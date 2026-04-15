@@ -7,6 +7,7 @@ from ..views import (
     TeamJoinRequestListByTeamView,
 )
 
+
 urlpatterns = [
     path('<int:pk>/join-requests/', TeamJoinRequestCreateView.as_view(), name='team_join_request_create'),
     path(
