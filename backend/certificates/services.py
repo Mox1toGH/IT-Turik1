@@ -1,45 +1,18 @@
 import os
 from io import BytesIO
-from django.core.files.base import ContentFile
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from PIL import Image
 from .models import Certificate, CertificateTemplate
-
-def get_certificate_data(manual_data):
-    """
-    Abstraction layer for getting certificate data.
-    In the future, this can accept an ID and fetch from DB.
-    """
-    return {
-        'full_name': manual_data.get('full_name', 'Unknown Name'),
-        'team_name': manual_data.get('team_name', ''),
-        'tournament_name': manual_data.get('tournament_name', 'Unknown Tournament'),
-        'location': manual_data.get('location', ''),
-        'placement': manual_data.get('placement', 'Participant'),
-        'certificate_number': manual_data.get('certificate_number', '0001'),
-    }
-
-def create_certificate_record(data_dict):
-    """
-    Creates and saves the certificate record in the database.
-    """
-    certificate = Certificate.objects.create(
-        full_name=data_dict['full_name'],
-        team_name=data_dict['team_name'],
-        tournament_name=data_dict['tournament_name'],
-        location=data_dict['location'],
-        placement=data_dict['placement'],
-        certificate_number=data_dict['certificate_number'],
-    )
-    return certificate
 
 def generate_certificate_pdf(certificate, template_obj=None):
     """
     Generates a PDF using reportlab over an uploaded template image
     and returns the raw PDF bytes.
     """
-    # If no template is provided, try to get the default one
+    # If a specific template is passed, use it. Otherwise, use the one saved in the record.
+    # If the record has no template, fall back to the default one.
+    if not template_obj:
+        template_obj = certificate.template
     if not template_obj:
         template_obj = CertificateTemplate.objects.filter(is_default=True).first()
     
@@ -57,10 +30,21 @@ def generate_certificate_pdf(certificate, template_obj=None):
     # Set up layout and colors for a dark background
     # Colors: White for standard text, Gold/Yellow for highlighted elements
     white = colors.HexColor("#FFFFFF")
-    gold = colors.HexColor("#F1C40F")
+    gold = colors.HexColor("#FFD700")
     
     # Center horizontally, slightly above middle vertically
     center_x = page_width / 2.0
+    
+    # TOP LEFT - Tournament OS Inscription with Design
+    c.setFont("Helvetica-Bold", 28)
+    # Shadow
+    c.setFillAlpha(0.3)
+    c.setFillColor(colors.HexColor("#000000"))
+    c.drawString(62, page_height - 62, "TOURNAMENT OS")
+    # Main text
+    c.setFillAlpha(1.0)
+    c.setFillColor(gold)
+    c.drawString(60, page_height - 60, "TOURNAMENT OS")
     
     # CERTIFICATE TITLE - Bigger, Bolder, with drop shadow design
     title_text = "CERTIFICATE OF ACHIEVEMENT"
@@ -130,12 +114,6 @@ def generate_certificate_pdf(certificate, template_obj=None):
     c.setFont("Helvetica-Bold", 48)
     c.drawCentredString(center_x, y_offset, certificate.tournament_name)
     y_offset -= 45
-    
-    # Location (if any)
-    if getattr(certificate, 'location', None):
-        c.setFillColor(white)
-        c.setFont("Helvetica", 24)
-        c.drawCentredString(center_x, y_offset, f"Held at {certificate.location}")
     
     # Bottom details (white, smaller)
     c.setFillColor(colors.HexColor("#E0E0E0"))
