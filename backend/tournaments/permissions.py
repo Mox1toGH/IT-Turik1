@@ -82,3 +82,13 @@ class IsJuryPermission(BasePermission):
     def has_permission(self, request, view):
         user = request.user
         return bool(user and user.is_authenticated and user.role == 'jury')
+
+
+class IsOrganizerOrAdminPermission(BasePermission):
+    message = 'Organizer or admin access required.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return user.role in ('organizer', 'admin') or user.is_superuser
