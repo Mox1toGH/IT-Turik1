@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from .models import Round, Submission, Tournament
 from .permissions import (
+    CanCreateTournamentPermission,
     IsJuryPermission,
     IsPlatformAdminOrTeamMemberPermission,
     IsPlatformAdminPermission,
@@ -98,7 +99,7 @@ class TournamentDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
 
 
 class TournamentCreateView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated, IsPlatformAdminPermission]
+    permission_classes = [IsAuthenticated, CanCreateTournamentPermission]
     serializer_class = TournamentAdminSerializer
 
     def create(self, request, *args, **kwargs):

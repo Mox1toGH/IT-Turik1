@@ -11,7 +11,7 @@
 | :--- | :--- | :--- | :--- |
 | **Список турнірів** | GET | `/api/tournaments/` | Всі |
 | **Деталі турніру** | GET | `/api/tournaments/{id}/` | Всі |
-| **Створити турнір** | POST | `/api/tournaments/manage/` | Admin |
+| **Створити турнір** | POST | `/api/tournaments/manage/` | Admin, Organizer |
 | **Редагувати турнір** | PATCH/DEL| `/api/tournaments/manage/{id}/` | Admin |
 | **Відкрити реєстрацію**| POST | `/api/tournaments/{id}/start-registration/` | Admin |
 | **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
