@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from django.db.models import Q
 
-from accounts.utils.permissions import is_platform_admin
+from accounts.utils.permissions import Permission, has_permission, is_platform_admin
 from teams.models import Team, TeamMember
 
 
@@ -10,6 +10,13 @@ class IsPlatformAdminPermission(BasePermission):
 
     def has_permission(self, request, view):
         return is_platform_admin(request.user)
+
+
+class CanCreateTournamentPermission(BasePermission):
+    message = 'Create tournament permission is required.'
+
+    def has_permission(self, request, view):
+        return has_permission(request.user, Permission.CREATE_TOURNAMENT)
 
 
 class IsPlatformAdminOrReadOnly(BasePermission):

@@ -11,6 +11,7 @@ from .models import Round, Submission, Tournament, TournamentTeamRegistration
 from accounts.utils.permissions import is_platform_admin
 
 from .permissions import (
+    CanCreateTournamentPermission,
     IsJuryPermission,
     IsPlatformAdminOrTeamMemberPermission,
     IsPlatformAdminPermission,
@@ -153,7 +154,7 @@ class TournamentDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
 
 
 class TournamentCreateView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated, IsPlatformAdminPermission]
+    permission_classes = [IsAuthenticated, CanCreateTournamentPermission]
     serializer_class = TournamentAdminSerializer
 
     def create(self, request, *args, **kwargs):

@@ -23,6 +23,12 @@ class TournamentApiTests(APITestCase):
             email='captain@example.com',
             password='StrongPass123!',
         )
+        self.organizer = User.objects.create_user(
+            username='organizer',
+            email='organizer@example.com',
+            password='StrongPass123!',
+            role='organizer',
+        )
         self.team = Team.objects.create(
             name='Test Team',
             email='test@example.com',
@@ -42,6 +48,15 @@ class TournamentApiTests(APITestCase):
         url = reverse('tournament_manage_create')
         response = self.client.post(url, self.tournament_data, format='json')
         
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Tournament.objects.count(), 1)
+        self.assertEqual(Round.objects.count(), 0)
+
+    def test_organizer_can_create_tournament(self):
+        self.client.force_authenticate(user=self.organizer)
+        url = reverse('tournament_manage_create')
+        response = self.client.post(url, self.tournament_data, format='json')
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Tournament.objects.count(), 1)
         self.assertEqual(Round.objects.count(), 0)
