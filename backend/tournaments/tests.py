@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from teams.models import Team, TeamMember
-from .models import Tournament, Round, Submission, TournamentTeamRegistration
+from .models import Event, Icon, Tournament, Round, Submission, TournamentTeamRegistration
 
 
 class TournamentApiTests(APITestCase):
@@ -1013,7 +1013,7 @@ class TournamentApiTests(APITestCase):
             created_by=self.admin,
             **self.tournament_data
         )
-        
+
         # Create two non-overlapping rounds
         round1 = Round.objects.create(
             tournament=tournament,
@@ -1027,10 +1027,10 @@ class TournamentApiTests(APITestCase):
             start_date=tournament.start_date + timezone.timedelta(hours=3),
             end_date=tournament.start_date + timezone.timedelta(hours=5),
         )
-        
+
         self.client.force_authenticate(user=self.admin)
         url = reverse('round_detail', kwargs={'pk': round2.id})
-        
+
         # Try to update round2 to overlap with round1
         update_data = {
             'tournament': tournament.id,
@@ -1043,4 +1043,228 @@ class TournamentApiTests(APITestCase):
         self.assertIn('start_date', response.data['details'])
         self.assertIn('overlap', response.data['details']['start_date'][0].lower())
 
-    
+
+class EventCalendarFilterTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin',
+            email='admin@example.com',
+            password='StrongPass123!',
+            role='admin',
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.tournament = Tournament.objects.create(
+            name='Test Tournament',
+            description='desc',
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            end_date=timezone.now() + timezone.timedelta(days=10),
+            created_by=self.admin,
+        )
+        self.base_dt = timezone.now() + timezone.timedelta(days=2)
+        self.event_meet = Event.objects.create(
+            tournament=self.tournament,
+            type=Event.TYPE_MEET,
+            title='Consultation 1',
+            link='https://meet.google.com/abc',
+            start_datetime=self.base_dt,
+            end_datetime=self.base_dt + timezone.timedelta(hours=1),
+        )
+        self.event_generic = Event.objects.create(
+            tournament=self.tournament,
+            type=Event.TYPE_EVENT,
+            title='Deadline 1',
+            start_datetime=self.base_dt + timezone.timedelta(days=1),
+        )
+        self.event_meet_2 = Event.objects.create(
+            tournament=self.tournament,
+            type=Event.TYPE_MEET,
+            title='Consultation 2',
+            link='https://meet.google.com/def',
+            start_datetime=self.base_dt + timezone.timedelta(days=3),
+            end_datetime=self.base_dt + timezone.timedelta(days=3, hours=1),
+        )
+
+    def test_list_events_without_filters(self):
+        url = reverse('event-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+    def test_filter_by_tournament(self):
+        other_tournament = Tournament.objects.create(
+            name='Other Tournament',
+            description='other',
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            end_date=timezone.now() + timezone.timedelta(days=10),
+            created_by=self.admin,
+        )
+        Event.objects.create(
+            tournament=other_tournament,
+            type=Event.TYPE_EVENT,
+            title='Other Event',
+            start_datetime=self.base_dt,
+        )
+
+        url = reverse('event-list')
+        response = self.client.get(url, {'tournament': self.tournament.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+    def test_filter_by_type_single(self):
+        url = reverse('event-list')
+        response = self.client.get(url, {'type': 'meet'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        for item in response.data:
+            self.assertEqual(item['type'], 'meet')
+
+    def test_filter_by_type_multiple(self):
+        url = reverse('event-list')
+        response = self.client.get(url, {'type': 'meet,event'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+    def test_filter_by_start_datetime_gte(self):
+        url = reverse('event-list')
+        cutoff = self.base_dt + timezone.timedelta(days=2)
+        response = self.client.get(url, {'start_datetime__gte': cutoff.isoformat()})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Consultation 2')
+
+    def test_filter_by_start_datetime_lte(self):
+        url = reverse('event-list')
+        cutoff = self.base_dt + timezone.timedelta(hours=12)
+        response = self.client.get(url, {'start_datetime__lte': cutoff.isoformat()})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Consultation 1')
+
+    def test_filter_by_start_datetime_range(self):
+        url = reverse('event-list')
+        start = self.base_dt.isoformat()
+        end = (self.base_dt + timezone.timedelta(days=1, hours=12)).isoformat()
+        response = self.client.get(url, {
+            'start_datetime__gte': start,
+            'start_datetime__lte': end,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_by_end_datetime_gte(self):
+        url = reverse('event-list')
+        cutoff = (self.base_dt + timezone.timedelta(hours=1)).isoformat()
+        response = self.client.get(url, {'end_datetime__gte': cutoff})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_by_end_datetime_lte(self):
+        url = reverse('event-list')
+        cutoff = (self.base_dt + timezone.timedelta(hours=1)).isoformat()
+        response = self.client.get(url, {'end_datetime__lte': cutoff})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Consultation 1')
+
+    def test_filter_combined_tournament_and_type(self):
+        url = reverse('event-list')
+        response = self.client.get(url, {
+            'tournament': self.tournament.id,
+            'type': 'meet',
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_combined_tournament_type_and_date_range(self):
+        url = reverse('event-list')
+        response = self.client.get(url, {
+            'tournament': self.tournament.id,
+            'type': 'meet',
+            'start_datetime__gte': (self.base_dt + timezone.timedelta(days=2)).isoformat(),
+            'start_datetime__lte': (self.base_dt + timezone.timedelta(days=4)).isoformat(),
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Consultation 2')
+
+    def test_events_ordered_by_start_datetime(self):
+        url = reverse('event-list')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        dates = [item['start_datetime'] for item in response.data]
+        self.assertEqual(dates, sorted(dates))
+
+    def test_admin_can_create_event(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('event-list')
+        data = {
+            'tournament': self.tournament.id,
+            'type': 'meet',
+            'title': 'New Consultation',
+            'link': 'https://meet.google.com/new',
+            'start_datetime': (self.base_dt + timezone.timedelta(days=5)).isoformat(),
+            'end_datetime': (self.base_dt + timezone.timedelta(days=5, hours=1)).isoformat(),
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Event.objects.count(), 4)
+
+    def test_non_admin_cannot_create_event(self):
+        captain = User.objects.create_user(
+            username='captain',
+            email='captain@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_authenticate(user=captain)
+        url = reverse('event-list')
+        data = {
+            'tournament': self.tournament.id,
+            'type': 'event',
+            'title': 'Forbidden Event',
+            'start_datetime': self.base_dt.isoformat(),
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_update_event(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('event-detail', kwargs={'pk': self.event_meet.id})
+        response = self.client.patch(url, {'title': 'Updated Title'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.event_meet.refresh_from_db()
+        self.assertEqual(self.event_meet.title, 'Updated Title')
+
+    def test_admin_can_delete_event(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('event-detail', kwargs={'pk': self.event_meet.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Event.objects.count(), 2)
+
+    def test_event_validation_end_before_start(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('event-list')
+        data = {
+            'tournament': self.tournament.id,
+            'type': 'meet',
+            'title': 'Bad Event',
+            'start_datetime': self.base_dt.isoformat(),
+            'end_datetime': (self.base_dt - timezone.timedelta(hours=1)).isoformat(),
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_event_type_event_ignores_link(self):
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('event-list')
+        data = {
+            'tournament': self.tournament.id,
+            'type': 'event',
+            'title': 'Event With Link',
+            'link': 'https://example.com',
+            'start_datetime': self.base_dt.isoformat(),
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['link'], '')
