@@ -455,9 +455,34 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Event.objects.select_related('icon', 'tournament').order_by('start_datetime')
-        tournament_id = self.request.query_params.get('tournament')
+        params = self.request.query_params
+
+        tournament_id = params.get('tournament')
         if tournament_id:
             queryset = queryset.filter(tournament_id=tournament_id)
+
+        event_type = params.get('type')
+        if event_type:
+            types = [t.strip() for t in event_type.split(',') if t.strip()]
+            if types:
+                queryset = queryset.filter(type__in=types)
+
+        start_gte = params.get('start_datetime__gte')
+        if start_gte:
+            queryset = queryset.filter(start_datetime__gte=start_gte)
+
+        start_lte = params.get('start_datetime__lte')
+        if start_lte:
+            queryset = queryset.filter(start_datetime__lte=start_lte)
+
+        end_gte = params.get('end_datetime__gte')
+        if end_gte:
+            queryset = queryset.filter(end_datetime__gte=end_gte)
+
+        end_lte = params.get('end_datetime__lte')
+        if end_lte:
+            queryset = queryset.filter(end_datetime__lte=end_lte)
+
         return queryset
 
 
