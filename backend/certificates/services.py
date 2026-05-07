@@ -2,7 +2,8 @@ import os
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from .models import Certificate, CertificateTemplate
+from .models import CertificateTemplate
+
 
 def generate_certificate_pdf(certificate, template_obj=None):
     """
@@ -15,26 +16,26 @@ def generate_certificate_pdf(certificate, template_obj=None):
         template_obj = certificate.template
     if not template_obj:
         template_obj = CertificateTemplate.objects.filter(is_default=True).first()
-    
+
     buffer = BytesIO()
-    
+
     # Use the photo's exact resolution for standard architecture (1376x768)
     page_width, page_height = 1376.0, 768.0
     c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
-    
+
     if template_obj and template_obj.image:
         template_path = template_obj.image.path
         # Draw the image to fit the exact page dimensions
         c.drawImage(template_path, 0, 0, width=page_width, height=page_height)
-        
+
     # Set up layout and colors for a dark background
     # Colors: White for standard text, Gold/Yellow for highlighted elements
     white = colors.HexColor("#FFFFFF")
     gold = colors.HexColor("#FFD700")
-    
+
     # Center horizontally, slightly above middle vertically
     center_x = page_width / 2.0
-    
+
     # TOP LEFT - Tournament OS Inscription with Design
     c.setFont("Helvetica-Bold", 28)
     # Shadow
@@ -45,7 +46,7 @@ def generate_certificate_pdf(certificate, template_obj=None):
     c.setFillAlpha(1.0)
     c.setFillColor(gold)
     c.drawString(60, page_height - 60, "TOURNAMENT OS")
-    
+
     # CERTIFICATE TITLE - Bigger, Bolder, with drop shadow design
     title_text = "CERTIFICATE OF ACHIEVEMENT"
     c.setFont("Helvetica-Bold", 54)
@@ -55,25 +56,28 @@ def generate_certificate_pdf(certificate, template_obj=None):
     # Main text in Gold
     c.setFillColor(gold)
     c.drawCentredString(center_x, page_height - 250, title_text)
-    
+
     # Add a thin gold line under the title for design
     title_width = c.stringWidth(title_text, "Helvetica-Bold", 54)
     c.setStrokeColor(gold)
     c.setLineWidth(2)
     c.line(center_x - title_width / 2.0, page_height - 265, center_x + title_width / 2.0, page_height - 265)
-    
+
     # Participant Name (Highlight)
+    participant_name = ''
+    if certificate.user:
+        participant_name = (certificate.user.full_name or certificate.user.username).strip()
     c.setFillColor(gold)
     c.setFont("Helvetica-Bold", 64)
-    c.drawCentredString(center_x, page_height - 380, certificate.full_name)
-    
+    c.drawCentredString(center_x, page_height - 380, participant_name)
+
     y_offset = page_height - 440
-    
+
     # Team Name (if any)
-    if certificate.team_name:
+    if certificate.team:
         c.setFillColor(white)
         c.setFont("Helvetica", 28)
-        c.drawCentredString(center_x, y_offset, f"Team: {certificate.team_name}")
+        c.drawCentredString(center_x, y_offset, f"Team: {certificate.team.name}")
         y_offset -= 50
     else:
         y_offset -= 20
@@ -84,43 +88,44 @@ def generate_certificate_pdf(certificate, template_obj=None):
     if "place" not in placement_text.lower() and placement_text.lower() != "participant":
         placement_text += " place"
     part3 = " in"
-    
+
     w1 = c.stringWidth(part1, "Helvetica", 28)
     w2 = c.stringWidth(placement_text, "Helvetica-Bold", 36)
     w3 = c.stringWidth(part3, "Helvetica", 28)
-    
+
     total_w = w1 + w2 + w3
     start_x = center_x - (total_w / 2.0)
-    
+
     c.setFillColor(white)
     c.setFont("Helvetica", 28)
     c.drawString(start_x, y_offset, part1)
-    
+
     # Gold Highlight and Shadow for the Placement
     c.setFillColor(colors.HexColor("#000000"))
     c.setFont("Helvetica-Bold", 36)
-    c.drawString(start_x + w1 + 2, y_offset - 2, placement_text) # Shadow
+    c.drawString(start_x + w1 + 2, y_offset - 2, placement_text)  # Shadow
     c.setFillColor(gold)
     c.drawString(start_x + w1, y_offset, placement_text)
-    
+
     c.setFillColor(white)
     c.setFont("Helvetica", 28)
     c.drawString(start_x + w1 + w2, y_offset, part3)
-    
+
     y_offset -= 60
-    
+
     # Tournament Name (Highlight)
     c.setFillColor(gold)
     c.setFont("Helvetica-Bold", 48)
-    c.drawCentredString(center_x, y_offset, certificate.tournament_name)
+    tournament_name = certificate.tournament.name if certificate.tournament else ''
+    c.drawCentredString(center_x, y_offset, tournament_name)
     y_offset -= 45
-    
+
     # Bottom details (white, smaller)
     c.setFillColor(colors.HexColor("#E0E0E0"))
     c.setFont("Helvetica", 16)
     c.drawString(60, 60, f"Certificate No: {certificate.certificate_number}")
     c.drawString(60, 35, f"Verify Code: {certificate.unique_code}")
-    
+
     c.save()
-    
+
     return buffer.getvalue()

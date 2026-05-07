@@ -22,7 +22,7 @@ class CertificateTemplateViewSet(viewsets.ModelViewSet):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CertificateViewSet(viewsets.ModelViewSet):
-    queryset = Certificate.objects.all().select_related('template').order_by('-created_at')
+    queryset = Certificate.objects.all().select_related('template', 'user', 'team', 'tournament').order_by('-created_at')
     serializer_class = CertificateSerializer
     lookup_field = 'unique_code'
 
