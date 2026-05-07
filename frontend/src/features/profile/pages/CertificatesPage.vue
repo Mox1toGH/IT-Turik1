@@ -46,13 +46,13 @@
               <a :href="item.certificate_url" target="_blank" rel="noopener noreferrer" class="link-btn">
                 View PDF
               </a>
-              <a
-                :href="item.certificate_url"
-                :download="`certificate-${item.certificate_number || item.unique_code}.pdf`"
+              <button
+                type="button"
                 class="link-btn secondary"
+                @click="downloadCertificate(item.certificate_url, item.certificate_number || item.unique_code)"
               >
                 Download PDF
-              </a>
+              </button>
             </div>
           </ui-card>
         </div>
@@ -70,11 +70,12 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useMyCertificates } from '@/api/queries/certificates'
 import { parseApiError } from '@/api/errors'
+import { apiClient } from '@/api/client'
 
 const router = useRouter()
 const { data: certificates, isLoading, isLoadingError, error } = useMyCertificates()
 const apiError = computed(() => parseApiError(error.value))
-const isNotFoundError = computed(() => apiError.value?.code === 404)
+const isNotFoundError = computed(() => String(apiError.value?.code || '') === '404')
 
 const goBack = () => {
   router.push('/profile')
@@ -83,6 +84,18 @@ const goBack = () => {
 const formatDate = (date: string) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('uk-UA')
+}
+
+const downloadCertificate = async (url: string, code: string) => {
+  const response = await apiClient.get(url, { responseType: 'blob' })
+  const blobUrl = window.URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.download = `certificate-${code}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(blobUrl)
 }
 </script>
 
@@ -140,6 +153,7 @@ const formatDate = (date: string) => {
   font-weight: 600;
   color: var(--brand-700);
   background: white;
+  cursor: pointer;
 }
 
 .link-btn.secondary {

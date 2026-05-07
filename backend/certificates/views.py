@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Certificate, CertificateTemplate
 from .serializers import CertificateSerializer, CertificateTemplateSerializer
@@ -21,6 +22,29 @@ class CertificateTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = CertificateTemplateSerializer
     parser_classes = (MultiPartParser, FormParser)
 
+    def get_permissions(self):
+        return [IsAuthenticated()]
+
+    def _ensure_admin(self):
+        if not self.request.user.is_staff:
+            raise PermissionDenied('Only admins can manage certificate templates.')
+
+    def create(self, request, *args, **kwargs):
+        self._ensure_admin()
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self._ensure_admin()
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        self._ensure_admin()
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        self._ensure_admin()
+        return super().destroy(request, *args, **kwargs)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CertificateViewSet(viewsets.ModelViewSet):
@@ -29,7 +53,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
     lookup_field = 'unique_code'
 
     def get_permissions(self):
-        if self.action == 'verify':
+        if self.action in {'verify', 'view'}:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -38,6 +62,8 @@ class CertificateViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if not user.is_authenticated:
+            if self.action == 'view':
+                return queryset
             return queryset.none()
 
         if user.is_staff:
@@ -45,12 +71,29 @@ class CertificateViewSet(viewsets.ModelViewSet):
 
         return queryset.filter(user_id=user.id)
 
+    def _ensure_admin_for_write(self):
+        if self.action in {'create', 'update', 'partial_update', 'destroy'} and not self.request.user.is_staff:
+            raise PermissionDenied('Only admins can manage certificates.')
+
+    def create(self, request, *args, **kwargs):
+        self._ensure_admin_for_write()
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self._ensure_admin_for_write()
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        self._ensure_admin_for_write()
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        self._ensure_admin_for_write()
+        return super().destroy(request, *args, **kwargs)
+
     @method_decorator(xframe_options_exempt)
     @action(detail=True, methods=['get'])
     def view(self, request, unique_code=None):
-        """
-        Custom action to render the dynamic PDF
-        """
         certificate = self.get_object()
         try:
             pdf_bytes = generate_certificate_pdf(certificate)
@@ -62,9 +105,6 @@ class CertificateViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='verify/(?P<code>[^/.]+)')
     def verify(self, request, code=None):
-        """
-        Custom action to verify a certificate by code or number
-        """
         certificate = Certificate.objects.filter(
             Q(unique_code=code) | Q(certificate_number=code)
         ).first()
