@@ -1,5 +1,4 @@
-from django.http import HttpResponse, Http404
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -9,10 +8,12 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Certificate, CertificateTemplate
 from .serializers import CertificateSerializer, CertificateTemplateSerializer
 from .services import generate_certificate_pdf
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CertificateTemplateViewSet(viewsets.ModelViewSet):
@@ -20,11 +21,29 @@ class CertificateTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = CertificateTemplateSerializer
     parser_classes = (MultiPartParser, FormParser)
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all().select_related('template', 'user', 'team', 'tournament').order_by('-created_at')
     serializer_class = CertificateSerializer
     lookup_field = 'unique_code'
+
+    def get_permissions(self):
+        if self.action == 'verify':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return queryset.none()
+
+        if user.is_staff:
+            return queryset
+
+        return queryset.filter(user_id=user.id)
 
     @method_decorator(xframe_options_exempt)
     @action(detail=True, methods=['get'])
@@ -49,10 +68,10 @@ class CertificateViewSet(viewsets.ModelViewSet):
         certificate = Certificate.objects.filter(
             Q(unique_code=code) | Q(certificate_number=code)
         ).first()
-        
+
         if not certificate:
             return Response({"is_valid": False, "message": "Certificate not found."}, status=status.HTTP_404_NOT_FOUND)
-            
+
         serializer = self.get_serializer(certificate)
         return Response({
             "is_valid": True,

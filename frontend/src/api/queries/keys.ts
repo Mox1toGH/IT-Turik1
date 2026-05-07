@@ -16,6 +16,10 @@ export const accountKeys = {
   roleCodes: (filter?: GetRoleCodesFilter) => ['role-codes', filter?.role ?? 'all'],
 }
 
+export const certificateKeys = {
+  myCertificates: () => ['my-certificates'],
+}
+
 export const touranmentsKeys = {
   allTouranments: () => ['tournaments'],
   'tournaments-list': (args: GetTournamentsArgs) => [
