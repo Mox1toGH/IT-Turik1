@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.utils.permissions import is_platform_admin
+from backend.permissions import is_platform_admin
 from accounts.models import User
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
@@ -20,6 +20,15 @@ from .serializers import (
     TeamMemberSerializer,
     TeamSerializer,
     invite_user_to_team,
+)
+from .services import assert_can_remove_member, assert_team_not_in_active_tournament
+from .signals import (
+    invitation_received,
+    invitation_responded,
+    join_request_received,
+    join_request_responded,
+    member_removed,
+    member_left,
 )
 
 
@@ -88,11 +97,17 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied('Only captain can modify this team.')
         return None
 
+    @staticmethod
+    def _is_team_identity_mutation(request_data):
+        return 'name' in request_data or 'is_public' in request_data
+
     def update(self, request, *args, **kwargs):
         team = self.get_object()
         denied = self._assert_captain(team)
         if denied:
             return denied
+        if self._is_team_identity_mutation(request.data):
+            assert_team_not_in_active_tournament(team)
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
@@ -100,6 +115,8 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
         denied = self._assert_captain(team)
         if denied:
             return denied
+        if self._is_team_identity_mutation(request.data):
+            assert_team_not_in_active_tournament(team)
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -122,6 +139,8 @@ class TeamMemberManageView(APIView):
         if team.captain_id != request.user.id:
             raise PermissionDenied('Only captain can manage members.')
 
+        assert_team_not_in_active_tournament(team)
+
         user_id = request.data.get('user_id')
         if not user_id:
             raise ValidationError({'user_id': ['user_id is required.']})
@@ -137,6 +156,8 @@ class TeamMemberManageView(APIView):
         if not invitation:
             raise ValidationError({'message': ['Unable to invite this user.']})
 
+        invitation_received.send(sender=self.__class__, invitation=invitation)
+
         team.refresh_from_db()
         serializer = TeamSerializer(team, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -149,9 +170,14 @@ class TeamMemberManageView(APIView):
         if team.captain_id == user_id:
             raise ValidationError({'message': ['Captain cannot be removed from team.']})
 
+        assert_can_remove_member(team)
+
+        removed_user = get_object_or_404(User, id=user_id)
         deleted_count, _ = TeamMember.objects.filter(team=team, user_id=user_id).delete()
         if deleted_count == 0:
             raise NotFound('User is not a team member.')
+
+        member_removed.send(sender=self.__class__, team=team, user=removed_user)
 
         clear_invitation_states_for_member(team=team, user_id=user_id)
         clear_join_request_states_for_member(team=team, user_id=user_id)
@@ -176,6 +202,8 @@ class TeamLeaveView(APIView):
         deleted_count, _ = TeamMember.objects.filter(team=team, user=request.user).delete()
         if deleted_count == 0:
             raise ValidationError({'message': ['You are not a team member of this team.']})
+
+        member_left.send(sender=self.__class__, team=team, user=request.user)
 
         clear_invitation_states_for_member(team=team, user=request.user)
         clear_join_request_states_for_member(team=team, user=request.user)
@@ -212,6 +240,7 @@ class TeamInvitationRespondView(APIView):
         now = timezone.now()
 
         if self.new_status == TeamInvitation.STATUS_ACCEPTED:
+            assert_team_not_in_active_tournament(invitation.team)
             TeamMember.objects.get_or_create(team=invitation.team, user=request.user)
             TeamJoinRequest.objects.filter(
                 team=invitation.team,
@@ -222,11 +251,15 @@ class TeamInvitationRespondView(APIView):
                 reviewed_by=invitation.team.captain,
                 reviewed_at=now,
             )
+            invitation.status = TeamInvitation.STATUS_ACCEPTED
+            invitation.responded_at = now
             clear_invitation_states_for_member(team=invitation.team, user=request.user)
+            invitation_responded.send(sender=self.__class__, invitation=invitation)
         else:
             invitation.status = self.new_status
             invitation.responded_at = now
             invitation.save(update_fields=['status', 'responded_at', 'updated_at'])
+            invitation_responded.send(sender=self.__class__, invitation=invitation)
 
         team = get_object_or_404(get_team_queryset(), pk=invitation.team_id)
         serializer = TeamSerializer(team, context={'request': request})
@@ -250,6 +283,8 @@ class TeamJoinRequestCreateView(APIView):
 
     def post(self, request, pk):
         team = self._get_team(pk)
+        assert_team_not_in_active_tournament(team)
+
         if not team.is_public:
             raise ValidationError({'message': ['Join requests are available only for public teams.']})
 
@@ -277,6 +312,8 @@ class TeamJoinRequestCreateView(APIView):
             join_request.reviewed_at = None
             join_request.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
 
+        join_request_received.send(sender=self.__class__, join_request=join_request)
+
         return Response({'detail': 'Join request sent.'}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
@@ -297,6 +334,9 @@ class TeamJoinRequestReviewView(APIView):
         if join_request.status != TeamJoinRequest.STATUS_PENDING:
             raise ValidationError({'message': ['This join request is already processed.']})
 
+        if self.new_status == TeamJoinRequest.STATUS_ACCEPTED:
+            assert_team_not_in_active_tournament(team)
+
         now = timezone.now()
         join_request.status = self.new_status
         join_request.reviewed_by = request.user
@@ -306,6 +346,8 @@ class TeamJoinRequestReviewView(APIView):
         if self.new_status == TeamJoinRequest.STATUS_ACCEPTED:
             TeamMember.objects.get_or_create(team=team, user=join_request.user)
             clear_invitation_states_for_member(team=team, user=join_request.user)
+
+        join_request_responded.send(sender=self.__class__, join_request=join_request)
 
         team.refresh_from_db()
         serializer = TeamSerializer(team, context={'request': request})

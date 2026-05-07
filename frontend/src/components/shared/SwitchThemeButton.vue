@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import BrushIcon from '@/icons/BrushIcon.vue'
-import UiButton from '../UiButton.vue'
+import UiButton from '../ui/UiButton.vue'
 
 const getCurrentTheme = () => {
   return document.documentElement.getAttribute('data-theme') || 'light'

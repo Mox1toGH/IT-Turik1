@@ -36,7 +36,6 @@ export interface Team {
   id: TeamId
   name: string
   email: string
-  captain: User
   members: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>[]
   invitations: Invitation[]
   join_requests: JoinRequest[]
@@ -72,6 +71,67 @@ interface JoinRequest {
   user: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>
   reviewed_by?: User
   reviewed_at?: Date
+  created_at: Date
+  updated_at: Date
+}
+
+// Tournament
+type TournamentId = number
+type TournamentStatus = 'draft' | 'registration' | 'running' | 'finished'
+
+interface Tournament {
+  id: TournamentId
+  name: string
+  description: string
+  start_date: Date
+  end_date: Date
+  max_teams: number
+  min_team_members: number
+  rounds_count: number
+  status: TournamentStatus
+}
+
+// Round
+type RoundId = number
+type RoundStatus = 'draft' | 'active' | 'submission_closed' | 'evaluated'
+
+interface CriteriaItem {
+  id: string
+  name: string
+  description: string
+  max_score: number
+}
+
+type EvaluationCriteria = 'score'
+
+interface Round {
+  id: RoundId
+  name: string
+  start_date: Date
+  end_date: Date
+  status: RoundStatus
+  description: JSONContent
+  must_have_requirements: JSONContent
+  tech_requirements: JSONContent
+  passing_count: number
+  winners_count: number
+  evaluation_criteria
+  criteria: CriteriaItem[]
+}
+
+// Event
+
+type EventId = number
+
+interface TournamentEvent {
+  description: string
+  icon: 2
+  id: EventId
+  link: string
+  start_datetime: Date
+  title: string
+  tournament: TournamentId
+  type: 'event' // TODO: remove cuz we dont need this
   created_at: Date
   updated_at: Date
 }

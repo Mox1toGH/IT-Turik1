@@ -1,2 +1,11 @@
-def is_platform_admin(user):
-    return bool(user and user.is_authenticated and (user.is_superuser or user.role == 'admin'))
+from backend.permissions import (  # noqa: F401
+    JURY_TOURNAMENT_PERMISSIONS,
+    ROLE_PERMISSIONS,
+    TOURNAMENT_MANAGEMENT_PERMISSIONS,
+    TOURNAMENT_PERMISSIONS,
+    TOURNAMENT_VIEW_PERMISSIONS,
+    Permission,
+    has_permission,
+    is_platform_admin,
+    user_has_permission,
+)

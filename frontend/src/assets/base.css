@@ -8,19 +8,12 @@
   --brand-700: #0f766e;
   --brand-600: #0d9488;
   --brand-500: #14b8a6;
-  --accent-strong: #c2410c;
 
-  --color-gray-50: lab(98.2596% -0.247031 -0.706708);
-  --color-gray-100: lab(96.1596% -0.0823438 -1.13575);
-  --color-gray-200: lab(91.6229% -0.159115 -2.26791);
-  --color-gray-300: lab(85.1236% -0.612259 -3.7138);
-  --color-gray-400: lab(65.9269% -0.832707 -8.17473);
-  --color-gray-500: lab(47.7841% -0.393182 -10.0268);
   --color-gray-600: lab(35.6337% -1.58697 -10.8425);
-  --color-gray-700: lab(27.1134% -0.956401 -12.3224);
-  --color-gray-800: lab(16.1051% -1.18239 -11.7533);
   --color-gray-900: lab(8.11897% 0.811279 -12.254);
   --color-gray-950: lab(1.90334% 0.278696 -5.48866);
+
+  --accent-strong: #c2410c;
 
   --primary: var(--brand-600);
   --primary-foreground: #ffffff;
@@ -28,7 +21,7 @@
   --secondary: rgb(227 230 233);
   --secondary-foreground: var(--color-gray-900);
 
-  --destructive: #e7000b;
+  --destructive: #cf131c;
   --warning: #d97706;
 
   --background: #ffffff;
@@ -38,22 +31,18 @@
   --card-foreground: var(--color-gray-900);
 
   --muted: rgb(255, 255, 255);
-  --muted-foreground: var(--color-gray-900);
+  --muted-foreground: lab(48.496% 0 0);
 
-  --border: var(--line-strong);
+  --border: #e5e5e5;
 
   --input: #f6f6f6;
   --ring: rgb(13, 148, 137, 30%);
   --popover: #ffffff;
-  --accent: rgba(20, 184, 165, 0.058);
 
   --radius: 12px;
 
-  --surface-strong: rgba(255, 255, 255, 0.9);
   --line-soft: rgba(15, 23, 42, 0.08);
   --line-strong: rgba(15, 23, 42, 0.2);
-
-  --shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.12);
 
   --page-gradient-top: #f8fafc;
   --page-gradient-mid: #ecfeff;
@@ -70,14 +59,14 @@
   --foreground: rgba(255, 255, 255, 0.92);
 
   --card: rgb(32 32 32);
-  --card-foreground: rgba(221, 221, 221, 0.92);
+  --card-foreground: rgba(245, 245, 245, 0.92);
 
   --muted: rgb(37 37 37);
-  --muted-foreground: rgb(213 213 213);
+  --muted-foreground: rgb(177, 177, 177);
 
-  --border: rgba(255, 255, 255, 0.18);
+  --border: rgb(52, 52, 52);
 
-  --input: rgb(44, 44, 44);
+  --input: rgb(46 46 46);
   --ring: rgba(20, 184, 166, 0.22);
   --popover: rgba(19, 19, 19, 1);
   --accent: rgba(255, 255, 255, 0.08);
@@ -100,6 +89,8 @@
 
 * {
   box-sizing: border-box;
+  border-color: var(--border);
+  outline-color: var(--ring);
 }
 
 html,
@@ -145,21 +136,26 @@ a {
   font-weight: 700;
 }
 
-.section-title {
-  margin: 0.45rem 0 0;
-  font-family: var(--font-display);
-  color: var(--foreground);
-  font-size: clamp(1.5rem, 2vw + 1rem, 2rem);
+.card-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--muted-foreground);
 }
 
 .section-subtitle {
-  margin: 0 0 0.5rem;
   color: var(--muted-foreground);
 }
 
 .form-label {
   color: var(--foreground);
   font-weight: 600;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .notice {
@@ -170,24 +166,32 @@ a {
 }
 
 .notice.success {
-  color: #166534;
-  background: #ecfdf5;
-  border-color: #86efac;
+  color: #fff;
+  background: color-mix(in srgb, var(--primary) 50%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 .notice.error {
-  color: #991b1b;
-  background: #fef2f2;
-  border-color: #fca5a5;
+  color: #fff;
+  background: color-mix(in srgb, var(--destructive) 50%, transparent);
+  border-color: color-mix(in srgb, var(--destructive) 60%, transparent);
 }
 
 .text-error {
-  color: #b91c1c;
+  color: var(--destructive);
 }
 
-.text-foreground,
 .text-muted {
   color: var(--muted-foreground);
+}
+
+.empty-card {
+  border: 1px dashed var(--border) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.empty-error {
+  text-align: center;
 }
 
 .auth-link {
@@ -198,18 +202,24 @@ a {
 .auth-link a {
   color: var(--brand-700);
   font-weight: 700;
-  text-decoration: none;
 }
 
-.card-text-title {
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.2;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-@media (max-width: 760px) {
-  .page-shell.centered {
-    min-height: calc(100vh - 130px);
-  }
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 999px;
+  border: 2px solid var(--background);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--secondary) var(--background);
 }

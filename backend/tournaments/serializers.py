@@ -7,13 +7,14 @@ from teams.models import Team
 from teams.models import TeamMember
 
 from .models import (
+    Event,
+    Icon,
     Round,
     Submission,
     Tournament,
     TournamentTeamRegistration,
 )
 from .services import (
-    ensure_round_placeholders,
     ensure_team_registered_for_tournament,
     register_team_for_tournament,
 )
@@ -23,7 +24,7 @@ from teams.serializers import TeamSummarySerializer
 class RoundShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Round
-        fields = ('id', 'position', 'name', 'start_date', 'end_date', 'status')
+        fields = ('id', 'name', 'start_date', 'end_date', 'status')
 
 
 class TournamentPublicSerializer(serializers.ModelSerializer):
@@ -37,24 +38,22 @@ class TournamentPublicSerializer(serializers.ModelSerializer):
             'description',
             'start_date',
             'end_date',
-            'tech_requirements',
-            'must_have_requirements',
             'max_teams',
             'min_team_members',
-            'rounds_count',
             'status',
             'rounds',
         )
 
 
+class ActiveTournamentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tournament
+        fields = ('id', 'name', 'status', 'start_date')
+
+
 class TournamentAdminSerializer(TournamentPublicSerializer):
     class Meta(TournamentPublicSerializer.Meta):
         read_only_fields = ('status',)
-
-    def validate_rounds_count(self, value):
-        if value < 1:
-            raise serializers.ValidationError('rounds_count must be at least 1.')
-        return value
 
     def validate(self, attrs):
         start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
@@ -72,7 +71,6 @@ class TournamentAdminSerializer(TournamentPublicSerializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict) from None
         tournament.save()
-        ensure_round_placeholders(tournament)
         return tournament
 
     @transaction.atomic
@@ -84,7 +82,6 @@ class TournamentAdminSerializer(TournamentPublicSerializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict) from None
         instance.save()
-        ensure_round_placeholders(instance)
         return instance
 
 
@@ -94,29 +91,28 @@ class RoundSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'tournament',
-            'position',
             'name',
             'description',
             'tech_requirements',
             'must_have_requirements',
+            'criteria',
             'start_date',
             'end_date',
             'passing_count',
-            'winners_count',
             'evaluation_criteria',
             'materials',
             'status',
         )
         read_only_fields = ('status',)
+        extra_kwargs = {
+            'tournament': {'required': False},
+        }
 
     def validate(self, attrs):
         instance = self.instance
         tournament = attrs.get('tournament', getattr(instance, 'tournament', None))
-        position = attrs.get('position', getattr(instance, 'position', None))
         start_date = attrs.get('start_date', getattr(instance, 'start_date', None))
         end_date = attrs.get('end_date', getattr(instance, 'end_date', None))
-        winners_count = attrs.get('winners_count', getattr(instance, 'winners_count', None))
-
         errors = {}
 
         if start_date and end_date and start_date >= end_date:
@@ -126,18 +122,19 @@ class RoundSerializer(serializers.ModelSerializer):
             if start_date < tournament.start_date or end_date > tournament.end_date:
                 errors['start_date'] = 'Round dates must be within tournament dates.'
 
-            if tournament.rounds_count == 1 and (
-                start_date != tournament.start_date or end_date != tournament.end_date
-            ):
-                errors['start_date'] = 'For single-round tournaments, round dates must match tournament dates.'
+        passing_count = attrs.get('passing_count', getattr(instance, 'passing_count', None))
+        if passing_count is not None and tournament:
+            registered_teams_count = tournament.team_registrations.count()
+            if registered_teams_count > 0 and passing_count > registered_teams_count:
+                errors['passing_count'] = (
+                    f'passing_count ({passing_count}) cannot exceed '
+                    f'the number of registered teams ({registered_teams_count}).'
+                )
 
-        if position is not None and position < 1:
-            errors['position'] = 'position must be at least 1.'
-        if tournament and position and position > tournament.rounds_count:
-            errors['position'] = 'position must be less than or equal to tournament rounds_count.'
-
-        if tournament and position and winners_count is not None and position != tournament.rounds_count:
-            errors['winners_count'] = 'winners_count is allowed only for the last round.'
+        for field in ['tech_requirements', 'must_have_requirements', 'description']:
+            val = attrs.get(field)
+            if val is not None and not isinstance(val, dict):
+                errors[field] = f'{field} must be a JSON object (dict).'
 
         if errors:
             raise serializers.ValidationError(errors)
@@ -300,7 +297,7 @@ class TournamentTeamRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('id', 'tournament', 'team', 'team_name', 'created_at')
+        fields = ('id', 'tournament', 'team', 'team_name', 'is_active', 'created_at')
         read_only_fields = ('id', 'tournament', 'created_at')
 
 
@@ -318,3 +315,89 @@ class TournamentTeamRegistrationCreateSerializer(serializers.Serializer):
         )
 
 
+class TournamentTeamRegistrationUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TournamentTeamRegistration
+        fields = ('is_active',)
+
+
+class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='team.id')
+    name = serializers.CharField(source='team.name')
+    is_public = serializers.BooleanField(source='team.is_public')
+    members_count = serializers.SerializerMethodField()
+ 
+    class Meta:
+        model = TournamentTeamRegistration
+        fields = ('id', 'name', 'members_count', 'is_public', 'is_active')
+ 
+    def get_members_count(self, obj):
+        return obj.team.team_members.count() + 1  # members + captain
+
+
+class IconSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Icon
+        fields = ('id', 'name', 'path')
+
+
+class EventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Event
+        fields = (
+            'id',
+            'tournament',
+            'type',
+            'title',
+            'description',
+            'link',
+            'start_datetime',
+            'end_datetime',
+            'icon',
+            'created_at',
+            'updated_at',
+        )
+        read_only_fields = ('created_at', 'updated_at')
+
+    def validate(self, attrs):
+        instance = self.instance
+        event_type = attrs.get('type', getattr(instance, 'type', None))
+        start_datetime = attrs.get('start_datetime', getattr(instance, 'start_datetime', None))
+        end_datetime = attrs.get('end_datetime', getattr(instance, 'end_datetime', None))
+        errors = {}
+
+        if end_datetime and start_datetime and end_datetime < start_datetime:
+            errors['end_datetime'] = 'end_datetime must be greater than or equal to start_datetime.'
+
+        if event_type == Event.TYPE_EVENT:
+            attrs.pop('link', None)
+            attrs['link'] = ''
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return attrs
+
+    def _resolve_default_icon(self, event_type):
+        if event_type == Event.TYPE_MEET:
+            default_name = 'meet_default'
+        else:
+            default_name = 'event_default'
+        return Icon.objects.filter(name=default_name).first()
+
+    @transaction.atomic
+    def create(self, validated_data):
+        if 'icon' not in validated_data or validated_data['icon'] is None:
+            validated_data['icon'] = self._resolve_default_icon(validated_data.get('type'))
+        return Event.objects.create(**validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        if 'icon' in validated_data and validated_data['icon'] is None:
+            validated_data['icon'] = self._resolve_default_icon(
+                validated_data.get('type', instance.type)
+            )
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

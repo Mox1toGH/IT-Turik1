@@ -1,6 +1,6 @@
 <template>
   <svg
-    v-if="!props.isCrossed"
+    v-if="props.isCrossed"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -36,6 +36,6 @@ interface Props {
   isCrossed?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
-  isCrossed: true,
+  isCrossed: false,
 })
 </script>

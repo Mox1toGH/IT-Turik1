@@ -3,10 +3,11 @@ import re
 from django.utils import timezone
 from rest_framework import serializers
 
-from accounts.utils.permissions import is_platform_admin
+from backend.permissions import is_platform_admin
 from accounts.models import User
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
+from .services import assert_team_not_in_active_tournament, get_active_tournament_registration
 
 
 def clear_invitation_states_for_member(*, team, user=None, user_id=None):
@@ -24,6 +25,8 @@ def clear_join_request_states_for_member(*, team, user=None, user_id=None):
 
 
 def invite_user_to_team(*, team, user, invited_by):
+    assert_team_not_in_active_tournament(team)
+
     if TeamMember.objects.filter(team=team, user=user).exists():
         return None, False
 
@@ -132,6 +135,7 @@ class TeamSerializer(serializers.ModelSerializer):
     is_member = serializers.SerializerMethodField()
     is_captain = serializers.SerializerMethodField()
     can_request_to_join = serializers.SerializerMethodField()
+    is_in_active_tournament = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
@@ -148,6 +152,7 @@ class TeamSerializer(serializers.ModelSerializer):
             'is_member',
             'is_captain',
             'can_request_to_join',
+            'is_in_active_tournament',
             'member_ids',
         )
 
@@ -185,6 +190,9 @@ class TeamSerializer(serializers.ModelSerializer):
         
         join_request_status = get_user_join_request_status(team=obj, user=user)
         return join_request_status != TeamJoinRequest.STATUS_PENDING
+
+    def get_is_in_active_tournament(self, obj):
+        return get_active_tournament_registration(obj) is not None
 
     def validate_contact_telegram(self, value):
         normalized = value.strip().lstrip('@')

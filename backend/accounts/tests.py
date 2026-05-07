@@ -10,6 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import RoleActivationCode, User
+from backend.permissions import Permission, user_has_permission
 
 
 @override_settings(GOOGLE_OAUTH_CLIENT_ID='test-google-client-id')
@@ -456,6 +457,49 @@ class ChangePasswordFlowTests(APITestCase):
 class UserRoleBehaviorTests(APITestCase):
     users_url = reverse('users')
 
+    def test_tournament_permissions_match_role_responsibilities(self):
+        admin = User.objects.create_user(
+            username='permission-admin',
+            email='permission-admin@example.com',
+            password='StrongPass123!',
+            role='admin',
+            is_active=True,
+        )
+        organizer = User.objects.create_user(
+            username='permission-organizer',
+            email='permission-organizer@example.com',
+            password='StrongPass123!',
+            role='organizer',
+            is_active=True,
+        )
+        jury = User.objects.create_user(
+            username='permission-jury',
+            email='permission-jury@example.com',
+            password='StrongPass123!',
+            role='jury',
+            is_active=True,
+        )
+
+        management_permissions = {
+            Permission.CREATE_TOURNAMENT,
+            Permission.EDIT_TOURNAMENT,
+            Permission.DELETE_TOURNAMENT,
+            Permission.MANAGE_PARTICIPANTS,
+            Permission.MANAGE_ROUNDS,
+        }
+
+        for user in (admin, organizer):
+            with self.subTest(role=user.role):
+                for permission in management_permissions | {Permission.VIEW_TOURNAMENT, Permission.SET_RESULTS}:
+                    self.assertTrue(user_has_permission(user, permission))
+
+        for permission in management_permissions:
+            with self.subTest(permission=permission):
+                self.assertFalse(user_has_permission(jury, permission))
+
+        self.assertTrue(user_has_permission(jury, Permission.VIEW_TOURNAMENT))
+        self.assertTrue(user_has_permission(jury, Permission.SET_RESULTS))
+
     def test_create_superuser_uses_admin_role(self):
         user = User.objects.create_superuser(
             username='root-admin',
@@ -499,6 +543,93 @@ class UserRoleBehaviorTests(APITestCase):
         usernames = [user['username'] for user in response.data]
         self.assertIn('team-user', usernames)
         self.assertNotIn('legacy-super-team', usernames)
+
+
+class UserDetailViewTests(APITestCase):
+    def setUp(self):
+        self.requester = User.objects.create_user(
+            username='detail-requester',
+            email='detail-requester@example.com',
+            password='StrongPass123!',
+            role='team',
+            is_active=True,
+        )
+        self.client.force_authenticate(user=self.requester)
+
+    def test_authenticated_user_can_fetch_active_non_superuser_profile(self):
+        target = User.objects.create_user(
+            username='detail-target',
+            email='detail-target@example.com',
+            password='StrongPass123!',
+            role='jury',
+            full_name='Detail Target',
+            city='Kyiv',
+            phone='+380991112233',
+            is_active=True,
+        )
+        url = reverse('user_detail', kwargs={'pk': target.id})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for field in ('id', 'username', 'role', 'full_name', 'city', 'phone', 'teams'):
+            self.assertIn(field, response.data)
+        self.assertEqual(response.data['id'], target.id)
+        self.assertEqual(response.data['username'], target.username)
+        self.assertEqual(response.data['role'], target.role)
+
+    def test_superuser_is_excluded(self):
+        superuser = User.objects.create_user(
+            username='detail-superuser',
+            email='detail-superuser@example.com',
+            password='StrongPass123!',
+            role='admin',
+            is_active=True,
+            is_staff=True,
+            is_superuser=True,
+        )
+        url = reverse('user_detail', kwargs={'pk': superuser.id})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_inactive_user_is_excluded(self):
+        inactive_user = User.objects.create_user(
+            username='detail-inactive',
+            email='detail-inactive@example.com',
+            password='StrongPass123!',
+            role='team',
+            is_active=False,
+        )
+        url = reverse('user_detail', kwargs={'pk': inactive_user.id})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_unauthenticated_request_returns_401(self):
+        target = User.objects.create_user(
+            username='detail-public-target',
+            email='detail-public-target@example.com',
+            password='StrongPass123!',
+            role='team',
+            is_active=True,
+        )
+        url = reverse('user_detail', kwargs={'pk': target.id})
+        self.client.force_authenticate(user=None)
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_user_can_fetch_own_profile(self):
+        url = reverse('user_detail', kwargs={'pk': self.requester.id})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.requester.id)
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')

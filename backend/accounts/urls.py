@@ -9,6 +9,7 @@ from .views import (
     PasswordResetRequestView,
     RoleActivationCodeAdminView,
     RegisterView,
+    UserDetailView,
     UserListView,
     UserProfileView,
 )
@@ -25,4 +26,5 @@ urlpatterns = [
     path('role-codes/', RoleActivationCodeAdminView.as_view(), name='role_codes_admin'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('users/', UserListView.as_view(), name='users'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
 ]

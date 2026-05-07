@@ -8,7 +8,7 @@
       :dropdown-options="{ showDialCodeInSelection: true, showSearchBox: true, showFlags: true }"
       :input-options="{ showDialCode: true, placeholder }"
       :valid-characters-only="true"
-      class="phone-input"
+      :class="['phone-input', { invalid: props.isInvalid }]"
     />
   </div>
 </template>
@@ -20,10 +20,12 @@ import { VueTelInput } from 'vue-tel-input'
 interface Props {
   modelValue?: string
   placeholder?: string
+  isInvalid?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Enter phone number',
+  isInvalid: false,
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -69,12 +71,20 @@ watch(phoneUiValue, (newValue) => {
   background: var(--input);
   border-color: var(--border);
   color: var(--foreground) !important;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .phone-input:focus-within {
   outline: none;
   border-color: transparent;
   box-shadow: 0 0 0 3px var(--ring);
+}
+
+.phone-input.invalid {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 12%, transparent);
 }
 
 :deep(.vti) {

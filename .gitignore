@@ -13,6 +13,7 @@ backend/media/certificate_templates/
 
 .gemini
 .codex
+.cursor
 tasks.txt
 
 ### Django ###

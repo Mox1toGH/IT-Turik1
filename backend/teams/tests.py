@@ -1,9 +1,13 @@
+from datetime import timedelta
+
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
 from teams.models import Team, TeamInvitation, TeamJoinRequest, TeamMember
+from tournaments.models import Tournament, TournamentTeamRegistration
 
 
 class TeamApiTests(APITestCase):
@@ -42,6 +46,28 @@ class TeamApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         return response.data
 
+    def _register_team_in_active_tournament(self, *, team_id, tournament_status, min_team_members=None):
+        now = timezone.now()
+        tournament = Tournament.objects.create(
+            name=f'Active Tournament {team_id}',
+            description='Test tournament',
+            start_date=now,
+            end_date=now + timedelta(days=7),
+            status=tournament_status,
+            min_team_members=min_team_members,
+            created_by=self.admin_user,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team_id=team_id,
+            created_by=self.captain,
+        )
+        return tournament
+
+    def _assert_team_error_present(self, response):
+        details = response.data.get('details', {}) if isinstance(response.data, dict) else {}
+        self.assertIn('team', details)
+
     def test_create_team_creates_invitations_not_members(self):
         self.client.force_authenticate(user=self.captain)
         response = self.client.post(
@@ -66,9 +92,9 @@ class TeamApiTests(APITestCase):
         self.assertNotIn(self.member.id, member_ids)
         self.assertEqual(response.data['contact_telegram'], 'alpha_team')
         self.assertEqual(response.data['contact_discord'], 'alpha.team')
-        self.assertEqual(len(response.data['invitations']), 1)
-        self.assertEqual(response.data['invitations'][0]['user']['id'], self.member.id)
-        self.assertEqual(response.data['invitations'][0]['status'], TeamInvitation.STATUS_INVITED)
+        invitations = TeamInvitation.objects.filter(team_id=response.data['id'], user=self.member)
+        self.assertEqual(invitations.count(), 1)
+        self.assertEqual(invitations.first().status, TeamInvitation.STATUS_INVITED)
 
     def test_invited_user_can_accept_invitation(self):
         team = self._create_team(
@@ -242,8 +268,8 @@ class TeamApiTests(APITestCase):
 
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(detail_response.data['invitations'], [])
-        self.assertEqual(detail_response.data['join_requests'], [])
+        self.assertNotIn('invitations', detail_response.data)
+        self.assertNotIn('join_requests', detail_response.data)
         member_ids = {member['id'] for member in detail_response.data['members']}
         self.assertIn(self.member.id, member_ids)
         self.assertIn(self.captain.id, member_ids)
@@ -268,9 +294,9 @@ class TeamApiTests(APITestCase):
         self.client.force_authenticate(user=self.captain)
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(detail_response.data['join_requests']), 1)
-        request_id = detail_response.data['join_requests'][0]['id']
-        self.assertEqual(detail_response.data['join_requests'][0]['status'], TeamJoinRequest.STATUS_PENDING)
+        join_request = TeamJoinRequest.objects.get(team_id=team['id'], user=self.member)
+        self.assertEqual(join_request.status, TeamJoinRequest.STATUS_PENDING)
+        request_id = join_request.id
 
         accept_response = self.client.post(
             reverse('team_join_request_accept', kwargs={'pk': team['id'], 'request_id': request_id}),
@@ -311,7 +337,7 @@ class TeamApiTests(APITestCase):
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
         self.assertTrue(detail_response.data['is_member'])
-        self.assertIsNone(detail_response.data['my_join_request_status'])
+        self.assertIsNone(detail_response.data.get('my_join_request_status'))
 
     def test_declined_invitation_is_removed_when_join_request_accepted(self):
         team = self._create_team(
@@ -344,7 +370,7 @@ class TeamApiTests(APITestCase):
         self.client.force_authenticate(user=self.captain)
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
-        request_id = detail_response.data['join_requests'][0]['id']
+        request_id = TeamJoinRequest.objects.get(team_id=team['id'], user=self.member).id
 
         accept_response = self.client.post(
             reverse('team_join_request_accept', kwargs={'pk': team['id'], 'request_id': request_id}),
@@ -355,8 +381,7 @@ class TeamApiTests(APITestCase):
 
         member_ids = {member['id'] for member in accept_response.data['members']}
         self.assertIn(self.member.id, member_ids)
-        invitation_user_ids = {item['user']['id'] for item in accept_response.data['invitations']}
-        self.assertNotIn(self.member.id, invitation_user_ids)
+        self.assertNotIn('invitations', accept_response.data)
 
         self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
         self.assertFalse(TeamInvitation.objects.filter(team_id=team['id'], user=self.member).exists())
@@ -384,8 +409,7 @@ class TeamApiTests(APITestCase):
         self.client.force_authenticate(user=self.captain)
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
-        invitation_user_ids = {item['user']['id'] for item in detail_response.data['invitations']}
-        self.assertNotIn(self.member.id, invitation_user_ids)
+        self.assertNotIn('invitations', detail_response.data)
 
         self.client.force_authenticate(user=self.member)
         inbox_response = self.client.get(self.invitations_url)
@@ -501,10 +525,16 @@ class TeamApiTests(APITestCase):
 
         detail_response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(detail_response.data['invitations']), 1)
-        self.assertEqual(detail_response.data['invitations'][0]['user']['id'], self.member.id)
-        self.assertEqual(len(detail_response.data['join_requests']), 1)
-        self.assertEqual(detail_response.data['join_requests'][0]['user']['id'], self.other_user.id)
+        self.assertNotIn('invitations', detail_response.data)
+        self.assertNotIn('join_requests', detail_response.data)
+        self.assertEqual(
+            TeamInvitation.objects.filter(team_id=team['id'], user=self.member, status=TeamInvitation.STATUS_INVITED).count(),
+            1,
+        )
+        self.assertEqual(
+            TeamJoinRequest.objects.filter(team_id=team['id'], user=self.other_user, status=TeamJoinRequest.STATUS_PENDING).count(),
+            1,
+        )
 
     def test_captain_can_invite_additional_member_and_remove_without_confirmation(self):
         team = self._create_team({'name': 'Delta Team', 'email': 'delta@example.com'})
@@ -605,3 +635,293 @@ class TeamApiTests(APITestCase):
 
         self.assertTrue(Team.objects.filter(id=team.id).exists())
         self.assertFalse(TeamInvitation.objects.filter(id=invitation.id).exists())
+
+    def test_invite_is_blocked_while_team_in_active_tournament(self):
+        team = self._create_team({'name': 'Blocked Invite Team', 'email': 'blocked-invite@example.com'})
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_REGISTRATION,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.post(
+            reverse('team_members', kwargs={'pk': team['id']}),
+            {'user_id': self.member.id},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(response)
+        self.assertFalse(TeamInvitation.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_join_request_creation_is_blocked_while_team_in_active_tournament(self):
+        team = self._create_team(
+            {
+                'name': 'Blocked Join Team',
+                'email': 'blocked-join@example.com',
+                'is_public': True,
+            }
+        )
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+        )
+
+        self.client.force_authenticate(user=self.member)
+        response = self.client.post(
+            reverse('team_join_request_create', kwargs={'pk': team['id']}),
+            {},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(response)
+        self.assertFalse(TeamJoinRequest.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_accept_invitation_is_blocked_while_team_in_active_tournament(self):
+        team = self._create_team(
+            {
+                'name': 'Blocked Invite Accept Team',
+                'email': 'blocked-invite-accept@example.com',
+                'member_ids': [self.member.id],
+            }
+        )
+        invitation = TeamInvitation.objects.get(team_id=team['id'], user=self.member)
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+        )
+
+        self.client.force_authenticate(user=self.member)
+        response = self.client.post(
+            reverse('team_invitation_accept', kwargs={'invitation_id': invitation.id}),
+            {},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(response)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, TeamInvitation.STATUS_INVITED)
+        self.assertFalse(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_accept_join_request_is_blocked_while_team_in_active_tournament(self):
+        team = self._create_team(
+            {
+                'name': 'Blocked Join Accept Team',
+                'email': 'blocked-join-accept@example.com',
+                'is_public': True,
+            }
+        )
+        self.client.force_authenticate(user=self.member)
+        join_response = self.client.post(
+            reverse('team_join_request_create', kwargs={'pk': team['id']}),
+            {},
+            format='json',
+        )
+        self.assertEqual(join_response.status_code, status.HTTP_201_CREATED)
+        join_request = TeamJoinRequest.objects.get(team_id=team['id'], user=self.member)
+
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_REGISTRATION,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.post(
+            reverse('team_join_request_accept', kwargs={'pk': team['id'], 'request_id': join_request.id}),
+            {},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(response)
+        join_request.refresh_from_db()
+        self.assertEqual(join_request.status, TeamJoinRequest.STATUS_PENDING)
+        self.assertFalse(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_team_name_and_visibility_updates_are_blocked_while_team_in_active_tournament(self):
+        team = self._create_team({'name': 'Blocked Update Team', 'email': 'blocked-update@example.com'})
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        rename_response = self.client.patch(
+            reverse('team_detail', kwargs={'pk': team['id']}),
+            {'name': 'New Name'},
+            format='json',
+        )
+        visibility_response = self.client.patch(
+            reverse('team_detail', kwargs={'pk': team['id']}),
+            {'is_public': True},
+            format='json',
+        )
+
+        self.assertEqual(rename_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(visibility_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(rename_response)
+        self._assert_team_error_present(visibility_response)
+
+    def test_member_removal_is_blocked_at_or_below_tournament_min_members(self):
+        team = self._create_team(
+            {
+                'name': 'Blocked Removal Team',
+                'email': 'blocked-removal@example.com',
+                'member_ids': [self.member.id],
+            }
+        )
+        invitation = TeamInvitation.objects.get(team_id=team['id'], user=self.member)
+        self.client.force_authenticate(user=self.member)
+        self.client.post(reverse('team_invitation_accept', kwargs={'invitation_id': invitation.id}), {}, format='json')
+        self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+            min_team_members=2,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.delete(
+            reverse('team_member_detail', kwargs={'pk': team['id'], 'user_id': self.member.id})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self._assert_team_error_present(response)
+        self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_member_removal_is_allowed_when_above_tournament_min_members(self):
+        team = self._create_team(
+            {
+                'name': 'Allowed Removal Team',
+                'email': 'allowed-removal@example.com',
+                'member_ids': [self.member.id, self.other_user.id],
+            }
+        )
+        member_invitation = TeamInvitation.objects.get(team_id=team['id'], user=self.member)
+        other_invitation = TeamInvitation.objects.get(team_id=team['id'], user=self.other_user)
+
+        self.client.force_authenticate(user=self.member)
+        self.client.post(
+            reverse('team_invitation_accept', kwargs={'invitation_id': member_invitation.id}),
+            {},
+            format='json',
+        )
+        self.client.force_authenticate(user=self.other_user)
+        self.client.post(
+            reverse('team_invitation_accept', kwargs={'invitation_id': other_invitation.id}),
+            {},
+            format='json',
+        )
+        self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+        self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.other_user).exists())
+
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+            min_team_members=2,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.delete(
+            reverse('team_member_detail', kwargs={'pk': team['id'], 'user_id': self.other_user.id})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
+        self.assertFalse(TeamMember.objects.filter(team_id=team['id'], user=self.other_user).exists())
+
+    def test_team_detail_contains_is_in_active_tournament_flag(self):
+        team = self._create_team({'name': 'Flag Team', 'email': 'flag-team@example.com'})
+
+        self.client.force_authenticate(user=self.captain)
+        detail_before = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
+        self.assertEqual(detail_before.status_code, status.HTTP_200_OK)
+        self.assertIn('is_in_active_tournament', detail_before.data)
+        self.assertFalse(detail_before.data['is_in_active_tournament'])
+
+        self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_REGISTRATION,
+        )
+
+        detail_after = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
+        self.assertEqual(detail_after.status_code, status.HTTP_200_OK)
+        self.assertTrue(detail_after.data['is_in_active_tournament'])
+
+    def test_inactive_registration_does_not_block_invite(self):
+        """
+        Deactivated tournament registration (is_active=False) must NOT prevent
+        the captain from sending invitations.
+        """
+        team = self._create_team({
+            'name': 'Inactive Reg Invite Team',
+            'email': 'inactive-reg-invite@example.com',
+        })
+        tournament = self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_REGISTRATION,
+        )
+        TournamentTeamRegistration.objects.filter(
+            tournament=tournament, team_id=team['id']
+        ).update(is_active=False)
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.post(
+            reverse('team_members', kwargs={'pk': team['id']}),
+            {'user_id': self.member.id},
+            format='json',
+        )
+
+        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_201_CREATED))
+        self.assertTrue(TeamInvitation.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_inactive_registration_does_not_block_join_request(self):
+        """
+        Deactivated tournament registration (is_active=False) must NOT prevent
+        a user from submitting a join request.
+        """
+        team = self._create_team({
+            'name': 'Inactive Reg Join Team',
+            'email': 'inactive-reg-join@example.com',
+            'is_public': True,
+        })
+        tournament = self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_RUNNING,
+        )
+        TournamentTeamRegistration.objects.filter(
+            tournament=tournament, team_id=team['id']
+        ).update(is_active=False)
+
+        self.client.force_authenticate(user=self.member)
+        response = self.client.post(
+            reverse('team_join_request_create', kwargs={'pk': team['id']}),
+            {},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(TeamJoinRequest.objects.filter(team_id=team['id'], user=self.member).exists())
+
+    def test_is_in_active_tournament_flag_is_false_when_registration_inactive(self):
+        """
+        is_in_active_tournament must return False when the team's only
+        registration has is_active=False.
+        """
+        team = self._create_team({'name': 'Inactive Flag Team', 'email': 'inactive-flag@example.com'})
+        tournament = self._register_team_in_active_tournament(
+            team_id=team['id'],
+            tournament_status=Tournament.STATUS_REGISTRATION,
+        )
+        TournamentTeamRegistration.objects.filter(
+            tournament=tournament, team_id=team['id']
+        ).update(is_active=False)
+
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.get(reverse('team_detail', kwargs={'pk': team['id']}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['is_in_active_tournament'])

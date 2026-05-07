@@ -1,93 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-import Activate from '@/features/auth/views/ActivateView.vue'
-import RoleCodesAdmin from '@/features/admin/views/RoleCodesAdminView.vue'
-import CompleteProfile from '@/features/auth/views/CompleteProfileView.vue'
-import ForgotPassword from '@/features/auth/views/ForgotPasswordView.vue'
-import EditProfile from '@/features/profile/views/EditProfileView.vue'
-import Home from '@/features/home/views/HomeView.vue'
-import Login from '@/features/auth/views/LoginView.vue'
-import Profile from '@/features/profile/views/ProfileView.vue'
-import Register from '@/features/auth/views/RegisterView.vue'
-import ResetPassword from '@/features/auth/views/ResetPasswordView.vue'
-import TeamsCreate from '@/features/teams/views/TeamsCreateView.vue'
-import TeamsDetail from '@/features/teams/views/TeamsDetailView.vue'
-import TeamsEdit from '@/features/teams/views/TeamsEditView.vue'
-import Teams from '@/features/teams/views/TeamsView.vue'
 import { useUserStore } from '@/stores/user'
+import { accountsService } from '@/api/services/accounts'
+import NotFoundView from '@/features/not-found-page/NotFoundPage.vue'
+import { authRoutes } from '@/features/auth/routes'
+import { profileRoutes } from '@/features/profile/routes'
+import { homeRoutes } from '@/features/home/routes'
+import { adminRoutes } from '@/features/admin/routes'
+import { teamsRoutes } from '@/features/teams/routes'
+import { tournamentsRoutes } from '@/features/tournaments/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    {
-      path: '/',
-      component: Home,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/login',
-      component: Login,
-      meta: { requiresGuest: true },
-    },
-    {
-      path: '/register',
-      component: Register,
-      meta: { requiresGuest: true },
-    },
-    {
-      path: '/forgot-password',
-      component: ForgotPassword,
-    },
-    {
-      path: '/reset-password/:uid/:token',
-      component: ResetPassword,
-      meta: { requiresGuest: true },
-    },
-    {
-      path: '/profile',
-      component: Profile,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/profile/edit',
-      component: EditProfile,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/admin/role-codes',
-      component: RoleCodesAdmin,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/teams',
-      component: Teams,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/teams/create',
-      component: TeamsCreate,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/teams/:id/edit',
-      component: TeamsEdit,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/teams/:id',
-      component: TeamsDetail,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/complete-profile',
-      component: CompleteProfile,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/activate/:uid/:token',
-      component: Activate,
-      meta: { requiresGuest: true },
-    },
+    ...homeRoutes,
+    ...authRoutes,
+    ...profileRoutes,
+    ...adminRoutes,
+    ...teamsRoutes,
+    ...tournamentsRoutes,
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
 
@@ -122,6 +53,19 @@ router.beforeEach(async (to, _from, next) => {
   ) {
     next('/')
     return
+  }
+
+  if (to.meta.requiresAdmin) {
+    try {
+      const profile = await accountsService.getProfile()
+      if (profile.role !== 'admin') {
+        next('/')
+        return
+      }
+    } catch {
+      next('/')
+      return
+    }
   }
 
   next()

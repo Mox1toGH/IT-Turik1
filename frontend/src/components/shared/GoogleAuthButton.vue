@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { renderGoogleButton, type GoogleCredentialResponse } from '@/lib/googleAuth'
-import { useGoogleLogin } from '@/queries/accounts'
+import { useGoogleLogin } from '@/api/queries/accounts'
 
 interface Props {
   dividerLabel?: string

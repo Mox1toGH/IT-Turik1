@@ -47,16 +47,55 @@ def _normalize_data(data):
 
 def _extract_message(normalized_data, status_code):
     if isinstance(normalized_data, dict):
-        return (
+        reserved_keys = {'detail', 'message', 'status', 'error'}
+        validation_fields = {k: v for k, v in normalized_data.items() if k not in reserved_keys}
+        
+        # For validation errors (400), build a comprehensive message from field errors
+        if status_code == status.HTTP_400_BAD_REQUEST:
+            validation_message = _format_validation_message(normalized_data)
+            if validation_message:
+                return validation_message
+        
+        # Fallback chain: message -> detail -> fields -> default -> Unknown error
+        message = (
             _extract_first_string(normalized_data.get('message'))
             or _extract_first_string(normalized_data.get('detail'))
+            or _extract_first_string(validation_fields)
             or _default_message_for_status(status_code)
         )
+        return message or 'Unknown error'
+    
     if isinstance(normalized_data, list):
-        return _extract_first_string(normalized_data) or _default_message_for_status(status_code)
+        return _extract_first_string(normalized_data) or _default_message_for_status(status_code) or 'Unknown error'
+    
     if isinstance(normalized_data, str):
-        return normalized_data
-    return _default_message_for_status(status_code)
+        return normalized_data or 'Unknown error'
+    
+    return _default_message_for_status(status_code) or 'Unknown error'
+
+
+def _format_validation_message(data):
+    """
+    Build a comprehensive validation error message from field errors.
+    Example: "team: This field is required. email: Invalid email format."
+    """
+    error_messages = []
+    excluded_keys = {'detail', 'message', 'status', 'error'}
+    
+    for key, value in data.items():
+        if key in excluded_keys:
+            continue
+        
+        # Extract error message for this field
+        field_error = _extract_first_string(value)
+        if field_error:
+            error_messages.append(f"{key}: {field_error}")
+    
+    # Join all error messages with ". " separator
+    if error_messages:
+        return ". ".join(error_messages) + "."
+    
+    return None
 
 
 def _extract_first_string(value):

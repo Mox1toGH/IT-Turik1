@@ -21,11 +21,8 @@ class Tournament(models.Model):
     description = models.TextField()
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
-    tech_requirements = models.TextField(blank=True)
-    must_have_requirements = models.JSONField(default=list, blank=True)
     max_teams = models.PositiveIntegerField(blank=True, null=True)
     min_team_members = models.PositiveIntegerField(blank=True, null=True)
-    rounds_count = models.PositiveIntegerField(default=1)
     status = models.CharField(max_length=24, choices=STATUS_CHOICES, default=STATUS_DRAFT)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -48,9 +45,6 @@ class Tournament(models.Model):
 
         if self.start_date and self.end_date and self.end_date <= self.start_date:
             errors['end_date'] = 'end_date must be greater than start_date.'
-
-        if self.rounds_count < 1:
-            errors['rounds_count'] = 'rounds_count must be at least 1.'
 
         if self.min_team_members is not None and self.min_team_members < 1:
             errors['min_team_members'] = 'min_team_members must be at least 1.'
@@ -82,15 +76,14 @@ class Round(models.Model):
     )
 
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='rounds')
-    position = models.PositiveIntegerField()
     name = models.CharField(max_length=255, blank=True)
-    description = models.TextField(blank=True)
-    tech_requirements = models.TextField(blank=True)
-    must_have_requirements = models.JSONField(default=list, blank=True)
+    description = models.JSONField(default=dict, blank=True)
+    tech_requirements = models.JSONField(default=dict, blank=True)
+    must_have_requirements = models.JSONField(default=dict, blank=True)
+    criteria = models.JSONField(default=list, blank=True)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     passing_count = models.PositiveIntegerField(blank=True, null=True)
-    winners_count = models.PositiveIntegerField(blank=True, null=True)
     evaluation_criteria = models.CharField(
         max_length=32,
         choices=EVALUATION_CRITERIA_CHOICES,
@@ -102,11 +95,11 @@ class Round(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ('tournament_id', 'position')
+        ordering = ('tournament_id', 'start_date')
         constraints = [
             models.UniqueConstraint(
-                fields=['tournament', 'position'],
-                name='uniq_round_tournament_position',
+                fields=['tournament', 'start_date'],
+                name='uniq_round_tournament_start_date',
             ),
             models.UniqueConstraint(
                 fields=['tournament'],
@@ -116,15 +109,41 @@ class Round(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.tournament_id}:{self.position}:{self.name or self.default_name}'
+        return f'{self.tournament_id}:{self.name or self.default_name}'
 
     @property
     def default_name(self):
-        return f'Round {self.position}'
+        pos = self.position
+        return f'Round {pos}' if pos else 'Round'
+
+    @property
+    def position(self):
+        ids = list(
+            Round.objects.filter(tournament_id=self.tournament_id)
+            .order_by('start_date')
+            .values_list('id', flat=True)
+        )
+        try:
+            return ids.index(self.pk) + 1
+        except ValueError:
+            return None
 
     @property
     def is_submission_open(self):
         return self.status == self.STATUS_ACTIVE
+
+    def _validate_date_overlaps(self, errors):
+        if not self.tournament_id or not self.start_date or not self.end_date:
+            return
+
+        overlaps = Round.objects.filter(
+            tournament_id=self.tournament_id,
+            start_date__lt=self.end_date,
+            end_date__gt=self.start_date,
+        ).exclude(pk=self.pk)
+
+        if overlaps.exists():
+            errors['start_date'] = 'Round dates overlap with another round in this tournament.'
 
     def clean(self):
         errors = {}
@@ -137,17 +156,39 @@ class Round(models.Model):
             if self.start_date < tournament.start_date or self.end_date > tournament.end_date:
                 errors['start_date'] = 'Round dates must be within tournament dates.'
 
-            if tournament.rounds_count == 1:
-                if self.start_date != tournament.start_date or self.end_date != tournament.end_date:
-                    errors['start_date'] = 'For single-round tournaments, round dates must match tournament dates.'
+        if tournament.rounds.exclude(pk=self.pk).count() == 0:
+            if self.start_date != tournament.start_date or self.end_date != tournament.end_date:
+                errors['start_date'] = 'For single-round tournaments, round dates must match tournament dates.'
+        
+        self._validate_date_overlaps(errors)
 
-        if self.position < 1:
-            errors['position'] = 'position must be at least 1.'
-        if tournament and self.position > tournament.rounds_count:
-            errors['position'] = 'position must be less than or equal to tournament rounds_count.'
-
-        if tournament and self.winners_count is not None and self.position != tournament.rounds_count:
-            errors['winners_count'] = 'winners_count is allowed only for the last round.'
+        if not isinstance(self.criteria, list):
+            errors['criteria'] = 'Criteria must be a list.'
+        else:
+            seen_ids = set()
+            for idx, c in enumerate(self.criteria):
+                if not isinstance(c, dict):
+                    errors['criteria'] = f'Item at index {idx} must be an object.'
+                    break
+                
+                c_id = c.get('id')
+                name = c.get('name')
+                max_score = c.get('max_score')
+                
+                if not c_id or not isinstance(c_id, str):
+                    errors['criteria'] = f'Item at index {idx} must have a valid string "id".'
+                    break
+                if not name or not isinstance(name, str):
+                    errors['criteria'] = f'Item "{c_id}" must have a valid string "name".'
+                    break
+                if max_score is None or not isinstance(max_score, (int, float)) or max_score <= 0:
+                    errors['criteria'] = f'Item "{c_id}" must have a positive "max_score".'
+                    break
+                    
+                if c_id in seen_ids:
+                    errors['criteria'] = f'Duplicate criteria id: "{c_id}".'
+                    break
+                seen_ids.add(c_id)
 
         if errors:
             raise ValidationError(errors)
@@ -220,6 +261,7 @@ class TournamentTeamRegistration(models.Model):
         null=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ('-created_at',)
@@ -233,4 +275,51 @@ class TournamentTeamRegistration(models.Model):
     def __str__(self):
         return f'{self.tournament_id}:{self.team_id}'
 
+
+class Icon(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    path = models.CharField(max_length=500)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name or self.path
+
+
+class Event(models.Model):
+    TYPE_MEET = 'meet'
+    TYPE_EVENT = 'event'
+
+    TYPE_CHOICES = (
+        (TYPE_MEET, 'Meet'),
+        (TYPE_EVENT, 'Event'),
+    )
+
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name='events',
+    )
+    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    link = models.URLField(blank=True)
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(blank=True, null=True)
+    icon = models.ForeignKey(
+        Icon,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='events',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('start_datetime',)
+
+    def __str__(self):
+        return f'{self.tournament_id}:{self.title}'
 

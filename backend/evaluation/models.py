@@ -17,14 +17,10 @@ class JuryAssignment(models.Model):
 
 class SubmissionEvaluation(models.Model):
     assignment = models.OneToOneField(JuryAssignment, on_delete=models.CASCADE, related_name='evaluation')
-    score_backend = models.PositiveSmallIntegerField(default=0)
-    score_db = models.PositiveSmallIntegerField(default=0)
-    score_frontend = models.PositiveSmallIntegerField(default=0)
-    score_completeness = models.PositiveSmallIntegerField(default=0)
-    score_stability = models.PositiveSmallIntegerField(default=0)
-    score_usability = models.PositiveSmallIntegerField(default=0)
-    comment = models.TextField(blank=True)
+    scores = models.JSONField(default=list)
+    total_score = models.PositiveIntegerField(default=0, editable=False)
     final_score = models.DecimalField(max_digits=5, decimal_places=2, editable=False)
+    comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -34,13 +30,7 @@ class SubmissionEvaluation(models.Model):
         return f'Evaluation:{self.assignment_id}:{self.final_score}'
 
     def save(self, *args, **kwargs):
-        scores = [
-            self.score_backend,
-            self.score_db,
-            self.score_frontend,
-            self.score_completeness,
-            self.score_stability,
-            self.score_usability,
-        ]
-        self.final_score = sum(scores) / len(scores)
+        scores_list = [item.get('score', 0) for item in self.scores] if self.scores else []
+        self.total_score = sum(scores_list)
+        self.final_score = sum(scores_list) / len(scores_list) if scores_list else 0
         super().save(*args, **kwargs)

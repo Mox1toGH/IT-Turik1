@@ -161,6 +161,12 @@ class UserListView(generics.ListAPIView):
         return queryset
 
 
+class UserDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    queryset = User.objects.filter(is_active=True, is_superuser=False)
+
+
 class PasswordResetRequestView(APIView):
     permission_classes = (AllowAny,)
 
