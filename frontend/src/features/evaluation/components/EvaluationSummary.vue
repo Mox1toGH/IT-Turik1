@@ -1,25 +1,31 @@
 <template>
   <div class="summary">
+    <div class="scores">
+      <div v-for="item in normalizedScores" :key="item.criterion_id" class="score-row">
+        <span class="criterion">{{ item.criterion_name }}</span>
+        <span class="value">{{ item.score }} / {{ item.max }}</span>
+      </div>
+    </div>
+
+    <p v-if="evaluation.comment" class="comment">{{ evaluation.comment }}</p>
+
     <div class="metric">
       <div class="metric-head">
         <p><strong>Total:</strong> {{ evaluation.total_score }}</p>
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
-      <div class="criteria-track" role="img" aria-label="Total score by criteria">
-        <div
-          v-for="(segment, index) in segments"
-          :key="segment.id"
-          class="criteria-segment"
-          :style="{ width: `${segment.widthPercent}%` }"
-          :title="`${segment.name}: ${segment.score} / ${segment.max}`"
-        >
+      <div class="total-track" role="img" aria-label="Total score by criteria">
+        <div class="total-used" :style="{ width: `${totalPercent}%` }">
           <div
-            class="criteria-fill"
+            v-for="(segment, index) in usedSegments"
+            :key="segment.id"
+            class="total-segment"
             :style="{
-              width: `${segment.fillPercent}%`,
+              width: `${segment.usedWidthPercent}%`,
               backgroundColor: palette[index % palette.length],
             }"
+            :title="`${segment.name}: ${segment.score} / ${segment.max}`"
           />
         </div>
       </div>
@@ -35,15 +41,6 @@
         <div class="final-fill" :style="{ width: `${finalPercent}%` }" />
       </div>
     </div>
-
-    <div class="scores">
-      <div v-for="item in evaluation.scores" :key="item.criterion_id" class="score-row">
-        <span class="criterion">{{ item.criterion_name ?? item.criterion_id }}</span>
-        <span class="value">{{ item.score }}</span>
-      </div>
-    </div>
-
-    <p v-if="evaluation.comment" class="comment">{{ evaluation.comment }}</p>
   </div>
 </template>
 
@@ -81,21 +78,40 @@ const scoreByCriterion = computed(() => {
   return map
 })
 
-const segments = computed(() => {
-  const totalMax = maxScore.value || 1
-  return props.criteria.map((criterion) => {
+const normalizedScores = computed(() =>
+  props.criteria.map((criterion) => {
     const max = Number(criterion.max_score || 0)
     const rawScore = scoreByCriterion.value.get(criterion.id) ?? 0
     const score = Math.max(0, Math.min(rawScore, max))
     return {
       id: criterion.id,
-      name: criterion.name,
+      criterion_id: criterion.id,
+      criterion_name: criterion.name,
       max,
       score,
-      widthPercent: (max / totalMax) * 100,
-      fillPercent: max ? (score / max) * 100 : 0,
     }
-  })
+  }),
+)
+
+const scoredSum = computed(() =>
+  normalizedScores.value.reduce((sum, item) => sum + Number(item.score || 0), 0),
+)
+
+const usedSegments = computed(() => {
+  const usedTotal = scoredSum.value || 1
+  return normalizedScores.value.map((item) => ({
+    id: item.criterion_id,
+    name: item.criterion_name,
+    max: item.max,
+    score: item.score,
+    usedWidthPercent: (item.score / usedTotal) * 100,
+  }))
+})
+
+const totalPercent = computed(() => {
+  if (!maxScore.value) return 0
+  const clamped = Math.max(0, Math.min(Number(props.evaluation.total_score || 0), maxScore.value))
+  return (clamped / maxScore.value) * 100
 })
 
 const finalPercent = computed(() => {
@@ -131,7 +147,7 @@ const finalPercent = computed(() => {
   color: var(--muted-foreground);
 }
 
-.criteria-track,
+.total-track,
 .final-track {
   height: 12px;
   border-radius: 999px;
@@ -141,29 +157,20 @@ const finalPercent = computed(() => {
   background: color-mix(in srgb, var(--muted) 70%, transparent);
 }
 
-.criteria-segment {
+.total-used {
   height: 100%;
-  border-right: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  display: flex;
+  overflow: hidden;
 }
 
-.criteria-segment:last-child {
-  border-right: none;
-}
-
-.criteria-fill {
+.total-segment {
   height: 100%;
+  min-width: 2px;
 }
 
 .final-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    #3b82f6 0%,
-    #22c55e 22%,
-    #f59e0b 45%,
-    #ef4444 70%,
-    #8b5cf6 100%
-  );
+  background: color-mix(in srgb, var(--foreground) 35%, transparent);
 }
 
 .scores {
@@ -176,10 +183,20 @@ const finalPercent = computed(() => {
   justify-content: space-between;
   gap: 1rem;
   color: var(--foreground);
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
 .criterion {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.value {
   color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 .comment {
