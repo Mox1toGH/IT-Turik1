@@ -33,6 +33,7 @@ from .serializers import (
     TournamentAdminSerializer,
     TournamentPublicSerializer,
     TournamentTeamRegistrationCreateSerializer,
+    TournamentTeamLeaveSerializer,
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationUpdateSerializer,
@@ -230,6 +231,20 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
 
 
+class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
+
+    def post(self, request, pk):
+        tournament = get_object_or_404(Tournament, pk=pk)
+        serializer = TournamentTeamLeaveSerializer(
+            data=request.data,
+            context={'request': request, 'tournament': tournament},
+        )
+        serializer.is_valid(raise_exception=True)
+        registration = serializer.save()
+        return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
+
+
 class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated, CanManageParticipants]
 
@@ -399,6 +414,7 @@ class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(round__tournament=tournament)
             .order_by('-updated_at')
         )
@@ -428,6 +444,7 @@ class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
 
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(
                 round__tournament=tournament,
                 team_id=team_registration.team_id,
@@ -438,13 +455,13 @@ class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
 
 class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanSetResults]
 
     def get_queryset(self):
         round_obj = get_object_or_404(Round, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury')
             .filter(round=round_obj)
             .order_by('-updated_at')
         )

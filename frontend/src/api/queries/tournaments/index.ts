@@ -21,6 +21,7 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
@@ -228,6 +229,25 @@ export const useRegisterTeam = (
   >({
     mutationFn: $api.tournaments.registerTeam,
     onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.eligibleTeams(vars.id) })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.id) })
+    },
+    ...config,
+  })
+}
+
+export const useLeaveTeam = (
+  config?: MutationConfig<
+    unknown,
+    AxiosError<ApiError<keyof LeaveTeamArgs['body']>>,
+    LeaveTeamArgs
+  >,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, AxiosError<ApiError<keyof LeaveTeamArgs['body']>>, LeaveTeamArgs>({
+    mutationFn: $api.tournaments.leaveTeam,
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(vars.id) })
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.eligibleTeams(vars.id) })
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.id) })
     },

@@ -1,12 +1,5 @@
 #  API Cheat Sheet
 
-## Access Updates (2026-05-07)
-
-- `POST /api/teams/` -> `Auth`, but `admin` and `superuser` are denied (`403`).
-- `PUT/PATCH/DELETE /api/teams/{id}/` -> `Auth + captain rules`, but `admin` and `superuser` are denied (`403`).
-- `POST /api/tournaments/{id}/register-team/` -> `Auth + tournament registration rules`, but `admin` and `superuser` are denied (`403`).
-- `POST/PATCH /api/tournaments/submissions/` -> only team captain can create/update submission (`400` if not captain).
-
 ---
 
 ### 1. Турніри
@@ -22,6 +15,7 @@
 | **Зареєстровані команди турніру** | GET | `/api/tournaments/{id}/teams/` | Auth |
 | **Активний турнір команди** | GET | `/api/tournaments/active/?team_id={id}` | Auth |
 | **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
+| **Вихід команди з турніру** | POST | `/api/tournaments/{id}/leave-team/` | Капітан |
 | **Деталі/Зміна реєстрації**| GET/PATCH | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
 | **Список раундів** | GET | `/api/tournaments/{id}/rounds/` | Auth |
 | **Створити раунд** | POST | `/api/tournaments/{id}/rounds/` | Admin |
@@ -116,6 +110,16 @@
 > - Команда не може бути зареєстрована в іншому активному турнірі (`registration` або `running`).
 > - Жоден учасник команди (включно з капітаном) не може одночасно брати участь в іншому активному турнірі у складі іншої команди.
 > - При конфлікті учасників API повертає email-и учасників, що вже беруть участь в іншому активному турнірі.
+
+**Вихід команди з турніру — POST `/api/tournaments/{id}/leave-team/`**
+```json
+{ "team_id": 10 }
+```
+> Доступно лише капітану цієї команди.
+> Endpoint **не видаляє команду з БД і не видаляє запис реєстрації фізично**.
+> Фактично виконується soft-delete участі: реєстрація лишається в історії, але стає неактивною (`is_active = false`).
+> Якщо команду намагається вивести не капітан — `400`.
+> Якщо команда не має активної реєстрації в цьому турнірі — `400`.
 
 **Доступні команди капітана — GET `/api/tournaments/{id}/eligible-teams/`**
 ```json
@@ -266,16 +270,16 @@
 **Подача роботи — POST `/api/tournaments/submissions/`**
 ```json
 {
-  "team": 1,
   "round": 1,
   "github_url": "https://github.com/user/repo",
   "demo_video_url": "https://youtube.com/...",
   "description": "Ready for review"
 }
 ```
-> Дозволено тільки якщо `request.user == team.captain`.
-> Якщо запит робить не капітан, повертається `400` з помилкою по полю `team`.
-
+> `team` is not accepted in request payload.
+> Backend resolves team automatically from active tournament registration for selected `round`, where `request.user` is captain.
+> If user is not a captain of an active registered team in this tournament, API returns `400` with `team` error.
+> If multiple active captain teams are found in the same tournament, API returns `400` (ambiguous team).
 **Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
 ```json
 {

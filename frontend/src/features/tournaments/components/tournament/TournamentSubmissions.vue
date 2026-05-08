@@ -150,6 +150,75 @@
                   }"
                 />
               </div>
+
+              <div class="submission-results">
+                <div class="submission-results-head">
+                  <p class="text-muted">Jury evaluations</p>
+                  <p class="text-muted">
+                    {{ evaluatedCount(submission) }}/{{ submissionAssignments(submission).length }}
+                    evaluated
+                    <template v-if="evaluatedCount(submission) > 0">
+                      • Avg:
+                      <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
+                    </template>
+                  </p>
+                </div>
+
+                <div
+                  v-for="assignment in submissionAssignments(submission)"
+                  :key="assignment.id"
+                  class="submission-result-item"
+                >
+                  <div class="jury-head">
+                    <p class="jury-name">{{ assignment.jury.full_name || assignment.jury.username }}</p>
+                    <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
+                      {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
+                    </ui-badge>
+                  </div>
+
+                  <template v-if="assignment.evaluation">
+                    <div class="jury-metrics">
+                      <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
+                      <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
+                      <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
+                    </div>
+
+                    <div class="score-track-wrap">
+                      <div class="score-track-head">
+                        <p class="text-muted">Score</p>
+                        <p class="text-muted">
+                          {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
+                        </p>
+                      </div>
+                      <ui-progress-bar
+                        :percent="
+                          scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                        "
+                        :height="10"
+                        fill-color="color-mix(in srgb, var(--primary) 55%, transparent)"
+                      />
+                    </div>
+
+                    <div class="jury-criteria">
+                      <p class="text-muted">Criteria</p>
+                      <div
+                        v-for="score in assignment.evaluation.scores"
+                        :key="`${assignment.id}-${score.criterion_id}`"
+                        class="jury-criterion-row"
+                      >
+                        <span>{{ score.criterion_name || score.criterion_id }}</span>
+                        <span>
+                          {{ score.score }}/{{ criterionMaxScore(submission.round_details.id, score.criterion_id) }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p v-if="assignment.evaluation.comment" class="jury-comment">
+                      {{ assignment.evaluation.comment }}
+                    </p>
+                  </template>
+                </div>
+              </div>
             </template>
           </ui-card>
         </div>
@@ -166,6 +235,7 @@ import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import UiBadge, { type Variants } from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiProgressBar from '@/components/ui/UiProgressBar.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
@@ -217,6 +287,51 @@ const submissionStatus = (roundStatus: RoundStatus) => {
 }
 const badgeVariant = (roundStatus: RoundStatus): Variants => {
   return roundStatus === 'active' ? 'primary' : 'red'
+}
+
+const submissionEvaluations = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return (submission.assignments ?? []).filter((assignment) => assignment.evaluation)
+}
+
+const submissionAssignments = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return [...(submission.assignments ?? [])].sort((a, b) => {
+    const left = (a.jury.full_name || a.jury.username || '').toLowerCase()
+    const right = (b.jury.full_name || b.jury.username || '').toLowerCase()
+    return left.localeCompare(right)
+  })
+}
+
+const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return submissionEvaluations(submission).length
+}
+
+const roundMaxScore = (roundId: number) => {
+  const round = (rounds.value ?? []).find((item) => item.id === roundId)
+  if (!round?.criteria?.length) return 0
+  return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
+}
+
+const criterionMaxScore = (roundId: number, criterionId: string) => {
+  const round = (rounds.value ?? []).find((item) => item.id === roundId)
+  const criterion = round?.criteria?.find((item) => item.id === criterionId)
+  return Number(criterion?.max_score || 0)
+}
+
+const scorePercent = (roundId: number, totalScore: number) => {
+  const max = roundMaxScore(roundId)
+  if (!max) return 0
+  const clamped = Math.max(0, Math.min(Number(totalScore || 0), max))
+  return (clamped / max) * 100
+}
+
+const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+  const evaluations = submissionEvaluations(submission)
+  if (!evaluations.length) return 0
+  const total = evaluations.reduce(
+    (sum, assignment) => sum + Number(assignment.evaluation?.final_score ?? 0),
+    0,
+  )
+  return total / evaluations.length
 }
 </script>
 
@@ -288,6 +403,84 @@ const badgeVariant = (roundStatus: RoundStatus): Variants => {
   font-weight: 700;
 }
 
+.submission-results {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.submission-results-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.submission-result-item {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.jury-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.jury-name {
+  font-weight: 700;
+}
+
+.jury-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.jury-criteria {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.score-track-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.score-track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.jury-criterion-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.55rem;
+  background: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.jury-comment {
+  border-left: 3px solid var(--primary);
+  padding-left: 0.6rem;
+  color: var(--muted-foreground);
+}
+
 @media (max-width: 625px) {
   .submission-header {
     flex-direction: column;
@@ -298,5 +491,11 @@ const badgeVariant = (roundStatus: RoundStatus): Variants => {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
   }
+
+  .jury-metrics {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
+
+
