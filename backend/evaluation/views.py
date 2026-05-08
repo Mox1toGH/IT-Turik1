@@ -24,9 +24,28 @@ class JuryAssignmentListView(generics.ListAPIView):
     serializer_class = JuryAssignmentSerializer
 
     def get_queryset(self):
-        return JuryAssignment.objects.filter(jury=self.request.user).select_related(
+        qs = JuryAssignment.objects.filter(jury=self.request.user).select_related(
             'submission', 'submission__team', 'submission__round', 'submission__round__tournament'
         )
+        round_id = self.request.query_params.get('round_id')
+        if round_id:
+            qs = qs.filter(submission__round_id=round_id)
+        return qs
+
+
+class JuryAssignmentDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated, CanSetResults]
+    serializer_class = JuryAssignmentSerializer
+
+    def get_queryset(self):
+        return JuryAssignment.objects.filter(
+            jury=self.request.user
+        ).select_related(
+            'submission',
+            'submission__team',
+            'submission__round',
+            'submission__round__tournament',
+        ).prefetch_related('evaluation')
 
 
 class JuryEvaluationCreateView(generics.CreateAPIView):
@@ -42,7 +61,7 @@ class JuryEvaluationCreateView(generics.CreateAPIView):
 class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = SubmissionEvaluationSerializer
-    lookup_field = 'assignment_id'
+    lookup_field = 'pk'
 
     def get_queryset(self):
         return SubmissionEvaluation.objects.filter(assignment__jury=self.request.user)
