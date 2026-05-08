@@ -114,8 +114,6 @@ interface Round {
   must_have_requirements: JSONContent
   tech_requirements: JSONContent
   passing_count: number
-  winners_count: number
-  evaluation_criteria
   criteria: CriteriaItem[]
 }
 
@@ -124,13 +122,10 @@ export type EventId = number
 
 interface TournamentEvent {
   description: string
-  icon: 2
   id: EventId
-  link: string
   start_datetime: Date
   title: string
   tournament: TournamentId
-  type: 'event' // TODO: remove cuz we dont need this
   created_at: Date
   updated_at: Date
 }
@@ -142,7 +137,6 @@ export interface Submission {
   id: SubmissionId
   github_url: string
   demo_video_url: string
-  demo_video_file: null // TODO,
   live_demo_url: string
   description: string
   created_at: Date

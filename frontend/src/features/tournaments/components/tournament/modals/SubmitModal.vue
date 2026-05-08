@@ -92,7 +92,6 @@ const submitRound = () => {
   submit(
     {
       body: {
-        team: 0, // TODO: get from active tournament team
         round: props.roundId,
         ...form.fields.value,
       },
