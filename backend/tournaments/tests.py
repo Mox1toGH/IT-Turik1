@@ -166,6 +166,54 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertFalse(TournamentTeamRegistration.objects.filter(tournament=tournament, team=self.team).exists())
 
+    def test_captain_can_leave_team_from_tournament(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        registration = TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        response = self.client.post(url, {'team_id': self.team.id}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        registration.refresh_from_db()
+        self.assertFalse(registration.is_active)
+
+    def test_non_captain_cannot_leave_team_from_tournament(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        registration = TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        member = User.objects.create_user(
+            username='member-leave',
+            email='member-leave@example.com',
+            password='StrongPass123!',
+        )
+        TeamMember.objects.create(team=self.team, user=member)
+
+        self.client.force_authenticate(user=member)
+        url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        response = self.client.post(url, {'team_id': self.team.id}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        registration.refresh_from_db()
+        self.assertTrue(registration.is_active)
+
     def test_round_management(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
