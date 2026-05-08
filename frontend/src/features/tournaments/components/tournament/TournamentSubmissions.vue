@@ -150,6 +150,30 @@
                   }"
                 />
               </div>
+
+              <div
+                v-if="submissionEvaluations(submission).length > 0"
+                class="submission-results"
+              >
+                <p class="text-muted">
+                  Result:
+                  <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
+                </p>
+
+                <div
+                  v-for="assignment in submissionEvaluations(submission)"
+                  :key="assignment.id"
+                  class="submission-result-item"
+                >
+                  <p>
+                    {{ assignment.jury.full_name || assignment.jury.username }}:
+                    {{ assignment.evaluation?.final_score }}
+                  </p>
+                  <p v-if="assignment.evaluation?.comment" class="text-muted">
+                    {{ assignment.evaluation.comment }}
+                  </p>
+                </div>
+              </div>
             </template>
           </ui-card>
         </div>
@@ -217,6 +241,20 @@ const submissionStatus = (roundStatus: RoundStatus) => {
 }
 const badgeVariant = (roundStatus: RoundStatus): Variants => {
   return roundStatus === 'active' ? 'primary' : 'red'
+}
+
+const submissionEvaluations = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return (submission.assignments ?? []).filter((assignment) => assignment.evaluation)
+}
+
+const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+  const evaluations = submissionEvaluations(submission)
+  if (!evaluations.length) return 0
+  const total = evaluations.reduce(
+    (sum, assignment) => sum + Number(assignment.evaluation?.final_score ?? 0),
+    0,
+  )
+  return total / evaluations.length
 }
 </script>
 
@@ -286,6 +324,21 @@ const badgeVariant = (roundStatus: RoundStatus): Variants => {
 .submission-link {
   color: var(--brand-700);
   font-weight: 700;
+}
+
+.submission-results {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.submission-result-item {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.7rem;
 }
 
 @media (max-width: 625px) {
