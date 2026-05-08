@@ -220,7 +220,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('created_at', 'updated_at')
         extra_kwargs = {
-            'team': {'write_only': True},
+            'team': {'read_only': True},
             'round': {'write_only': True},
         }
 
@@ -230,10 +230,33 @@ class SubmissionSerializer(serializers.ModelSerializer):
             return None
         return request.user
 
+    def _resolve_captain_team_for_round(self, *, user, round_obj):
+        if not user or not round_obj:
+            return None
+
+        registrations = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .filter(
+                tournament=round_obj.tournament,
+                is_active=True,
+                team__captain_id=user.id,
+            )
+            .order_by('id')
+        )
+        registration_count = registrations.count()
+        if registration_count == 0:
+            raise serializers.ValidationError(
+                {'team': 'Only team captain can create submissions for an active registered team in this tournament.'}
+            )
+        if registration_count > 1:
+            raise serializers.ValidationError(
+                {'team': 'Multiple active captain teams found in this tournament. Please contact support.'}
+            )
+        return registrations.first().team
+
     def validate(self, attrs):
         instance = self.instance
         user = self._request_user()
-        team = attrs.get('team', getattr(instance, 'team', None))
         round_obj = attrs.get('round', getattr(instance, 'round', None))
         github_url = attrs.get('github_url', getattr(instance, 'github_url', ''))
         demo_video_url = attrs.get('demo_video_url', getattr(instance, 'demo_video_url', ''))
@@ -247,9 +270,6 @@ class SubmissionSerializer(serializers.ModelSerializer):
         if not demo_video_url and not demo_video_file:
             errors['demo_video_url'] = 'Provide demo_video_url or demo_video_file.'
 
-        if not team:
-            errors['team'] = 'team is required.'
-
         if not round_obj:
             errors['round'] = 'round is required.'
 
@@ -259,7 +279,11 @@ class SubmissionSerializer(serializers.ModelSerializer):
             if 'round' in attrs and attrs['round'].id != instance.round_id:
                 errors['round'] = 'round cannot be changed.'
 
-        if team and user and team.captain_id != user.id:
+        team = getattr(instance, 'team', None)
+        if instance is None and not errors:
+            team = self._resolve_captain_team_for_round(user=user, round_obj=round_obj)
+            attrs['team'] = team
+        elif team and user and team.captain_id != user.id:
             errors['team'] = 'Only team captain can create or update submissions.'
 
         if round_obj:
