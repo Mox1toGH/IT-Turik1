@@ -209,6 +209,24 @@ def register_team_for_tournament(*, tournament, team, actor):
 
 
 @transaction.atomic
+def leave_team_from_tournament(*, tournament, team, actor):
+    if team.captain_id != actor.id:
+        raise ValidationError({'team': 'Only the team owner can remove this team from a tournament.'})
+
+    registration = TournamentTeamRegistration.objects.filter(
+        tournament=tournament,
+        team=team,
+        is_active=True,
+    ).first()
+    if registration is None:
+        raise ValidationError({'team': 'This team is not actively registered for this tournament.'})
+
+    registration.is_active = False
+    registration.save(update_fields=['is_active'])
+    return registration
+
+
+@transaction.atomic
 def delete_round(round_obj):
     round_obj = Round.objects.select_for_update().select_related('tournament').get(id=round_obj.id)
     tournament = round_obj.tournament
