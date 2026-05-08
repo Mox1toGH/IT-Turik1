@@ -393,14 +393,16 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
 
 class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
-            .filter(round__tournament=tournament)
+            .filter(
+                round__tournament=tournament,
+                team__captain_id=self.request.user.id,
+            )
             .order_by('-updated_at')
         )
 
