@@ -9,6 +9,8 @@ import type {
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
+  EditRoundArgs,
+  EditRoundResponse,
   EditSubmissionArgs,
   EditSubmissionResponse,
   GetActiveTeamTournamentArgs,
@@ -163,6 +165,27 @@ export const useCreateRound = (
       ...config,
     },
   )
+}
+
+export const useEditRound = (
+  config?: MutationConfig<
+    EditRoundResponse,
+    AxiosError<ApiError<keyof EditRoundArgs['body']>>,
+    EditRoundArgs
+  >,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<
+    EditRoundResponse,
+    AxiosError<ApiError<keyof EditRoundArgs['body']>>,
+    EditRoundArgs
+  >({
+    mutationFn: $api.tournaments.editRound,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(data.tournament) })
+    },
+    ...config,
+  })
 }
 
 export const useDeleteRound = (

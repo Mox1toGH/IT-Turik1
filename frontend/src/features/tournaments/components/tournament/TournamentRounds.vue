@@ -73,6 +73,20 @@
               View details
             </ui-button>
 
+            <ui-button
+              v-if="user?.role === 'admin'"
+              size="sm"
+              variant="secondary"
+              @click="openEdit(round)"
+            >
+              Edit
+            </ui-button>
+            <edit-round-modal
+              v-if="selectedRound && user?.role === 'admin'"
+              :round="selectedRound"
+              v-model="isEditOpen"
+            />
+
             <template v-if="round.status === 'active' && user?.role === 'team'">
               <ui-button size="sm" @click="openSubmissionForm"> Submit </ui-button>
               <submit-modal
@@ -114,6 +128,7 @@ import { useTournamentRounds } from '@/api/queries/tournaments'
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
+import EditRoundModal from './modals/EditRoundModal.vue'
 
 interface Props {
   tournamentId: number
@@ -135,11 +150,17 @@ const rounds = computed(() => data.value ?? [])
 
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
+const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round
   isDetailsOpen.value = true
+}
+
+function openEdit(round: Round) {
+  selectedRound.value = round
+  isEditOpen.value = true
 }
 
 function openSubmissionForm() {
