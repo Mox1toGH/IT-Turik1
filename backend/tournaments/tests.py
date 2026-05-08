@@ -214,6 +214,31 @@ class TournamentApiTests(APITestCase):
         registration.refresh_from_db()
         self.assertTrue(registration.is_active)
 
+    def test_team_can_reregister_same_tournament_after_leave(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        registration = TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=False,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        response = self.client.post(url, {'team_id': self.team.id}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        registration.refresh_from_db()
+        self.assertTrue(registration.is_active)
+        self.assertEqual(
+            TournamentTeamRegistration.objects.filter(tournament=tournament, team=self.team).count(),
+            1,
+        )
+
     def test_round_management(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
