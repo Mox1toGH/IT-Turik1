@@ -17,6 +17,7 @@ from .models import (
 )
 from .services import (
     ensure_team_registered_for_tournament,
+    leave_team_from_tournament,
     register_team_for_tournament,
 )
 from teams.serializers import TeamSummarySerializer
@@ -376,6 +377,20 @@ class TournamentTeamRegistrationCreateSerializer(serializers.Serializer):
         tournament = self.context['tournament']
         team = self.validated_data['team']
         return register_team_for_tournament(
+            tournament=tournament,
+            team=team,
+            actor=request.user,
+        )
+
+
+class TournamentTeamLeaveSerializer(serializers.Serializer):
+    team_id = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all(), source='team')
+
+    def save(self, **kwargs):
+        request = self.context['request']
+        tournament = self.context['tournament']
+        team = self.validated_data['team']
+        return leave_team_from_tournament(
             tournament=tournament,
             team=team,
             actor=request.user,
