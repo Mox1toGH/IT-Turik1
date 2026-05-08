@@ -43,26 +43,22 @@
             </div>
           </template>
 
-          <p
-            :title="tournament?.description"
-            @click="toggleDescriptionModal"
-            :class="['tournament-description-text', { large: isDescriptionLarge }]"
-          >
-            {{ truncateText(tournament?.description ?? '', 190) }}
-
-            <full-screen-icon
-              v-if="isDescriptionLarge"
-              class="text-muted"
-              width="15px"
-              height="15px"
-              style="display: inline; margin-left: 4px"
-            />
-          </p>
-
-          <description-modal
+          <large-text-modal
             v-model="isDesciptionOpen"
-            :description="tournament?.description ?? ''"
-          />
+            title="Tournament description"
+            :text="tournament?.description ?? ''"
+            max-length="190"
+          >
+            <template #trigger="{ toggleOpen }">
+              <p
+                :title="tournament?.description"
+                @click="toggleOpen"
+                :class="['tournament-description-text', { large: isDescriptionLarge }]"
+              >
+                {{ truncateText(tournament?.description ?? '', 190) }}
+              </p>
+            </template>
+          </large-text-modal>
         </ui-skeleton-loader>
       </div>
 
@@ -123,13 +119,12 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed, ref } from 'vue'
-import DescriptionModal from './modals/DescriptionModal.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
-import FullScreenIcon from '@/icons/FullScreenIcon.vue'
 import { useCurrentRound, useStartRegistration, useTournamentInfo } from '@/api/queries/tournaments'
 import JoinTournamentBtn from './JoinTournamentBtn.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
+import LargeTextModal from '../../../../components/shared/LargeTextModal.vue'
 
 interface Props {
   tournamentId: number
@@ -161,11 +156,6 @@ const statusBadgeVariant = computed(() => {
 
   return 'gray'
 })
-
-const toggleDescriptionModal = () => {
-  if (!isDescriptionLarge.value) return
-  isDesciptionOpen.value = !isDesciptionOpen.value
-}
 
 const { mutate: startRegistration, isPending } = useStartRegistration()
 
@@ -211,11 +201,6 @@ const handleStartRegistration = () => {
   border-radius: 6px;
   transition: baclground 2s ease-in;
   word-break: break-word;
-}
-
-.tournament-description-text.large:hover {
-  cursor: pointer;
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .tournament-dates {

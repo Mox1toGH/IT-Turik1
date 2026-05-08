@@ -43,6 +43,7 @@ export const tournamentsKeys = {
     [...tournamentsKeys.detail(id), 'registered-teams'] as const,
   eligibleTeams: (id: TournamentId) => [...tournamentsKeys.detail(id), 'eligible-teams'] as const,
   events: (id: TournamentId) => [...tournamentsKeys.detail(id), 'events'] as const,
+  submissions: (id: TournamentId) => [...tournamentsKeys.detail(id), 'submissions'] as const,
   activeTeamTournament: (teamId: TeamId) =>
     [...tournamentsKeys.all(), 'active-for-team', teamId] as const,
 }

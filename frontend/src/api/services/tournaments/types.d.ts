@@ -2,6 +2,8 @@ import type {
   EventId,
   Round,
   RoundId,
+  Submission,
+  SubmissionId,
   Team,
   TeamId,
   Tournament,
@@ -220,3 +222,30 @@ export interface CloseSubmissionsArgs {
 }
 
 export type CloseSubmissionsResponse = Round
+
+// tournament submissions
+export interface GetTeamSubmissionsArgs {
+  tournamentId: TournamentId
+}
+
+export type GetTeamSubmissionsResponse = (Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+})[]
+
+// edit submission
+export interface EditSubmissionArgs {
+  submissionId: SubmissionId
+  body: EditSubmissionBody
+}
+
+export interface EditSubmissionBody {
+  github_url: string
+  demo_video_url: string
+  description: string
+}
+
+export type EditSubmissionResponse = Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+}

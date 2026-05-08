@@ -113,6 +113,8 @@ export const SubmitRoundSchema = v.object({
   ),
 })
 
+export const EditSubmissionSchema = SubmitRoundSchema
+
 export const EditEventSchema = v.object({
   title: v.pipe(
     v.string('Title is required'),

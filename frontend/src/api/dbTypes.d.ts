@@ -121,8 +121,7 @@ interface Round {
 }
 
 // Event
-
-type EventId = number
+export type EventId = number
 
 interface TournamentEvent {
   description: string
@@ -133,6 +132,21 @@ interface TournamentEvent {
   title: string
   tournament: TournamentId
   type: 'event' // TODO: remove cuz we dont need this
+  created_at: Date
+  updated_at: Date
+}
+
+// Submission
+export type SubmissionId = number
+
+export interface Submission {
+  id: SubmissionId
+
+  github_url: string
+  demo_video_url: string
+  demo_video_file: null // TODO,
+  live_demo_url: string
+  description: string
   created_at: Date
   updated_at: Date
 }

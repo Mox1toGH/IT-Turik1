@@ -136,6 +136,7 @@ function handleCloseSubmissions() {
   text-align: start;
   justify-content: start;
   background: transparent;
+  color: var(--foreground);
 }
 
 .action-btn:hover {
@@ -145,6 +146,7 @@ function handleCloseSubmissions() {
 .action-delete {
   border: 0;
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
 }
 
 .action-delete:hover {
