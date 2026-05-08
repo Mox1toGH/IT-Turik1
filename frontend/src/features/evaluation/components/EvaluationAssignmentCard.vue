@@ -31,7 +31,11 @@
         </p>
       </div>
       <p class="description">{{ description }}</p>
-      <evaluation-summary v-if="assignment.evaluation" :evaluation="assignment.evaluation" />
+      <evaluation-summary
+        v-if="assignment.evaluation"
+        :evaluation="assignment.evaluation"
+        :criteria="assignment.criteria"
+      />
     </div>
 
     <template #footer>
