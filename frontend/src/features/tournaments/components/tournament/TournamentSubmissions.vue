@@ -207,7 +207,9 @@
                         class="jury-criterion-row"
                       >
                         <span>{{ score.criterion_name || score.criterion_id }}</span>
-                        <span>{{ score.score }}</span>
+                        <span>
+                          {{ score.score }}/{{ criterionMaxScore(submission.round_details.id, score.criterion_id) }}
+                        </span>
                       </div>
                     </div>
 
@@ -307,6 +309,12 @@ const roundMaxScore = (roundId: number) => {
   const round = (rounds.value ?? []).find((item) => item.id === roundId)
   if (!round?.criteria?.length) return 0
   return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
+}
+
+const criterionMaxScore = (roundId: number, criterionId: string) => {
+  const round = (rounds.value ?? []).find((item) => item.id === roundId)
+  const criterion = round?.criteria?.find((item) => item.id === criterionId)
+  return Number(criterion?.max_score || 0)
 }
 
 const scorePercent = (roundId: number, totalScore: number) => {
