@@ -17,8 +17,18 @@
 
     <div class="card-body">
       <div class="links">
-        <a v-if="githubUrl" :href="githubUrl" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a v-if="demoUrl" :href="demoUrl" target="_blank" rel="noopener noreferrer">Demo</a>
+        <p v-if="githubUrl" class="link-row">
+          <span class="link-label">GitHub:</span>
+          <a :href="githubUrl" target="_blank" rel="noopener noreferrer">{{ githubUrl }}</a>
+        </p>
+        <p v-if="demoVideoUrl" class="link-row">
+          <span class="link-label">Demo Video:</span>
+          <a :href="demoVideoUrl" target="_blank" rel="noopener noreferrer">{{ demoVideoUrl }}</a>
+        </p>
+        <p v-if="liveDemoUrl" class="link-row">
+          <span class="link-label">Live Demo:</span>
+          <a :href="liveDemoUrl" target="_blank" rel="noopener noreferrer">{{ liveDemoUrl }}</a>
+        </p>
       </div>
       <p class="description">{{ description }}</p>
       <evaluation-summary v-if="assignment.evaluation" :evaluation="assignment.evaluation" />
@@ -50,7 +60,6 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'
-import { truncateText } from '@/lib/utils'
 
 interface Props {
   assignment: JuryAssignmentData
@@ -77,8 +86,9 @@ const submissionDetails = computed(
 
 const teamName = computed(() => submissionDetails.value.team_details?.name ?? `Team #${props.assignment.submission}`)
 const githubUrl = computed(() => submissionDetails.value.github_url ?? '')
-const demoUrl = computed(() => submissionDetails.value.live_demo_url ?? submissionDetails.value.demo_video_url ?? '')
-const description = computed(() => truncateText(submissionDetails.value.description ?? 'No description', 180))
+const demoVideoUrl = computed(() => submissionDetails.value.demo_video_url ?? '')
+const liveDemoUrl = computed(() => submissionDetails.value.live_demo_url ?? '')
+const description = computed(() => submissionDetails.value.description ?? 'No description')
 
 const toggleForm = () => {
   showForm.value = !showForm.value
@@ -126,13 +136,24 @@ const handleSuccess = () => {
 }
 
 .links {
-  display: flex;
-  gap: 0.9rem;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 0.35rem;
 }
 
 .links a {
   color: var(--primary);
+  word-break: break-all;
+}
+
+.link-row {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.link-label {
+  color: var(--muted-foreground);
   font-weight: 700;
 }
 
