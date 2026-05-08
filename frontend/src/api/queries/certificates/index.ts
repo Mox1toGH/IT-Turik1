@@ -6,17 +6,17 @@ import { certificateKeys } from '../keys'
 import type { QueryConfig } from '../types'
 import type { ApiError } from '@/api/errors'
 import type {
-  GetCertificatesResponse,
-  GetCertificateTemplatesResponse,
+  CertificateItem,
+  CertificateTemplateItem,
   PaginatedResponse,
   VerifyCertificateResponse,
 } from '@/api/services/certificates/types'
 
 export const useMyCertificates = (
   args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
-  config?: QueryConfig<PaginatedResponse<GetCertificatesResponse>>,
+  config?: QueryConfig<PaginatedResponse<CertificateItem>>,
 ) => {
-  return useQuery<PaginatedResponse<GetCertificatesResponse>, AxiosError<ApiError>>({
+  return useQuery<PaginatedResponse<CertificateItem>, AxiosError<ApiError>>({
     queryKey: ['my-certificates', args.page ?? 1, args.pageSize ?? 6],
     queryFn: () =>
       $api.certificates.getMyCertificates({
@@ -29,9 +29,9 @@ export const useMyCertificates = (
 
 export const useCertificates = (
   args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
-  config?: QueryConfig<PaginatedResponse<GetCertificatesResponse>>,
+  config?: QueryConfig<PaginatedResponse<CertificateItem>>,
 ) => {
-  return useQuery<PaginatedResponse<GetCertificatesResponse>, AxiosError<ApiError>>({
+  return useQuery<PaginatedResponse<CertificateItem>, AxiosError<ApiError>>({
     queryKey: ['certificates', args.page ?? 1, args.pageSize ?? 20],
     queryFn: () =>
       $api.certificates.getCertificates({
@@ -44,9 +44,9 @@ export const useCertificates = (
 
 export const useCertificateTemplates = (
   args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number>; nopage?: MaybeRefOrGetter<boolean> } = {},
-  config?: QueryConfig<PaginatedResponse<GetCertificateTemplatesResponse>>,
+  config?: QueryConfig<PaginatedResponse<CertificateTemplateItem>>,
 ) => {
-  return useQuery<PaginatedResponse<GetCertificateTemplatesResponse>, AxiosError<ApiError>>({
+  return useQuery<PaginatedResponse<CertificateTemplateItem>, AxiosError<ApiError>>({
     queryKey: ['certificate-templates', args.page ?? 1, args.pageSize ?? 8, args.nopage ?? false],
     queryFn: () =>
       $api.certificates.getTemplates({

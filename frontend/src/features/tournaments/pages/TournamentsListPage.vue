@@ -207,7 +207,12 @@ const {
   isFetching,
   error: tournamentsError,
   isError,
-} = useTournaments({ page: currentPage, searchQuery, pageSize, status: statusFilter })
+} = useTournaments(
+  { page: currentPage, searchQuery, pageSize, status: statusFilter },
+  {
+    staleTime: 1000 * 60 * 5,
+  },
+)
 const error = computed(() => parseApiError(tournamentsError.value))
 
 const pageItems = computed(() => data.value?.data ?? [])

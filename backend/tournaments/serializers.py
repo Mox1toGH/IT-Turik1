@@ -29,6 +29,7 @@ class RoundShortSerializer(serializers.ModelSerializer):
 
 class TournamentPublicSerializer(serializers.ModelSerializer):
     rounds = RoundShortSerializer(many=True, read_only=True)
+    registered_team = serializers.SerializerMethodField()  # <-- додати
 
     class Meta:
         model = Tournament
@@ -42,7 +43,32 @@ class TournamentPublicSerializer(serializers.ModelSerializer):
             'min_team_members',
             'status',
             'rounds',
+            'registered_team',  # <-- додати
         )
+
+    def get_registered_team(self, obj):  # <-- додати метод
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+
+        user = request.user
+        user_team_ids = set(
+            TeamMember.objects.filter(user=user).values_list('team_id', flat=True)
+        ) | set(
+            Team.objects.filter(captain=user).values_list('id', flat=True)
+        )
+
+        registration = (
+            obj.team_registrations
+            .filter(team_id__in=user_team_ids, is_active=True)
+            .select_related('team')
+            .first()
+        )
+
+        if not registration:
+            return None
+
+        return TeamSummarySerializer(registration.team, context=self.context).data
 
 
 class ActiveTournamentSerializer(serializers.ModelSerializer):
@@ -111,16 +137,7 @@ class RoundSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         instance = self.instance
         tournament = attrs.get('tournament', getattr(instance, 'tournament', None))
-        start_date = attrs.get('start_date', getattr(instance, 'start_date', None))
-        end_date = attrs.get('end_date', getattr(instance, 'end_date', None))
         errors = {}
-
-        if start_date and end_date and start_date >= end_date:
-            errors['end_date'] = 'end_date must be greater than start_date.'
-
-        if tournament and start_date and end_date:
-            if start_date < tournament.start_date or end_date > tournament.end_date:
-                errors['start_date'] = 'Round dates must be within tournament dates.'
 
         passing_count = attrs.get('passing_count', getattr(instance, 'passing_count', None))
         if passing_count is not None and tournament:
@@ -352,7 +369,6 @@ class EventSerializer(serializers.ModelSerializer):
             'description',
             'link',
             'start_datetime',
-            'end_datetime',
             'icon',
             'created_at',
             'updated_at',
@@ -362,19 +378,10 @@ class EventSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         instance = self.instance
         event_type = attrs.get('type', getattr(instance, 'type', None))
-        start_datetime = attrs.get('start_datetime', getattr(instance, 'start_datetime', None))
-        end_datetime = attrs.get('end_datetime', getattr(instance, 'end_datetime', None))
-        errors = {}
-
-        if end_datetime and start_datetime and end_datetime < start_datetime:
-            errors['end_datetime'] = 'end_datetime must be greater than or equal to start_datetime.'
 
         if event_type == Event.TYPE_EVENT:
             attrs.pop('link', None)
             attrs['link'] = ''
-
-        if errors:
-            raise serializers.ValidationError(errors)
 
         return attrs
 
@@ -400,4 +407,4 @@ class EventSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        return instance
+        return instance

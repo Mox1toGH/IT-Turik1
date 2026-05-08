@@ -3,17 +3,22 @@ import type { TeamId, TournamentId, UserId } from '@/api/dbTypes'
 import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
 
 export const teamKeys = {
-  allTeams: () => ['teams'],
-  team: (id: TeamId) => ['teams', id],
-  'join-requests': (id: TeamId) => ['team-join-requests', id],
-  'team-invitations': (id: TeamId) => ['team-invitations', id],
+  all: () => ['teams'] as const,
+  lists: () => [...teamKeys.all(), 'list'] as const,
+  details: () => [...teamKeys.all(), 'detail'] as const,
+  detail: (id: TeamId) => [...teamKeys.details(), id] as const,
+  info: (id: TeamId) => [...teamKeys.detail(id), 'info'] as const,
+  joinRequests: (id: TeamId) => [...teamKeys.detail(id), 'join-requests'] as const,
+  invitations: (id: TeamId) => [...teamKeys.detail(id), 'invitations'] as const,
 }
 
 export const accountKeys = {
-  profile: () => ['profile'],
-  users: () => ['users'],
-  user: (id: UserId) => ['user', id],
-  roleCodes: (filter?: GetRoleCodesFilter) => ['role-codes', filter?.role ?? 'all'],
+  all: () => ['accounts'] as const,
+  profile: () => [...accountKeys.all(), 'profile'] as const,
+  users: () => [...accountKeys.all(), 'users'] as const,
+  user: (id: UserId) => [...accountKeys.users(), id] as const,
+  roleCodes: (filter?: GetRoleCodesFilter) =>
+    [...accountKeys.all(), 'role-codes', filter?.role ?? 'all'] as const,
 }
 
 export const certificateKeys = {
@@ -23,28 +28,37 @@ export const certificateKeys = {
   verify: (code: string) => ['certificate-verify', code],
 }
 
-export const touranmentsKeys = {
-  allTouranments: () => ['tournaments'],
-  'tournaments-list': (args: GetTournamentsArgs) => [
-    'tournaments',
-    args.page,
-    args.searchQuery,
-    args.status,
-    args.pageSize,
-  ],
-  touranment: (id: TournamentId) => ['tournaments', id],
-  'active-team-tournament': (id: TeamId) => ['active-team-tournament', id],
-  'eligible-teams': () => ['eligible-teams'],
-  'registered-teams': (id: TournamentId) => ['registered-teams', id],
-  rounds: (id: TournamentId) => ['rounds', id],
-  'current-round': (id: TournamentId) => ['current-round', id],
-  events: (id: TournamentId) => ['tournament-events', id],
+export const tournamentsKeys = {
+  all: () => ['tournaments'] as const,
+  lists: () => [...tournamentsKeys.all(), 'list'] as const,
+  tournamentsLists: (args: GetTournamentsArgs) =>
+    [
+      ...tournamentsKeys.lists(),
+      {
+        page: args.page,
+        pageSize: args.pageSize,
+        searchQuery: args.searchQuery,
+        status: args.status,
+      },
+    ] as const,
+  details: () => [...tournamentsKeys.all(), 'detail'] as const,
+  detail: (id: TournamentId) => [...tournamentsKeys.details(), id] as const,
+  touranment: (id: TournamentId) => [...tournamentsKeys.detail(id), 'info'] as const,
+  rounds: (id: TournamentId) => [...tournamentsKeys.detail(id), 'rounds'] as const,
+  currentRound: (id: TournamentId) => [...tournamentsKeys.rounds(id), 'current'] as const,
+  registeredTeams: (id: TournamentId) =>
+    [...tournamentsKeys.detail(id), 'registered-teams'] as const,
+  eligibleTeams: (id: TournamentId) => [...tournamentsKeys.detail(id), 'eligible-teams'] as const,
+  events: (id: TournamentId) => [...tournamentsKeys.detail(id), 'events'] as const,
+  activeTeamTournament: (teamId: TeamId) =>
+    [...tournamentsKeys.all(), 'active-for-team', teamId] as const,
 }
 
 export const notificationKeys = {
-  all: ['notifications'],
-  lists: () => [...notificationKeys.all, 'list'],
-  list: (page: number, pageSize: number) => [...notificationKeys.lists(), { page, pageSize }],
-  unreadCount: () => [...notificationKeys.all, 'unread-count'],
-  settings: () => [...notificationKeys.all, 'settings'],
+  all: () => ['notifications'] as const,
+  lists: () => [...notificationKeys.all(), 'list'] as const,
+  list: (page: number, pageSize: number) =>
+    [...notificationKeys.lists(), { page, pageSize }] as const,
+  unreadCount: () => [...notificationKeys.all(), 'unread-count'] as const,
+  settings: () => [...notificationKeys.all(), 'settings'] as const,
 }

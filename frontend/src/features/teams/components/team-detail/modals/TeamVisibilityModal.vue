@@ -42,7 +42,7 @@
               <eye-in-circle />
               <strong>Public</strong>
             </div>
-            <p>Anyone can find and request to join this team.</p>
+            <p class="visibility-subtext">Anyone can find and request to join this team.</p>
           </div>
         </label>
 
@@ -242,5 +242,10 @@ const confirmChangeVisibility = async () => {
   font-size: 0.87rem;
   color: var(--warning);
   margin-bottom: 0.5rem;
+}
+
+.modal-text,
+.visibility-subtext {
+  color: var(--muted-foreground);
 }
 </style>

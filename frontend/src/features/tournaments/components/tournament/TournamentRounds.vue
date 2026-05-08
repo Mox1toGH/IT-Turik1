@@ -44,7 +44,18 @@
           <template #header>
             <div class="round-header">
               <h4>{{ truncateText(round.name, 70) }}</h4>
-              <ui-badge :variant="badgeVariant(round.status)">{{ round.status }}</ui-badge>
+
+              <div class="header-right">
+                <ui-badge :variant="badgeVariant(round.status)">{{
+                  badgeStatus(round.status)
+                }}</ui-badge>
+                <round-actions-popover
+                  v-if="user?.role === 'admin'"
+                  :roundId="round.id"
+                  :tournamentId="props.tournamentId"
+                  :status="round.status"
+                />
+              </div>
             </div>
           </template>
 
@@ -58,21 +69,14 @@
               View details
             </ui-button>
 
-            <ui-button size="sm" @click="openSubmissionForm"> Submit </ui-button>
-            <submit-modal
-              :roundId="selectedRound?.id ?? 0"
-              :tournamentId="props.tournamentId"
-              v-model="isSubmitOpen"
-            />
-
-            <ui-button
-              v-if="profile?.role === 'admin'"
-              size="sm"
-              variant="danger"
-              @click="handleDeleteRound(round.id)"
-            >
-              <delete-icon width="20" height="20" />
-            </ui-button>
+            <template v-if="round.status === 'active' && user?.role === 'team'">
+              <ui-button size="sm" @click="openSubmissionForm"> Submit </ui-button>
+              <submit-modal
+                :roundId="selectedRound?.id ?? 0"
+                :tournamentId="props.tournamentId"
+                v-model="isSubmitOpen"
+              />
+            </template>
           </div>
         </ui-card>
       </div>
@@ -102,12 +106,10 @@ import { computed, ref } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
-import { useDeleteRound, useTournamentRounds } from '@/api/queries/tournaments'
+import { useTournamentRounds } from '@/api/queries/tournaments'
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
-import type { RoundId } from '@/api/dbTypes'
-import { useNotification } from '@/composables/useNotification'
-import DeleteIcon from '@/icons/DeleteIcon.vue'
 import SubmitModal from './modals/SubmitModal.vue'
+import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
 
 interface Props {
   tournamentId: number
@@ -115,10 +117,8 @@ interface Props {
 type Round = GetRoundsResponse[number]
 
 const props = defineProps<Props>()
-const { showNotification } = useNotification()
 const { data: user } = useProfile()
 
-const { data: profile } = useProfile()
 const {
   data,
   isLoading,
@@ -126,28 +126,12 @@ const {
   isError,
 } = useTournamentRounds({ id: props.tournamentId })
 
-const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
-
 const error = computed(() => parseApiError(roundsError.value))
 const rounds = computed(() => data.value ?? [])
 
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
-
-function handleDeleteRound(id: RoundId) {
-  deleteRound(
-    {
-      id,
-    },
-    {
-      onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
-      },
-    },
-  )
-}
 
 function openDetails(round: Round) {
   selectedRound.value = round
@@ -161,8 +145,15 @@ function openSubmissionForm() {
 function badgeVariant(status: Round['status']): Variants {
   if (status === 'active') return 'primary'
   if (status === 'evaluated') return 'green'
-  if (status === 'submission_closed') return 'gray'
+  if (status === 'submission_closed') return 'red'
   return 'gray'
+}
+
+function badgeStatus(status: Round['status']) {
+  if (status === 'draft') return 'Draft'
+  if (status === 'active') return 'Active'
+  if (status === 'evaluated') return 'Evaluated'
+  if (status === 'submission_closed') return 'Closed'
 }
 </script>
 
@@ -184,6 +175,12 @@ function badgeVariant(status: Round['status']): Variants {
   justify-content: space-between;
   align-items: center;
   gap: 0.8rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .round-actions {

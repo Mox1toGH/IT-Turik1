@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from django.db.models import Q
 
-from backend.permissions import Permission, has_permission as user_has_permission
+from backend.permissions import Permission, has_permission as user_has_permission, is_platform_admin
 from teams.models import Team, TeamMember
 
 
@@ -57,6 +57,14 @@ class CanManageRoundsOrReadOnly(HasTournamentPermissionOrReadOnly):
 
 
 CanEditTournamentOrReadOnly = CanManageRoundsOrReadOnly
+
+
+class CanRegisterTeamForTournament(BasePermission):
+    message = 'Platform admins cannot register teams for tournaments.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and not is_platform_admin(user))
 
 
 class IsTeamMemberPermission(BasePermission):

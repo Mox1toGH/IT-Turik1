@@ -103,3 +103,10 @@ const handleDeleteTeam = async () => {
   )
 }
 </script>
+
+<style scoped>
+.modal-text {
+  margin-bottom: 1rem;
+  color: var(--muted-foreground);
+}
+</style>

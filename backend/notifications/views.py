@@ -29,7 +29,7 @@ class NotificationListView(generics.ListAPIView):
         cutoff_date = timezone.now() - timedelta(days=30)
         # Auto-delete notifications older than 30 days for this user
         Notification.objects.filter(recipient=self.request.user, created_at__lt=cutoff_date).delete()
-        
+
         return Notification.objects.filter(recipient=self.request.user)
 
 
@@ -79,7 +79,30 @@ class UnreadCountView(APIView):
         return Response({'unread_count': count}, status=status.HTTP_200_OK)
 
 
-# ── Notification Settings ───────────────────────────────────────
+class NotificationDeleteView(APIView):
+    """Delete a single notification for the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, pk):
+        deleted_count, _ = Notification.objects.filter(
+            id=pk,
+            recipient=request.user,
+        ).delete()
+        if deleted_count == 0:
+            return Response({'detail': 'Notification not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NotificationDeleteAllView(APIView):
+    """Delete all notifications for the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
+        return Response({'deleted': deleted_count}, status=status.HTTP_200_OK)
+
 
 class NotificationSettingsView(APIView):
     """Returns available event types and personal DB configs for the current user."""
@@ -102,9 +125,9 @@ class NotificationSettingsView(APIView):
         db_configs = NotificationConfig.objects.filter(user=user).values(
             'event_type', 'is_system_enabled', 'is_email_enabled'
         )
-        
+
         user_settings, _ = UserNotificationSettings.objects.get_or_create(user=user)
-        
+
         return Response({
             'event_types': [
                 {'key': e.key, 'title': e.title_tpl} for e in EVENTS.values()
@@ -124,14 +147,14 @@ class NotificationConfigUpdateView(APIView):
         event_type = request.data.get('event_type')
         is_system = request.data.get('is_system_enabled')
         is_email = request.data.get('is_email_enabled')
-        
+
         config = get_object_or_404(NotificationConfig, user=request.user, event_type=event_type)
         if is_system is not None:
             config.is_system_enabled = is_system
         if is_email is not None:
             config.is_email_enabled = is_email
         config.save()
-        
+
         return Response({'detail': f'Setting updated for {event_type}'})
 
 
@@ -141,10 +164,10 @@ class GlobalConfigUpdateView(APIView):
 
     def post(self, request):
         disabled = request.data.get('emails_disabled_globally')
-        
+
         user_settings, _ = UserNotificationSettings.objects.get_or_create(user=request.user)
         if disabled is not None:
             user_settings.emails_disabled_globally = disabled
             user_settings.save()
-            
+
         return Response({'detail': 'Personal global email setting updated'})

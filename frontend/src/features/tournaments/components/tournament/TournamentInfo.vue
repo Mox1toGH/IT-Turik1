@@ -1,7 +1,13 @@
 <template>
   <ui-card class="tournament-card" :is-error="isError">
     <template #header>
-      <h2 class="tournament-title">Tournament Info</h2>
+      <div class="tournament-header">
+        <h2>Tournament Info</h2>
+
+        <ui-button v-if="tournament?.status === 'draft'" size="sm" @click="handleStartRegistration"
+          ><loading-icon v-if="isPending" />Start registration</ui-button
+        >
+      </div>
     </template>
 
     <template #error>
@@ -121,8 +127,9 @@ import DescriptionModal from './modals/DescriptionModal.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import FullScreenIcon from '@/icons/FullScreenIcon.vue'
-import { useCurrentRound, useTournamentInfo } from '@/api/queries/tournaments'
+import { useCurrentRound, useStartRegistration, useTournamentInfo } from '@/api/queries/tournaments'
 import JoinTournamentBtn from './JoinTournamentBtn.vue'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
 
 interface Props {
   tournamentId: number
@@ -138,7 +145,12 @@ const {
   isError,
 } = useTournamentInfo({ id: props.tournamentId })
 const error = computed(() => parseApiError(tournamentInfoError.value))
-const { data: currentRound } = useCurrentRound({ id: props.tournamentId })
+const { data: currentRound } = useCurrentRound(
+  { id: props.tournamentId },
+  {
+    enabled: computed(() => tournament.value?.status === 'running'),
+  },
+)
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
 const statusBadgeVariant = computed(() => {
@@ -154,6 +166,14 @@ const toggleDescriptionModal = () => {
   if (!isDescriptionLarge.value) return
   isDesciptionOpen.value = !isDesciptionOpen.value
 }
+
+const { mutate: startRegistration, isPending } = useStartRegistration()
+
+const handleStartRegistration = () => {
+  startRegistration({
+    tournamentId: props.tournamentId,
+  })
+}
 </script>
 
 <style scoped>
@@ -161,9 +181,17 @@ const toggleDescriptionModal = () => {
   flex: 1;
 }
 
-.tournament-title {
+.tournament-header {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-timeline {
+  display: flex;
+  gap: 0.3rem;
 }
 
 .tournament-info {

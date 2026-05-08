@@ -17,6 +17,10 @@ def _set_tournament_finished_if_all_rounds_evaluated(*, tournament):
 
     tournament.status = Tournament.STATUS_FINISHED
     tournament.save(update_fields=['status', 'updated_at'])
+    last_round = tournament.rounds.order_by('-start_date', '-id').first()
+    if last_round:
+        from evaluation.leaderboard_service import save_leaderboard_snapshot
+        save_leaderboard_snapshot(tournament_id=tournament.id, round_id=last_round.id)
     return True
 
 

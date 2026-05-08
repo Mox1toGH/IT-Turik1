@@ -1,6 +1,8 @@
 import type { AxiosError } from 'axios'
 import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
 import type {
+  CloseSubmissionsArgs,
+  CloseSubmissionsResponse,
   CreateEventArgs,
   CreateRoundArgs,
   CreateTournamentArgs,
@@ -24,11 +26,14 @@ import type {
   GetTournamentsArgs,
   GetTournamentsResponse,
   RegisterTeamArgs,
+  StartRegistrationArgs,
+  StartRoundArgs,
+  StartRoundResponse,
   SubmitRoundArgs,
 } from '@/api/services/tournaments/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { $api } from '@/api/services'
-import { touranmentsKeys } from '../keys'
+import { tournamentsKeys } from '../keys'
 import { computed, toValue } from 'vue'
 import type { ApiError } from '@/api/errors'
 import type { TournamentId } from '@/api/dbTypes'
@@ -38,7 +43,7 @@ export const useTournaments = (
   config?: QueryConfig<GetTournamentsResponse>,
 ) => {
   const queryKey = computed(() =>
-    touranmentsKeys['tournaments-list']({
+    tournamentsKeys.tournamentsLists({
       page: toValue(payload.page),
       searchQuery: toValue(payload.searchQuery),
       status: toValue(payload.status),
@@ -55,7 +60,6 @@ export const useTournaments = (
         pageSize: toValue(payload.pageSize),
         status: toValue(payload.status),
       }),
-    staleTime: 1000 * 60 * 5,
     ...config,
   })
 }
@@ -65,7 +69,7 @@ export const useRegisteredTeams = (
   config?: QueryConfig<GetRegisteredTeamsResponse>,
 ) => {
   return useQuery<GetRegisteredTeamsResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys['registered-teams'](payload.id),
+    queryKey: tournamentsKeys.registeredTeams(payload.id),
     queryFn: () => $api.tournaments.getRegisteredTeams({ id: payload.id }),
     ...config,
   })
@@ -76,7 +80,7 @@ export const useTournamentRounds = (
   config?: QueryConfig<GetRoundsResponse>,
 ) => {
   return useQuery<GetRoundsResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys.rounds(payload.id),
+    queryKey: tournamentsKeys.rounds(payload.id),
     queryFn: () => $api.tournaments.getRounds({ id: payload.id }),
     ...config,
   })
@@ -87,7 +91,7 @@ export const useActiveTeamTournament = (
   config?: QueryConfig<GetActiveTeamTournamentResponse>,
 ) => {
   return useQuery<GetActiveTeamTournamentResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys['active-team-tournament'](payload.id),
+    queryKey: tournamentsKeys.activeTeamTournament(payload.id),
     queryFn: () => $api.tournaments.getActiveTeamTournament({ id: payload.id }),
     ...config,
   })
@@ -108,7 +112,7 @@ export const useCreateTournament = (
   >({
     mutationFn: $api.tournaments.createTournament,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: touranmentsKeys.allTouranments() })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.lists() })
     },
     ...config,
   })
@@ -119,7 +123,7 @@ export const useTournamentInfo = (
   config?: QueryConfig<GetTournamentInfoResponse>,
 ) => {
   return useQuery<GetTournamentInfoResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys.touranment(payload.id),
+    queryKey: tournamentsKeys.touranment(payload.id),
     queryFn: () => $api.tournaments.getTournamentInfo({ id: payload.id }),
     ...config,
   })
@@ -130,7 +134,7 @@ export const useEligibleTeams = (
   config?: QueryConfig<GetEligibleTeamsResponse>,
 ) => {
   return useQuery<GetEligibleTeamsResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys['eligible-teams'](),
+    queryKey: tournamentsKeys.eligibleTeams(payload.id),
     queryFn: () => $api.tournaments.getEligibleTeams({ id: payload.id }),
     ...config,
   })
@@ -148,7 +152,7 @@ export const useCreateRound = (
     {
       mutationFn: $api.tournaments.createRound,
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: touranmentsKeys.rounds(vars.id) })
+        queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(vars.id) })
       },
       ...config,
     },
@@ -163,7 +167,7 @@ export const useDeleteRound = (
   return useMutation<unknown, AxiosError<ApiError>, DeleteRoundArgs>({
     mutationFn: $api.tournaments.deleteRound,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: touranmentsKeys.rounds(payload.id) })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(payload.id) })
     },
     ...config,
   })
@@ -174,7 +178,7 @@ export const useCurrentRound = (
   config?: QueryConfig<GetCurrentRoundResponse>,
 ) => {
   return useQuery<GetCurrentRoundResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys['current-round'](payload.id),
+    queryKey: tournamentsKeys.currentRound(payload.id),
     queryFn: () => $api.tournaments.getCurrentRound({ id: payload.id }),
     ...config,
   })
@@ -195,12 +199,8 @@ export const useRegisterTeam = (
   >({
     mutationFn: $api.tournaments.registerTeam,
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          touranmentsKeys['eligible-teams'](),
-          touranmentsKeys['registered-teams'](vars.id),
-        ],
-      })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.eligibleTeams(vars.id) })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.id) })
     },
     ...config,
   })
@@ -234,7 +234,7 @@ export const useCreateEvent = (
       mutationFn: $api.tournaments.createEvent,
       ...config,
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: touranmentsKeys.events(vars.body.tournament) })
+        queryClient.invalidateQueries({ queryKey: tournamentsKeys.events(vars.body.tournament) })
       },
     },
   )
@@ -245,7 +245,7 @@ export const useTournamentEvents = (
   config?: QueryConfig<GetEventsResponse>,
 ) => {
   return useQuery<GetEventsResponse, AxiosError<ApiError>>({
-    queryKey: touranmentsKeys.events(payload.tournamentId),
+    queryKey: tournamentsKeys.events(payload.tournamentId),
     queryFn: () => $api.tournaments.getEvents({ tournamentId: payload.tournamentId }),
     ...config,
   })
@@ -269,6 +269,47 @@ export const useDeleteEvent = (
 ) => {
   return useMutation<unknown, AxiosError<ApiError>, DeleteEventArgs>({
     mutationFn: $api.tournaments.deleteEvent,
+    ...config,
+  })
+}
+
+export const useStartRegistration = (
+  config?: MutationConfig<unknown, AxiosError<ApiError>, StartRegistrationArgs>,
+) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<unknown, AxiosError<ApiError>, StartRegistrationArgs>({
+    mutationFn: $api.tournaments.startRegistration,
+    onSuccess: (_data, args) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.detail(args.tournamentId) })
+    },
+    ...config,
+  })
+}
+
+export const useStartRound = (
+  config?: MutationConfig<StartRoundResponse, AxiosError<ApiError>, StartRoundArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<StartRoundResponse, AxiosError<ApiError>, StartRoundArgs>({
+    mutationFn: $api.tournaments.startRound,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(data.tournament) })
+    },
+    ...config,
+  })
+}
+
+export const useCloseSubmissions = (
+  config?: MutationConfig<CloseSubmissionsResponse, AxiosError<ApiError>, CloseSubmissionsArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<CloseSubmissionsResponse, AxiosError<ApiError>, CloseSubmissionsArgs>({
+    mutationFn: $api.tournaments.closeSubmissions,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(data.tournament) })
+      queryClient.resetQueries({ queryKey: tournamentsKeys.currentRound(data.tournament) })
+    },
     ...config,
   })
 }

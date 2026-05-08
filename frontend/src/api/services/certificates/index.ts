@@ -1,8 +1,8 @@
 import { apiClient } from '@/api/client'
 import { isAxiosError } from 'axios'
 import type {
-  GetCertificatesResponse,
-  GetCertificateTemplatesResponse,
+  CertificateItem,
+  CertificateTemplateItem,
   PaginatedResponse,
   VerifyCertificateResponse,
 } from './types'
@@ -15,7 +15,7 @@ export const certificatesService = {
     const pageSize = args?.pageSize ?? 6
 
     try {
-      const { data } = await apiClient.get<PaginatedResponse<GetCertificatesResponse> | GetCertificatesResponse>(
+      const { data } = await apiClient.get<PaginatedResponse<CertificateItem> | CertificateItem[]>(
         `${prefix}/`,
         { params: { page, page_size: pageSize } },
       )
@@ -44,7 +44,7 @@ export const certificatesService = {
   async getCertificates(args?: { page?: number; pageSize?: number }) {
     const page = args?.page ?? 1
     const pageSize = args?.pageSize ?? 20
-    const { data } = await apiClient.get<PaginatedResponse<GetCertificatesResponse> | GetCertificatesResponse>(
+    const { data } = await apiClient.get<PaginatedResponse<CertificateItem> | CertificateItem[]>(
       `${prefix}/`,
       { params: { page, page_size: pageSize } },
     )
@@ -77,7 +77,7 @@ export const certificatesService = {
     if (args?.pageSize) params.page_size = args.pageSize
     if (args?.nopage) params.nopage = 'true'
 
-    const { data } = await apiClient.get<PaginatedResponse<GetCertificateTemplatesResponse> | GetCertificateTemplatesResponse>(
+    const { data } = await apiClient.get<PaginatedResponse<CertificateTemplateItem> | CertificateTemplateItem[]>(
       `${prefix}/templates/`,
       { params }
     )

@@ -119,6 +119,7 @@ import { useNotification } from '@/composables/useNotification'
 import { useResendInvitation, useTeamInvitations } from '@/api/queries/teams'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { parseApiError } from '@/api/errors'
 
 interface Props {
   teamId: TeamId
@@ -183,10 +184,8 @@ const resendInvitation = (userId: UserId) => {
         emit('updateTeam', data)
       },
       onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to resend invitation.' : 'Server connection error.',
-          'error',
-        )
+        const parsedError = parseApiError(err)
+        showNotification(parsedError?.message, 'error')
       },
       onSettled: () => {
         loadingInvitationIds.value.delete(userId)

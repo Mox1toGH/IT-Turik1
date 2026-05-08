@@ -22,6 +22,7 @@ from .serializers import (
     invite_user_to_team,
 )
 from .services import assert_can_remove_member, assert_team_not_in_active_tournament
+from .permissions import CanCreateTeam, IsNotPlatformAdminOrReadOnly
 from .signals import (
     invitation_received,
     invitation_responded,
@@ -60,6 +61,12 @@ class TeamListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamSerializer
 
+    def get_permissions(self):
+        permission_classes = [IsAuthenticated]
+        if self.request.method == 'POST':
+            permission_classes.append(CanCreateTeam)
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
         if is_platform_admin(self.request.user):
             return get_team_queryset()
@@ -80,7 +87,7 @@ class TeamListCreateView(generics.ListCreateAPIView):
 
 
 class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
     serializer_class = TeamSerializer
 
     def get_queryset(self):

@@ -201,3 +201,22 @@ export interface EditEventArgs {
 export interface DeleteEventArgs {
   eventId: EventId
 }
+
+// start registration
+export interface StartRegistrationArgs {
+  tournamentId: TournamentId
+}
+
+// start registration
+export interface StartRoundArgs {
+  roundId: RoundId
+}
+
+export type StartRoundResponse = Round
+
+// close submissions
+export interface CloseSubmissionsArgs {
+  roundId: RoundId
+}
+
+export type CloseSubmissionsResponse = Round

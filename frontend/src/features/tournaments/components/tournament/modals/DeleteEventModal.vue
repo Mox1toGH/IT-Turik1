@@ -45,7 +45,7 @@ import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { touranmentsKeys } from '@/api/queries/keys'
+import { tournamentsKeys } from '@/api/queries/keys'
 import type { TournamentId } from '@/api/dbTypes'
 
 interface Props {
@@ -93,7 +93,7 @@ async function handleDelete() {
       },
 
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: touranmentsKeys.events(props.tournamentId) })
+        queryClient.invalidateQueries({ queryKey: tournamentsKeys.events(props.tournamentId) })
         emit('update:modelValue', false)
         showNotification('Event deleted successfully', 'success')
       },

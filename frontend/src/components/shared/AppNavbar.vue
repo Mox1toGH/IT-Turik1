@@ -17,7 +17,9 @@
 
           <template v-else>
             <router-link to="/" :class="navItemClass('home')">Home</router-link>
-            <router-link to="/teams" :class="navItemClass('teams')">Teams</router-link>
+            <router-link v-if="user.role === 'team'" to="/teams" :class="navItemClass('teams')"
+              >Teams</router-link
+            >
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >

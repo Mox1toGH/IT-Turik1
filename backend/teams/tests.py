@@ -96,6 +96,32 @@ class TeamApiTests(APITestCase):
         self.assertEqual(invitations.count(), 1)
         self.assertEqual(invitations.first().status, TeamInvitation.STATUS_INVITED)
 
+    def test_admin_cannot_create_team(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.post(
+            self.teams_url,
+            {
+                'name': 'Admin Team',
+                'email': 'admin-team@example.com',
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_cannot_update_or_delete_team(self):
+        team = self._create_team({'name': 'Captain Team', 'email': 'captain-team@example.com'})
+
+        self.client.force_authenticate(user=self.admin_user)
+        update_response = self.client.patch(
+            reverse('team_detail', kwargs={'pk': team['id']}),
+            {'name': 'Updated by admin'},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        delete_response = self.client.delete(reverse('team_detail', kwargs={'pk': team['id']}))
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_invited_user_can_accept_invitation(self):
         team = self._create_team(
             {

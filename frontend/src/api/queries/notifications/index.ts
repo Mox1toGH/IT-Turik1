@@ -67,6 +67,32 @@ export const useMarkAllAsRead = () => {
   })
 }
 
+export const useDeleteNotification = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return await notificationsService.deleteNotification(id)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
+    },
+  })
+}
+
+export const useDeleteAllNotifications = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      return await notificationsService.deleteAllNotifications()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
+    },
+  })
+}
+
 export const useUpdateEventConfig = () => {
   const queryClient = useQueryClient()
   return useMutation({

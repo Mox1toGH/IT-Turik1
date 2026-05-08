@@ -1,5 +1,7 @@
 import { apiClient } from '@/api/client'
 import type {
+  CloseSubmissionsArgs,
+  CloseSubmissionsResponse,
   CreateEventArgs,
   CreateRoundArgs,
   CreateTournamentArgs,
@@ -22,6 +24,9 @@ import type {
   GetTournamentInfoResponse,
   GetTournamentsArgs,
   RegisterTeamArgs,
+  StartRegistrationArgs,
+  StartRoundArgs,
+  StartRoundResponse,
   SubmitRoundArgs,
 } from './types'
 
@@ -130,6 +135,25 @@ export const tournamentsService = {
 
   deleteEvent: async (args: DeleteEventArgs) => {
     const { data } = await apiClient.delete(`${prefix}/events/${args.eventId}/`)
+    return data
+  },
+
+  startRegistration: async (args: StartRegistrationArgs) => {
+    const { data } = await apiClient.post(`${prefix}/${args.tournamentId}/start-registration/`)
+    return data
+  },
+
+  startRound: async (args: StartRoundArgs) => {
+    const { data } = await apiClient.post<StartRoundResponse>(
+      `${prefix}/rounds/${args.roundId}/start/`,
+    )
+    return data
+  },
+
+  closeSubmissions: async (args: CloseSubmissionsArgs) => {
+    const { data } = await apiClient.post<CloseSubmissionsResponse>(
+      `${prefix}/rounds/${args.roundId}/close-submissions/`,
+    )
     return data
   },
 }

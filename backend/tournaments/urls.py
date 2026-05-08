@@ -22,6 +22,9 @@ from .views import (
     TournamentTeamRegistrationCreateView,
     TournamentTeamRegistrationDetailView,
     TournamentUpdateView,
+    
+    TournamentSubmissionsView, 
+    RoundSubmissionsView,
 )
 
 router = DefaultRouter()
@@ -53,6 +56,9 @@ urlpatterns = [
     path('rounds/<int:pk>/mark-evaluated/', RoundMarkEvaluatedView.as_view(), name='round_mark_evaluated'),
     path('submissions/', SubmissionListCreateView.as_view(), name='submissions'),
     path('submissions/<int:pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
+    path('<int:pk>/submissions/', TournamentSubmissionsView.as_view(), name='tournament_submissions'),
+    path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
+    
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),
     path('icons/', IconListView.as_view(), name='icon_list'),
 ] + router.urls

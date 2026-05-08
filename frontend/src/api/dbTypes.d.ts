@@ -106,6 +106,7 @@ type EvaluationCriteria = 'score'
 
 interface Round {
   id: RoundId
+  tournament: TournamentId
   name: string
   start_date: Date
   end_date: Date

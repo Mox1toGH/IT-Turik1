@@ -30,7 +30,7 @@ import type { ApiError } from '@/api/errors'
 
 export const useTeams = (config?: QueryConfig<GetTeamsResponse>) => {
   return useQuery<GetTeamsResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys.allTeams(),
+    queryKey: teamKeys.lists(),
     queryFn: $api.teams.getTeams,
     ...config,
   })
@@ -41,7 +41,7 @@ export const useTeamInfo = (
   config?: QueryConfig<GetTeamInfoResponse>,
 ) => {
   return useQuery<GetTeamInfoResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys.team(payload.id),
+    queryKey: teamKeys.info(payload.id),
     queryFn: () => $api.teams.getTeamInfo({ id: payload.id }),
     ...config,
   })
@@ -52,7 +52,7 @@ export const useTeamJoinRequests = (
   config?: QueryConfig<GetTeamJoinRequestsResponse>,
 ) => {
   return useQuery<GetTeamJoinRequestsResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys['join-requests'](payload.teamId),
+    queryKey: teamKeys.joinRequests(payload.teamId),
     queryFn: () => $api.teams.getTeamJoinRequests(payload),
     ...config,
   })
@@ -71,7 +71,7 @@ export const useTeamInvitations = (
   config?: QueryConfig<GetTeamInvitationsResponse>,
 ) => {
   return useQuery<GetTeamInvitationsResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys['team-invitations'](payload.teamId),
+    queryKey: teamKeys.invitations(payload.teamId),
     queryFn: () => $api.teams.getTeamInvitations(payload),
     ...config,
   })
@@ -92,7 +92,7 @@ export const useCreateTeam = (
   >({
     mutationFn: $api.teams.createTeam,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.allTeams() })
+      queryClient.invalidateQueries({ queryKey: teamKeys.lists() })
     },
     ...config,
   })
@@ -106,7 +106,7 @@ export const useRespondToInvitation = (
     mutationFn: $api.teams.respondToInvitation,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invitations'] })
-      queryClient.invalidateQueries({ queryKey: teamKeys.allTeams() })
+      queryClient.invalidateQueries({ queryKey: teamKeys.lists() })
     },
     ...config,
   })
@@ -119,7 +119,7 @@ export const useSendJoinRequest = (
   return useMutation<unknown, AxiosError<ApiError>, SendJoinRequestArgs>({
     mutationFn: $api.teams.sendJoinRequest,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.allTeams() })
+      queryClient.invalidateQueries({ queryKey: teamKeys.lists() })
     },
     ...config,
   })
@@ -132,7 +132,7 @@ export const useDeleteTeam = (
   return useMutation<unknown, AxiosError<ApiError>, DeleteTeamArgs>({
     mutationFn: $api.teams.deleteTeam,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.allTeams() })
+      queryClient.invalidateQueries({ queryKey: teamKeys.lists() })
     },
     ...config,
   })
@@ -145,7 +145,7 @@ export const useLeaveTeam = (
   return useMutation<unknown, AxiosError<ApiError>, LeaveTeamArgs>({
     mutationFn: $api.teams.leave,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.allTeams() })
+      queryClient.invalidateQueries({ queryKey: teamKeys.lists() })
     },
     ...config,
   })
@@ -158,7 +158,7 @@ export const useManageJoinRequest = (
   return useMutation<GetTeamInfoResponse, AxiosError<ApiError>, ManageJoinRequestArgs>({
     mutationFn: $api.teams.manageJoinRequest,
     onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys['join-requests'](teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.joinRequests(teamId) })
     },
     ...config,
   })
@@ -170,8 +170,8 @@ export const useResendInvitation = (
   const queryClient = useQueryClient()
   return useMutation<GetTeamInfoResponse, AxiosError<ApiError>, ResendInvitationArgs>({
     mutationFn: $api.teams.resendInvitation,
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.team(teamId) })
+    onSuccess: (_, args) => {
+      queryClient.invalidateQueries({ queryKey: teamKeys.invitations(args.teamId) })
     },
     ...config,
   })
@@ -188,7 +188,7 @@ export const useChangeTeamVisibility = (
   return useMutation<ChangeTeamVisibilityResponse, AxiosError<ApiError>, ChangeTeamVisibilityArgs>({
     mutationFn: $api.teams.changeTeamVisibility,
     onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.team(teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
     },
     ...config,
   })
@@ -201,7 +201,7 @@ export const useUpdateTeamInfo = (
   return useMutation<unknown, AxiosError<ApiError>, UpdateTeamInfoArgs>({
     mutationFn: $api.teams.updateInfo,
     onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.team(teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
     },
     ...config,
   })
@@ -214,7 +214,7 @@ export const useRemoveMember = (
   return useMutation<unknown, AxiosError<ApiError>, RemoveMemberArgs>({
     mutationFn: $api.teams.removeMember,
     onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.team(teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
     },
     ...config,
   })
@@ -227,7 +227,8 @@ export const useAddMember = (
   return useMutation<unknown, AxiosError<ApiError>, AddMemberArgs>({
     mutationFn: $api.teams.addMember,
     onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.team(teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
+      queryClient.invalidateQueries({ queryKey: teamKeys.invitations(teamId) })
     },
     ...config,
   })

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{{ subject }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+    /* Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Outer wrapper */
+    .wrapper {
+      width: 100%;
+      padding: 48px 16px 56px;
+      background-color: #f8fafc;
+      /* Subtle background gradient matching the website */
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(20, 184, 166, 0.12), transparent 45%),
+        radial-gradient(circle at 85% 10%, rgba(249, 115, 22, 0.10), transparent 38%);
+    }
+
+    .card {
+      max-width: 580px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.10);
+      border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    /* ── Header ─────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 60%, #0f766e 100%);
+      padding: 32px 40px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-brand {
+      color: #ffffff;
+    }
+
+    .header-brand-name {
+      font-family: 'Sora', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: #ffffff;
+    }
+
+    .header-brand-tagline {
+      font-size: 11.5px;
+      font-weight: 500;
+      opacity: 0.75;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 2px;
+      color: #ffffff;
+    }
+
+    /* ── Eyebrow / badge row ─────────────────── */
+    .badge-row {
+      padding: 24px 40px 0;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #c2410c;
+    }
+
+    /* ── Body ────────────────────────────────── */
+    .body {
+      padding: 14px 40px 36px;
+    }
+
+    .title {
+      font-family: 'Sora', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+      margin-top: 8px;
+    }
+
+    .message-text {
+      font-size: 15px;
+      color: #475569;
+      line-height: 1.75;
+      margin-bottom: 32px;
+    }
+
+    /* ── CTA Button ──────────────────────────── */
+    .btn-row {
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 13px 30px;
+      background: #0d9488;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 10px;
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 14.5px;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Divider ─────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: rgba(15, 23, 42, 0.10);
+      margin: 0 40px;
+    }
+
+    /* ── Footer ──────────────────────────────── */
+    .footer {
+      padding: 22px 40px;
+      text-align: center;
+    }
+
+    .footer p {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .footer a {
+      color: #0d9488;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 600px) {
+      .header       { padding: 24px; }
+      .badge-row    { padding: 20px 24px 0; }
+      .body         { padding: 12px 24px 28px; }
+      .divider      { margin: 0 24px; }
+      .footer       { padding: 18px 24px; }
+      .title        { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="header-brand">
+          <div class="header-brand-name">TournamentOS</div>
+          <div class="header-brand-tagline">Platform Notification</div>
+        </div>
+      </div>
+
+      <!-- Event eyebrow -->
+      <div class="badge-row">
+        <span class="eyebrow">{{ event_type_label }}</span>
+      </div>
+
+      <!-- Body -->
+      <div class="body">
+        <h1 class="title">{{ title }}</h1>
+        <p class="message-text">{{ message }}</p>
+
+        {% if action_url %}
+        <div class="btn-row">
+          <a href="{{ action_url }}" class="btn">{{ action_label }} →</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          You received this because you're registered on IT‑Turik.<br />
+          <a href="{{ unsubscribe_url }}">Manage notification settings</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

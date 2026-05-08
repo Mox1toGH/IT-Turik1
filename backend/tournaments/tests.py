@@ -152,6 +152,19 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(TournamentTeamRegistration.objects.filter(tournament=tournament, team=self.team).exists())
 
+    def test_admin_cannot_register_team(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        response = self.client.post(url, {'team_id': self.team.id}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(TournamentTeamRegistration.objects.filter(tournament=tournament, team=self.team).exists())
+
     def test_round_management(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,

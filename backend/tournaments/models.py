@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class Tournament(models.Model):
@@ -145,21 +146,32 @@ class Round(models.Model):
         if overlaps.exists():
             errors['start_date'] = 'Round dates overlap with another round in this tournament.'
 
+    @staticmethod
+    def _normalize_for_compare(value):
+        if value is None:
+            return None
+        if timezone.is_naive(value):
+            return timezone.make_aware(value, timezone.get_current_timezone())
+        return value
+
     def clean(self):
         errors = {}
 
-        if self.start_date and self.end_date and self.start_date >= self.end_date:
+        start_date = self._normalize_for_compare(self.start_date)
+        end_date = self._normalize_for_compare(self.end_date)
+
+        if start_date and end_date and start_date >= end_date:
             errors['end_date'] = 'end_date must be greater than start_date.'
 
-        tournament = self.tournament
-        if tournament and self.start_date and self.end_date:
-            if self.start_date < tournament.start_date or self.end_date > tournament.end_date:
+        tournament = getattr(self, 'tournament', None)
+        tournament_start = self._normalize_for_compare(getattr(tournament, 'start_date', None))
+        tournament_end = self._normalize_for_compare(getattr(tournament, 'end_date', None))
+
+        if tournament and start_date and end_date and tournament_start and tournament_end:
+            # Inclusive boundaries: round may start at tournament start and end at tournament end.
+            if start_date < tournament_start or end_date > tournament_end:
                 errors['start_date'] = 'Round dates must be within tournament dates.'
 
-        if tournament.rounds.exclude(pk=self.pk).count() == 0:
-            if self.start_date != tournament.start_date or self.end_date != tournament.end_date:
-                errors['start_date'] = 'For single-round tournaments, round dates must match tournament dates.'
-        
         self._validate_date_overlaps(errors)
 
         if not isinstance(self.criteria, list):
@@ -306,7 +318,6 @@ class Event(models.Model):
     description = models.TextField(blank=True)
     link = models.URLField(blank=True)
     start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField(blank=True, null=True)
     icon = models.ForeignKey(
         Icon,
         on_delete=models.SET_NULL,

@@ -64,7 +64,7 @@ import { combineDateAndTime } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TournamentId } from '@/api/dbTypes'
-import { touranmentsKeys } from '@/api/queries/keys'
+import { tournamentsKeys } from '@/api/queries/keys'
 
 interface Props {
   modelValue: boolean
@@ -119,7 +119,7 @@ const editEvent = () => {
         showNotification(parsedError?.message, 'error')
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: touranmentsKeys.events(props.tournamentId) })
+        queryClient.invalidateQueries({ queryKey: tournamentsKeys.events(props.tournamentId) })
         emit('update:modelValue', false)
       },
     },

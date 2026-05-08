@@ -1,7 +1,7 @@
 <template>
   <ui-modal :model-value="modelValue" @update:model-value="toggleOpen">
     <template #title>
-      <h3>Edit event</h3>
+      <h3>Submit round</h3>
     </template>
 
     <form class="submit-form">

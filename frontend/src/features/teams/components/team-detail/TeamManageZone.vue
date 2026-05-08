@@ -18,7 +18,7 @@
         </div>
 
         <div class="danger-zone-box">
-          <div class="manage-row danger-zone-row">
+          <div class="manage-row danger-zone-row" v-if="!team?.is_in_active_tournament">
             <div>
               <h3>Change visibility</h3>
               <p class="text-muted">

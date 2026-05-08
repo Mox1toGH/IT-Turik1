@@ -1,5 +1,5 @@
 <template>
-  <template v-if="teams && teams.length > 0">
+  <template v-if="teams && teams.length > 0 && user?.role === 'team'">
     <ui-button :disabled="isPending" @click="open">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
@@ -52,14 +52,15 @@ import { useNotification } from '@/composables/useNotification'
 import { parseApiError } from '@/api/errors'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import { useProfile } from '@/api/queries/accounts'
 
 interface Props {
   tournamentId: TournamentId
 }
 
 const props = defineProps<Props>()
-
 const { showNotification } = useNotification()
+const { data: user } = useProfile()
 
 const isOpen = ref(false)
 const search = ref('')

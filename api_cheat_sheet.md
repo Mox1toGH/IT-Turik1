@@ -1,5 +1,10 @@
 #  API Cheat Sheet
 
+## Access Updates (2026-05-07)
+
+- `POST /api/teams/` -> `Auth`, but `admin` and `superuser` are denied (`403`).
+- `PUT/PATCH/DELETE /api/teams/{id}/` -> `Auth + captain rules`, but `admin` and `superuser` are denied (`403`).
+- `POST /api/tournaments/{id}/register-team/` -> `Auth + tournament registration rules`, but `admin` and `superuser` are denied (`403`).
 
 ---
 
@@ -8,7 +13,7 @@
 | Дія | Метод | Шлях | Доступ |
 | :--- | :--- | :--- | :--- |
 | **Список турнірів** | GET | `/api/tournaments/` | Всі |
-| **Деталі турніру** | GET | `/api/tournaments/{id}/` | Всі |
+| **Деталі турніру** | GET | `/api/tournaments/{id}/` | Всі (+ `registered_team` для Auth) |
 | **Створити турнір** | POST | `/api/tournaments/manage/` | Admin |
 | **Редагувати турнір** | PATCH/DEL| `/api/tournaments/manage/{id}/` | Admin |
 | **Відкрити реєстрацію**| POST | `/api/tournaments/{id}/start-registration/` | Admin |
@@ -23,6 +28,8 @@
 | **Почати раунд** | POST | `/api/tournaments/rounds/{id}/start/` | Admin |
 | **Закрити прийом робіт**| POST | `/api/tournaments/rounds/{id}/close-submissions/` | Admin |
 | **Фіналізація оцінок** | POST | `/api/tournaments/rounds/{id}/mark-evaluated/` | Admin |
+| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth (журі/адмін) |
+| **Всі роботи раунду** | GET | `/api/tournaments/rounds/{id}/submissions/` | Auth (журі/адмін) |
 | **Мої роботи** | GET | `/api/tournaments/submissions/` | Команда |
 | **Подати роботу** | POST | `/api/tournaments/submissions/` | Команда |
 | **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | Команда |
@@ -56,6 +63,28 @@
 ---
 
 ### 1. Турніри (Admin)
+
+**Деталі турніру — GET `/api/tournaments/{id}/`**
+```json
+{
+  "id": 5,
+  "name": "Hackathon 2026",
+  "description": "...",
+  "start_date": "2026-05-01T10:00:00Z",
+  "end_date": "2026-05-10T10:00:00Z",
+  "max_teams": 20,
+  "min_team_members": 2,
+  "status": "registration",
+  "rounds": [...],
+  "registered_team": {
+    "id": 3,
+    "name": "Team Rocket"
+  }
+}
+```
+> Поле `registered_team` — команда, якою авторизований користувач зареєстрований у цьому турнірі (капітан або учасник, `is_active=true`).
+> Якщо не авторизований або команди немає — `registered_team: null`.
+> Використовується для визначення `team` при поданні submission.
 
 **Створення турніру — POST `/api/tournaments/manage/`**
 ```json
@@ -186,15 +215,46 @@
 
 > **Валідація раунду (актуальна бізнес-логіка):**
 > - `start_date < end_date` (інакше 400).
-> - Дати раунду мають бути в межах дат турніру.
+> - Дати раунду мають бути в межах дат турніру (включно): дозволено `start_date == tournament.start_date` і `end_date == tournament.end_date`.
 > - Раунди одного турніру не можуть перетинатися в часі. Перевірка виконується в бізнес-логіці моделі (`Round.clean()`), тому працює однаково для create/update.
 > - Кейс на кшталт `round1(21.04-24.04)` і `round2(23.04-27.04)` заборонений (перетин періодів).
-> - Для single-round турніру (коли в турнірі один раунд) дати раунду мають збігатися з датами турніру.
 >
 > **Валідація `passing_count`:**
 > Якщо вказано `passing_count` і в турнірі вже є зареєстровані команди, значення не може перевищувати кількість зареєстрованих команд. Якщо команд ще немає (реєстрація не відкрита), перевірка пропускається.
 
 ### 3. Роботи (Команда)
+
+**Всі роботи турніру (Jury/Admin) — GET `/api/tournaments/{id}/submissions/`**
+```json
+[
+  {
+    "id": 1,
+    "team_details": {
+      "id": 3,
+      "name": "Team Rocket"
+    },
+    "round_details": {
+      "id": 2,
+      "name": "Round 1",
+      "start_date": "...",
+      "end_date": "...",
+      "status": "submission_closed"
+    },
+    "github_url": "https://github.com/...",
+    "demo_video_url": "https://youtube.com/...",
+    "live_demo_url": "",
+    "description": "...",
+    "created_at": "...",
+    "updated_at": "..."
+  }
+]
+```
+> Повертає всі submissions усіх раундів вказаного турніру, відсортовані за `updated_at` (спадання).
+> Якщо турнір не існує — `404`.
+
+**Всі роботи раунду (Jury/Admin) — GET `/api/tournaments/rounds/{id}/submissions/`**
+> Аналогічна структура відповіді, але фільтрує submissions тільки для конкретного раунду.
+> Якщо раунд не існує — `404`.
 
 **Подача роботи — POST `/api/tournaments/submissions/`**
 ```json
@@ -230,7 +290,6 @@
   "description": "Discuss project",
   "link": "https://meet.google.com/abc",
   "start_datetime": "2026-05-01T10:00:00Z",
-  "end_datetime": "2026-05-01T11:00:00Z",
   "icon": 2
 }
 ```
@@ -252,7 +311,7 @@
 ```json
 {
   "title": "Updated Title",
-  "end_datetime": "2026-05-01T12:00:00Z"
+  "start_datetime": "2026-05-01T12:00:00Z"
 }
 ```
 
@@ -261,7 +320,6 @@
 
 > **Валідація подій:**
 > - `start_datetime` є обов'язковим.
-> - Якщо вказано `end_datetime`, він має бути ≥ `start_datetime`.
 > - Якщо `type == "event"` — поле `link` ігнорується (встановлюється порожнім).
 > - Якщо `type == "meet"` — поле `link` дозволено.
 > - `tournament` має існувати.

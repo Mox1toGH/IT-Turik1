@@ -17,6 +17,7 @@ from .permissions import (
     CanManageRounds,
     CanManageRoundsOrReadOnly,
     CanManageParticipants,
+    CanRegisterTeamForTournament,
     CanSetResults,
     CanViewTournament,
     IsPlatformAdminOrTeamMemberPermission,
@@ -216,7 +217,7 @@ class TournamentStartRegistrationView(APIView):
 
 
 class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
 
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
@@ -389,6 +390,33 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
         round_obj.refresh_from_db()
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
+
+class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .filter(round__tournament=tournament)
+            .order_by('-updated_at')
+        )
+
+
+class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        round_obj = get_object_or_404(Round, pk=self.kwargs['pk'])
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .filter(round=round_obj)
+            .order_by('-updated_at')
+        )
 
 class RoundCloseSubmissionsView(SyncStatusesMixin, APIView):
     permission_classes = [IsAuthenticated, CanManageRounds]

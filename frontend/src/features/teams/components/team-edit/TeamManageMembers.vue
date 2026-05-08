@@ -67,7 +67,7 @@
 
           <template #footer>
             <ui-button
-              v-if="member.id !== team?.captain_id"
+              v-if="member.id !== team?.captain_id && !team.is_in_active_tournament"
               variant="danger"
               size="sm"
               class="remove-member-btn"
@@ -126,18 +126,17 @@
       No members match your search.
     </p>
 
-    <div class="add-member-box">
+    <div class="add-member-box" v-if="!team.is_in_active_tournament">
       <h3>Invite user</h3>
 
       <div class="form-item">
         <ui-select
+          placeholder="Select user"
           v-model="addMemberSelection"
           :options="userOptions"
           :isLoading="isLoadingUsers"
         />
       </div>
-
-      <p v-if="availableUsers?.length === 0" class="text-muted">No available users to add.</p>
 
       <ui-button
         @click="addMember"
@@ -202,7 +201,6 @@ const filteredMembers = computed(() => {
 })
 
 const userOptions = computed(() => [
-  { value: '', label: 'Select user' },
   ...(availableUsers.value?.map((user) => ({
     value: String(user.id),
     label: `${user.username} (${user.email})`,

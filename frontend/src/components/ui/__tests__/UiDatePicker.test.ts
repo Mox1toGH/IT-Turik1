@@ -132,14 +132,14 @@ describe('UiDatePicker', () => {
       const onUpdate = vi.fn()
       const onBlur = vi.fn()
       const screen = await render(UiDatePicker, {
-        props: { modelValue: null, 'onUpdate:modelValue': onUpdate, onBlur: onBlur },
+        props: { modelValue: FIXED_DATE, 'onUpdate:modelValue': onUpdate, onBlur: onBlur },
       })
 
       await screen.getByRole('button').click()
 
       const days = screen.getByRole('dialog').getByRole('button').all()
       const dayBtn = days.find(
-        (day) => day.element().textContent?.trim() === String(FIXED_DATE.getDate()),
+        (day) => day.element().textContent?.trim() === FIXED_DATE.getDate().toString(),
       )
       await dayBtn!.click()
 
@@ -150,7 +150,8 @@ describe('UiDatePicker', () => {
     })
 
     it('disables days before minDate', async () => {
-      const minDate = new Date(2026, 3, 15)
+      const minDate = new Date()
+      const pastDateDay = new Date().getDay() - 1
 
       const screen = await render(UiDatePicker, {
         props: { modelValue: null, minDate },
@@ -159,7 +160,9 @@ describe('UiDatePicker', () => {
       await screen.getByRole('button').click()
 
       const days = screen.getByRole('dialog').getByRole('button').all()
-      const disabledDay = days.find((day) => day.element().textContent?.trim() === '10')
+      const disabledDay = days.find(
+        (day) => day.element().textContent?.trim() === pastDateDay.toString(),
+      )
       expect(disabledDay!.element()).toHaveAttribute('disabled')
     })
 
