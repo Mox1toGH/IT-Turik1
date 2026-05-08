@@ -62,6 +62,7 @@ export interface GetTournamentInfoArgs {
 
 export type GetTournamentInfoResponse = Tournament & {
   rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
+  registered_team: Pick<Team, 'id' | 'name'> | null
 }
 
 // Get active team tournament
@@ -151,6 +152,16 @@ export interface RegisterTeamBody {
 export interface RegisterTeamArgs {
   id: TournamentId
   body: RegisterTeamBody
+}
+
+// Leave team from tournament
+export interface LeaveTeamBody {
+  team_id: TeamId
+}
+
+export interface LeaveTeamArgs {
+  id: TournamentId
+  body: LeaveTeamBody
 }
 
 // Submit round

@@ -106,6 +106,7 @@
       <join-tournament-btn
         v-if="tournament?.status === 'registration'"
         :tournament-id="props.tournamentId"
+        :registered-team-id="tournament?.registered_team?.id ?? null"
       />
     </div>
   </ui-card>
