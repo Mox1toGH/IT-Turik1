@@ -414,6 +414,7 @@ class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(round__tournament=tournament)
             .order_by('-updated_at')
         )
@@ -443,6 +444,7 @@ class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
 
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(
                 round__tournament=tournament,
                 team_id=team_registration.team_id,

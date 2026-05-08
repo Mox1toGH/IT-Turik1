@@ -199,10 +199,24 @@ class SubmissionAssignmentJurySerializer(serializers.Serializer):
 
 class SubmissionAssignmentSerializer(serializers.ModelSerializer):
     jury = SubmissionAssignmentJurySerializer(read_only=True)
+    evaluation = serializers.SerializerMethodField()
 
     class Meta:
         model = JuryAssignment
-        fields = ('id', 'jury', 'created_at')
+        fields = ('id', 'jury', 'evaluation', 'created_at')
+
+    def get_evaluation(self, obj):
+        evaluation = getattr(obj, 'evaluation', None)
+        if evaluation is None:
+            return None
+        return {
+            'id': evaluation.id,
+            'scores': evaluation.scores,
+            'total_score': evaluation.total_score,
+            'final_score': evaluation.final_score,
+            'comment': evaluation.comment,
+            'created_at': evaluation.created_at,
+        }
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
