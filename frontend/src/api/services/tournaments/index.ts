@@ -22,6 +22,8 @@ import type {
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
   GetRoundsResponse,
+  GetRoundSubmissionsArgs,
+  GetRoundSubmissionsResponse,
   GetTeamSubmissionsArgs,
   GetTeamSubmissionsResponse,
   GetTournamentInfoArgs,
@@ -33,6 +35,7 @@ import type {
   StartRoundResponse,
   SubmitRoundArgs,
 } from './types'
+import { toValue } from 'vue'
 
 const prefix = '/api/tournaments'
 
@@ -172,6 +175,13 @@ export const tournamentsService = {
     const { data } = await apiClient.patch<EditSubmissionResponse>(
       `${prefix}/submissions/${args.submissionId}/`,
       args.body,
+    )
+    return data
+  },
+
+  getRoundSubmissions: async (args: GetRoundSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
+      `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
     )
     return data
   },

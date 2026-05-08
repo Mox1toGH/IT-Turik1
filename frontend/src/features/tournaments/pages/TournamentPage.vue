@@ -57,7 +57,15 @@
 
     <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
     <TournamentSchedule :tournament-id="id" v-if="currentSection === 'schedule'" />
-    <TournamentSubmissions :tournament-id="id" v-if="currentSection === 'submissions'" />
+
+    <TournamentSubmissions
+      :tournament-id="id"
+      v-if="currentSection === 'submissions' && user?.role === 'team'"
+    />
+    <JuryAssign
+      :tournament-id="id"
+      v-if="currentSection === 'submissions' && user?.role === 'admin'"
+    />
   </section>
 </template>
 
@@ -70,13 +78,16 @@ import TournamentTeams from '../components/tournament/TournamentTeams.vue'
 import { ref, watch } from 'vue'
 import TournamentSchedule from '../components/tournament/TournamentSchedule.vue'
 import TournamentRounds from '../components/tournament/TournamentRounds.vue'
-import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
+import JuryAssign from '../components/tournament/tournament-submissions/JuryAssign.vue'
+import { useProfile } from '@/api/queries/accounts'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
 const route = useRoute()
 const router = useRouter()
 const id = Number(route.params.id) || 1
+
+const { data: user } = useProfile()
 
 const currentSection = ref<Sections>('information')
 
