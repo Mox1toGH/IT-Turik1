@@ -1,12 +1,5 @@
 #  API Cheat Sheet
 
-## Access Updates (2026-05-07)
-
-- `POST /api/teams/` -> `Auth`, but `admin` and `superuser` are denied (`403`).
-- `PUT/PATCH/DELETE /api/teams/{id}/` -> `Auth + captain rules`, but `admin` and `superuser` are denied (`403`).
-- `POST /api/tournaments/{id}/register-team/` -> `Auth + tournament registration rules`, but `admin` and `superuser` are denied (`403`).
-- `POST/PATCH /api/tournaments/submissions/` -> only team captain can create/update submission (`400` if not captain).
-
 ---
 
 ### 1. Турніри
