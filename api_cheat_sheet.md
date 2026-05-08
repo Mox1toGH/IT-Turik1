@@ -266,16 +266,17 @@
 **Подача роботи — POST `/api/tournaments/submissions/`**
 ```json
 {
-  "team": 1,
+{
   "round": 1,
   "github_url": "https://github.com/user/repo",
   "demo_video_url": "https://youtube.com/...",
   "description": "Ready for review"
 }
 ```
-> Дозволено тільки якщо `request.user == team.captain`.
-> Якщо запит робить не капітан, повертається `400` з помилкою по полю `team`.
-
+> `team` is not accepted in request payload.
+> Backend resolves team automatically from active tournament registration for selected `round`, where `request.user` is captain.
+> If user is not a captain of an active registered team in this tournament, API returns `400` with `team` error.
+> If multiple active captain teams are found in the same tournament, API returns `400` (ambiguous team).
 **Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
 ```json
 {
