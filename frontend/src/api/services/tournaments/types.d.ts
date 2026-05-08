@@ -120,13 +120,31 @@ export interface CreateRoundArgs {
 }
 
 // delete round
-
 export interface DeleteRoundArgs {
   id: RoundId
 }
 
-// Get current round
+// edit round
+export interface EditRoundArgs {
+  id: RoundId
+  body: EditRoundBody
+}
 
+export type EditRoundBody = Pick<
+  Round,
+  | 'name'
+  | 'passing_count'
+  | 'description'
+  | 'tech_requirements'
+  | 'must_have_requirements'
+  | 'criteria'
+  | 'start_date'
+  | 'end_date'
+>
+
+export type EditRoundResponse = Round
+
+// Get current round
 export interface GetCurrentRoundArgs {
   id: TournamentId
 }

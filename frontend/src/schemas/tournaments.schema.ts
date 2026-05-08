@@ -91,6 +91,8 @@ export const CreateRoundSchema = v.pipe(
   ),
 )
 
+export const EditRoundSchema = CreateRoundSchema
+
 export const SubmitRoundSchema = v.object({
   github_url: v.pipe(
     v.string('GitHub URL is required'),
