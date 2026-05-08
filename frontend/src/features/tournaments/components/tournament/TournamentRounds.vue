@@ -74,7 +74,15 @@
             </ui-button>
 
             <template v-if="round.status === 'active' && user?.role === 'team'">
-              <ui-button size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
+              <ui-button
+                v-if="submittedRoundIds.has(round.id)"
+                size="sm"
+                variant="secondary"
+                @click="openSubmissionsSection"
+              >
+                View submission
+              </ui-button>
+              <ui-button v-else size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
             </template>
           </div>
         </ui-card>
@@ -112,10 +120,11 @@ import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
-import { useTournamentRounds } from '@/api/queries/tournaments'
+import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
   tournamentId: number
@@ -124,6 +133,8 @@ type Round = GetRoundsResponse[number]
 
 const props = defineProps<Props>()
 const { data: user } = useProfile()
+const router = useRouter()
+const route = useRoute()
 
 const {
   data,
@@ -131,9 +142,13 @@ const {
   error: roundsError,
   isError,
 } = useTournamentRounds({ id: props.tournamentId })
+const { data: submissions } = useTeamSubmissions({ tournamentId: props.tournamentId })
 
 const error = computed(() => parseApiError(roundsError.value))
 const rounds = computed(() => data.value ?? [])
+const submittedRoundIds = computed(
+  () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
+)
 
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
@@ -148,6 +163,15 @@ function openDetails(round: Round) {
 function openSubmissionForm(roundId: number) {
   selectedSubmitRoundId.value = roundId
   isSubmitOpen.value = true
+}
+
+function openSubmissionsSection() {
+  void router.replace({
+    query: {
+      ...route.query,
+      section: 'submissions',
+    },
+  })
 }
 
 watch(isSubmitOpen, (isOpen) => {
