@@ -22,7 +22,6 @@ export interface GetTournamentsArgs {
 }
 
 export interface GetTournamentsResponse {
-  // TODO: add rounds type annotation
   data: (Pick<
     Tournament,
     | 'id'
@@ -33,7 +32,7 @@ export interface GetTournamentsResponse {
     | 'max_teams'
     | 'min_team_members'
     | 'status'
-  > & { rounds: [] })[]
+  > & { rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'> })[]
   total: number
 }
 
@@ -156,7 +155,6 @@ export interface RegisterTeamArgs {
 // Submit round
 
 export interface SubmitRoundBody {
-  team: TeamId
   round: RoundId
   github_url: string
   demo_video_url: string
@@ -170,10 +168,8 @@ export interface SubmitRoundArgs {
 // create Event
 export type CreateEventBody = Pick<
   TournamentEvent,
-  'title' | 'description' | 'link' | 'start_datetime' | 'tournament'
-> & {
-  type: 'event' // TODO: remove this. We dont actually need to pass type of event
-}
+  'title' | 'description' | 'start_datetime' | 'tournament'
+>
 
 export interface CreateEventArgs {
   body: CreateEventBody
@@ -187,7 +183,7 @@ export interface GetEventsArgs {
 export type GetEventsResponse = TournamentEvent[]
 
 // Edit event
-export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime'>
+export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime' | 'description'>
 
 export interface EditEventArgs {
   eventId: EventId

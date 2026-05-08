@@ -18,6 +18,18 @@
       </label>
 
       <label class="form-item">
+        <p class="form-label">Descriprion</p>
+        <ui-text-area
+          v-model="form.fields.value.description"
+          :is-invalid="!!form.errors.value.description"
+          @blur="form.validateField('description')"
+        />
+        <small v-if="form.errors.value.description" class="text-error">{{
+          form.errors.value.description
+        }}</small>
+      </label>
+
+      <label class="form-item">
         <p class="form-label">Start Date</p>
         <ui-date-picker
           v-model="form.fields.value.startDate"
@@ -65,17 +77,20 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import type { TournamentId } from '@/api/dbTypes'
 import { tournamentsKeys } from '@/api/queries/keys'
+import UiTextArea from '@/components/ui/UiTextArea.vue'
 
 interface Props {
   modelValue: boolean
   eventId: number
   tournamentId: TournamentId
   title: string
+  description: string
   startDate: Date | string
 }
 
 interface Form {
   title: string
+  description: string
   startDate: Date
   startTime: string
 }
@@ -92,6 +107,7 @@ const date = props.startDate instanceof Date ? props.startDate : new Date(props.
 const pad = (value: number) => String(value).padStart(2, '0')
 const form = useForm<Form>(EditEventSchema, {
   title: props.title,
+  description: props.description,
   startDate: date,
   startTime: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
 })
@@ -103,6 +119,7 @@ const editEvent = () => {
       eventId: props.eventId,
       body: {
         title: form.fields.value.title,
+        description: form.fields.value.description,
         start_datetime: combineDateAndTime(
           form.fields.value.startDate,
           form.fields.value.startTime,

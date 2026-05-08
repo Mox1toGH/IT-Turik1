@@ -18,16 +18,6 @@
       </label>
 
       <label class="form-item">
-        <p class="form-label">Link</p>
-        <ui-input
-          v-model="form.fields.value.link"
-          :is-invalid="!!form.errors.value.link"
-          @blur="form.validateField('link')"
-        />
-        <small v-if="form.errors.value.link" class="text-error">{{ form.errors.value.link }}</small>
-      </label>
-
-      <label class="form-item">
         <p class="form-label">Start Date</p>
         <ui-date-picker
           v-model="form.fields.value.start_date"
@@ -93,7 +83,6 @@ interface Props {
 interface Form {
   title: string
   description: string
-  link: string
   start_date: Date
   start_time: string
 }
@@ -106,7 +95,6 @@ const emit = defineEmits<{
 const form = useForm<Form>(AddEventSchema, {
   title: '',
   description: '',
-  link: '',
   start_date: new Date(),
   start_time: '00:00',
 })
@@ -123,7 +111,6 @@ const createEvent = () => {
         type: 'event',
         title: form.fields.value.title,
         description: form.fields.value.description,
-        link: form.fields.value.link,
         start_datetime: combineDateAndTime(
           form.fields.value.start_date,
           form.fields.value.start_time,
