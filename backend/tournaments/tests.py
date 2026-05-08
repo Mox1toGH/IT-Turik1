@@ -231,7 +231,6 @@ class TournamentApiTests(APITestCase):
         self.client.force_authenticate(user=self.captain)
         url = reverse('submissions')
         submission_data = {
-            'team': self.team.id,
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
             'demo_video_url': 'https://youtube.com/test',
@@ -266,7 +265,6 @@ class TournamentApiTests(APITestCase):
         self.client.force_authenticate(user=self.captain)
         url = reverse('submissions')
         submission_data = {
-            'team': self.team.id,
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
             'demo_video_url': 'https://youtube.com/test',
@@ -302,7 +300,6 @@ class TournamentApiTests(APITestCase):
         self.client.force_authenticate(user=member)
         url = reverse('submissions')
         submission_data = {
-            'team': self.team.id,
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
             'demo_video_url': 'https://youtube.com/test',
