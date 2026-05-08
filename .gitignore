@@ -15,7 +15,7 @@ backend/media/certificate_templates/
 .codex
 .cursor
 tasks.txt
-.venv312
+venv312
 
 ### Django ###
 *.log
