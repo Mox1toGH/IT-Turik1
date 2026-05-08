@@ -393,7 +393,6 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
 
 class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -401,6 +400,38 @@ class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
             .filter(round__tournament=tournament)
+            .order_by('-updated_at')
+        )
+
+
+class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
+
+        team_registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .filter(
+                tournament=tournament,
+                is_active=True,
+            )
+            .filter(
+                Q(team__captain_id=user.id) | Q(team__team_members__user_id=user.id),
+            )
+            .first()
+        )
+        if team_registration is None:
+            raise NotFound('No team participation found for this tournament.')
+
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .filter(
+                round__tournament=tournament,
+                team_id=team_registration.team_id,
+            )
             .order_by('-updated_at')
         )
 

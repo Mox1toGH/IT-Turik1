@@ -277,6 +277,380 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(response.data.get('code'), 'validation_error')
         self.assertIn('team', response.data['details'])
 
+    def test_non_captain_team_member_cannot_create_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+
+        member = User.objects.create_user(
+            username='member-create',
+            email='member-create@example.com',
+            password='StrongPass123!',
+        )
+        TeamMember.objects.create(team=self.team, user=member)
+
+        self.client.force_authenticate(user=member)
+        url = reverse('submissions')
+        submission_data = {
+            'team': self.team.id,
+            'round': round_obj.id,
+            'github_url': 'https://github.com/test/repo',
+            'demo_video_url': 'https://youtube.com/test',
+            'description': 'Member submission',
+        }
+        response = self.client.post(url, submission_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get('code'), 'validation_error')
+        self.assertIn('team', response.data['details'])
+
+    def test_non_captain_team_member_cannot_update_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo',
+            demo_video_url='https://youtube.com/test',
+            description='Captain submission',
+            created_by=self.captain,
+        )
+
+        member = User.objects.create_user(
+            username='member-update',
+            email='member-update@example.com',
+            password='StrongPass123!',
+        )
+        TeamMember.objects.create(team=self.team, user=member)
+
+        self.client.force_authenticate(user=member)
+        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        response = self.client.patch(url, {'description': 'Updated by member'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get('code'), 'validation_error')
+        self.assertIn('team', response.data['details'])
+
+    def test_captain_can_update_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo',
+            demo_video_url='https://youtube.com/test',
+            description='Captain submission',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        response = self.client.patch(url, {'description': 'Updated by captain'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        submission.refresh_from_db()
+        self.assertEqual(submission.description, 'Updated by captain')
+
+    def test_tournament_submissions_returns_all_teams_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        own_submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/my-team',
+            demo_video_url='https://youtube.com/my-team',
+            created_by=self.captain,
+        )
+
+        other_captain = User.objects.create_user(
+            username='captain-other',
+            email='captain-other@example.com',
+            password='StrongPass123!',
+        )
+        other_team = Team.objects.create(
+            name='Other Team',
+            email='other-team@example.com',
+            captain=other_captain,
+        )
+        TeamMember.objects.create(team=other_team, user=other_captain)
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=other_team)
+        Submission.objects.create(
+            team=other_team,
+            round=round_obj,
+            github_url='https://github.com/test/other-team',
+            demo_video_url='https://youtube.com/other-team',
+            created_by=other_captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        returned_ids = {item['id'] for item in response.data}
+        self.assertIn(own_submission.id, returned_ids)
+
+    def test_tournament_submissions_does_not_include_other_tournament_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        other_tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            name='Other tournament',
+            description='Other tournament desc',
+            start_date=timezone.now() + timezone.timedelta(days=2),
+            end_date=timezone.now() + timezone.timedelta(days=12),
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        other_round = Round.objects.create(
+            tournament=other_tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        TournamentTeamRegistration.objects.create(tournament=other_tournament, team=self.team)
+        own_submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/current-tournament',
+            demo_video_url='https://youtube.com/current-tournament',
+            created_by=self.captain,
+        )
+        Submission.objects.create(
+            team=self.team,
+            round=other_round,
+            github_url='https://github.com/test/other-tournament',
+            demo_video_url='https://youtube.com/other-tournament',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], own_submission.id)
+
+    def test_tournament_my_submissions_returns_only_captain_team_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        own_submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo',
+            demo_video_url='https://youtube.com/test',
+            created_by=self.captain,
+        )
+
+        other_captain = User.objects.create_user(
+            username='captain-other-2',
+            email='captain-other-2@example.com',
+            password='StrongPass123!',
+        )
+        other_team = Team.objects.create(
+            name='Other Team 2',
+            email='other-team-2@example.com',
+            captain=other_captain,
+        )
+        TeamMember.objects.create(team=other_team, user=other_captain)
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=other_team, is_active=True)
+        Submission.objects.create(
+            team=other_team,
+            round=round_obj,
+            github_url='https://github.com/test/other-repo',
+            demo_video_url='https://youtube.com/other-test',
+            created_by=other_captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], own_submission.id)
+
+    def test_tournament_my_submissions_returns_member_team_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        member = User.objects.create_user(
+            username='member-my-team',
+            email='member-my-team@example.com',
+            password='StrongPass123!',
+        )
+        TeamMember.objects.create(team=self.team, user=member)
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team, is_active=True)
+        own_submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/member-repo',
+            demo_video_url='https://youtube.com/member-test',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=member)
+        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], own_submission.id)
+
+    def test_tournament_my_submissions_does_not_include_other_tournament_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        other_tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            name='Other tournament for my submissions',
+            description='Other tournament desc',
+            start_date=timezone.now() + timezone.timedelta(days=2),
+            end_date=timezone.now() + timezone.timedelta(days=12),
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        other_round = Round.objects.create(
+            tournament=other_tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team, is_active=True)
+        TournamentTeamRegistration.objects.create(tournament=other_tournament, team=self.team, is_active=True)
+        own_submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/current-tournament-my',
+            demo_video_url='https://youtube.com/current-tournament-my',
+            created_by=self.captain,
+        )
+        Submission.objects.create(
+            team=self.team,
+            round=other_round,
+            github_url='https://github.com/test/other-tournament-my',
+            demo_video_url='https://youtube.com/other-tournament-my',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], own_submission.id)
+
+    def test_tournament_my_submissions_returns_404_when_user_not_participating(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        outsider = User.objects.create_user(
+            username='outsider',
+            email='outsider@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_authenticate(user=outsider)
+        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_tournament_my_submissions_requires_authentication(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_tournament_my_submissions_returns_404_for_missing_tournament(self):
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_my_submissions', kwargs={'pk': 999999})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_registration_limit_reached(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,

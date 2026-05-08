@@ -2,6 +2,8 @@ import type {
   EventId,
   Round,
   RoundId,
+  Submission,
+  SubmissionId,
   Team,
   TeamId,
   Tournament,
@@ -9,6 +11,7 @@ import type {
   TournamentId,
   TournamentStatus,
 } from '@/api/dbTypes'
+import type { MaybeRefOrGetter } from 'vue'
 
 // Get tournaments
 export interface GetTournamentsArgs {
@@ -45,13 +48,7 @@ export interface GetTournamentsArgs {
 // Create tournament
 export type CreateTournamentBody = Pick<
   Tournament,
-  | 'name'
-  | 'description'
-  | 'start_date'
-  | 'end_date'
-  | 'rounds_count'
-  | 'max_teams'
-  | 'min_team_members'
+  'name' | 'description' | 'start_date' | 'end_date' | 'max_teams' | 'min_team_members'
 >
 
 export interface CreateTournamentArgs {
@@ -64,7 +61,7 @@ export interface GetTournamentInfoArgs {
 }
 
 export type GetTournamentInfoResponse = Tournament & {
-  rounds: [] // TODO
+  rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
 }
 
 // Get active team tournament
@@ -220,3 +217,37 @@ export interface CloseSubmissionsArgs {
 }
 
 export type CloseSubmissionsResponse = Round
+
+// tournament submissions
+export interface GetTeamSubmissionsArgs {
+  tournamentId: TournamentId
+}
+
+export type GetTeamSubmissionsResponse = (Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+})[]
+
+// edit submission
+export interface EditSubmissionArgs {
+  submissionId: SubmissionId
+  body: EditSubmissionBody
+}
+
+export interface EditSubmissionBody {
+  github_url: string
+  demo_video_url: string
+  description: string
+}
+
+export type EditSubmissionResponse = Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+}
+
+// round submissions
+export interface GetRoundSubmissionsArgs {
+  roundId: MaybeRefOrGetter<RoundId>
+}
+
+export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse

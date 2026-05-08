@@ -5,6 +5,7 @@
 - `POST /api/teams/` -> `Auth`, but `admin` and `superuser` are denied (`403`).
 - `PUT/PATCH/DELETE /api/teams/{id}/` -> `Auth + captain rules`, but `admin` and `superuser` are denied (`403`).
 - `POST /api/tournaments/{id}/register-team/` -> `Auth + tournament registration rules`, but `admin` and `superuser` are denied (`403`).
+- `POST/PATCH /api/tournaments/submissions/` -> only team captain can create/update submission (`400` if not captain).
 
 ---
 
@@ -28,11 +29,12 @@
 | **Почати раунд** | POST | `/api/tournaments/rounds/{id}/start/` | Admin |
 | **Закрити прийом робіт**| POST | `/api/tournaments/rounds/{id}/close-submissions/` | Admin |
 | **Фіналізація оцінок** | POST | `/api/tournaments/rounds/{id}/mark-evaluated/` | Admin |
-| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth (журі/адмін) |
+| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth |
+| **Роботи моєї команди у турнірі** | GET | `/api/tournaments/{id}/my-submissions/` | Auth (автофільтр по команді) |
 | **Всі роботи раунду** | GET | `/api/tournaments/rounds/{id}/submissions/` | Auth (журі/адмін) |
 | **Мої роботи** | GET | `/api/tournaments/submissions/` | Команда |
-| **Подати роботу** | POST | `/api/tournaments/submissions/` | Команда |
-| **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | Команда |
+| **Подати роботу** | POST | `/api/tournaments/submissions/` | Лише капітан команди |
+| **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | GET: Команда, PATCH: Лише капітан |
 | **Поточне завдання** | GET | `/api/tournaments/current-task/?tournament_id={id}` *(опц.)* | Учасники |
 | **Список подій** | GET | `/api/tournaments/events/?tournament={id}` *(опц.)* | Всі |
 | **Деталі події** | GET | `/api/tournaments/events/{id}/` | Всі |
@@ -224,7 +226,7 @@
 
 ### 3. Роботи (Команда)
 
-**Всі роботи турніру (Jury/Admin) — GET `/api/tournaments/{id}/submissions/`**
+**Всі роботи турніру — GET `/api/tournaments/{id}/submissions/`**
 ```json
 [
   {
@@ -252,6 +254,11 @@
 > Повертає всі submissions усіх раундів вказаного турніру, відсортовані за `updated_at` (спадання).
 > Якщо турнір не існує — `404`.
 
+**Роботи моєї команди у турнірі — GET `/api/tournaments/{id}/my-submissions/`**
+> Повертає submissions тільки однієї команди користувача в цьому турнірі.
+> `team_id` передавати не потрібно: бекенд сам знаходить команду користувача (капітан або учасник) в активній реєстрації турніру.
+> Якщо користувач не бере участі в цьому турнірі — `404`.
+
 **Всі роботи раунду (Jury/Admin) — GET `/api/tournaments/rounds/{id}/submissions/`**
 > Аналогічна структура відповіді, але фільтрує submissions тільки для конкретного раунду.
 > Якщо раунд не існує — `404`.
@@ -266,6 +273,8 @@
   "description": "Ready for review"
 }
 ```
+> Дозволено тільки якщо `request.user == team.captain`.
+> Якщо запит робить не капітан, повертається `400` з помилкою по полю `team`.
 
 **Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
 ```json
@@ -274,6 +283,8 @@
   "description": "Updated submission notes"
 }
 ```
+> Редагувати submission може тільки капітан відповідної команди.
+> Перегляд (`GET`) лишається доступним для капітана та учасників цієї команди.
 
 ### 4. Розклад / Події (Admin)
 
