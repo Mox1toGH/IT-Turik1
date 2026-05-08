@@ -35,7 +35,11 @@
         </div>
       </ui-card>
 
-      <ui-card v-else-if="rounds.length === 0" class="empty-card">
+      <ui-card
+        v-else-if="rounds.length === 0"
+        class="empty-card"
+        style="display: flex; align-items: center; justify-content: center; height: 300px"
+      >
         <p class="empty-error">No rounds found</p>
       </ui-card>
 

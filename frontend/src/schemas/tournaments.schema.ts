@@ -18,7 +18,6 @@ export const CreateTournamentSchema = v.pipe(
     startTime: TimeSchema,
     endDate: v.date(),
     endTime: TimeSchema,
-    rounds_count: v.pipe(v.number('must be a number'), v.minValue(1, 'Rounds must be at least 1')),
     max_teams: v.pipe(
       v.number('must be a number'),
       v.minValue(2, 'Maximum teams must be at least 2'),
@@ -112,6 +111,8 @@ export const SubmitRoundSchema = v.object({
     v.maxLength(500, 'Description must not exceed 500 characters'),
   ),
 })
+
+export const EditSubmissionSchema = SubmitRoundSchema
 
 export const EditEventSchema = v.object({
   title: v.pipe(
