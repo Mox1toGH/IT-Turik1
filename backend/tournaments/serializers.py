@@ -3,6 +3,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from evaluation.models import JuryAssignment
 from teams.models import Team
 from teams.models import TeamMember
 
@@ -180,9 +181,25 @@ class RoundSerializer(serializers.ModelSerializer):
         return instance
 
 
+class SubmissionAssignmentJurySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+    full_name = serializers.CharField()
+    role = serializers.CharField()
+
+
+class SubmissionAssignmentSerializer(serializers.ModelSerializer):
+    jury = SubmissionAssignmentJurySerializer(read_only=True)
+
+    class Meta:
+        model = JuryAssignment
+        fields = ('id', 'jury', 'created_at')
+
+
 class SubmissionSerializer(serializers.ModelSerializer):
     team_details = TeamSummarySerializer(source='team', read_only=True)
     round_details = RoundShortSerializer(source='round', read_only=True)
+    assignments = SubmissionAssignmentSerializer(source='jury_assignments', many=True, read_only=True)
 
     class Meta:
         model = Submission
@@ -197,6 +214,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'demo_video_file',
             'live_demo_url',
             'description',
+            'assignments',
             'created_at',
             'updated_at',
         )

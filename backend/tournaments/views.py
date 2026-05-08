@@ -445,6 +445,7 @@ class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         round_obj = get_object_or_404(Round, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury')
             .filter(round=round_obj)
             .order_by('-updated_at')
         )
