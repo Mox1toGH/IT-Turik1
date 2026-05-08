@@ -7,7 +7,10 @@
       </div>
     </div>
 
-    <p v-if="evaluation.comment" class="comment">{{ evaluation.comment }}</p>
+    <div v-if="evaluation.comment" class="comment-box">
+      <p class="comment-label">Jury Comment</p>
+      <p class="comment">{{ evaluation.comment }}</p>
+    </div>
 
     <div class="metric">
       <div class="metric-head">
@@ -201,8 +204,26 @@ const finalPercent = computed(() => {
 
 .comment {
   margin: 0;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   line-height: 1.45;
   word-break: break-word;
+}
+
+.comment-box {
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.comment-label {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  font-weight: 700;
 }
 </style>
