@@ -33,6 +33,7 @@ from .serializers import (
     TournamentAdminSerializer,
     TournamentPublicSerializer,
     TournamentTeamRegistrationCreateSerializer,
+    TournamentTeamLeaveSerializer,
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationUpdateSerializer,
@@ -228,6 +229,20 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
         serializer.is_valid(raise_exception=True)
         registration = serializer.save()
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
+
+
+class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
+
+    def post(self, request, pk):
+        tournament = get_object_or_404(Tournament, pk=pk)
+        serializer = TournamentTeamLeaveSerializer(
+            data=request.data,
+            context={'request': request, 'tournament': tournament},
+        )
+        serializer.is_valid(raise_exception=True)
+        registration = serializer.save()
+        return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
 
 
 class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
