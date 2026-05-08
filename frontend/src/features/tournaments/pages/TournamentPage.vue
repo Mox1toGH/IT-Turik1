@@ -66,6 +66,11 @@
       :tournament-id="id"
       v-if="currentSection === 'submissions' && user?.role === 'admin'"
     />
+    <ui-card
+      v-if="currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'"
+    >
+      <p>Submissions are available for team members and admins.</p>
+    </ui-card>
   </section>
 </template>
 
@@ -79,6 +84,7 @@ import { ref, watch } from 'vue'
 import TournamentSchedule from '../components/tournament/TournamentSchedule.vue'
 import TournamentRounds from '../components/tournament/TournamentRounds.vue'
 import JuryAssign from '../components/tournament/tournament-submissions/JuryAssign.vue'
+import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
 import { useProfile } from '@/api/queries/accounts'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'

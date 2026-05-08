@@ -18,6 +18,7 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
@@ -114,6 +115,11 @@ export const tournamentsService = {
 
   registerTeam: async (args: RegisterTeamArgs) => {
     const { data } = await apiClient.post(`${prefix}/${args.id}/register-team/`, args.body)
+    return data
+  },
+
+  leaveTeam: async (args: LeaveTeamArgs) => {
+    const { data } = await apiClient.post(`${prefix}/${args.id}/leave-team/`, args.body)
     return data
   },
 

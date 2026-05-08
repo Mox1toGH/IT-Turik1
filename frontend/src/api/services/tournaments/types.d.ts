@@ -61,6 +61,7 @@ export interface GetTournamentInfoArgs {
 
 export type GetTournamentInfoResponse = Tournament & {
   rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
+  registered_team: Pick<Team, 'id' | 'name'> | null
 }
 
 // Get active team tournament
@@ -152,6 +153,16 @@ export interface RegisterTeamArgs {
   body: RegisterTeamBody
 }
 
+// Leave team from tournament
+export interface LeaveTeamBody {
+  team_id: TeamId
+}
+
+export interface LeaveTeamArgs {
+  id: TournamentId
+  body: LeaveTeamBody
+}
+
 // Submit round
 
 export interface SubmitRoundBody {
@@ -222,6 +233,24 @@ export interface GetTeamSubmissionsArgs {
 export type GetTeamSubmissionsResponse = (Submission & {
   team_details: Pick<Team, 'id' | 'name' | 'is_public'>
   round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+  assignments: {
+    id: number
+    jury: {
+      id: number
+      username: string
+      full_name: string
+      role: string
+    }
+    evaluation: {
+      id: number
+      scores: { criterion_id: string; criterion_name?: string; score: number }[]
+      total_score: number
+      final_score: number
+      comment: string
+      created_at: string
+    } | null
+    created_at: string
+  }[]
 })[]
 
 // edit submission

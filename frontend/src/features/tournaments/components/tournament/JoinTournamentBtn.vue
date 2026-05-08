@@ -1,8 +1,17 @@
 <template>
-  <template v-if="teams && teams.length > 0 && user?.role === 'team'">
+  <template v-if="user?.role === 'team' && (hasEligibleTeams || props.registeredTeamId)">
     <ui-button :disabled="isPending" @click="open">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
+    </ui-button>
+    <ui-button
+      v-if="props.registeredTeamId"
+      :disabled="isPending"
+      variant="danger"
+      @click="handleLeave"
+    >
+      <LoadingIcon v-if="isPending" class="team-spinner" />
+      <span>Leave Tournament</span>
     </ui-button>
 
     <ui-modal v-model="isOpen">
@@ -47,7 +56,7 @@ import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useEligibleTeams, useRegisterTeam } from '@/api/queries/tournaments'
+import { useEligibleTeams, useLeaveTeam, useRegisterTeam } from '@/api/queries/tournaments'
 import { useNotification } from '@/composables/useNotification'
 import { parseApiError } from '@/api/errors'
 import UiInput from '@/components/ui/UiInput.vue'
@@ -56,6 +65,7 @@ import { useProfile } from '@/api/queries/accounts'
 
 interface Props {
   tournamentId: TournamentId
+  registeredTeamId?: TeamId | null
 }
 
 const props = defineProps<Props>()
@@ -67,6 +77,8 @@ const search = ref('')
 
 const { data: teams, isLoading: isLoadingTeams } = useEligibleTeams({ id: props.tournamentId })
 const { mutate: register, isPending } = useRegisterTeam()
+const { mutate: leave } = useLeaveTeam()
+const hasEligibleTeams = computed(() => (teams.value?.length ?? 0) > 0)
 
 const filteredTeams = computed(() => {
   const query = search.value.trim().toLowerCase()
@@ -92,6 +104,19 @@ function handleJoin(teamId: TeamId) {
     { id: props.tournamentId, body: { team_id: teamId } },
     {
       onSuccess: () => close(),
+      onError: (error) => {
+        const parsedError = parseApiError(error)
+        showNotification(parsedError?.message, 'error')
+      },
+    },
+  )
+}
+
+function handleLeave() {
+  if (!props.registeredTeamId || isPending.value) return
+  leave(
+    { id: props.tournamentId, body: { team_id: props.registeredTeamId } },
+    {
       onError: (error) => {
         const parsedError = parseApiError(error)
         showNotification(parsedError?.message, 'error')
