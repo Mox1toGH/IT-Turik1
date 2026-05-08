@@ -241,8 +241,8 @@ class SubmissionSerializer(serializers.ModelSerializer):
             if 'round' in attrs and attrs['round'].id != instance.round_id:
                 errors['round'] = 'round cannot be changed.'
 
-        if team and user and not TeamMember.objects.filter(team=team, user=user).exists() and team.captain_id != user.id:
-            errors['team'] = 'You are not a member of this team.'
+        if team and user and team.captain_id != user.id:
+            errors['team'] = 'Only team captain can create or update submissions.'
 
         if round_obj:
             now = timezone.now()
