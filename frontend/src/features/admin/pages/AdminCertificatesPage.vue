@@ -10,7 +10,7 @@
               Create certificates for users, manage template library, and verify certificate codes.
             </p>
           </div>
-          <router-link to="/admin/role-codes" class="back-link">Back to Activation Codes</router-link>
+          <ui-button as-link to="/admin/role-codes" variant="secondary">Back to admin panel</ui-button>
         </div>
       </template>
 
@@ -54,7 +54,7 @@
 
             <div class="form-item">
               <label class="form-label">Placement</label>
-              <ui-input v-model="createForm.placement" required placeholder="1st place" />
+              <ui-input v-model="createForm.placement" required placeholder="1st" />
             </div>
 
             <div class="form-item">
@@ -133,19 +133,32 @@
           </template>
 
           <form class="verify-form" @submit.prevent="handleVerify">
-            <div class="form-item">
-              <label class="form-label">Code or certificate number</label>
-              <ui-input v-model="verifyCode" required placeholder="Paste code" />
+            <div class="input-wrap">
+              <ui-input v-model="verifyCode" placeholder="Paste code or certificate number" required class="ui-input-full"/>
             </div>
-            <ui-button type="submit" class="submit">Verify</ui-button>
+            <ui-button class="verify-btn" type="submit">Verify</ui-button>
           </form>
 
-          <ui-card v-if="verifyResult" class="verify-result">
-            <p><strong>Valid:</strong> {{ verifyResult.is_valid ? 'Yes' : 'No' }}</p>
-            <p v-if="verifyResult.data"><strong>User:</strong> {{ verifyResult.data.full_name }}</p>
-            <p v-if="verifyResult.data"><strong>Tournament:</strong> {{ verifyResult.data.tournament_name }}</p>
-            <p v-if="verifyResult.message" class="text-muted">{{ verifyResult.message }}</p>
-          </ui-card>
+          <div v-if="verifyResult" class="result" :class="verifyResult.is_valid ? 'result-valid' : 'result-invalid'">
+            <div class="result-head">
+              <p class="result-title">Verification result</p>
+              <span class="status-badge" :class="verifyResult.is_valid ? 'status-valid' : 'status-invalid'">
+                {{ verifyResult.is_valid ? 'Valid' : 'Invalid' }}
+              </span>
+            </div>
+
+            <template v-if="verifyResult.data">
+              <div class="result-grid">
+                <p><span class="label">Name</span><strong>{{ verifyResult.data.full_name || '-' }}</strong></p>
+                <p><span class="label">Team</span><strong>{{ verifyResult.data.team_name || '-' }}</strong></p>
+                <p><span class="label">Tournament</span><strong>{{ verifyResult.data.tournament_name || '-' }}</strong></p>
+                <p><span class="label">Certificate number</span><strong>{{ verifyResult.data.certificate_number || '-' }}</strong></p>
+                <p><span class="label">Placement</span><strong>{{ verifyResult.data.placement || '-' }}</strong></p>
+              </div>
+            </template>
+
+            <p v-if="verifyResult.message" class="result-message">{{ verifyResult.message }}</p>
+          </div>
         </ui-card>
       </div>
     </ui-card>
@@ -302,11 +315,7 @@ const handleVerify = async () => {
   gap: 1rem;
 }
 
-.back-link {
-  text-decoration: none;
-  color: var(--brand-700);
-  font-weight: 700;
-}
+
 
 .layout {
   display: grid;
@@ -343,10 +352,39 @@ const handleVerify = async () => {
   align-items: end;
 }
 
-.template-form,
-.verify-form {
+.form-grid :deep(.select-trigger) {
+  background: var(--input) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+  border-radius: 12px !important;
+  font-weight: 400 !important;
+  padding: 0.75rem 0.85rem !important;
+}
+
+.form-grid :deep(.select-trigger:focus-visible) {
+  box-shadow: 0 0 0 3px var(--ring) !important;
+}
+
+.template-form {
   display: grid;
   gap: 0.65rem;
+}
+
+.verify-form {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.input-wrap {
+  flex: 1;
+}
+.ui-input-full {
+    width: 100%;
+  }
+
+.verify-btn {
+  min-width: 140px;
 }
 
 .form-item {
@@ -365,9 +403,33 @@ const handleVerify = async () => {
 
 .file-input {
   border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  padding: 0.45rem;
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
   background: var(--background);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-input:hover {
+  border-color: var(--primary);
+}
+
+.file-input::file-selector-button {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  margin-right: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.file-input::file-selector-button:hover {
+  opacity: 0.85;
 }
 
 .check {
@@ -404,8 +466,81 @@ const handleVerify = async () => {
   background: #fff;
 }
 
-.verify-result {
-  margin-top: 0.75rem;
+.result {
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid var(--line-soft);
+  background: var(--background);
+}
+
+.result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.result-title {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-valid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-invalid {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.result-grid p {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--muted);
+  border: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--color-gray-500);
+}
+
+.result-message {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+}
+
+.result-valid {
+  border-color: #86efac;
+}
+
+.result-invalid {
+  border-color: #fca5a5;
 }
 
 @media (max-width: 900px) {
