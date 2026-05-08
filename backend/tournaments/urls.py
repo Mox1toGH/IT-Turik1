@@ -23,6 +23,7 @@ from .views import (
     TournamentTeamRegistrationDetailView,
     TournamentUpdateView,
     
+    TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
     RoundSubmissionsView,
 )
@@ -57,6 +58,7 @@ urlpatterns = [
     path('submissions/', SubmissionListCreateView.as_view(), name='submissions'),
     path('submissions/<int:pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
     path('<int:pk>/submissions/', TournamentSubmissionsView.as_view(), name='tournament_submissions'),
+    path('<int:pk>/my-submissions/', TournamentMyTeamSubmissionsView.as_view(), name='tournament_my_submissions'),
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),

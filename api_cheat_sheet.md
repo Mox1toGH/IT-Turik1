@@ -29,7 +29,8 @@
 | **Почати раунд** | POST | `/api/tournaments/rounds/{id}/start/` | Admin |
 | **Закрити прийом робіт**| POST | `/api/tournaments/rounds/{id}/close-submissions/` | Admin |
 | **Фіналізація оцінок** | POST | `/api/tournaments/rounds/{id}/mark-evaluated/` | Admin |
-| **Роботи моїх команд у турнірі** | GET | `/api/tournaments/{id}/submissions/` | Лише капітан (автофільтр) |
+| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth |
+| **Роботи моєї команди у турнірі** | GET | `/api/tournaments/{id}/my-submissions/` | Auth (автофільтр по команді) |
 | **Всі роботи раунду** | GET | `/api/tournaments/rounds/{id}/submissions/` | Auth (журі/адмін) |
 | **Мої роботи** | GET | `/api/tournaments/submissions/` | Команда |
 | **Подати роботу** | POST | `/api/tournaments/submissions/` | Лише капітан команди |
@@ -225,7 +226,7 @@
 
 ### 3. Роботи (Команда)
 
-**Роботи моїх команд у турнірі (Captain auto-filter) — GET `/api/tournaments/{id}/submissions/`**
+**Всі роботи турніру — GET `/api/tournaments/{id}/submissions/`**
 ```json
 [
   {
@@ -250,10 +251,13 @@
   }
 ]
 ```
-> Повертає submissions усіх раундів вказаного турніру тільки для команд, де `request.user` є капітаном.
-> Не потрібно передавати `team_id` чи інші фільтри: фільтрація виконується на бекенді автоматично.
-> Якщо користувач не є капітаном жодної команди в турнірі — повертається порожній список `[]`.
+> Повертає всі submissions усіх раундів вказаного турніру, відсортовані за `updated_at` (спадання).
 > Якщо турнір не існує — `404`.
+
+**Роботи моєї команди у турнірі — GET `/api/tournaments/{id}/my-submissions/`**
+> Повертає submissions тільки однієї команди користувача в цьому турнірі.
+> `team_id` передавати не потрібно: бекенд сам знаходить команду користувача (капітан або учасник) в активній реєстрації турніру.
+> Якщо користувач не бере участі в цьому турнірі — `404`.
 
 **Всі роботи раунду (Jury/Admin) — GET `/api/tournaments/rounds/{id}/submissions/`**
 > Аналогічна структура відповіді, але фільтрує submissions тільки для конкретного раунду.
