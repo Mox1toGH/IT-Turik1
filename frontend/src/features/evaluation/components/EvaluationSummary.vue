@@ -8,7 +8,7 @@
     </div>
 
     <div v-if="evaluation.comment" class="comment-box">
-      <p class="comment-label">Jury Comment</p>
+      <p class="comment-label">Comment</p>
       <p class="comment">{{ evaluation.comment }}</p>
     </div>
 
