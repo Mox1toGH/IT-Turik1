@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tournaments.models import Round
+from tournaments.models import Round, Tournament
 from tournaments.permissions import CanManageAssignments, CanSetResults
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
 from .leaderboard_service import get_leaderboard, get_tournament_leaderboard
