@@ -34,25 +34,6 @@
       </label>
 
       <div class="form-row settings-row">
-        <label class="form-item">
-          <span class="form-label">Rounds</span>
-          <ui-select
-            :modelValue="String(form.fields.value.rounds_count)"
-            @update:modelValue="(val) => (form.fields.value.rounds_count = Number(val))"
-            :options="[
-              { value: '1', label: '1' },
-              { value: '2', label: '2' },
-              { value: '3', label: '3' },
-              { value: '4', label: '4' },
-            ]"
-            required
-            @blur="form.validateField('rounds_count')"
-          />
-          <small v-if="form.errors.value.rounds_count" class="text-error">{{
-            form.errors.value.rounds_count
-          }}</small>
-        </label>
-
         <label class="form-item" style="grid-column-start: 1">
           <span class="form-label">Max Teams</span>
           <ui-input
@@ -153,7 +134,6 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import { useForm } from '@/composables/useForm'
@@ -170,7 +150,6 @@ interface Form {
   startTime: string
   endTime: string
   endDate: Date
-  rounds_count: number
   max_teams: number
   min_team_members: number
 }
@@ -182,7 +161,6 @@ const form = useForm<Form>(CreateTournamentSchema, {
   startTime: '00:00',
   endDate: new Date(),
   endTime: '00:00',
-  rounds_count: 1,
   max_teams: 2,
   min_team_members: 2,
 })
@@ -199,7 +177,6 @@ function toPayload(values: Form): CreateTournamentBody {
   return {
     name: values.name,
     description: values.description,
-    rounds_count: values.rounds_count,
     max_teams: values.max_teams,
     min_team_members: values.min_team_members,
     start_date: combineDateAndTime(values.startDate, values.startTime),

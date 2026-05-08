@@ -87,7 +87,6 @@ interface Tournament {
   end_date: Date
   max_teams: number
   min_team_members: number
-  rounds_count: number
   status: TournamentStatus
 }
 
@@ -141,7 +140,6 @@ export type SubmissionId = number
 
 export interface Submission {
   id: SubmissionId
-
   github_url: string
   demo_video_url: string
   demo_video_file: null // TODO,

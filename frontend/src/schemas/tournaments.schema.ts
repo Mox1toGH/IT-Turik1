@@ -18,7 +18,6 @@ export const CreateTournamentSchema = v.pipe(
     startTime: TimeSchema,
     endDate: v.date(),
     endTime: TimeSchema,
-    rounds_count: v.pipe(v.number('must be a number'), v.minValue(1, 'Rounds must be at least 1')),
     max_teams: v.pipe(
       v.number('must be a number'),
       v.minValue(2, 'Maximum teams must be at least 2'),

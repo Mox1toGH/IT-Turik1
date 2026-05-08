@@ -183,7 +183,7 @@ function handleSubmit() {
     {
       onSuccess: () => {
         router.push({
-          path: '/tournaments/5',
+          path: `/tournaments/${tournamentId}`,
           query: {
             section: 'rounds',
           },

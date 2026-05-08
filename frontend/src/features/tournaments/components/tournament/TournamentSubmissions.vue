@@ -68,7 +68,12 @@
 
       <template #default>
         <div class="submissions-list">
+          <ui-card v-if="filteredSubmissions.length === 0" class="empty-card">
+            <p class="empty-error">No submissions found</p>
+          </ui-card>
+
           <ui-card
+            v-else
             v-for="submission in filteredSubmissions"
             :key="submission.id"
             class="submission-card"
