@@ -40,20 +40,26 @@
 
     <template #footer>
       <div class="card-footer">
-        <ui-button size="sm" variant="secondary" @click="toggleForm">
-          {{ showForm ? 'Close' : assignment.evaluation ? 'Edit Evaluation' : 'Evaluate' }}
+        <ui-button v-if="canEditEvaluation" size="sm" variant="secondary" @click="toggleForm">
+          {{ assignment.evaluation ? 'Edit Evaluation' : 'Evaluate' }}
         </ui-button>
-      </div>
-      <div v-if="showForm" class="form-wrap">
-        <evaluation-form
-          :assignment="assignment"
-          :existing-evaluation="assignment.evaluation"
-          @cancel="showForm = false"
-          @success="handleSuccess"
-        />
       </div>
     </template>
   </ui-card>
+
+  <ui-modal v-model="showForm">
+    <template #title>
+      <h3>{{ assignment.evaluation ? 'Edit Evaluation' : 'Set Evaluation' }}</h3>
+      <p class="modal-subtitle">{{ teamName }} · {{ assignment.round_details.name }}</p>
+    </template>
+
+    <evaluation-form
+      :assignment="assignment"
+      :existing-evaluation="assignment.evaluation"
+      @cancel="showForm = false"
+      @success="handleSuccess"
+    />
+  </ui-modal>
 </template>
 
 <script setup lang="ts">
@@ -62,6 +68,7 @@ import type { JuryAssignmentData } from '@/api/services/evaluation/types'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiModal from '@/components/ui/UiModal.vue'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'
 
@@ -93,6 +100,7 @@ const githubUrl = computed(() => submissionDetails.value.github_url ?? '')
 const demoVideoUrl = computed(() => submissionDetails.value.demo_video_url ?? '')
 const liveDemoUrl = computed(() => submissionDetails.value.live_demo_url ?? '')
 const description = computed(() => submissionDetails.value.description ?? 'No description')
+const canEditEvaluation = computed(() => props.assignment.round_details.status !== 'evaluated')
 
 const toggleForm = () => {
   showForm.value = !showForm.value
@@ -173,10 +181,10 @@ const handleSuccess = () => {
   justify-content: flex-end;
 }
 
-.form-wrap {
-  margin-top: 0.8rem;
-  padding-top: 0.8rem;
-  border-top: 1px solid var(--border);
+.modal-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
 }
 
 @media (max-width: 768px) {
