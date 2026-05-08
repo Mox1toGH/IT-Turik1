@@ -11,6 +11,7 @@ import type {
   TournamentId,
   TournamentStatus,
 } from '@/api/dbTypes'
+import type { MaybeRefOrGetter } from 'vue'
 
 // Get tournaments
 export interface GetTournamentsArgs {
@@ -60,7 +61,7 @@ export interface GetTournamentInfoArgs {
 }
 
 export type GetTournamentInfoResponse = Tournament & {
-  rounds: [] // TODO
+  rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
 }
 
 // Get active team tournament
@@ -243,3 +244,10 @@ export type EditSubmissionResponse = Submission & {
   team_details: Pick<Team, 'id' | 'name' | 'is_public'>
   round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
 }
+
+// round submissions
+export interface GetRoundSubmissionsArgs {
+  roundId: MaybeRefOrGetter<RoundId>
+}
+
+export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse

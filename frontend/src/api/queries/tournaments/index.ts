@@ -23,6 +23,8 @@ import type {
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
   GetRoundsResponse,
+  GetRoundSubmissionsArgs,
+  GetRoundSubmissionsResponse,
   GetTeamSubmissionsArgs,
   GetTeamSubmissionsResponse,
   GetTournamentInfoArgs,
@@ -334,6 +336,17 @@ export const useEditSubmission = (
 ) => {
   return useMutation<EditSubmissionResponse, AxiosError<ApiError>, EditSubmissionArgs>({
     mutationFn: $api.tournaments.editSubmission,
+    ...config,
+  })
+}
+
+export const useRoundSubmissions = (
+  payload: GetRoundSubmissionsArgs,
+  config?: QueryConfig<GetRoundSubmissionsResponse>,
+) => {
+  return useQuery<GetRoundSubmissionsResponse, AxiosError<ApiError>>({
+    queryKey: computed(() => tournamentsKeys.roundSubmissions(toValue(payload.roundId))),
+    queryFn: () => $api.tournaments.getRoundSubmissions({ roundId: toValue(payload.roundId) }),
     ...config,
   })
 }
