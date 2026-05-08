@@ -163,7 +163,7 @@ export const tournamentsService = {
 
   getTeamSubmissions: async (args: GetTeamSubmissionsArgs) => {
     const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
-      `${prefix}/${args.tournamentId}/submissions/`,
+      `${prefix}/${args.tournamentId}/my-submissions/`,
     )
     return data
   },
