@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from evaluation.models import JuryAssignment
 from teams.models import Team, TeamMember
 from .models import Tournament, Round, Submission, TournamentTeamRegistration
 
@@ -1431,3 +1432,82 @@ class TournamentApiTests(APITestCase):
         self.assertIn('overlap', response.data['details']['start_date'][0].lower())
 
     
+class RoundSubmissionsAssignmentsTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin_round_subs',
+            email='admin_round_subs@example.com',
+            password='StrongPass123!',
+            role='admin',
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.captain = User.objects.create_user(
+            username='captain_round_subs',
+            email='captain_round_subs@example.com',
+            password='StrongPass123!',
+        )
+        self.jury1 = User.objects.create_user(
+            username='jury_round_subs_1',
+            email='jury_round_subs_1@example.com',
+            password='StrongPass123!',
+            role='jury',
+            full_name='Jury One',
+        )
+        self.jury2 = User.objects.create_user(
+            username='jury_round_subs_2',
+            email='jury_round_subs_2@example.com',
+            password='StrongPass123!',
+            role='jury',
+            full_name='Jury Two',
+        )
+
+        self.tournament = Tournament.objects.create(
+            name='Tournament Round Submissions',
+            description='Round submissions with assignments',
+            start_date=timezone.now() - timezone.timedelta(days=2),
+            end_date=timezone.now() + timezone.timedelta(days=5),
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+        )
+        self.round_obj = Round.objects.create(
+            tournament=self.tournament,
+            name='Round A',
+            start_date=timezone.now() - timezone.timedelta(days=1),
+            end_date=timezone.now() + timezone.timedelta(days=1),
+            status=Round.STATUS_ACTIVE,
+        )
+        self.team = Team.objects.create(
+            name='Round Submissions Team',
+            email='round_submissions_team@example.com',
+            captain=self.captain,
+        )
+        TeamMember.objects.create(team=self.team, user=self.captain)
+        TournamentTeamRegistration.objects.create(tournament=self.tournament, team=self.team, is_active=True)
+
+        self.submission = Submission.objects.create(
+            team=self.team,
+            round=self.round_obj,
+            github_url='https://github.com/example/repo',
+            demo_video_url='https://example.com/demo',
+            created_by=self.captain,
+        )
+
+    def test_round_submissions_includes_assignments(self):
+        assign1 = JuryAssignment.objects.create(submission=self.submission, jury=self.jury1)
+        assign2 = JuryAssignment.objects.create(submission=self.submission, jury=self.jury2)
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse('round_submissions', kwargs={'pk': self.round_obj.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+        assignments = response.data[0].get('assignments')
+        self.assertIsInstance(assignments, list)
+        returned_ids = {item['id'] for item in assignments}
+        self.assertEqual(returned_ids, {assign1.id, assign2.id})
+
+        jury_ids = {item['jury']['id'] for item in assignments}
+        self.assertEqual(jury_ids, {self.jury1.id, self.jury2.id})
+        self.assertTrue(all(item['jury']['role'] == 'jury' for item in assignments))
