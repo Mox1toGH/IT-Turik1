@@ -74,17 +74,19 @@
             </ui-button>
 
             <template v-if="round.status === 'active' && user?.role === 'team'">
-              <ui-button size="sm" @click="openSubmissionForm"> Submit </ui-button>
-              <submit-modal
-                :roundId="selectedRound?.id ?? 0"
-                :tournamentId="props.tournamentId"
-                v-model="isSubmitOpen"
-              />
+              <ui-button size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
             </template>
           </div>
         </ui-card>
       </div>
     </ui-skeleton-loader>
+
+    <submit-modal
+      v-if="selectedSubmitRoundId !== null"
+      :roundId="selectedSubmitRoundId"
+      :tournamentId="props.tournamentId"
+      v-model="isSubmitOpen"
+    />
 
     <round-details-modal
       v-if="selectedRound"
@@ -106,7 +108,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
@@ -136,15 +138,23 @@ const rounds = computed(() => data.value ?? [])
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
+const selectedSubmitRoundId = ref<number | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round
   isDetailsOpen.value = true
 }
 
-function openSubmissionForm() {
-  isSubmitOpen.value = !isSubmitOpen.value
+function openSubmissionForm(roundId: number) {
+  selectedSubmitRoundId.value = roundId
+  isSubmitOpen.value = true
 }
+
+watch(isSubmitOpen, (isOpen) => {
+  if (!isOpen) {
+    selectedSubmitRoundId.value = null
+  }
+})
 
 function badgeVariant(status: Round['status']): Variants {
   if (status === 'active') return 'primary'

@@ -88,6 +88,10 @@ const form = useForm<Form>(SubmitRoundSchema, {
 const { mutate: submit, isPending } = useSubmitRound()
 const submitRound = () => {
   if (!form.validate()) return
+  if (!props.roundId || props.roundId <= 0) {
+    showNotification('Round is not selected', 'error')
+    return
+  }
 
   submit(
     {
