@@ -183,6 +183,21 @@
                       <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
                     </div>
 
+                    <div class="score-track-wrap">
+                      <div class="score-track-head">
+                        <p class="text-muted">Score</p>
+                        <p class="text-muted">
+                          {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
+                        </p>
+                      </div>
+                      <div class="score-track">
+                        <div
+                          class="score-track-fill"
+                          :style="{ width: `${scorePercent(submission.round_details.id, assignment.evaluation.total_score)}%` }"
+                        />
+                      </div>
+                    </div>
+
                     <div class="jury-criteria">
                       <p class="text-muted">Criteria</p>
                       <div
@@ -284,6 +299,19 @@ const submissionAssignments = (submission: NonNullable<typeof submissions.value>
 
 const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number]) => {
   return submissionEvaluations(submission).length
+}
+
+const roundMaxScore = (roundId: number) => {
+  const round = (rounds.value ?? []).find((item) => item.id === roundId)
+  if (!round?.criteria?.length) return 0
+  return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
+}
+
+const scorePercent = (roundId: number, totalScore: number) => {
+  const max = roundMaxScore(roundId)
+  if (!max) return 0
+  const clamped = Math.max(0, Math.min(Number(totalScore || 0), max))
+  return (clamped / max) * 100
 }
 
 const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
@@ -412,6 +440,32 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+}
+
+.score-track-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.score-track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.score-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--muted) 65%, transparent);
+}
+
+.score-track-fill {
+  height: 100%;
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
 }
 
 .jury-criterion-row {
