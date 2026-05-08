@@ -7,7 +7,10 @@
             <p class="section-eyebrow">Certificates</p>
             <h1 class="section-title">My certificates</h1>
           </div>
-          <ui-button variant="secondary" @click="goBack">Back to profile</ui-button>
+          <div class="head-actions">
+            <ui-button variant="secondary" @click="openVerifyPage">Verify certificate</ui-button>
+            <ui-button variant="secondary" @click="goBack">Back to profile</ui-button>
+          </div>
         </div>
       </template>
 
@@ -81,6 +84,10 @@ const goBack = () => {
   router.push('/profile')
 }
 
+const openVerifyPage = () => {
+  router.push('/certificates/verify')
+}
+
 const formatDate = (date: string) => {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('uk-UA')
@@ -105,6 +112,12 @@ const downloadCertificate = async (url: string, code: string) => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.head-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .list {
@@ -164,6 +177,10 @@ const downloadCertificate = async (url: string, code: string) => {
   .head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .head-actions {
+    width: 100%;
   }
 
   .grid {
