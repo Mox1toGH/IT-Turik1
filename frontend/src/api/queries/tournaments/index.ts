@@ -9,6 +9,8 @@ import type {
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
+  EditSubmissionArgs,
+  EditSubmissionResponse,
   GetActiveTeamTournamentArgs,
   GetActiveTeamTournamentResponse,
   GetCurrentRoundArgs,
@@ -21,6 +23,8 @@ import type {
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
   GetRoundsResponse,
+  GetTeamSubmissionsArgs,
+  GetTeamSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -310,6 +314,26 @@ export const useCloseSubmissions = (
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(data.tournament) })
       queryClient.resetQueries({ queryKey: tournamentsKeys.currentRound(data.tournament) })
     },
+    ...config,
+  })
+}
+
+export const useTeamSubmissions = (
+  payload: GetTeamSubmissionsArgs,
+  config?: QueryConfig<GetTeamSubmissionsResponse>,
+) => {
+  return useQuery<GetTeamSubmissionsResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.submissions(payload.tournamentId),
+    queryFn: () => $api.tournaments.getTeamSubmissions({ tournamentId: payload.tournamentId }),
+    ...config,
+  })
+}
+
+export const useEditSubmission = (
+  config?: MutationConfig<EditSubmissionResponse, AxiosError<ApiError>, EditSubmissionArgs>,
+) => {
+  return useMutation<EditSubmissionResponse, AxiosError<ApiError>, EditSubmissionArgs>({
+    mutationFn: $api.tournaments.editSubmission,
     ...config,
   })
 }

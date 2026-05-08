@@ -8,6 +8,8 @@ import type {
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
+  EditSubmissionArgs,
+  EditSubmissionResponse,
   GetActiveTeamTournamentArgs,
   GetActiveTeamTournamentResponse,
   GetCurrentRoundArgs,
@@ -20,6 +22,8 @@ import type {
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
   GetRoundsResponse,
+  GetTeamSubmissionsArgs,
+  GetTeamSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -153,6 +157,21 @@ export const tournamentsService = {
   closeSubmissions: async (args: CloseSubmissionsArgs) => {
     const { data } = await apiClient.post<CloseSubmissionsResponse>(
       `${prefix}/rounds/${args.roundId}/close-submissions/`,
+    )
+    return data
+  },
+
+  getTeamSubmissions: async (args: GetTeamSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
+      `${prefix}/${args.tournamentId}/submissions/`,
+    )
+    return data
+  },
+
+  editSubmission: async (args: EditSubmissionArgs) => {
+    const { data } = await apiClient.patch<EditSubmissionResponse>(
+      `${prefix}/submissions/${args.submissionId}/`,
+      args.body,
     )
     return data
   },
