@@ -266,7 +266,6 @@
 **Подача роботи — POST `/api/tournaments/submissions/`**
 ```json
 {
-{
   "round": 1,
   "github_url": "https://github.com/user/repo",
   "demo_video_url": "https://youtube.com/...",
