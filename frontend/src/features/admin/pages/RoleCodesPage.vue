@@ -8,6 +8,9 @@
           <p class="section-subtitle">
             Generate and monitor one-time registration codes for restricted roles.
           </p>
+          <p class="admin-nav-link">
+            <router-link to="/admin/certificates">Go to Certificates Admin</router-link>
+          </p>
         </div>
       </template>
 
@@ -294,6 +297,16 @@ const formatDateTime = (value: string | number | Date) => {
   text-align: center;
 }
 
+.admin-nav-link {
+  margin: 0.4rem 0 0;
+}
+
+.admin-nav-link a {
+  font-weight: 700;
+  color: var(--brand-700);
+  text-decoration: none;
+}
+
 @media (max-width: 900px) {
   .counts {
     grid-template-columns: 1fr;
@@ -304,3 +317,4 @@ const formatDateTime = (value: string | number | Date) => {
   }
 }
 </style>
+

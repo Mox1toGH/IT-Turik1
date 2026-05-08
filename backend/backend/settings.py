@@ -76,6 +76,8 @@ CORS_ALLOWED_ORIGINS = [
     origin for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',') if origin
 ]
 
+FRONTEND_URL = os.getenv('FRONTEND_URL', '')
+
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [

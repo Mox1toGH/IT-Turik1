@@ -1,0 +1,360 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+
+  <style>
+    @page {
+      size: {{ page_width_px }}px {{ page_height_px }}px;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'DejaVu Sans', Arial, sans-serif;
+    }
+
+    body {
+      background: #060d1a;
+    }
+
+    .page {
+      position: relative;
+      width: {{ page_width_px }}px;
+      height: {{ page_height_px }}px;
+      overflow: hidden;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* BACKGROUND */
+    .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      /* Трохи темніший оверлей — бренд та текст читаються на будь-якому фоні */
+      background: rgba(4, 10, 24, 0.55);
+    }
+
+    /* FRAME — тонка подвійна рамка з золотавим акцентом */
+    .frame {
+      position: absolute;
+      inset: 24px;
+      border: 1.5px solid rgba(251, 191, 36, 0.55);
+      box-shadow: inset 0 0 0 6px rgba(251, 191, 36, 0.08);
+    }
+
+    /* Кутові акценти рамки */
+    .frame::before,
+    .frame::after {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: rgba(251, 191, 36, 0.85);
+      border-style: solid;
+    }
+    .frame::before {
+      top: -2px;
+      left: -2px;
+      border-width: 3px 0 0 3px;
+    }
+    .frame::after {
+      bottom: -2px;
+      right: -2px;
+      border-width: 0 3px 3px 0;
+    }
+
+    /* MAIN CONTENT WRAPPER */
+    .content {
+      position: relative;
+      z-index: 2;
+
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+
+      padding: 40px 70px;
+    }
+
+    /* ─── BRAND ─────────────────────────────────────────────
+       Логотип складається з двох частин:
+         TOURNAMENT — тонкий, широкий спейсинг, приглушений
+         OS          — жирний, акцентний, золотавий
+    ──────────────────────────────────────────────────────── */
+    .brand {
+      position: absolute;
+      top: 40px;
+
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+
+      font-size: 22px;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+
+    .brand-word {
+      font-weight: 300;
+      letter-spacing: 8px;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+
+    .brand-accent {
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fbbf24;
+      font-size: 24px;
+      text-transform: uppercase;
+      /* Невеликий відступ між словами */
+      margin-left: 2px;
+      /* Тонка рамка навколо OS для виділення */
+      border-left: 1.5px solid rgba(251, 191, 36, 1);
+      padding: 1px 7px 1px 6px;
+      line-height: 1;
+    }
+
+    /* ─── TITLE ────────────────────────────────────────────── */
+    .title {
+      font-size: 56px;
+      font-weight: 800;
+      /* Чисто білий — читається на темному та напівтемному фоні */
+      color: #ffffff;
+      line-height: 1.05;
+      letter-spacing: 3px;
+
+      margin-top: 40px;
+      text-shadow: 0 2px 24px rgba(0,0,0,0.55);
+    }
+
+    /* ─── DIVIDER ───────────────────────────────────────────── */
+    .divider {
+      width: 320px;
+      height: 2px;
+      /* Золото → прозоре — виглядає елегантно на будь-якому фоні */
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(251, 191, 36, 0.85) 30%,
+        rgba(251, 191, 36, 0.85) 70%,
+        transparent 100%
+      );
+      margin-top: 22px;
+    }
+
+    /* ─── SUBTITLE ──────────────────────────────────────────── */
+    .subtitle {
+      margin-top: 28px;
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 1px;
+      font-style: italic;
+    }
+
+    /* ─── NAME ──────────────────────────────────────────────── */
+    .name {
+      margin-top: 50px;
+
+      font-size: 72px;
+      font-weight: 800;
+      /* М'яке тепле золото — добре читається і не "кричить" */
+      color: #fde68a;
+
+      max-width: 90%;
+      word-wrap: break-word;
+      text-shadow: 0 2px 30px rgba(251, 191, 36, 0.25);
+    }
+
+    /* ─── TEAM ──────────────────────────────────────────────── */
+    .team {
+      margin-top: 18px;
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 1px;
+    }
+
+    /* ─── PLACEMENT ─────────────────────────────────────────── */
+    .placement {
+      margin-top: 40px;
+      font-size: 28px;
+      color: rgba(255, 255, 255, 0.8);
+      letter-spacing: 0.5px;
+    }
+
+    .placement strong {
+      /* Яскраво-золотий акцент для місця */
+      color: #fbbf24;
+      font-size: 38px;
+      font-weight: 900;
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+
+    /* ─── TOURNAMENT ────────────────────────────────────────── */
+    .tournament {
+      margin-top: 24px;
+
+      font-size: 50px;
+      font-weight: 800;
+      /* Світло-блакитний зберігаємо як вторинний акцент для назви турніру */
+      color: #e0f2fe;
+
+      max-width: 85%;
+      word-wrap: break-word;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 20px rgba(14, 165, 233, 0.2);
+    }
+
+    /* ─── FOOTER ────────────────────────────────────────────── */
+    .footer {
+      position: absolute;
+      bottom: 40px;
+      left: 70px;
+      right: 70px;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+
+      width: calc(100% - 140px);
+    }
+
+    .footer-block {
+      width: 45%;
+    }
+
+    .footer-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .footer-value {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.75);
+      word-break: break-word;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .verify-link {
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.85);
+      word-break: break-all;
+    }
+
+    .qr-block {
+      text-align: right;
+    }
+
+    .qr-image {
+      width: 96px;
+      height: 96px;
+      background: #fff;
+      padding: 4px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    {% if template_image_uri %}
+    <img class="bg" src="{{ template_image_uri }}" />
+    {% endif %}
+
+    <div class="overlay"></div>
+    <div class="frame"></div>
+
+    <div class="content">
+
+      <div class="brand">
+        <span class="brand-word">Tournament</span>
+        <span class="brand-accent">OS</span>
+      </div>
+
+      <div class="title">
+        CERTIFICATE OF ACHIEVEMENT
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="subtitle">
+        This certificate is proudly presented to
+      </div>
+
+      <div class="name">
+        {{ participant_name }}
+      </div>
+
+      {% if team_name %}
+      <div class="team">
+        Team: {{ team_name }}
+      </div>
+      {% endif %}
+
+      <div class="placement">
+        For achieving <strong>{{ placement_text }}</strong> in the tournament
+      </div>
+
+      <div class="tournament">
+        {{ tournament_name }}
+      </div>
+
+    </div>
+
+    <div class="footer">
+
+      <div class="footer-block">
+        <div class="footer-label">Certificate Number</div>
+        <div class="footer-value">
+          {{ certificate.certificate_number }}
+        </div>
+      </div>
+
+      <div class="footer-block" style="text-align:right;">
+        {% if qr_code_data_uri %}
+        <div class="qr-block">
+          <img class="qr-image" src="{{ qr_code_data_uri }}" alt="Certificate verification QR code" />
+        </div>
+        {% endif %}
+        <div class="footer-label">Verification Code</div>
+        <div class="footer-value">
+          {{ certificate.unique_code }}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+</html>

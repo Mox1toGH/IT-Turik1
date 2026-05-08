@@ -96,7 +96,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
     def view(self, request, unique_code=None):
         certificate = self.get_object()
         try:
-            pdf_bytes = generate_certificate_pdf(certificate)
+            pdf_bytes = generate_certificate_pdf(certificate, request=request)
             response = HttpResponse(pdf_bytes, content_type='application/pdf')
             response['Content-Disposition'] = f'inline; filename="cert_{certificate.unique_code}.pdf"'
             return response
