@@ -190,12 +190,13 @@
                           {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
                         </p>
                       </div>
-                      <div class="score-track">
-                        <div
-                          class="score-track-fill"
-                          :style="{ width: `${scorePercent(submission.round_details.id, assignment.evaluation.total_score)}%` }"
-                        />
-                      </div>
+                      <ui-progress-bar
+                        :percent="
+                          scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                        "
+                        :height="10"
+                        fill-color="color-mix(in srgb, var(--primary) 55%, transparent)"
+                      />
                     </div>
 
                     <div class="jury-criteria">
@@ -232,6 +233,7 @@ import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import UiBadge, { type Variants } from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiProgressBar from '@/components/ui/UiProgressBar.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
@@ -454,20 +456,6 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
   align-items: center;
 }
 
-.score-track {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--muted) 65%, transparent);
-}
-
-.score-track-fill {
-  height: 100%;
-  background: color-mix(in srgb, var(--primary) 55%, transparent);
-}
-
 .jury-criterion-row {
   display: flex;
   justify-content: space-between;
@@ -501,3 +489,5 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
   }
 }
 </style>
+
+

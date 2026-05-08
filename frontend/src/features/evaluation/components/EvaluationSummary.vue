@@ -18,20 +18,11 @@
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
-      <div class="total-track" role="img" aria-label="Total score by criteria">
-        <div class="total-used" :style="{ width: `${totalPercent}%` }">
-          <div
-            v-for="(segment, index) in usedSegments"
-            :key="segment.id"
-            class="total-segment"
-            :style="{
-              width: `${segment.usedWidthPercent}%`,
-              backgroundColor: palette[index % palette.length],
-            }"
-            :title="`${segment.name}: ${segment.score} / ${segment.max}`"
-          />
-        </div>
-      </div>
+      <ui-segmented-progress-bar
+        :percent="totalPercent"
+        :segments="usedSegments"
+        aria-label="Total score by criteria"
+      />
     </div>
 
     <div class="metric">
@@ -40,9 +31,7 @@
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
-      <div class="final-track">
-        <div class="final-fill" :style="{ width: `${finalPercent}%` }" />
-      </div>
+      <ui-progress-bar :percent="finalPercent" />
     </div>
   </div>
 </template>
@@ -50,6 +39,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { EvaluationData, RoundCriterion } from '@/api/services/evaluation/types'
+import UiProgressBar from '@/components/ui/UiProgressBar.vue'
+import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
 
 interface Props {
   evaluation: EvaluationData
@@ -102,12 +93,11 @@ const scoredSum = computed(() =>
 
 const usedSegments = computed(() => {
   const usedTotal = scoredSum.value || 1
-  return normalizedScores.value.map((item) => ({
+  return normalizedScores.value.map((item, index) => ({
     id: item.criterion_id,
-    name: item.criterion_name,
-    max: item.max,
-    score: item.score,
-    usedWidthPercent: (item.score / usedTotal) * 100,
+    widthPercent: (item.score / usedTotal) * 100,
+    title: `${item.criterion_name}: ${item.score} / ${item.max}`,
+    color: palette[index % palette.length],
   }))
 })
 
@@ -148,32 +138,6 @@ const finalPercent = computed(() => {
 
 .range {
   color: var(--muted-foreground);
-}
-
-.total-track,
-.final-track {
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  display: flex;
-  background: color-mix(in srgb, var(--muted) 70%, transparent);
-}
-
-.total-used {
-  height: 100%;
-  display: flex;
-  overflow: hidden;
-}
-
-.total-segment {
-  height: 100%;
-  min-width: 2px;
-}
-
-.final-fill {
-  height: 100%;
-  background: color-mix(in srgb, var(--foreground) 35%, transparent);
 }
 
 .scores {
