@@ -101,11 +101,13 @@ async function verify() {
 
 <style scoped>
 .verify-page {
-  min-height: 100vh;
+  min-height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 24px;
+  padding-top: 96px;
+  box-sizing: border-box;
 }
 
 .verify-card {
