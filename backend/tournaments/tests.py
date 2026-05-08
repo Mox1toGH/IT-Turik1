@@ -35,12 +35,18 @@ class TournamentApiTests(APITestCase):
             password='StrongPass123!',
             role='jury',
         )
+        self.member = User.objects.create_user(
+            username='member',
+            email='member@example.com',
+            password='StrongPass123!',
+        )
         self.team = Team.objects.create(
             name='Test Team',
             email='test@example.com',
             captain=self.captain,
         )
         TeamMember.objects.create(team=self.team, user=self.captain)
+        TeamMember.objects.create(team=self.team, user=self.member)
 
         self.tournament_data = {
             'name': 'Dev Tournament',
@@ -276,6 +282,95 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data.get('code'), 'validation_error')
         self.assertIn('team', response.data['details'])
+
+    def test_non_captain_team_member_cannot_create_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+
+        self.client.force_authenticate(user=self.member)
+        url = reverse('submissions')
+        submission_data = {
+            'team': self.team.id,
+            'round': round_obj.id,
+            'github_url': 'https://github.com/test/repo',
+            'demo_video_url': 'https://youtube.com/test',
+            'description': 'Member submission',
+        }
+        response = self.client.post(url, submission_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get('code'), 'validation_error')
+        self.assertIn('team', response.data['details'])
+
+    def test_non_captain_team_member_cannot_update_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo',
+            demo_video_url='https://youtube.com/test',
+            description='Captain submission',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=self.member)
+        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        response = self.client.patch(url, {'description': 'Updated by member'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data.get('code'), 'validation_error')
+        self.assertIn('team', response.data['details'])
+
+    def test_captain_can_update_submission(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        submission = Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo',
+            demo_video_url='https://youtube.com/test',
+            description='Captain submission',
+            created_by=self.captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        response = self.client.patch(url, {'description': 'Updated by captain'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        submission.refresh_from_db()
+        self.assertEqual(submission.description, 'Updated by captain')
 
     def test_registration_limit_reached(self):
         tournament = Tournament.objects.create(
