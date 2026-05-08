@@ -104,6 +104,23 @@ export const certificatesService = {
     return data
   },
 
+  async updateTemplate(id: number, args: { name?: string; image?: File; is_default?: boolean }) {
+    const formData = new FormData()
+    if (args.name) formData.append('name', args.name)
+    if (args.image) formData.append('image', args.image)
+    if (args.is_default !== undefined) formData.append('is_default', String(Boolean(args.is_default)))
+
+    const { data } = await apiClient.patch(`${prefix}/templates/${id}/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  },
+
+  async deleteTemplate(id: number) {
+    const { data } = await apiClient.delete(`${prefix}/templates/${id}/`)
+    return data
+  },
+
   async verifyByCode(code: string) {
     const { data } = await apiClient.get<VerifyCertificateResponse>(`${prefix}/verify/${encodeURIComponent(code)}/`)
     return data

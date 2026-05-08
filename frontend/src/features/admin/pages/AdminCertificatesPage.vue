@@ -112,10 +112,21 @@
                 <ui-card v-for="tpl in paginatedTemplates" :key="tpl.id" class="template-card">
                   <template #header>
                     <div class="template-head">
-                      <strong>{{ tpl.name }}</strong>
-                      <ui-badge :variant="tpl.is_default ? 'green' : 'gray'">
-                        {{ tpl.is_default ? 'Default' : 'Template' }}
-                      </ui-badge>
+                      <div class="template-info">
+                        <strong>{{ tpl.name }}</strong>
+                        <ui-badge :variant="tpl.is_default ? 'green' : 'gray'" class="status-badge-mini">
+                          {{ tpl.is_default ? 'Default' : 'Template' }}
+                        </ui-badge>
+                      </div>
+                      
+                      <div class="mini-actions">
+                        <button class="action-btn-mini" title="Edit template" @click.stop="openEdit(tpl)">
+                          <EditIcon class="icon-mini" />
+                        </button>
+                        <button class="action-btn-mini delete" title="Delete template" @click.stop="confirmDelete(tpl.id)">
+                          <TrashIcon class="icon-mini" />
+                        </button>
+                      </div>
                     </div>
                   </template>
 
@@ -170,6 +181,43 @@
         </ui-card>
       </div>
     </ui-card>
+
+    <UiConfirmModal
+      v-model="isDeleteModalOpen"
+      title="Delete Template"
+      message="Are you sure you want to delete this template? This action cannot be undone."
+      confirmText="Delete"
+      confirmVariant="danger"
+      :loading="isDeleting"
+      @confirm="onDeleteConfirm"
+    />
+
+    <UiModal v-model="isEditModalOpen">
+      <template #title>
+        <h3 class="panel-title">Edit Template</h3>
+      </template>
+      <form class="template-form" @submit.prevent="handleUpdate">
+        <div class="form-item">
+          <label class="form-label">Template name</label>
+          <ui-input v-model="editForm.name" required placeholder="Summer Cup 2026" />
+        </div>
+
+        <div class="form-item">
+          <label class="form-label">Image (optional)</label>
+          <input class="file-input" type="file" accept="image/*" @change="onEditFileChange" />
+          <p class="panel-note">Leave empty to keep current image</p>
+        </div>
+
+        <label class="check">
+          <input v-model="editForm.is_default" type="checkbox" />
+          Make default template
+        </label>
+
+        <ui-button type="submit" :disabled="isUpdating" class="submit">
+          {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+        </ui-button>
+      </form>
+    </UiModal>
   </section>
 </template>
 
@@ -182,6 +230,10 @@ import UiSelect from '@/components/ui/UiSelect.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiModal from '@/components/ui/UiModal.vue'
+import TrashIcon from '@/icons/TrashIcon.vue'
+import EditIcon from '@/icons/EditIcon.vue'
 import { useUsers } from '@/api/queries/accounts'
 import { useTeams } from '@/api/queries/teams'
 import { useTournaments } from '@/api/queries/tournaments'
@@ -189,6 +241,8 @@ import {
   useCertificateTemplates,
   useCreateCertificate,
   useUploadCertificateTemplate,
+  useUpdateCertificateTemplate,
+  useDeleteCertificateTemplate,
 } from '@/api/queries/certificates'
 import { $api } from '@/api/services'
 import { useNotification } from '@/composables/useNotification'
@@ -234,6 +288,19 @@ const { data: allTemplatesResponse } = useCertificateTemplates({ nopage: true })
 
 const { mutateAsync: createCertificate, isPending: isCreating } = useCreateCertificate()
 const { mutateAsync: uploadTemplate, isPending: isUploading } = useUploadCertificateTemplate()
+const { mutateAsync: updateTemplate, isPending: isUpdating } = useUpdateCertificateTemplate()
+const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteCertificateTemplate()
+
+const isDeleteModalOpen = ref(false)
+const templateToDeleteId = ref<number | null>(null)
+
+const isEditModalOpen = ref(false)
+const templateToEditId = ref<number | null>(null)
+const editForm = ref({
+  name: '',
+  file: null as File | null,
+  is_default: false,
+})
 
 const createForm = ref({
   user: 0,
@@ -335,6 +402,58 @@ const handleVerify = async () => {
     verifyResult.value = await $api.certificates.verifyByCode(verifyCode.value)
   } catch {
     verifyResult.value = { is_valid: false, message: 'Verification failed.' }
+  }
+}
+
+const confirmDelete = (id: number) => {
+  templateToDeleteId.value = id
+  isDeleteModalOpen.value = true
+}
+
+const onDeleteConfirm = async () => {
+  if (templateToDeleteId.value === null) return
+
+  try {
+    await deleteTemplate(templateToDeleteId.value)
+    showNotification('Template deleted successfully.', 'success')
+    isDeleteModalOpen.value = false
+  } catch {
+    showNotification('Failed to delete template.', 'error')
+  }
+}
+
+const openEdit = (tpl: any) => {
+  templateToEditId.value = tpl.id
+  editForm.value = {
+    name: tpl.name,
+    file: null,
+    is_default: tpl.is_default,
+  }
+  isEditModalOpen.value = true
+}
+
+const onEditFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  editForm.value.file = target.files?.[0] || null
+}
+
+const handleUpdate = async () => {
+  if (templateToEditId.value === null) return
+
+  try {
+    await updateTemplate({
+      id: templateToEditId.value,
+      data: {
+        name: editForm.value.name,
+        image: editForm.value.file || undefined,
+        is_default: editForm.value.is_default,
+      },
+    })
+
+    showNotification('Template updated successfully.', 'success')
+    isEditModalOpen.value = false
+  } catch {
+    showNotification('Failed to update template.', 'error')
   }
 }
 </script>
@@ -485,8 +604,63 @@ const handleVerify = async () => {
 .template-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
+}
+
+.template-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.template-info strong {
+  word-break: break-word;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.status-badge-mini {
+  width: fit-content;
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+
+.action-btn-mini {
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.action-btn-mini:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.action-btn-mini.delete:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.icon-mini {
+  width: 14px;
+  height: 14px;
 }
 
 .preview {
@@ -497,6 +671,8 @@ const handleVerify = async () => {
   border: 1px solid var(--line-soft);
   background: #fff;
 }
+
+
 
 .pagination {
   display: flex;

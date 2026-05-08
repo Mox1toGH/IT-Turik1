@@ -47,7 +47,7 @@ export const useCertificateTemplates = (
   config?: QueryConfig<PaginatedResponse<CertificateTemplateItem>>,
 ) => {
   return useQuery<PaginatedResponse<CertificateTemplateItem>, AxiosError<ApiError>>({
-    queryKey: ['certificate-templates', args.page ?? 1, args.pageSize ?? 8, args.nopage ?? false],
+    queryKey: ['certificate-templates', toValue(args.page) ?? 1, toValue(args.pageSize) ?? 8, toValue(args.nopage) ?? false],
     queryFn: () =>
       $api.certificates.getTemplates({
         page: toValue(args.page) ?? 1,
@@ -74,7 +74,28 @@ export const useUploadCertificateTemplate = () => {
   return useMutation({
     mutationFn: $api.certificates.uploadTemplate,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: certificateKeys.templates() })
+      queryClient.invalidateQueries({ queryKey: ['certificate-templates'] })
+    },
+  })
+}
+
+export const useUpdateCertificateTemplate = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { id: number; data: { name?: string; image?: File; is_default?: boolean } }) =>
+      $api.certificates.updateTemplate(args.id, args.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificate-templates'] })
+    },
+  })
+}
+
+export const useDeleteCertificateTemplate = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: $api.certificates.deleteTemplate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificate-templates'] })
     },
   })
 }
