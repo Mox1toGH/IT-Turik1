@@ -21,8 +21,8 @@ class CertificateSerializer(serializers.ModelSerializer):
     certificate_url = serializers.SerializerMethodField()
     template_name = serializers.ReadOnlyField(source='template.name')
     full_name = serializers.SerializerMethodField(read_only=True)
-    team_name = serializers.ReadOnlyField(source='team.name')
-    tournament_name = serializers.ReadOnlyField(source='tournament.name')
+    team_name = serializers.SerializerMethodField(read_only=True)
+    tournament_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Certificate
@@ -41,6 +41,10 @@ class CertificateSerializer(serializers.ModelSerializer):
         return None
 
     def get_full_name(self, obj):
-        if not obj.user:
-            return ''
-        return (obj.user.full_name or obj.user.username).strip()
+        return obj.full_name
+
+    def get_team_name(self, obj):
+        return obj.team_name
+
+    def get_tournament_name(self, obj):
+        return obj.tournament_name

@@ -16,9 +16,7 @@ PAGE_HEIGHT_PX = 768
 
 
 def _build_context(certificate, template_obj, verification_url=''):
-    participant_name = ''
-    if certificate.user:
-        participant_name = (certificate.user.full_name or certificate.user.username).strip()
+    participant_name = certificate.full_name
 
     placement_text = certificate.placement or ''
     if placement_text and 'place' not in placement_text.lower() and placement_text.lower() != 'participant':
@@ -42,8 +40,8 @@ def _build_context(certificate, template_obj, verification_url=''):
     return {
         'certificate': certificate,
         'participant_name': participant_name,
-        'team_name': certificate.team.name if certificate.team else '',
-        'tournament_name': certificate.tournament.name if certificate.tournament else '',
+        'team_name': certificate.team_name,
+        'tournament_name': certificate.tournament_name,
         'placement_text': placement_text,
         'template_image_uri': template_image_uri,
         'verification_url': verification_url,
