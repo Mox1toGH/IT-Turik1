@@ -27,7 +27,7 @@ export const certificatesService = {
     tournament: number
     team?: number | null
     placement: string
-    certificate_number: string
+    certificate_number?: string
     template?: number | null
   }) {
     const { data } = await apiClient.post(`${prefix}/`, body)

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 import uuid
 import os
 
@@ -35,7 +36,7 @@ class Certificate(models.Model):
     team_name_snapshot = models.CharField(max_length=255, blank=True, default='')
     tournament_name_snapshot = models.CharField(max_length=255, blank=True, default='')
     placement = models.CharField(max_length=100)
-    certificate_number = models.CharField(max_length=100)
+    certificate_number = models.CharField(max_length=100, blank=True, default='')
     template = models.ForeignKey(CertificateTemplate, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -64,11 +65,17 @@ class Certificate(models.Model):
         if force or not self.tournament_name_snapshot:
             self.tournament_name_snapshot = self._resolve_tournament_name()
 
+    def _generate_certificate_number(self):
+        current_date = timezone.localdate()
+        return f'CERT-{current_date:%Y-%m-%d}'
+
     def save(self, *args, **kwargs):
         # Immutable snapshot for certificate data:
         # on create we always capture current names;
         # on update we only backfill empty snapshots.
         self.fill_snapshot_fields(force=self._state.adding)
+        if not (self.certificate_number or '').strip():
+            self.certificate_number = self._generate_certificate_number()
         super().save(*args, **kwargs)
 
     @property

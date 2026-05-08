@@ -58,8 +58,8 @@
             </div>
 
             <div class="form-item">
-              <label class="form-label">Certificate number</label>
-              <ui-input v-model="createForm.certificate_number" required placeholder="CERT-2026-001" />
+              <label class="form-label">Certificate number (optional)</label>
+              <ui-input v-model="createForm.certificate_number" placeholder="Leave empty for auto: CERT-YYYY-MM-DD" />
             </div>
 
             <ui-button type="submit" class="submit" :disabled="isCreating">
@@ -254,7 +254,7 @@ const handleCreateCertificate = async () => {
       team: createForm.value.team || null,
       template: createForm.value.template || null,
       placement: createForm.value.placement,
-      certificate_number: createForm.value.certificate_number,
+      certificate_number: createForm.value.certificate_number.trim() || undefined,
     })
 
     showNotification('Certificate created successfully.', 'success')

@@ -32,6 +32,9 @@ class CertificateSerializer(serializers.ModelSerializer):
             'template', 'template_name', 'certificate_url', 'created_at'
         ]
         read_only_fields = ['id', 'unique_code', 'created_at', 'certificate_url', 'full_name', 'team_name', 'tournament_name']
+        extra_kwargs = {
+            'certificate_number': {'required': False, 'allow_blank': True},
+        }
 
     def get_certificate_url(self, obj):
         request = self.context.get('request')
