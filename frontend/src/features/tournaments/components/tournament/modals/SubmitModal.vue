@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import type { RoundId, TournamentId } from '@/api/dbTypes'
 import { parseApiError } from '@/api/errors'
+import { tournamentsKeys } from '@/api/queries/keys'
 import { useSubmitRound } from '@/api/queries/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
@@ -60,6 +61,8 @@ import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { SubmitRoundSchema } from '@/schemas/tournaments.schema'
+import { useQueryClient } from '@tanstack/vue-query'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
   modelValue: boolean
@@ -78,6 +81,9 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 const { showNotification } = useNotification()
+const queryClient = useQueryClient()
+const route = useRoute()
+const router = useRouter()
 
 const form = useForm<Form>(SubmitRoundSchema, {
   github_url: '',
@@ -112,8 +118,16 @@ const submitRound = () => {
       },
 
       onSuccess() {
+        queryClient.invalidateQueries({ queryKey: tournamentsKeys.submissions(props.tournamentId) })
         showNotification('Success', 'success')
+        form.reset()
         emit('update:modelValue', false)
+        void router.replace({
+          query: {
+            ...route.query,
+            section: 'submissions',
+          },
+        })
       },
     },
   )
