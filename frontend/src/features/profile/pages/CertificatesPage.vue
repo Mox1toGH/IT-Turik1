@@ -25,12 +25,12 @@
           Failed to load certificates (code: {{ apiError?.code ?? 'unknown' }})
         </p>
 
-        <p v-else-if="!certificates?.length || isNotFoundError" class="text-muted">
+        <p v-else-if="!certificates?.results?.length || isNotFoundError" class="text-muted">
           You do not have certificates yet.
         </p>
 
         <div v-else class="list">
-          <ui-card v-for="item in certificates" :key="item.id" class="cert-card">
+          <ui-card v-for="item in certificates.results" :key="item.id" class="cert-card">
             <template #header>
               <div class="row-head">
                 <strong>{{ item.tournament_name || 'Tournament' }}</strong>
@@ -43,6 +43,7 @@
               <p><strong>Placement:</strong> {{ item.placement || '-' }}</p>
               <p><strong>Team:</strong> {{ item.team_name || '-' }}</p>
               <p><strong>Date:</strong> {{ formatDate(item.created_at) }}</p>
+              <p class="verification-code"><strong>Verification code:</strong> {{ item.unique_code }}</p>
             </div>
 
             <div class="actions">
@@ -58,6 +59,12 @@
               </button>
             </div>
           </ui-card>
+
+          <div v-if="totalPages > 1" class="pagination">
+            <ui-button variant="secondary" :disabled="currentPage === 1" @click="prevPage">Prev</ui-button>
+            <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
+            <ui-button variant="secondary" :disabled="currentPage === totalPages" @click="nextPage">Next</ui-button>
+          </div>
         </div>
       </ui-skeleton-loader>
     </ui-card>
@@ -65,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -76,9 +83,19 @@ import { parseApiError } from '@/api/errors'
 import { apiClient } from '@/api/client'
 
 const router = useRouter()
-const { data: certificates, isLoading, isLoadingError, error } = useMyCertificates()
+const currentPage = ref(1)
+const pageSize = 6
+const { data: certificates, isLoading, isLoadingError, error } = useMyCertificates({
+  page: currentPage,
+  pageSize,
+})
 const apiError = computed(() => parseApiError(error.value))
 const isNotFoundError = computed(() => String(apiError.value?.code || '') === '404')
+
+const totalPages = computed(() => {
+  const total = certificates.value?.count || 0
+  return Math.max(1, Math.ceil(total / pageSize))
+})
 
 const goBack = () => {
   router.push('/profile')
@@ -103,6 +120,14 @@ const downloadCertificate = async (url: string, code: string) => {
   link.click()
   link.remove()
   window.URL.revokeObjectURL(blobUrl)
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value -= 1
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value += 1
 }
 </script>
 
@@ -151,11 +176,29 @@ const downloadCertificate = async (url: string, code: string) => {
   margin: 0;
 }
 
+.verification-code {
+  grid-column: 1 / -1;
+  word-break: break-all;
+}
+
 .actions {
   display: flex;
   gap: 8px;
   margin-top: 12px;
   flex-wrap: wrap;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.page-info {
+  font-weight: 600;
+  color: var(--color-gray-600);
 }
 
 .link-btn {
@@ -164,13 +207,19 @@ const downloadCertificate = async (url: string, code: string) => {
   padding: 8px 12px;
   text-decoration: none;
   font-weight: 600;
-  color: var(--brand-700);
-  background: white;
+  color: var(--foreground);
+  background: var(--background);
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .link-btn.secondary {
-  color: var(--color-gray-700);
+  color: var(--muted-foreground);
+}
+
+.link-btn:hover {
+  background: color-mix(in srgb, var(--background) 88%, var(--foreground));
+  border-color: color-mix(in srgb, var(--line-soft) 65%, var(--foreground));
 }
 
 @media (max-width: 760px) {

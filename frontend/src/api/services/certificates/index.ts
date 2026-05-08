@@ -1,25 +1,62 @@
 import { apiClient } from '@/api/client'
 import { isAxiosError } from 'axios'
-import type { GetCertificatesResponse, GetCertificateTemplatesResponse, VerifyCertificateResponse } from './types'
+import type {
+  GetCertificatesResponse,
+  GetCertificateTemplatesResponse,
+  PaginatedResponse,
+  VerifyCertificateResponse,
+} from './types'
 
 const prefix = '/api/certificates'
 
 export const certificatesService = {
-  async getMyCertificates() {
+  async getMyCertificates(args?: { page?: number; pageSize?: number }) {
+    const page = args?.page ?? 1
+    const pageSize = args?.pageSize ?? 6
+
     try {
-      const { data } = await apiClient.get<GetCertificatesResponse>(`${prefix}/`)
-      return Array.isArray(data) ? data : []
+      const { data } = await apiClient.get<PaginatedResponse<GetCertificatesResponse> | GetCertificatesResponse>(
+        `${prefix}/`,
+        { params: { page, page_size: pageSize } },
+      )
+      if (Array.isArray(data)) {
+        return {
+          count: data.length,
+          next: null,
+          previous: null,
+          results: data,
+        }
+      }
+      return data
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) {
-        return []
+        return {
+          count: 0,
+          next: null,
+          previous: null,
+          results: [],
+        }
       }
       throw error
     }
   },
 
-  async getCertificates() {
-    const { data } = await apiClient.get<GetCertificatesResponse>(`${prefix}/`)
-    return Array.isArray(data) ? data : []
+  async getCertificates(args?: { page?: number; pageSize?: number }) {
+    const page = args?.page ?? 1
+    const pageSize = args?.pageSize ?? 20
+    const { data } = await apiClient.get<PaginatedResponse<GetCertificatesResponse> | GetCertificatesResponse>(
+      `${prefix}/`,
+      { params: { page, page_size: pageSize } },
+    )
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        next: null,
+        previous: null,
+        results: data,
+      }
+    }
+    return data
   },
 
   async createCertificate(body: {

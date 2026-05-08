@@ -32,5 +32,12 @@ export interface VerifyCertificateResponse {
   data?: CertificateItem
 }
 
+export interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
 export type GetCertificatesResponse = CertificateItem[]
 export type GetCertificateTemplatesResponse = CertificateTemplateItem[]

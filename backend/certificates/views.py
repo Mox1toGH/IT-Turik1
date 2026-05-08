@@ -10,10 +10,17 @@ from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.pagination import PageNumberPagination
 
 from .models import Certificate, CertificateTemplate
 from .serializers import CertificateSerializer, CertificateTemplateSerializer
 from .services import generate_certificate_pdf
+
+
+class CertificatePagination(PageNumberPagination):
+    page_size = 6
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -51,6 +58,7 @@ class CertificateViewSet(viewsets.ModelViewSet):
     queryset = Certificate.objects.all().select_related('template', 'user', 'team', 'tournament').order_by('-created_at')
     serializer_class = CertificateSerializer
     lookup_field = 'unique_code'
+    pagination_class = CertificatePagination
 
     def get_permissions(self):
         if self.action in {'verify', 'view'}:

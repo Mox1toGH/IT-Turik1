@@ -17,8 +17,8 @@ export const accountKeys = {
 }
 
 export const certificateKeys = {
-  myCertificates: () => ['my-certificates'],
-  allCertificates: () => ['certificates'],
+  myCertificates: (page = 1, pageSize = 6) => ['my-certificates', page, pageSize],
+  allCertificates: (page = 1, pageSize = 20) => ['certificates', page, pageSize],
   templates: () => ['certificate-templates'],
   verify: (code: string) => ['certificate-verify', code],
 }

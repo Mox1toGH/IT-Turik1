@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { toValue, type MaybeRefOrGetter } from 'vue'
 import type { AxiosError } from 'axios'
 import { $api } from '@/api/services'
 import { certificateKeys } from '../keys'
@@ -7,21 +8,36 @@ import type { ApiError } from '@/api/errors'
 import type {
   GetCertificatesResponse,
   GetCertificateTemplatesResponse,
+  PaginatedResponse,
   VerifyCertificateResponse,
 } from '@/api/services/certificates/types'
 
-export const useMyCertificates = (config?: QueryConfig<GetCertificatesResponse>) => {
-  return useQuery<GetCertificatesResponse, AxiosError<ApiError>>({
-    queryKey: certificateKeys.myCertificates(),
-    queryFn: $api.certificates.getMyCertificates,
+export const useMyCertificates = (
+  args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
+  config?: QueryConfig<PaginatedResponse<GetCertificatesResponse>>,
+) => {
+  return useQuery<PaginatedResponse<GetCertificatesResponse>, AxiosError<ApiError>>({
+    queryKey: ['my-certificates', args.page ?? 1, args.pageSize ?? 6],
+    queryFn: () =>
+      $api.certificates.getMyCertificates({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 6,
+      }),
     ...config,
   })
 }
 
-export const useCertificates = (config?: QueryConfig<GetCertificatesResponse>) => {
-  return useQuery<GetCertificatesResponse, AxiosError<ApiError>>({
-    queryKey: certificateKeys.allCertificates(),
-    queryFn: $api.certificates.getCertificates,
+export const useCertificates = (
+  args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
+  config?: QueryConfig<PaginatedResponse<GetCertificatesResponse>>,
+) => {
+  return useQuery<PaginatedResponse<GetCertificatesResponse>, AxiosError<ApiError>>({
+    queryKey: ['certificates', args.page ?? 1, args.pageSize ?? 20],
+    queryFn: () =>
+      $api.certificates.getCertificates({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 20,
+      }),
     ...config,
   })
 }
@@ -39,8 +55,8 @@ export const useCreateCertificate = () => {
   return useMutation({
     mutationFn: $api.certificates.createCertificate,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: certificateKeys.allCertificates() })
-      queryClient.invalidateQueries({ queryKey: certificateKeys.myCertificates() })
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
+      queryClient.invalidateQueries({ queryKey: ['my-certificates'] })
     },
   })
 }
