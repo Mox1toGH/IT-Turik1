@@ -73,6 +73,20 @@
               View details
             </ui-button>
 
+            <ui-button
+              v-if="user?.role === 'admin' && round.status === 'draft'"
+              size="sm"
+              variant="secondary"
+              @click="openEdit(round)"
+            >
+              Edit
+            </ui-button>
+            <edit-round-modal
+              v-if="selectedRound && user?.role === 'admin'"
+              :round="selectedRound"
+              v-model="isEditOpen"
+            />
+
             <template v-if="round.status === 'active' && user?.role === 'team'">
               <ui-button
                 v-if="submittedRoundIds.has(round.id)"
@@ -124,6 +138,7 @@ import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournamen
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
+import EditRoundModal from './modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
@@ -152,12 +167,18 @@ const submittedRoundIds = computed(
 
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
+const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round
   isDetailsOpen.value = true
+}
+
+function openEdit(round: Round) {
+  selectedRound.value = round
+  isEditOpen.value = true
 }
 
 function openSubmissionForm(roundId: number) {

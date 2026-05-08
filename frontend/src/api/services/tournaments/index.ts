@@ -8,6 +8,8 @@ import type {
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
+  EditRoundArgs,
+  EditRoundResponse,
   EditSubmissionArgs,
   EditSubmissionResponse,
   GetActiveTeamTournamentArgs,
@@ -98,6 +100,14 @@ export const tournamentsService = {
 
   createRound: async (args: CreateRoundArgs) => {
     const { data } = await apiClient.post(`${prefix}/${args.id}/rounds/`, args.body)
+    return data
+  },
+
+  editRound: async (args: EditRoundArgs) => {
+    const { data } = await apiClient.patch<EditRoundResponse>(
+      `${prefix}/rounds/${args.id}/`,
+      args.body,
+    )
     return data
   },
 

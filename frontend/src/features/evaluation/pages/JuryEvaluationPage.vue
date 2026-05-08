@@ -15,7 +15,10 @@
             multiple
             min-width="220px"
             placeholder="Filter by round"
-            align-to="right"
+            align-to="left"
+            :is-loading="isLoading"
+            :is-error="isError"
+            error="Failed to fetch rounds"
           />
 
           <div class="progress-wrap">
@@ -69,7 +72,7 @@ import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue
 
 const selectedRounds = ref<string[]>([])
 
-const { data: assignments, isLoading, refetch } = useAssignments()
+const { data: assignments, isLoading, isError, refetch } = useAssignments()
 
 const roundOptions = computed(() => {
   const unique = new Map<string, string>()
@@ -89,7 +92,9 @@ const filteredAssignments = computed(() => {
 })
 
 const totalCount = computed(() => filteredAssignments.value.length)
-const evaluatedCount = computed(() => filteredAssignments.value.filter((item) => item.is_evaluated).length)
+const evaluatedCount = computed(
+  () => filteredAssignments.value.filter((item) => item.is_evaluated).length,
+)
 const progressPercent = computed(() =>
   totalCount.value ? Math.round((evaluatedCount.value / totalCount.value) * 100) : 0,
 )

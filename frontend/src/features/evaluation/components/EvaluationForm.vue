@@ -18,7 +18,9 @@
     </div>
 
     <div class="totals">
-      <p>Total: <strong>{{ total }}</strong></p>
+      <p>
+        Total: <strong>{{ total }}</strong>
+      </p>
       <p class="hint">All scores must be within criterion limits</p>
     </div>
 
@@ -28,7 +30,9 @@
     </div>
 
     <div class="actions">
-      <ui-button size="sm" variant="secondary" type="button" @click="emit('cancel')">Cancel</ui-button>
+      <ui-button size="sm" variant="secondary" type="button" @click="emit('cancel')"
+        >Cancel</ui-button
+      >
       <ui-button size="sm" type="submit" :disabled="hasAnyError || isPending">
         {{ existingEvaluation ? 'Save Changes' : 'Submit Evaluation' }}
       </ui-button>
@@ -84,7 +88,9 @@ const hasCriterionError = (criterionId: string, maxScore: number) => {
 }
 
 const hasAnyError = computed(() =>
-  props.assignment.criteria.some((criterion) => hasCriterionError(criterion.id, criterion.max_score)),
+  props.assignment.criteria.some((criterion) =>
+    hasCriterionError(criterion.id, criterion.max_score),
+  ),
 )
 
 const createMutation = useCreateEvaluation()
@@ -94,8 +100,8 @@ const isPending = computed(() => createMutation.isPending.value || updateMutatio
 const tournamentId = computed(
   () =>
     props.assignment.round_details.tournament ??
-    (props.assignment.submission_details as { round_details?: { tournament?: number } }).round_details
-      ?.tournament ??
+    (props.assignment.submission_details as { round_details?: { tournament?: number } })
+      .round_details?.tournament ??
     0,
 )
 

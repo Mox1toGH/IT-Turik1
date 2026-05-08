@@ -30,6 +30,7 @@
           <a :href="liveDemoUrl" target="_blank" rel="noopener noreferrer">{{ liveDemoUrl }}</a>
         </p>
       </div>
+
       <p class="description">{{ description }}</p>
       <evaluation-summary
         v-if="assignment.evaluation"
@@ -47,10 +48,12 @@
     </template>
   </ui-card>
 
-  <ui-modal v-model="showForm">
+  <ui-modal v-model="showForm" scrollable>
     <template #title>
-      <h3>{{ assignment.evaluation ? 'Edit Evaluation' : 'Set Evaluation' }}</h3>
-      <p class="modal-subtitle">{{ teamName }} · {{ assignment.round_details.name }}</p>
+      <div>
+        <h3>{{ assignment.evaluation ? 'Edit Evaluation' : 'Set Evaluation' }}</h3>
+        <p class="modal-subtitle">{{ teamName }} · {{ assignment.round_details.name }}</p>
+      </div>
     </template>
 
     <evaluation-form
@@ -95,7 +98,9 @@ const submissionDetails = computed(
     },
 )
 
-const teamName = computed(() => submissionDetails.value.team_details?.name ?? `Team #${props.assignment.submission}`)
+const teamName = computed(
+  () => submissionDetails.value.team_details?.name ?? `Team #${props.assignment.submission}`,
+)
 const githubUrl = computed(() => submissionDetails.value.github_url ?? '')
 const demoVideoUrl = computed(() => submissionDetails.value.demo_video_url ?? '')
 const liveDemoUrl = computed(() => submissionDetails.value.live_demo_url ?? '')
@@ -150,6 +155,8 @@ const handleSuccess = () => {
 .links {
   display: grid;
   gap: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.8rem;
 }
 
 .links a {
@@ -174,6 +181,8 @@ const handleSuccess = () => {
   line-height: 1.5;
   color: var(--foreground);
   word-break: break-word;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.8rem;
 }
 
 .card-footer {
