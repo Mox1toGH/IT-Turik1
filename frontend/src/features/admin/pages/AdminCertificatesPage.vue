@@ -179,6 +179,66 @@
             <p v-if="verifyResult.message" class="result-message">{{ verifyResult.message }}</p>
           </div>
         </ui-card>
+
+        <ui-card class="panel certs-panel">
+          <template #header>
+            <div class="panel-head">
+              <div class="panel-title-row">
+                <h2 class="panel-title">Issued Certificates</h2>
+                <form class="search-box" @submit.prevent="handleSearch">
+                  <ui-input v-model="searchQuery" placeholder="Search by full name or verification code..." size="sm" class="ui-input-full"/>
+                  <ui-button type="submit" size="sm" variant="secondary">Search</ui-button>
+                </form>
+              </div>
+              <span class="panel-note">Global management</span>
+            </div>
+          </template>
+
+          <ui-skeleton-loader :loading="isCertsLoading">
+            <template #skeleton>
+              <div class="certs-list-skeleton">
+                <ui-skeleton v-for="i in 4" :key="i" variant="rect" width="100%" height="80px" />
+              </div>
+            </template>
+
+            <p v-if="isCertsError" class="text-muted">Failed to load certificates.</p>
+            <p v-else-if="!certsResponse?.results?.length" class="text-muted">No certificates found.</p>
+
+            <div v-else class="certs-list">
+              <div v-for="cert in certsResponse.results" :key="cert.id" class="cert-item">
+                <div class="cert-info-main">
+                  <div class="cert-title-row">
+                    <strong>{{ cert.tournament_name || 'Tournament' }}</strong>
+                    <span class="cert-num">#{{ cert.certificate_number || cert.unique_code }}</span>
+                  </div>
+                  <div class="cert-details-grid">
+                    <span><strong>User:</strong> {{ cert.full_name || cert.username }}</span>
+                    <span><strong>Placement:</strong> {{ cert.placement || '-' }}</span>
+                    <span><strong>Team:</strong> {{ cert.team_name || '-' }}</span>
+                    <span><strong>Date:</strong> {{ formatDate(cert.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="cert-item-actions">
+                  <a :href="cert.certificate_url" target="_blank" class="action-btn-mini" title="View PDF">
+                    <ui-badge variant="gray">PDF</ui-badge>
+                  </a>
+                  <button class="action-btn-mini" title="Edit certificate" @click="openEditCert(cert)">
+                    <EditIcon class="icon-mini" />
+                  </button>
+                  <button class="action-btn-mini delete" title="Delete certificate" @click="confirmDeleteCert(cert.unique_code)">
+                    <TrashIcon class="icon-mini" />
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="totalCertPages > 1" class="pagination">
+                <ui-button size="sm" variant="secondary" :disabled="certsPage === 1" @click="certsPage--">Prev</ui-button>
+                <span class="page-info">Page {{ certsPage }} / {{ totalCertPages }}</span>
+                <ui-button size="sm" variant="secondary" :disabled="certsPage === totalCertPages" @click="certsPage++">Next</ui-button>
+              </div>
+            </div>
+          </ui-skeleton-loader>
+        </ui-card>
       </div>
     </ui-card>
 
@@ -218,6 +278,63 @@
         </ui-button>
       </form>
     </UiModal>
+
+    <UiConfirmModal
+      v-model="isDeleteCertModalOpen"
+      title="Delete Certificate"
+      message="Are you sure you want to delete this certificate? This action cannot be undone."
+      confirmText="Delete"
+      confirmVariant="danger"
+      :loading="isDeletingCert"
+      @confirm="onDeleteCertConfirm"
+    />
+
+    <UiModal v-model="isEditCertModalOpen" maxWidth="600px">
+      <template #title>
+        <h3 class="panel-title">Edit Certificate</h3>
+      </template>
+      
+      <form id="editCertForm" class="edit-cert-modal-form" @submit.prevent="handleUpdateCert">
+        <div class="modal-form-grid">
+          <div class="form-item">
+            <label class="form-label">User</label>
+            <ui-select v-model="editCertForm.user" :options="userOptions" placeholder="Select user" />
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">Tournament</label>
+            <ui-select v-model="editCertForm.tournament" :options="tournamentOptions" placeholder="Select tournament" />
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">Team (optional)</label>
+            <ui-select v-model="editCertForm.team" :options="teamOptions" placeholder="No team" />
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">Template (optional)</label>
+            <ui-select v-model="editCertForm.template" :options="templateOptions" placeholder="Default template" />
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">Placement</label>
+            <ui-input v-model="editCertForm.placement" required placeholder="1st" />
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">Certificate number</label>
+            <ui-input v-model="editCertForm.certificate_number" placeholder="CERT-YYYY-MM-DD" />
+          </div>
+        </div>
+      </form>
+
+      <template #footer>
+        <ui-button variant="secondary" @click="isEditCertModalOpen = false">Cancel</ui-button>
+        <ui-button type="submit" form="editCertForm" :disabled="isUpdatingCert">
+          {{ isUpdatingCert ? 'Saving...' : 'Save Changes' }}
+        </ui-button>
+      </template>
+    </UiModal>
   </section>
 </template>
 
@@ -239,10 +356,13 @@ import { useTeams } from '@/api/queries/teams'
 import { useTournaments } from '@/api/queries/tournaments'
 import {
   useCertificateTemplates,
+  useCertificates,
   useCreateCertificate,
   useUploadCertificateTemplate,
   useUpdateCertificateTemplate,
   useDeleteCertificateTemplate,
+  useUpdateCertificate,
+  useDeleteCertificate,
 } from '@/api/queries/certificates'
 import { $api } from '@/api/services'
 import { useNotification } from '@/composables/useNotification'
@@ -300,6 +420,44 @@ const editForm = ref({
   name: '',
   file: null as File | null,
   is_default: false,
+})
+
+const certsPage = ref(1)
+const certsPageSize = 10
+const certsSearch = ref('')
+const searchQuery = ref('')
+
+const handleSearch = () => {
+  certsSearch.value = searchQuery.value
+  certsPage.value = 1
+}
+
+const {
+  data: certsResponse,
+  isLoading: isCertsLoading,
+  isLoadingError: isCertsError,
+} = useCertificates({ page: certsPage, pageSize: certsPageSize, search: certsSearch })
+
+const { mutateAsync: updateCert, isPending: isUpdatingCert } = useUpdateCertificate()
+const { mutateAsync: deleteCert, isPending: isDeletingCert } = useDeleteCertificate()
+
+const isDeleteCertModalOpen = ref(false)
+const certToDeleteCode = ref<string | null>(null)
+
+const isEditCertModalOpen = ref(false)
+const certToEditCode = ref<string | null>(null)
+const editCertForm = ref({
+  user: 0,
+  tournament: 0,
+  team: 0,
+  template: 0,
+  placement: '',
+  certificate_number: '',
+})
+
+const totalCertPages = computed(() => {
+  const total = certsResponse.value?.count || 0
+  return Math.max(1, Math.ceil(total / certsPageSize))
 })
 
 const createForm = ref({
@@ -455,6 +613,61 @@ const handleUpdate = async () => {
   } catch {
     showNotification('Failed to update template.', 'error')
   }
+}
+
+const confirmDeleteCert = (code: string) => {
+  certToDeleteCode.value = code
+  isDeleteCertModalOpen.value = true
+}
+
+const onDeleteCertConfirm = async () => {
+  if (!certToDeleteCode.value) return
+  try {
+    await deleteCert(certToDeleteCode.value)
+    showNotification('Certificate deleted successfully.', 'success')
+    isDeleteCertModalOpen.value = false
+  } catch {
+    showNotification('Failed to delete certificate.', 'error')
+  }
+}
+
+const openEditCert = (cert: any) => {
+  certToEditCode.value = cert.unique_code
+  editCertForm.value = {
+    user: cert.user,
+    tournament: cert.tournament,
+    team: cert.team || 0,
+    template: cert.template || 0,
+    placement: cert.placement,
+    certificate_number: cert.certificate_number || '',
+  }
+  isEditCertModalOpen.value = true
+}
+
+const handleUpdateCert = async () => {
+  if (!certToEditCode.value) return
+  try {
+    await updateCert({
+      uniqueCode: certToEditCode.value,
+      data: {
+        user: editCertForm.value.user,
+        tournament: editCertForm.value.tournament,
+        team: editCertForm.value.team || null,
+        template: editCertForm.value.template || null,
+        placement: editCertForm.value.placement,
+        certificate_number: editCertForm.value.certificate_number.trim() || undefined,
+      },
+    })
+    showNotification('Certificate updated successfully.', 'success')
+    isEditCertModalOpen.value = false
+  } catch {
+    showNotification('Failed to update certificate.', 'error')
+  }
+}
+
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('uk-UA')
 }
 </script>
 
@@ -765,6 +978,90 @@ const handleUpdate = async () => {
   border-color: #fca5a5;
 }
 
+.certs-panel {
+  grid-column: 1 / -1;
+}
+
+.edit-cert-modal-form {
+  padding: 10px 0;
+}
+
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1rem;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.search-box {
+  max-width: 450px;
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.certs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--background);
+  border: 1px solid var(--line-soft);
+  gap: 1rem;
+}
+
+.cert-info-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cert-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.cert-num {
+  font-size: 0.8rem;
+  color: var(--color-gray-500);
+}
+
+.cert-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.cert-details-grid strong {
+  color: var(--color-gray-500);
+  font-weight: 500;
+}
+
+.cert-item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.certs-list-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
 @media (max-width: 900px) {
   .head {
     flex-direction: column;
@@ -773,6 +1070,28 @@ const handleUpdate = async () => {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .panel-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-box {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .cert-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cert-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--line-soft);
+    padding-top: 10px;
   }
 }
 </style>

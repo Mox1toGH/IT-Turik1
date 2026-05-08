@@ -87,6 +87,14 @@ class CertificateViewSet(viewsets.ModelViewSet):
             return queryset.none()
 
         if user.is_staff:
+            search_query = self.request.query_params.get('search')
+            if search_query:
+                queryset = queryset.filter(
+                    Q(user__username__icontains=search_query) |
+                    Q(user__full_name__icontains=search_query) |
+                    Q(certificate_number__icontains=search_query) |
+                    Q(unique_code__icontains=search_query)
+                )
             return queryset
 
         return queryset.filter(user_id=user.id)

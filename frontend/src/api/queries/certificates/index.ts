@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { toValue, type MaybeRefOrGetter } from 'vue'
+import { toValue, type MaybeRefOrGetter, computed } from 'vue'
 import type { AxiosError } from 'axios'
 import { $api } from '@/api/services'
 import { certificateKeys } from '../keys'
@@ -17,7 +17,7 @@ export const useMyCertificates = (
   config?: QueryConfig<PaginatedResponse<CertificateItem>>,
 ) => {
   return useQuery<PaginatedResponse<CertificateItem>, AxiosError<ApiError>>({
-    queryKey: ['my-certificates', args.page ?? 1, args.pageSize ?? 6],
+    queryKey: computed(() => ['my-certificates', toValue(args.page) ?? 1, toValue(args.pageSize) ?? 6]),
     queryFn: () =>
       $api.certificates.getMyCertificates({
         page: toValue(args.page) ?? 1,
@@ -28,15 +28,16 @@ export const useMyCertificates = (
 }
 
 export const useCertificates = (
-  args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
+  args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number>; search?: MaybeRefOrGetter<string> } = {},
   config?: QueryConfig<PaginatedResponse<CertificateItem>>,
 ) => {
   return useQuery<PaginatedResponse<CertificateItem>, AxiosError<ApiError>>({
-    queryKey: ['certificates', args.page ?? 1, args.pageSize ?? 20],
+    queryKey: computed(() => ['certificates', toValue(args.page) ?? 1, toValue(args.pageSize) ?? 20, toValue(args.search) ?? '']),
     queryFn: () =>
       $api.certificates.getCertificates({
         page: toValue(args.page) ?? 1,
         pageSize: toValue(args.pageSize) ?? 20,
+        search: toValue(args.search) ?? '',
       }),
     ...config,
   })
@@ -47,7 +48,7 @@ export const useCertificateTemplates = (
   config?: QueryConfig<PaginatedResponse<CertificateTemplateItem>>,
 ) => {
   return useQuery<PaginatedResponse<CertificateTemplateItem>, AxiosError<ApiError>>({
-    queryKey: ['certificate-templates', toValue(args.page) ?? 1, toValue(args.pageSize) ?? 8, toValue(args.nopage) ?? false],
+    queryKey: computed(() => ['certificate-templates', toValue(args.page) ?? 1, toValue(args.pageSize) ?? 8, toValue(args.nopage) ?? false]),
     queryFn: () =>
       $api.certificates.getTemplates({
         page: toValue(args.page) ?? 1,
@@ -96,6 +97,35 @@ export const useDeleteCertificateTemplate = () => {
     mutationFn: $api.certificates.deleteTemplate,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['certificate-templates'] })
+    },
+  })
+}
+
+export const useUpdateCertificate = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { uniqueCode: string; data: Partial<{
+      user: number
+      tournament: number
+      team?: number | null
+      placement: string
+      certificate_number?: string
+      template?: number | null
+    }> }) => $api.certificates.updateCertificate(args.uniqueCode, args.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
+      queryClient.invalidateQueries({ queryKey: ['my-certificates'] })
+    },
+  })
+}
+
+export const useDeleteCertificate = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: $api.certificates.deleteCertificate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
+      queryClient.invalidateQueries({ queryKey: ['my-certificates'] })
     },
   })
 }

@@ -41,12 +41,14 @@ export const certificatesService = {
     }
   },
 
-  async getCertificates(args?: { page?: number; pageSize?: number }) {
+  async getCertificates(args?: { page?: number; pageSize?: number; search?: string }) {
     const page = args?.page ?? 1
     const pageSize = args?.pageSize ?? 20
+    const search = args?.search ?? ''
+
     const { data } = await apiClient.get<PaginatedResponse<CertificateItem> | CertificateItem[]>(
       `${prefix}/`,
-      { params: { page, page_size: pageSize } },
+      { params: { page, page_size: pageSize, search } },
     )
     if (Array.isArray(data)) {
       return {
@@ -56,6 +58,23 @@ export const certificatesService = {
         results: data,
       }
     }
+    return data
+  },
+
+  async updateCertificate(uniqueCode: string, body: Partial<{
+    user: number
+    tournament: number
+    team?: number | null
+    placement: string
+    certificate_number?: string
+    template?: number | null
+  }>) {
+    const { data } = await apiClient.patch(`${prefix}/${uniqueCode}/`, body)
+    return data
+  },
+
+  async deleteCertificate(uniqueCode: string) {
+    const { data } = await apiClient.delete(`${prefix}/${uniqueCode}/`)
     return data
   },
 
