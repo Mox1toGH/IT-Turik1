@@ -25,7 +25,15 @@ from teams.serializers import TeamSummarySerializer
 class RoundShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Round
-        fields = ('id', 'name', 'start_date', 'end_date', 'status')
+        fields = (
+            'id',
+            'name',
+            'start_date',
+            'end_date',
+            'status',
+            'criteria',
+            'tournament',
+        )
 
 
 class TournamentPublicSerializer(serializers.ModelSerializer):
