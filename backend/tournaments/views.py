@@ -438,8 +438,7 @@ class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
 
 class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanSetResults]
 
     def get_queryset(self):
         round_obj = get_object_or_404(Round, pk=self.kwargs['pk'])
