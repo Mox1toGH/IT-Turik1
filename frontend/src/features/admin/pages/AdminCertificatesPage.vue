@@ -105,21 +105,29 @@
             </template>
 
             <p v-if="isTemplatesError" class="text-muted">Failed to load templates.</p>
-            <p v-else-if="!templates?.length" class="text-muted">No templates uploaded yet.</p>
+            <p v-else-if="!paginatedTemplates.length" class="text-muted">No templates uploaded yet.</p>
 
-            <div v-else class="templates-grid">
-              <ui-card v-for="tpl in templates" :key="tpl.id" class="template-card">
-                <template #header>
-                  <div class="template-head">
-                    <strong>{{ tpl.name }}</strong>
-                    <ui-badge :variant="tpl.is_default ? 'green' : 'gray'">
-                      {{ tpl.is_default ? 'Default' : 'Template' }}
-                    </ui-badge>
-                  </div>
-                </template>
+            <div v-else>
+              <div class="templates-grid">
+                <ui-card v-for="tpl in paginatedTemplates" :key="tpl.id" class="template-card">
+                  <template #header>
+                    <div class="template-head">
+                      <strong>{{ tpl.name }}</strong>
+                      <ui-badge :variant="tpl.is_default ? 'green' : 'gray'">
+                        {{ tpl.is_default ? 'Default' : 'Template' }}
+                      </ui-badge>
+                    </div>
+                  </template>
 
-                <img v-if="tpl.image_url" :src="tpl.image_url" :alt="tpl.name" class="preview" />
-              </ui-card>
+                  <img v-if="tpl.image_url" :src="tpl.image_url" :alt="tpl.name" class="preview" />
+                </ui-card>
+              </div>
+
+              <div v-if="totalTemplatePages > 1" class="pagination">
+                <ui-button size="sm" variant="secondary" :disabled="templatesPage === 1" @click="prevTemplatePage">Prev</ui-button>
+                <span class="page-info">Page {{ templatesPage }} / {{ totalTemplatePages }}</span>
+                <ui-button size="sm" variant="secondary" :disabled="templatesPage === totalTemplatePages" @click="nextTemplatePage">Next</ui-button>
+              </div>
             </div>
           </ui-skeleton-loader>
         </ui-card>
@@ -196,11 +204,34 @@ const { data: tournamentsResponse } = useTournaments({
   status: undefined as any,
 })
 
+const templatesPage = ref(1)
+const templatesPageSize = 8
+
+// Paginated query for the Template Library
 const {
-  data: templates,
+  data: paginatedTemplatesResponse,
   isLoading: isTemplatesLoading,
   isLoadingError: isTemplatesError,
-} = useCertificateTemplates()
+} = useCertificateTemplates({ page: templatesPage, pageSize: templatesPageSize })
+
+const paginatedTemplates = computed(() => paginatedTemplatesResponse.value?.results || [])
+
+const totalTemplatePages = computed(() => {
+  const total = paginatedTemplatesResponse.value?.count || 0
+  return Math.max(1, Math.ceil(total / templatesPageSize))
+})
+
+const prevTemplatePage = () => {
+  if (templatesPage.value > 1) templatesPage.value -= 1
+}
+
+const nextTemplatePage = () => {
+  if (templatesPage.value < totalTemplatePages.value) templatesPage.value += 1
+}
+
+// Unpaginated query for the Dropdown Options
+const { data: allTemplatesResponse } = useCertificateTemplates({ nopage: true })
+
 const { mutateAsync: createCertificate, isPending: isCreating } = useCreateCertificate()
 const { mutateAsync: uploadTemplate, isPending: isUploading } = useUploadCertificateTemplate()
 
@@ -243,7 +274,7 @@ const teamOptions = computed(() => [
 
 const templateOptions = computed(() => [
   { value: 0, label: 'Default template' },
-  ...(templates.value || []).map((t) => ({
+  ...(allTemplatesResponse.value?.results || []).map((t) => ({
     value: t.id,
     label: t.is_default ? `${t.name} (default)` : t.name,
   })),
@@ -292,6 +323,7 @@ const handleUploadTemplate = async () => {
     })
 
     templateForm.value = { name: '', file: null, is_default: false }
+    templatesPage.value = 1
     showNotification('Template uploaded successfully.', 'success')
   } catch {
     showNotification('Failed to upload template.', 'error')
@@ -441,7 +473,7 @@ const handleVerify = async () => {
 
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 0.65rem;
   margin-top: 0.65rem;
 }
@@ -464,6 +496,20 @@ const handleVerify = async () => {
   border-radius: 10px;
   border: 1px solid var(--line-soft);
   background: #fff;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.page-info {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-gray-600);
 }
 
 .result {

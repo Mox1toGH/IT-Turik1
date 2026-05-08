@@ -42,10 +42,18 @@ export const useCertificates = (
   })
 }
 
-export const useCertificateTemplates = (config?: QueryConfig<GetCertificateTemplatesResponse>) => {
-  return useQuery<GetCertificateTemplatesResponse, AxiosError<ApiError>>({
-    queryKey: certificateKeys.templates(),
-    queryFn: $api.certificates.getTemplates,
+export const useCertificateTemplates = (
+  args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number>; nopage?: MaybeRefOrGetter<boolean> } = {},
+  config?: QueryConfig<PaginatedResponse<GetCertificateTemplatesResponse>>,
+) => {
+  return useQuery<PaginatedResponse<GetCertificateTemplatesResponse>, AxiosError<ApiError>>({
+    queryKey: ['certificate-templates', args.page ?? 1, args.pageSize ?? 8, args.nopage ?? false],
+    queryFn: () =>
+      $api.certificates.getTemplates({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 8,
+        nopage: toValue(args.nopage) ?? false,
+      }),
     ...config,
   })
 }

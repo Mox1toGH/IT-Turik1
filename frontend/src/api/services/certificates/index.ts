@@ -71,9 +71,25 @@ export const certificatesService = {
     return data
   },
 
-  async getTemplates() {
-    const { data } = await apiClient.get<GetCertificateTemplatesResponse>(`${prefix}/templates/`)
-    return Array.isArray(data) ? data : []
+  async getTemplates(args?: { page?: number; pageSize?: number; nopage?: boolean }) {
+    const params: Record<string, any> = {}
+    if (args?.page) params.page = args.page
+    if (args?.pageSize) params.page_size = args.pageSize
+    if (args?.nopage) params.nopage = 'true'
+
+    const { data } = await apiClient.get<PaginatedResponse<GetCertificateTemplatesResponse> | GetCertificateTemplatesResponse>(
+      `${prefix}/templates/`,
+      { params }
+    )
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        next: null,
+        previous: null,
+        results: data,
+      }
+    }
+    return data
   },
 
   async uploadTemplate(args: { name: string; image: File; is_default?: boolean }) {

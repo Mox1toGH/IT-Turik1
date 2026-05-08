@@ -23,11 +23,23 @@ class CertificatePagination(PageNumberPagination):
     max_page_size = 100
 
 
+class CertificateTemplatePagination(PageNumberPagination):
+    page_size = 8
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def paginate_queryset(self, queryset, request, view=None):
+        if request.query_params.get('nopage') == 'true':
+            return None
+        return super().paginate_queryset(queryset, request, view)
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class CertificateTemplateViewSet(viewsets.ModelViewSet):
     queryset = CertificateTemplate.objects.all().order_by('-created_at')
     serializer_class = CertificateTemplateSerializer
     parser_classes = (MultiPartParser, FormParser)
+    pagination_class = CertificateTemplatePagination
 
     def get_permissions(self):
         return [IsAuthenticated()]
