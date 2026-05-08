@@ -170,7 +170,7 @@ export interface SubmitRoundArgs {
 // create Event
 export type CreateEventBody = Pick<
   TournamentEvent,
-  'title' | 'description' | 'link' | 'start_datetime' | 'tournament'
+  'title' | 'description' | 'start_datetime' | 'tournament'
 > & {
   type: 'event' // TODO: remove this. We dont actually need to pass type of event
 }
@@ -187,7 +187,7 @@ export interface GetEventsArgs {
 export type GetEventsResponse = TournamentEvent[]
 
 // Edit event
-export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime'>
+export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime' | 'description'>
 
 export interface EditEventArgs {
   eventId: EventId
