@@ -28,10 +28,12 @@
         </div>
       </ui-card>
 
-      <ui-card v-else-if="events?.length === 0">
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>No events founded for this tournament</p>
-        </div>
+      <ui-card
+        v-else-if="events?.length === 0"
+        class="empty-card"
+        style="display: flex; align-items: center; justify-content: center; height: 300px"
+      >
+        <p class="empty-error">No events founded for this tournament</p>
       </ui-card>
 
       <div v-else class="events-list">
