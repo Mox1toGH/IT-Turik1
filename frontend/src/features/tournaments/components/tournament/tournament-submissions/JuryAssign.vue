@@ -3,7 +3,7 @@
     <ui-card :is-error="isError">
       <template #error>
         <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-          <p>Failed to fetch submissions (code: {{ error?.code }})</p>
+          <p>{{ error?.message || 'Something went wrong' }}</p>
         </div>
       </template>
 
@@ -14,11 +14,15 @@
               <ui-skeleton variant="rect" width="150px" />
             </template>
 
-            <h2>Round: "{{ closedRound?.name }}"</h2>
+            <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
           </ui-skeleton-loader>
-          <ui-button @click="handleAssignJury" class="assign-btn" :disabled="isLoading"
-            ><loading-icon v-if="isPending" />Assign</ui-button
+          <ui-button
+            @click="handleAssignJury"
+            class="assign-btn"
+            :disabled="isLoading || noClosedRound"
           >
+            <loading-icon v-if="isPending" />Assign
+          </ui-button>
         </div>
       </template>
 
@@ -129,7 +133,13 @@ const props = defineProps<Props>()
 
 const { showNotification } = useNotification()
 
-const { data: tournament } = useTournamentInfo({ id: props.tournamentId })
+const {
+  data: tournament,
+  isLoading: tournamentLoading,
+  isError: tournamentError,
+  error: tournamentErrorData,
+} = useTournamentInfo({ id: props.tournamentId })
+
 const closedRound = computed(() =>
   tournament.value?.rounds.find((round) => round.status === 'submission_closed'),
 )
@@ -163,9 +173,24 @@ const {
 )
 const parsedJuryError = computed(() => parseApiError(juryFetchError.value))
 
-const isLoading = computed(() => submissionsLoading.value)
-const isError = computed(() => submissionsError.value)
-const error = computed(() => parseApiError(submissionsErrorData.value))
+const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
+const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
+const isError = computed(
+  () => noClosedRound.value || tournamentError.value || submissionsError.value,
+)
+const error = computed(() => {
+  if (noClosedRound.value) {
+    return { message: 'No finished round available' }
+  }
+
+  if (tournamentError.value) {
+    return (
+      parseApiError(tournamentErrorData.value) ?? { message: 'Failed to fetch tournament info' }
+    )
+  }
+
+  return parseApiError(submissionsErrorData.value) ?? { message: 'Failed to fetch submissions' }
+})
 
 const juryOptions = computed<SelectOption[]>(
   () =>
