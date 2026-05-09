@@ -628,7 +628,7 @@ class PassingCountTests(APITestCase):
         self.assertFalse(self.reg2.is_active)
         
         with self.assertRaises(ValidationError):
-            ensure_team_registered_for_tournament(self.tournament, self.team2)
+            ensure_team_registered_for_tournament(tournament=self.tournament, team=self.team2)
 
     def test_passing_status_endpoint(self):
         self.round1.status = Round.STATUS_EVALUATED
