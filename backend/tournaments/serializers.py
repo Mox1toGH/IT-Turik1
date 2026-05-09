@@ -428,7 +428,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'members_count', 'is_public', 'is_active')
  
     def get_members_count(self, obj):
-        return obj.team.team_members.count() + 1  # members + captain
+        return obj.team.team_members.count()
 
 
 class IconSerializer(serializers.ModelSerializer):

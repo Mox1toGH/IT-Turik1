@@ -1,4 +1,4 @@
-from django.db.models import Count, IntegerField, Prefetch, Q, Value
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import NotFound, ValidationError
@@ -271,7 +271,7 @@ class TournamentEligibleTeamsView(APIView):
         teams = (
             Team.objects.filter(captain_id=request.user.id)
             .annotate(
-                members_count=Count('team_members', distinct=True) + Value(1, output_field=IntegerField())
+                members_count=Count('team_members', distinct=True)
             )
             .values('id', 'name', 'members_count')
             .order_by('id')

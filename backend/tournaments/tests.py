@@ -925,7 +925,7 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['id'], self.team.id)
         self.assertEqual(response.data[0]['name'], self.team.name)
-        self.assertEqual(response.data[0]['members_count'], 3)
+        self.assertEqual(response.data[0]['members_count'], 2)
 
     def test_team_active_tournament_returns_registration_or_running_tournament(self):
         tournament = Tournament.objects.create(
@@ -1006,6 +1006,7 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['id'], self.team.id)
         self.assertEqual(response.data[0]['name'], self.team.name)
+        self.assertEqual(response.data[0]['members_count'], 1)
         self.assertTrue(response.data[0]['is_active'])
 
     def test_tournament_teams_can_include_inactive(self):
