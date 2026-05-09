@@ -10,6 +10,10 @@ import type {
   GetAssignmentsResponse,
   GetAvailableJuryArgs,
   GetAvailableJuryResponse,
+  GetRoundLeaderboardArgs,
+  GetRoundLeaderboardResponse,
+  GetTournamentLeaderboardArgs,
+  GetTournamentLeaderboardResponse,
   JuryAssignmentData,
   RoundCriterion,
   UpdateEvaluationArgs,
@@ -38,6 +42,20 @@ export const evaluationService = {
   getAvailableJury: async (args: GetAvailableJuryArgs) => {
     const { data } = await apiClient.get<GetAvailableJuryResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/available-jury/`,
+    )
+    return data
+  },
+
+  getRoundLeaderboard: async (args: GetRoundLeaderboardArgs) => {
+    const { data } = await apiClient.get<GetRoundLeaderboardResponse>(
+      `${prefix}/tournaments/rounds/${toValue(args.roundId)}/leaderboard/`,
+    )
+    return data
+  },
+
+  getTournamentLeaderboard: async (args: GetTournamentLeaderboardArgs) => {
+    const { data } = await apiClient.get<GetTournamentLeaderboardResponse>(
+      `${prefix}/tournaments/${toValue(args.tournamentId)}/leaderboard/`,
     )
     return data
   },

@@ -77,7 +77,7 @@
 
             <div class="assigned-cell">
               <ui-badge
-                v-for="juryId in assignedJury[submission.id]"
+                v-for="juryId in assignedJury[submission.id] ?? []"
                 :key="juryId"
                 variant="primary"
               >
@@ -200,15 +200,17 @@ const juryOptions = computed<SelectOption[]>(
     })) ?? [],
 )
 
-const assignedJury = reactive<Record<string, string[]>>({})
+const assignedJury = reactive<Record<number, number[]>>({})
 watch(
   submissions,
   (value) => {
     if (!value) return
     value.forEach((submission) => {
-      if (!assignedJury[submission.id]) {
-        assignedJury[submission.id] = []
-      }
+      const nextAssigned = (submission.assignments ?? [])
+        .map((assignment) => assignment.jury?.id)
+        .filter((id): id is number => typeof id === 'number')
+
+      assignedJury[submission.id] = Array.from(new Set(nextAssigned))
     })
   },
   { immediate: true },
@@ -241,8 +243,8 @@ const handleAssignJury = () => {
   )
 }
 
-const juryLabel = (value: string) =>
-  juryOptions.value.find((option) => option.value === value)?.label ?? value
+const juryLabel = (value: number) =>
+  juryOptions.value.find((option) => option.value === value)?.label ?? String(value)
 
 const teamAbbr = (teamName: string) =>
   teamName
