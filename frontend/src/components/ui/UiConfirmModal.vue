@@ -8,8 +8,10 @@
       <h3 class="confirm-modal-title">{{ title }}</h3>
     </template>
 
+    <p v-if="message">{{ message }}</p>
+
     <div class="confirm-modal-content">
-      <p>{{ message }}</p>
+      <slot />
     </div>
 
     <template #footer>
@@ -30,7 +32,7 @@ import UiButton, { type Variant } from './UiButton.vue'
 interface Props {
   modelValue: boolean
   title?: string
-  message: string
+  message?: string
   confirmText?: string
   cancelText?: string
   confirmVariant?: Variant
@@ -61,18 +63,12 @@ const confirm = () => {
 
 <style scoped>
 .confirm-modal-title {
-  margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--foreground);
 }
 
-.confirm-modal-content {
-  padding: 0.5rem 0;
-}
-
 .confirm-modal-content p {
-  margin: 0;
   color: var(--muted-foreground);
   line-height: 1.5;
 }

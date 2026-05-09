@@ -195,7 +195,7 @@ const handleSubmit = () => {
     },
     {
       onSuccess() {
-        router.push('/tournaments')
+        router.push('/')
       },
 
       onError: (error) => {

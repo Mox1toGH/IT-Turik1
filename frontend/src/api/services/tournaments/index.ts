@@ -32,11 +32,15 @@ import type {
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
+  MarkEvaluatedArgs,
+  MarkEvaluatedResponse,
   RegisterTeamArgs,
   StartRegistrationArgs,
   StartRoundArgs,
   StartRoundResponse,
   SubmitRoundArgs,
+  UpdateRegistrationArgs,
+  UpdateRegistrationResponse,
 } from './types'
 import { toValue } from 'vue'
 import type { MaybeRefArgs } from '@/api/queries/types'
@@ -73,9 +77,19 @@ export const tournamentsService = {
   },
 
   getRegisteredTeams: async (args: MaybeRefArgs<GetRegisteredTeamsArgs>) => {
-    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(
-      `${prefix}/${toValue(args.id)}/teams`,
-    )
+    const params = new URLSearchParams()
+    const status = toValue(args.status)
+    if (status) {
+      params.append('status', status)
+    }
+    if (args.includeInactive) {
+      params.append('include_inactive', 'true')
+    }
+    const query = params.toString()
+    const url = query
+      ? `${prefix}/${args.id}/teams?${query}`
+      : `${prefix}/${toValue(args.id)}/teams`
+    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(url)
     return data
   },
 
@@ -197,6 +211,13 @@ export const tournamentsService = {
     return data
   },
 
+  markEvaluated: async (args: MaybeRefArgs<MarkEvaluatedArgs>) => {
+    const { data } = await apiClient.post<MarkEvaluatedResponse>(
+      `${prefix}/rounds/${toValue(args.roundId)}/mark-evaluated/`,
+    )
+    return data
+  },
+
   getTeamSubmissions: async (args: MaybeRefArgs<GetTeamSubmissionsArgs>) => {
     const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
       `${prefix}/${toValue(args.tournamentId)}/my-submissions/`,
@@ -215,6 +236,14 @@ export const tournamentsService = {
   getRoundSubmissions: async (args: MaybeRefArgs<GetRoundSubmissionsArgs>) => {
     const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
+    )
+    return data
+  },
+
+  updateRegistration: async (args: MaybeRefArgs<UpdateRegistrationArgs>) => {
+    const { data } = await apiClient.patch<UpdateRegistrationResponse>(
+      `${prefix}/${args.tournamentId}/registrations/${toValue(args.registrationId)}/disqualification/`,
+      args.body,
     )
     return data
   },

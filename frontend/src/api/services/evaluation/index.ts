@@ -92,26 +92,24 @@ export const evaluationService = {
     return normalizeAssignment(data as Omit<JuryAssignmentData, 'round_details' | 'criteria'>)
   },
 
-  createEvaluation: async (args: CreateEvaluationArgs) => {
+  createEvaluation: async (args: MaybeRefArgs<CreateEvaluationArgs>) => {
     const { data } = await apiClient.post<CreateEvaluationResponse>(
       `${prefix}/evaluate/`,
-      args.body,
+      toValue(args.body),
     )
     return data
   },
 
-  updateEvaluation: async (args: UpdateEvaluationArgs) => {
+  updateEvaluation: async (args: MaybeRefArgs<UpdateEvaluationArgs>) => {
     const { data } = await apiClient.patch<UpdateEvaluationResponse>(
-      `${prefix}/evaluate/${args.id}/`,
-      args.body,
+      `${prefix}/evaluate/${toValue(args.id)}/`,
+      toValue(args.body),
     )
     return data
   },
 
-  deleteEvaluation: async (args: DeleteEvaluationArgs) => {
-    const { data } = await apiClient.delete(`${prefix}/evaluate/${args.id}/`)
+  deleteEvaluation: async (args: MaybeRefArgs<DeleteEvaluationArgs>) => {
+    const { data } = await apiClient.delete(`${prefix}/evaluate/${toValue(args.id)}/`)
     return data
   },
 }
-
-export const evaluationSerice = evaluationService

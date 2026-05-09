@@ -96,7 +96,7 @@ export interface EvaluationData {
   assignment: number
   scores: ScoreItem[]
   total_score: number
-  final_score: number
+  average_score: number
   comment: string
   created_at: string
 }

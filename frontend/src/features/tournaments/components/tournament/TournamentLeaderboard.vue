@@ -63,7 +63,7 @@
                   <ui-badge :variant="isSnapshot ? 'green' : 'orange'">
                     {{ isSnapshot ? 'Snapshot' : 'Live' }}
                   </ui-badge>
-                  <p class="entry-score">{{ formatScore(entry.total_score) }}</p>
+                  <p class="entry-score">{{ entry.total_score }}</p>
                 </div>
               </div>
             </template>
@@ -78,20 +78,18 @@
                   >
                     <div class="round-left">
                       <p class="round-name">{{ round.round_name }}</p>
-                      <p class="text-muted">Avg: {{ formatScore(round.average_score) }}</p>
+                      <p class="text-muted">Avg: {{ round.average_score }}</p>
                     </div>
 
                     <div class="round-right">
-                      <p class="round-score">{{ formatScore(round.total_score) }}</p>
+                      <p class="round-score">{{ round.total_score }}</p>
                     </div>
                   </div>
                 </div>
               </template>
 
               <template v-else>
-                <p class="text-muted">
-                  Avg: {{ formatScore((entry as RoundEntry).average_score) }}
-                </p>
+                <p class="text-muted">Avg: {{ (entry as RoundEntry).average_score }}</p>
               </template>
             </div>
           </ui-card>
@@ -178,11 +176,6 @@ const errorMessage = computed(() => {
   if (error.value.code === 'forbidden') return 'Leaderboard is not available yet.'
   return error.value.message || 'Failed to load leaderboard.'
 })
-
-function formatScore(value: number) {
-  if (Number.isNaN(value)) return '0'
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
-}
 </script>
 
 <style scoped>

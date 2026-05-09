@@ -159,7 +159,11 @@
                     evaluated
                     <template v-if="evaluatedCount(submission) > 0">
                       • Avg:
-                      <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
+                      <strong>{{ averageJuryScore(submission).toFixed(2) }}</strong>
+                    </template>
+                    <template v-if="evaluatedCount(submission) > 0">
+                      • Total:
+                      <strong>{{ totalScore(submission).toFixed(2) }}</strong>
                     </template>
                   </p>
                 </div>
@@ -171,7 +175,7 @@
                 >
                   <div class="jury-head">
                     <p class="jury-name">
-                      {{ assignment.jury.full_name || assignment.jury.username }}
+                      {{ assignment.jury.full_name }}
                     </p>
                     <ui-badge :variant="assignment.evaluation ? 'green' : 'orange'">
                       {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
@@ -180,7 +184,7 @@
 
                   <template v-if="assignment.evaluation">
                     <div class="jury-metrics">
-                      <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
+                      <p><strong>Average:</strong> {{ assignment.evaluation.average_score }}</p>
                       <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
                       <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
                     </div>
@@ -332,14 +336,23 @@ const scorePercent = (roundId: number, totalScore: number) => {
   return (clamped / max) * 100
 }
 
-const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+const averageJuryScore = (submission: NonNullable<typeof submissions.value>[number]) => {
   const evaluations = submissionEvaluations(submission)
   if (!evaluations.length) return 0
   const total = evaluations.reduce(
-    (sum, assignment) => sum + Number(assignment.evaluation?.final_score ?? 0),
+    (sum, assignment) => sum + Number(assignment.evaluation?.total_score ?? 0),
     0,
   )
   return total / evaluations.length
+}
+
+const totalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+  const evaluations = submissionEvaluations(submission)
+  if (!evaluations.length) return 0
+  return evaluations.reduce(
+    (sum, assignment) => sum + Number(assignment.evaluation?.total_score ?? 0),
+    0,
+  )
 }
 </script>
 

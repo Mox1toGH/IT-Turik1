@@ -10,6 +10,7 @@ import type {
   TournamentEvent,
   TournamentId,
   TournamentStatus,
+  User,
 } from '@/api/dbTypes'
 
 // Get tournaments
@@ -69,11 +70,17 @@ export type GetActiveTeamTournamentResponse = Pick<
 // Get registered teams
 export interface GetRegisteredTeamsArgs {
   id: TournamentId
+  includeInactive?: boolean
+  status?: 'active' | 'disqualified' | 'all'
 }
 
 export type GetRegisteredTeamsResponse = (Pick<Team, 'id' | 'name' | 'is_public'> & {
+  registration_id: number
   members_count: number
   is_active: boolean
+  is_disqualified: boolean
+  members: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>[]
+  disqualification_reason: string
 })[]
 
 // Tournament rounds
@@ -235,6 +242,13 @@ export interface CloseSubmissionsArgs {
 
 export type CloseSubmissionsResponse = Round
 
+// mark evaluated
+export interface MarkEvaluatedArgs {
+  roundId: RoundId
+}
+
+export type MarkEvaluatedResponse = Round
+
 // tournament submissions
 export interface GetTeamSubmissionsArgs {
   tournamentId: TournamentId
@@ -255,7 +269,7 @@ export type GetTeamSubmissionsResponse = (Submission & {
       id: number
       scores: { criterion_id: string; criterion_name?: string; score: number }[]
       total_score: number
-      final_score: number
+      average_score: number
       comment: string
       created_at: string
     } | null
@@ -286,3 +300,20 @@ export interface GetRoundSubmissionsArgs {
 }
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse
+
+// Update registration
+export interface UpdateRegistrationArgs {
+  tournamentId: TournamentId
+  registrationId: number
+  body: {
+    action: 'disqualify' | 'reactivate'
+    disqualification_reason?: string
+  }
+}
+
+export interface UpdateRegistrationResponse {
+  id: number
+  is_active: boolean
+  disqualification_reason: string | null
+  action: 'activated' | 'disqualified'
+}

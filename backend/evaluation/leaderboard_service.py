@@ -5,6 +5,7 @@ from django.db.models import Avg, Sum
 from rest_framework.exceptions import PermissionDenied
 
 from tournaments.models import Round, Tournament
+from tournaments.models import TournamentTeamRegistration
 
 from .models import LeaderboardEntry, SubmissionEvaluation
 
@@ -14,18 +15,31 @@ def _quantize(value, digits='0.01'):
 
 
 def compute_leaderboard(round_id: int) -> list[dict]:
+    round_obj = Round.objects.select_related('tournament').only('id', 'tournament_id').filter(id=round_id).first()
+    if round_obj is None:
+        return []
+
+    disqualified_team_ids = set(
+        TournamentTeamRegistration.objects.filter(
+            tournament_id=round_obj.tournament_id,
+            is_disqualified=True,
+        ).values_list('team_id', flat=True)
+    )
+
     evaluations = (
         SubmissionEvaluation.objects.filter(assignment__submission__round_id=round_id)
         .select_related('assignment__submission__team', 'assignment__jury')
         .annotate(
             team_total_score=Sum('assignment__submission__jury_assignments__evaluation__total_score'),
-            team_average_score=Avg('assignment__submission__jury_assignments__evaluation__final_score'),
+            team_average_score=Avg('assignment__submission__jury_assignments__evaluation__average_score'),
         )
     )
 
     team_stats = {}
     for evaluation in evaluations:
         team = evaluation.assignment.submission.team
+        if team.id in disqualified_team_ids:
+            continue
         stats = team_stats.setdefault(
             team.id,
             {
@@ -45,7 +59,7 @@ def compute_leaderboard(round_id: int) -> list[dict]:
             stats['criteria_breakdown_raw'][criterion_name] += Decimal(str(score_item.get('score', 0)))
 
         jury_label = evaluation.assignment.jury.full_name or evaluation.assignment.jury.username
-        stats['jury_breakdown'][jury_label] = float(_quantize(evaluation.final_score or 0))
+        stats['jury_breakdown'][jury_label] = float(_quantize(evaluation.average_score or 0))
 
     ranked = sorted(
         team_stats.values(),
