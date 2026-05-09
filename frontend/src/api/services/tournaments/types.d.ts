@@ -78,6 +78,7 @@ export type GetActiveTeamTournamentResponse = Pick<
 export interface GetRegisteredTeamsArgs {
   id: TournamentId
   includeInactive?: boolean
+  status?: 'active' | 'disqualified' | 'all'
 }
 
 export type GetRegisteredTeamsResponse = (Pick<Team, 'id' | 'name' | 'is_public'> & {

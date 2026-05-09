@@ -1049,6 +1049,106 @@ class TournamentApiTests(APITestCase):
         self.assertTrue(any(item['is_active'] for item in response.data))
         self.assertTrue(any(not item['is_active'] for item in response.data))
 
+    def test_tournament_teams_filters_disqualified_only(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        disq_user = User.objects.create_user(
+            username='disq-captain',
+            email='disq-captain@example.com',
+            password='StrongPass123!',
+        )
+        left_user = User.objects.create_user(
+            username='left-captain',
+            email='left-captain@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Disqualified Team',
+            email='disq-team@example.com',
+            captain=disq_user,
+        )
+        left_team = Team.objects.create(
+            name='Left Team',
+            email='left-team@example.com',
+            captain=left_user,
+        )
+        TeamMember.objects.create(team=disq_team, user=disq_user)
+        TeamMember.objects.create(team=left_team, user=left_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            created_by=disq_user,
+            is_active=False,
+            disqualification_reason='Rules violation',
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=left_team,
+            created_by=left_user,
+            is_active=False,
+            disqualification_reason='',
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'status': 'disqualified'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['name'], disq_team.name)
+        self.assertFalse(response.data[0]['is_active'])
+
+    def test_tournament_teams_status_active_excludes_disqualified(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        disq_user = User.objects.create_user(
+            username='status-active-disq',
+            email='status-active-disq@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Status Active Disqualified Team',
+            email='status-active-disq-team@example.com',
+            captain=disq_user,
+        )
+        TeamMember.objects.create(team=disq_team, user=disq_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            created_by=disq_user,
+            is_active=False,
+            disqualification_reason='Rules violation',
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'status': 'active'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.team.id)
+        self.assertTrue(response.data[0]['is_active'])
+
     def test_tournament_teams_filters_only_active(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,

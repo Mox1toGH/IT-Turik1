@@ -27,48 +27,32 @@
           </template>
 
           <p class="text-muted">
-            {{ filteredTeams.length }} team{{ filteredTeams.length === 1 ? '' : 's' }}
+            {{ filteredActiveTeams.length }} team{{ filteredActiveTeams.length === 1 ? '' : 's' }}
           </p>
         </ui-skeleton-loader>
       </div>
 
       <div class="teams-list">
-        <ui-skeleton-loader :loading="isTeamsLoading">
+        <ui-skeleton-loader :loading="isActiveTeamsLoading">
           <template #skeleton>
             <div style="display: flex; flex-direction: column; gap: 0.4rem">
               <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="48px" width="100%" />
             </div>
           </template>
 
-          <template v-if="filteredTeams.length">
-            <div v-for="team in filteredTeams" :key="team.id" class="team-row">
+          <template v-if="filteredActiveTeams.length">
+            <div v-for="team in filteredActiveTeams" :key="team.id" class="team-row">
               <RouterLink :to="`/teams/${team.id}`" class="team-item">
                 <div class="team-info">
                   <TeamIcon />
                   {{ team.name }}
-                  <ui-badge v-if="!team.is_active" variant="red"> Disqualified </ui-badge>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 0.5rem">
                   <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
                   <div v-if="isAdmin" class="team-actions">
-                    <ui-button
-                      v-if="team.is_active"
-                      size="sm"
-                      variant="danger"
-                      :disabled="isUpdating"
-                      @click.prevent="openDisqualifyModal(team)"
-                    >
+                    <ui-button size="sm" variant="danger" :disabled="isUpdating" @click.prevent="openDisqualifyModal(team)">
                       <TeamDeleteIcon />
-                    </ui-button>
-                    <ui-button
-                      v-else
-                      size="sm"
-                      variant="default"
-                      :disabled="isUpdating"
-                      @click.prevent="openReactivateModal(team)"
-                    >
-                      <AddTeamIcon />
                     </ui-button>
                   </div>
                 </div>
@@ -78,6 +62,61 @@
 
           <p v-else class="text-muted">No teams found.</p>
         </ui-skeleton-loader>
+      </div>
+
+      <div v-if="hasDisqualifiedTeams" class="disqualified-wrap">
+        <div class="team-label">
+          <div class="label-with-icon">
+            <!-- <AddTeamIcon /> -->
+            <p>Disqualified Teams</p>
+          </div>
+
+          <ui-skeleton-loader :loading="isDisqualifiedTeamsLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="60px" />
+            </template>
+
+            <p class="text-muted">
+              {{ filteredDisqualifiedTeams.length }} team{{ filteredDisqualifiedTeams.length === 1 ? '' : 's' }}
+            </p>
+          </ui-skeleton-loader>
+        </div>
+
+        <div class="teams-list">
+          <ui-skeleton-loader :loading="isDisqualifiedTeamsLoading">
+            <template #skeleton>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem">
+                <ui-skeleton v-for="i in 3" :key="i" variant="rect" height="48px" width="100%" />
+              </div>
+            </template>
+
+            <template v-if="filteredDisqualifiedTeams.length">
+              <div v-for="team in filteredDisqualifiedTeams" :key="team.id" class="team-row">
+                <RouterLink :to="`/teams/${team.id}`" class="team-item">
+                  <div class="team-info">
+                    <TeamIcon />
+                    {{ team.name }}
+                    <ui-badge variant="red"> Disqualified </ui-badge>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 0.5rem">
+                    <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
+                    <div v-if="isAdmin" class="team-actions">
+                      <ui-button
+                        size="sm"
+                        variant="default"
+                        :disabled="isUpdating"
+                        @click.prevent="openReactivateModal(team)"
+                      >
+                        <AddTeamIcon />
+                      </ui-button>
+                    </div>
+                  </div>
+                </RouterLink>
+              </div>
+            </template>
+          </ui-skeleton-loader>
+        </div>
       </div>
     </div>
 
@@ -133,20 +172,34 @@ const props = defineProps<Props>()
 const search = ref('')
 
 const {
-  data: teams,
-  isLoading: isTeamsLoading,
-  error: teamsError,
-  isError,
-} = useRegisteredTeams({ id: props.tournamentId })
-const error = computed(() => parseApiError(teamsError.value))
+  data: activeTeams,
+  isLoading: isActiveTeamsLoading,
+  error: activeTeamsError,
+  isError: isActiveTeamsError,
+} = useRegisteredTeams({ id: props.tournamentId, status: 'active' })
+const {
+  data: disqualifiedTeams,
+  isLoading: isDisqualifiedTeamsLoading,
+  error: disqualifiedTeamsError,
+  isError: isDisqualifiedTeamsError,
+} = useRegisteredTeams({ id: props.tournamentId, status: 'disqualified' })
+const isError = computed(() => isActiveTeamsError.value || isDisqualifiedTeamsError.value)
+const error = computed(() => parseApiError(activeTeamsError.value || disqualifiedTeamsError.value))
 
-const filteredTeams = computed(() => {
-  if (!teams.value) return []
+const filteredActiveTeams = computed(() => {
+  if (!activeTeams.value) return []
   const term = search.value.trim().toLowerCase()
-  if (!term) return teams.value
+  if (!term) return activeTeams.value
 
-  return teams.value.filter((team) => team.name.toLowerCase().includes(term))
+  return activeTeams.value.filter((team) => team.name.toLowerCase().includes(term))
 })
+const filteredDisqualifiedTeams = computed(() => {
+  if (!disqualifiedTeams.value) return []
+  const term = search.value.trim().toLowerCase()
+  if (!term) return disqualifiedTeams.value
+  return disqualifiedTeams.value.filter((team) => team.name.toLowerCase().includes(term))
+})
+const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 
@@ -244,6 +297,16 @@ const handleConfirmAction = () => {
 .teams-list {
   overflow-y: auto;
   max-height: 400px;
+}
+
+.disqualified-wrap {
+  margin-top: 1rem;
+}
+
+.label-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .team-row {

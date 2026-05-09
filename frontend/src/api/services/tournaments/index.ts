@@ -78,6 +78,9 @@ export const tournamentsService = {
 
   getRegisteredTeams: async (args: GetRegisteredTeamsArgs) => {
     const params = new URLSearchParams()
+    if (args.status) {
+      params.append('status', args.status)
+    }
     if (args.includeInactive) {
       params.append('include_inactive', 'true')
     }

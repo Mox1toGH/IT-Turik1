@@ -153,6 +153,15 @@
 > За замовчуванням повертає тільки активні реєстрації (`is_active=true`).
 > Щоб отримати також неактивні (soft-deleted) реєстрації, використовуйте `?include_inactive=true`.
 > Якщо турнір не існує — `404`.
+>
+> `status` filter:
+> - `?status=active` -> only active registrations (`is_active=true`)
+> - `?status=disqualified` -> only disqualified registrations (`is_active=false` and `disqualification_reason` is not empty)
+> - `?status=all` -> all registrations (active + inactive)
+>
+> Important distinction:
+> - `left team` -> `is_active=false` and empty `disqualification_reason`
+> - `disqualified team` -> `is_active=false` and non-empty `disqualification_reason`
 
 **Активний турнір команди — GET `/api/tournaments/active/?team_id={id}`**
 ```json
@@ -173,6 +182,10 @@
 ```json
 { "action": "reactivate" }
 ```
+```json
+{ "action": "disqualify" }
+```
+> If `disqualification_reason` is empty, backend saves default reason: `Disqualified by admin`.
 > Деактивовані команди (`is_active: false`) не можуть подавати роботи. Запис не видаляється.
 > Деактивація можлива як вручну через цей endpoint, так і автоматично після оцінювання раунду за правилом `passing_count`.
 
