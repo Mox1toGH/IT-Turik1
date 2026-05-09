@@ -313,10 +313,22 @@ class TournamentTeamsView(APIView):
             tournament_id=pk,
         ).select_related('team').prefetch_related('team__team_members')
 
-        include_inactive = request.query_params.get('include_inactive')
-        include_inactive = isinstance(include_inactive, str) and include_inactive.lower() == 'true'
-        if not include_inactive:
+        status_filter = request.query_params.get('status')
+        if status_filter == 'active':
             queryset = queryset.filter(is_active=True)
+        elif status_filter == 'disqualified':
+            queryset = queryset.filter(
+                is_active=False,
+            ).exclude(
+                Q(disqualification_reason__isnull=True) | Q(disqualification_reason='')
+            )
+        elif status_filter == 'all':
+            pass
+        else:
+            include_inactive = request.query_params.get('include_inactive')
+            include_inactive = isinstance(include_inactive, str) and include_inactive.lower() == 'true'
+            if not include_inactive:
+                queryset = queryset.filter(is_active=True)
  
         serializer = TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

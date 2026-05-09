@@ -423,7 +423,8 @@ class TournamentTeamRegistrationDisqualificationSerializer(serializers.Serialize
         action = validated_data['action']
         if action == self.ACTION_DISQUALIFY:
             instance.is_active = False
-            instance.disqualification_reason = validated_data.get('disqualification_reason', '')
+            reason = validated_data.get('disqualification_reason', '').strip()
+            instance.disqualification_reason = reason or 'Disqualified by admin'
         else:
             instance.is_active = True
             instance.disqualification_reason = ''
