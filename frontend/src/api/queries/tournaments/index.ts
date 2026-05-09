@@ -78,8 +78,12 @@ export const useRegisteredTeams = (
   config?: QueryConfig<GetRegisteredTeamsResponse>,
 ) => {
   return useQuery<GetRegisteredTeamsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.registeredTeams(payload.id),
-    queryFn: () => $api.tournaments.getRegisteredTeams({ id: payload.id }),
+    queryKey: [...tournamentsKeys.registeredTeams(payload.id), { includeInactive: !!payload.includeInactive }],
+    queryFn: () =>
+      $api.tournaments.getRegisteredTeams({
+        id: payload.id,
+        includeInactive: payload.includeInactive,
+      }),
     ...config,
   })
 }

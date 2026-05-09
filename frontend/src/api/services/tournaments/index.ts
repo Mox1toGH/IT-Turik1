@@ -72,7 +72,13 @@ export const tournamentsService = {
   },
 
   getRegisteredTeams: async (args: GetRegisteredTeamsArgs) => {
-    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(`${prefix}/${args.id}/teams`)
+    const params = new URLSearchParams()
+    if (args.includeInactive) {
+      params.append('include_inactive', 'true')
+    }
+    const query = params.toString()
+    const url = query ? `${prefix}/${args.id}/teams?${query}` : `${prefix}/${args.id}/teams`
+    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(url)
     return data
   },
 
