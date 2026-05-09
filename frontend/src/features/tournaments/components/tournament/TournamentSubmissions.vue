@@ -170,8 +170,10 @@
                   class="submission-result-item"
                 >
                   <div class="jury-head">
-                    <p class="jury-name">{{ assignment.jury.full_name || assignment.jury.username }}</p>
-                    <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
+                    <p class="jury-name">
+                      {{ assignment.jury.full_name || assignment.jury.username }}
+                    </p>
+                    <ui-badge :variant="assignment.evaluation ? 'green' : 'orange'">
                       {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
                     </ui-badge>
                   </div>
@@ -187,12 +189,16 @@
                       <div class="score-track-head">
                         <p class="text-muted">Score</p>
                         <p class="text-muted">
-                          {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
+                          {{ assignment.evaluation.total_score }} /
+                          {{ roundMaxScore(submission.round_details.id) }}
                         </p>
                       </div>
                       <ui-progress-bar
                         :percent="
-                          scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                          scorePercent(
+                            submission.round_details.id,
+                            assignment.evaluation.total_score,
+                          )
                         "
                         :height="10"
                         fill-color="color-mix(in srgb, var(--primary) 55%, transparent)"
@@ -208,7 +214,9 @@
                       >
                         <span>{{ score.criterion_name || score.criterion_id }}</span>
                         <span>
-                          {{ score.score }}/{{ criterionMaxScore(submission.round_details.id, score.criterion_id) }}
+                          {{ score.score }}/{{
+                            criterionMaxScore(submission.round_details.id, score.criterion_id)
+                          }}
                         </span>
                       </div>
                     </div>
@@ -497,5 +505,3 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
   }
 }
 </style>
-
-

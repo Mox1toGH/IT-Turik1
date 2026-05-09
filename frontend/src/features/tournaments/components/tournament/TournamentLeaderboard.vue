@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="entry-meta">
-                  <ui-badge :variant="isSnapshot ? 'green' : 'gray'">
+                  <ui-badge :variant="isSnapshot ? 'green' : 'orange'">
                     {{ isSnapshot ? 'Snapshot' : 'Live' }}
                   </ui-badge>
                   <p class="entry-score">{{ formatScore(entry.total_score) }}</p>
@@ -149,10 +149,7 @@ const selectedRoundId = computed(() =>
   typeof selectedLeaderboardMode.value === 'number' ? selectedLeaderboardMode.value : null,
 )
 
-const tournamentQuery = useTournamentLeaderboard(
-  { tournamentId },
-  { enabled: isAverageMode },
-)
+const tournamentQuery = useTournamentLeaderboard({ tournamentId }, { enabled: isAverageMode })
 
 const roundQuery = useRoundLeaderboard(
   { roundId: computed(() => selectedRoundId.value ?? 0) },

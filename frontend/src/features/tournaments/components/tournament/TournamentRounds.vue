@@ -50,7 +50,7 @@
               <h4>{{ truncateText(round.name, 70) }}</h4>
 
               <div class="header-right">
-                <ui-badge :variant="badgeVariant(round.status)">{{
+                <ui-badge :variant="roundStatusBadge(round.status)">{{
                   badgeStatus(round.status)
                 }}</ui-badge>
                 <round-actions-popover
@@ -128,10 +128,9 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { truncateText } from '@/lib/utils'
+import { roundStatusBadge, truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
-import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
 import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
@@ -200,13 +199,6 @@ watch(isSubmitOpen, (isOpen) => {
     selectedSubmitRoundId.value = null
   }
 })
-
-function badgeVariant(status: Round['status']): Variants {
-  if (status === 'active') return 'primary'
-  if (status === 'evaluated') return 'green'
-  if (status === 'submission_closed') return 'red'
-  return 'gray'
-}
 
 function badgeStatus(status: Round['status']) {
   if (status === 'draft') return 'Draft'

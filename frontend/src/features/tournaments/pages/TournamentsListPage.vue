@@ -94,9 +94,21 @@
                   </template>
 
                   <div class="tournament-info">
-                    <p class="tournaments-description" :title="tournament.description">
-                      {{ truncateText(tournament.description, 200) }}
-                    </p>
+                    <large-text-modal
+                      title="Tournament description"
+                      :text="tournament.description"
+                      max-length="200"
+                    >
+                      <template #trigger="{ toggleOpen }">
+                        <p
+                          class="tournaments-description"
+                          :title="tournament.description"
+                          @click="toggleOpen"
+                        >
+                          {{ truncateText(tournament.description, 200) }}
+                        </p>
+                      </template>
+                    </large-text-modal>
 
                     <div class="tournaments-meta">
                       <div class="tournaments-date">
@@ -107,7 +119,7 @@
                         </p>
                       </div>
 
-                      <ui-badge :variant="statusBadgeVariant(tournament.status)">
+                      <ui-badge :variant="tournamentStatusBadge(tournament.status)">
                         {{ tournament.status }}
                       </ui-badge>
                     </div>
@@ -175,12 +187,12 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import { parseApiError } from '@/api/errors'
-import { truncateText } from '@/lib/utils'
+import { tournamentStatusBadge, truncateText } from '@/lib/utils'
 import { useProfile } from '@/api/queries/accounts'
 import { useTournaments } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
 import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
-import type { TournamentStatus } from '@/api/dbTypes'
+import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 
 const statusOptions = computed(() => {
   const base = [
@@ -217,14 +229,6 @@ const error = computed(() => parseApiError(tournamentsError.value))
 
 const pageItems = computed(() => data.value?.data ?? [])
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / pageSize))
-const statusBadgeVariant = (status: TournamentStatus) => {
-  if (status === 'draft') return 'gray'
-  if (status === 'finished') return 'gray'
-  if (status === 'running') return 'green'
-  if (status === 'registration') return 'orange'
-
-  return 'gray'
-}
 
 const visiblePages = computed(() => {
   const total = totalPages.value

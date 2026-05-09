@@ -58,6 +58,18 @@
         }}</small>
       </label>
 
+      <label class="form-item start-time-field">
+        <span class="form-label">Start time</span>
+        <ui-time-picker
+          v-model="form.fields.value.start_time"
+          :isInvalid="!!form.errors.value.start_time"
+          @blur="form.validateField('start_time')"
+        />
+        <small v-if="form.errors.value.start_time" class="text-error">{{
+          form.errors.value.start_time
+        }}</small>
+      </label>
+
       <label class="form-item end-date-field">
         <span class="form-label">End date</span>
         <ui-date-picker
@@ -67,6 +79,18 @@
         />
         <small v-if="form.errors.value.end_date" class="text-error">{{
           form.errors.value.end_date
+        }}</small>
+      </label>
+
+      <label class="form-item end-time-field">
+        <span class="form-label">End time</span>
+        <ui-time-picker
+          v-model="form.fields.value.end_time"
+          :isInvalid="!!form.errors.value.end_time"
+          @blur="form.validateField('end_time')"
+        />
+        <small v-if="form.errors.value.end_time" class="text-error">{{
+          form.errors.value.end_time
         }}</small>
       </label>
 
@@ -123,6 +147,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import AddCriteriaModal from '../components/create-round/modals/AddCriteriaModal.vue'
 import EditorModal from '../components/create-round/modals/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
@@ -132,6 +157,7 @@ import { useCreateRound } from '@/api/queries/tournaments'
 import { useRoute, useRouter } from 'vue-router'
 import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
+import { combineDateAndTime } from '@/lib/date'
 
 interface RoundCriteriaItem {
   id: string
@@ -148,7 +174,9 @@ interface Form {
   must_have_requirements: JSONContent | null
   criteria: RoundCriteriaItem[]
   start_date: Date
+  start_time: string
   end_date: Date
+  end_time: string
 }
 
 const form = useForm<Form>(CreateRoundSchema, {
@@ -159,7 +187,9 @@ const form = useForm<Form>(CreateRoundSchema, {
   must_have_requirements: null,
   criteria: [],
   start_date: new Date(),
+  start_time: '00:00',
   end_date: new Date(),
+  end_time: '00:00',
 })
 
 const route = useRoute()
@@ -172,12 +202,16 @@ const { mutate: createRound, isPending } = useCreateRound()
 function handleSubmit() {
   if (!form.validate()) return
 
+  const { start_date, start_time, end_date, end_time, ...rest } = form.fields.value
+
   createRound(
     {
       id: tournamentId,
       body: {
         tournament: tournamentId,
-        ...form.fields.value,
+        ...rest,
+        start_date: combineDateAndTime(start_date, start_time),
+        end_date: combineDateAndTime(end_date, end_time),
       },
     },
     {
@@ -225,8 +259,8 @@ function handleSubmit() {
 }
 
 .must-have-field {
-  grid-column: 2;
-  grid-row: 3;
+  grid-column: 1;
+  grid-row: 4;
 }
 
 .start-date-field {
@@ -234,9 +268,19 @@ function handleSubmit() {
   grid-row: 1;
 }
 
-.end-date-field {
+.start-time-field {
   grid-column: 2;
   grid-row: 2;
+}
+
+.end-date-field {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.end-time-field {
+  grid-column: 2;
+  grid-row: 4;
 }
 
 .passing-count-field {
@@ -275,7 +319,9 @@ function handleSubmit() {
   }
 
   .start-date-field,
+  .start-time-field,
   .end-date-field,
+  .end-time-field,
   .criteria-field,
   .submit-btn {
     grid-column: 1;
