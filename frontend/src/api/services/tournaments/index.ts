@@ -222,7 +222,7 @@ export const tournamentsService = {
   updateRegistration: async (args: UpdateRegistrationArgs) => {
     const { data } = await apiClient.patch<UpdateRegistrationResponse>(
       `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/`,
-      { action: args.action },
+      { is_active: args.action === 'activated' },
     )
     return data
   },

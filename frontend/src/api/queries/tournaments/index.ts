@@ -429,7 +429,7 @@ export const useUpdateRegistration = (
     mutationFn: $api.tournaments.updateRegistration,
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.tournamentId) })
-      queryClient.invalidateQueries({ queryKey: tournamentsKeys.passingStatus(vars.roundId) })
+      queryClient.invalidateQueries({ queryKey: ['tournaments', 'passing-status'] })
     },
     ...config,
   })
