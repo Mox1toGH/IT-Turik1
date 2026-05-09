@@ -70,24 +70,38 @@
               <div class="score">{{ formatScore(result.total_score) }}</div>
               <div class="score">{{ formatScore(result.average_score) }}</div>
               <div class="actions">
-                <ui-button
-                  v-if="result.is_active"
-                  size="sm"
-                  variant="danger"
-                  :disabled="isUpdating"
-                  @click="openDisqualifyModal(result)"
-                >
-                  Disqualify
-                </ui-button>
-                <ui-button
-                  v-else
-                  size="sm"
-                  variant="secondary"
-                  :disabled="isUpdating"
-                  @click="openReactivateModal(result)"
-                >
-                  Reactivate
-                </ui-button>
+                <ui-popover align="end" @close="activeMenuId = null">
+                  <template #trigger="{ toggle }">
+                    <button
+                      class="menu-trigger"
+                      :class="{ active: activeMenuId === result.registration_id }"
+                      @click="() => { activeMenuId = activeMenuId === result.registration_id ? null : result.registration_id; toggle() }"
+                      :disabled="isUpdating"
+                      :title="result.is_active ? 'Team actions' : 'Team actions'"
+                    >
+                      <ThreeCenterDotsIcon />
+                    </button>
+                  </template>
+
+                  <div class="menu-content">
+                    <button
+                      v-if="result.is_active"
+                      class="menu-item menu-item--danger"
+                      @click="() => { openDisqualifyModal(result); activeMenuId = null }"
+                      :disabled="isUpdating"
+                    >
+                      <span class="menu-item-text">Disqualify</span>
+                    </button>
+                    <button
+                      v-else
+                      class="menu-item menu-item--success"
+                      @click="() => { openReactivateModal(result); activeMenuId = null }"
+                      :disabled="isUpdating"
+                    >
+                      <span class="menu-item-text">Reactivate</span>
+                    </button>
+                  </div>
+                </ui-popover>
               </div>
             </div>
           </div>
@@ -125,6 +139,8 @@ import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiPopover from '@/components/ui/UiPopover.vue'
+import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
 import { usePassingStatus, useUpdateRegistration } from '@/api/queries/tournaments'
 import { useTournamentRounds } from '@/api/queries/tournaments'
 import { useProfile } from '@/api/queries/accounts'
@@ -145,7 +161,7 @@ const { data: user } = useProfile()
 const isAdmin = computed(() => user.value?.role === 'admin')
 
 const { data: passingStatusData, isLoading, isError, error, refetch } = usePassingStatus(
-  { roundId: props.roundId },
+  { id: props.roundId },
   {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 3,
@@ -154,20 +170,13 @@ const { data: passingStatusData, isLoading, isError, error, refetch } = usePassi
 )
 const { data: roundsData } = useTournamentRounds({ id: props.tournamentId })
 
-// Watch for round status changes and hide component if needed
-watch(() => currentRound.value?.status, (newStatus) => {
-  if (newStatus && !['submission_closed', 'evaluated'].includes(newStatus)) {
-    emit('hide')
-  }
-})
-
-const results = computed(() => passingStatusData.value ?? [])
-
 const currentRound = computed(() =>
   roundsData.value?.find(round => round.id === props.roundId)
 )
 
-const passingCount = computed(() => currentRound.value?.passing_count ?? null)
+const results = computed(() => passingStatusData.value?.results ?? [])
+
+const passingCount = computed(() => passingStatusData.value?.passing_count ?? null)
 
 const roundBadgeText = computed(() => {
   const status = currentRound.value?.status
@@ -181,6 +190,16 @@ const roundBadgeVariant = computed(() => {
 const sortedResults = computed(() => {
   return [...results.value].sort((a, b) => a.rank - b.rank)
 })
+
+// Watch for round status changes and hide component if needed
+watch(
+  () => currentRound.value?.status,
+  (newStatus) => {
+    if (newStatus && !['submission_closed', 'evaluated'].includes(newStatus)) {
+      emit('hide')
+    }
+  },
+)
 
 const shouldShowCutLine = (index: number) => {
   if (!passingCount.value) return false
@@ -208,6 +227,7 @@ const confirmModalConfirmText = ref('')
 const confirmModalVariant = ref<'primary' | 'danger'>('primary')
 const disqualificationReason = ref('')
 const pendingAction = ref<{ result: PassingStatusResult; action: 'activated' | 'disqualified' } | null>(null)
+const activeMenuId = ref<number | null>(null)
 
 const { mutate: updateRegistration, isPending: isUpdating } = useUpdateRegistration()
 
@@ -234,7 +254,7 @@ const handleConfirmAction = () => {
   if (!pendingAction.value) return
 
   const isDisqualifying = pendingAction.value.action === 'disqualified'
-  
+
   updateRegistration({
     tournamentId: props.tournamentId,
     registrationId: pendingAction.value.result.registration_id,
@@ -388,6 +408,84 @@ function formatScore(value: number) {
 
 .reason-input {
   margin-top: 1rem;
+}
+
+.menu-trigger {
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--muted-foreground);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
+}
+
+.menu-trigger.active {
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+  color: var(--foreground);
+}
+
+.menu-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 150px;
+}
+
+.menu-item {
+  background: none;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.menu-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.menu-item--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--destructive) 20%, transparent);
+  color: var(--destructive);
+}
+
+.menu-item--success:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
+}
+
+.menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-item-text {
+  flex: 1;
 }
 
 @media (max-width: 768px) {
