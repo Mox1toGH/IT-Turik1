@@ -5,7 +5,8 @@
     </template>
 
     <div class="confirm-modal-content">
-      <p>{{ message }}</p>
+      <p v-if="message">{{ message }}</p>
+      <slot />
     </div>
 
     <template #footer>

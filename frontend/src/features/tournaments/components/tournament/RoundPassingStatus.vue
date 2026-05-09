@@ -103,7 +103,16 @@
       :confirm-variant="confirmModalVariant"
       :loading="isUpdating"
       @confirm="handleConfirmAction"
-    />
+    >
+      <div v-if="pendingAction?.action === 'disqualified'" class="reason-input">
+        <ui-input
+          v-model="disqualificationReason"
+          label="Reason (optional)"
+          placeholder="e.g. Violation of rules"
+          autofocus
+        />
+      </div>
+    </ui-confirm-modal>
   </section>
 </template>
 
@@ -113,6 +122,7 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiInput from '@/components/ui/UiInput.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { usePassingStatus, useUpdateRegistration } from '@/api/queries/tournaments'
@@ -196,12 +206,14 @@ const confirmModalTitle = ref('')
 const confirmModalMessage = ref('')
 const confirmModalConfirmText = ref('')
 const confirmModalVariant = ref<'primary' | 'danger'>('primary')
+const disqualificationReason = ref('')
 const pendingAction = ref<{ result: PassingStatusResult; action: 'activated' | 'disqualified' } | null>(null)
 
 const { mutate: updateRegistration, isPending: isUpdating } = useUpdateRegistration()
 
 const openDisqualifyModal = (result: PassingStatusResult) => {
   pendingAction.value = { result, action: 'disqualified' }
+  disqualificationReason.value = ''
   confirmModalTitle.value = 'Disqualify Team'
   confirmModalMessage.value = `Are you sure you want to disqualify "${result.team_name}"? This action can be reversed.`
   confirmModalConfirmText.value = 'Disqualify'
@@ -221,14 +233,20 @@ const openReactivateModal = (result: PassingStatusResult) => {
 const handleConfirmAction = () => {
   if (!pendingAction.value) return
 
+  const isDisqualifying = pendingAction.value.action === 'disqualified'
+  
   updateRegistration({
     tournamentId: props.tournamentId,
     registrationId: pendingAction.value.result.registration_id,
-    action: pendingAction.value.action,
+    body: {
+      is_active: !isDisqualifying,
+      disqualification_reason: isDisqualifying ? disqualificationReason.value : '',
+    },
   }, {
     onSuccess: () => {
       showConfirmModal.value = false
       pendingAction.value = null
+      disqualificationReason.value = ''
     },
     onError: () => {
       showConfirmModal.value = false
@@ -366,6 +384,10 @@ function formatScore(value: number) {
   justify-content: center;
   text-align: center;
   color: var(--muted-foreground);
+}
+
+.reason-input {
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
