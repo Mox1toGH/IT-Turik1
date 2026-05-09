@@ -36,7 +36,7 @@ from .serializers import (
     TournamentTeamLeaveSerializer,
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
-    TournamentTeamRegistrationUpdateSerializer,
+    TournamentTeamRegistrationDisqualificationSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -245,7 +245,7 @@ class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
 
 
-class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
+class TournamentTeamRegistrationDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, CanManageParticipants]
 
     def get_queryset(self):
@@ -257,17 +257,23 @@ class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
         queryset = self.get_queryset()
         return get_object_or_404(queryset, pk=self.kwargs['registration_pk'])
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TournamentTeamRegistrationSerializer
-        return TournamentTeamRegistrationUpdateSerializer
+    serializer_class = TournamentTeamRegistrationSerializer
 
-    def update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        registration = self.get_object()
-        serializer = self.get_serializer(registration, data=request.data, partial=True)
+
+class TournamentTeamRegistrationDisqualificationView(APIView):
+    permission_classes = [IsAuthenticated, CanManageParticipants]
+
+    def patch(self, request, pk, registration_pk):
+        registration = get_object_or_404(
+            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team'),
+            pk=registration_pk,
+        )
+        serializer = TournamentTeamRegistrationDisqualificationSerializer(
+            registration,
+            data=request.data,
+        )
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        serializer.save()
 
         action = 'activated' if registration.is_active else 'disqualified'
 

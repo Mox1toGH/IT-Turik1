@@ -653,11 +653,15 @@ class PassingCountTests(APITestCase):
 
     def test_admin_can_manually_disqualify_team(self):
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_detail', kwargs={
+        url = reverse('tournament_registration_disqualification', kwargs={
             'pk': self.tournament.id,
             'registration_pk': self.reg1.id
         })
-        response = self.client.patch(url, {'is_active': False}, format='json')
+        response = self.client.patch(
+            url,
+            {'action': 'disqualify', 'disqualification_reason': 'Rules violation'},
+            format='json',
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['action'], 'disqualified')
         self.assertFalse(response.data['is_active'])
@@ -667,11 +671,20 @@ class PassingCountTests(APITestCase):
         self.reg1.save(update_fields=['is_active'])
         
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_detail', kwargs={
+        url = reverse('tournament_registration_disqualification', kwargs={
             'pk': self.tournament.id,
             'registration_pk': self.reg1.id
         })
-        response = self.client.patch(url, {'is_active': True}, format='json')
+        response = self.client.patch(url, {'action': 'reactivate'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['action'], 'activated')
         self.assertTrue(response.data['is_active'])
+
+    def test_disqualification_action_is_required(self):
+        self.client.force_authenticate(self.admin)
+        url = reverse('tournament_registration_disqualification', kwargs={
+            'pk': self.tournament.id,
+            'registration_pk': self.reg1.id
+        })
+        response = self.client.patch(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

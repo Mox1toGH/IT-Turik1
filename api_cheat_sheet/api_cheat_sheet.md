@@ -16,7 +16,8 @@
 | **Активний турнір команди** | GET | `/api/tournaments/active/?team_id={id}` | Auth |
 | **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
 | **Вихід команди з турніру** | POST | `/api/tournaments/{id}/leave-team/` | Капітан |
-| **Деталі/Зміна реєстрації**| GET/PATCH | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Деталі реєстрації**| GET | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Дискваліфікація/реактивація команди**| PATCH | `/api/tournaments/{id}/registrations/{reg_id}/disqualification/` | Admin |
 | **Список раундів** | GET | `/api/tournaments/{id}/rounds/` | Auth |
 | **Створити раунд** | POST | `/api/tournaments/{id}/rounds/` | Admin |
 | **Деталі/Зміна/Видалення раунду**| GET/PATCH/DEL | `/api/tournaments/rounds/{id}/` | GET: Auth, PATCH/DEL: Admin |
@@ -165,9 +166,12 @@
 > Повертає активний турнір команди (статус `registration` або `running`) тільки для активної реєстрації (`is_active=true`).
 > Якщо активної участі для `team_id` немає — повертає `404`.
 
-**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/`**
+**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/disqualification/`**
 ```json
-{ "is_active": false }
+{ "action": "disqualify", "disqualification_reason": "Rules violation" }
+```
+```json
+{ "action": "reactivate" }
 ```
 > Деактивовані команди (`is_active: false`) не можуть подавати роботи. Запис не видаляється.
 > Деактивація можлива як вручну через цей endpoint, так і автоматично після оцінювання раунду за правилом `passing_count`.

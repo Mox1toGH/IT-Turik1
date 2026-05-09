@@ -411,11 +411,25 @@ class TournamentTeamLeaveSerializer(serializers.Serializer):
         )
 
 
-class TournamentTeamRegistrationUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TournamentTeamRegistration
-        fields = ('is_active', 'disqualification_reason')
+class TournamentTeamRegistrationDisqualificationSerializer(serializers.Serializer):
+    ACTION_DISQUALIFY = 'disqualify'
+    ACTION_REACTIVATE = 'reactivate'
+    ACTION_CHOICES = (ACTION_DISQUALIFY, ACTION_REACTIVATE)
 
+    action = serializers.ChoiceField(choices=ACTION_CHOICES)
+    disqualification_reason = serializers.CharField(required=False, allow_blank=True)
+
+    def update(self, instance, validated_data):
+        action = validated_data['action']
+        if action == self.ACTION_DISQUALIFY:
+            instance.is_active = False
+            instance.disqualification_reason = validated_data.get('disqualification_reason', '')
+        else:
+            instance.is_active = True
+            instance.disqualification_reason = ''
+
+        instance.save(update_fields=['is_active', 'disqualification_reason'])
+        return instance
 
 class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='team.id')

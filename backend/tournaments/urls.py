@@ -22,6 +22,7 @@ from .views import (
     TournamentTeamRegistrationCreateView,
     TournamentTeamLeaveView,
     TournamentTeamRegistrationDetailView,
+    TournamentTeamRegistrationDisqualificationView,
     TournamentUpdateView,
     
     TournamentMyTeamSubmissionsView,
@@ -51,6 +52,11 @@ urlpatterns = [
         '<int:pk>/registrations/<int:registration_pk>/',
         TournamentTeamRegistrationDetailView.as_view(),
         name='tournament_registration_detail',
+    ),
+    path(
+        '<int:pk>/registrations/<int:registration_pk>/disqualification/',
+        TournamentTeamRegistrationDisqualificationView.as_view(),
+        name='tournament_registration_disqualification',
     ),
     path('<int:tournament_pk>/rounds/', RoundListCreateView.as_view(), name='rounds'),
     path('rounds/<int:pk>/', RoundDetailView.as_view(), name='round_detail'),
