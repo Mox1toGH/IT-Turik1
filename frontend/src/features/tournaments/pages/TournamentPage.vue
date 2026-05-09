@@ -9,7 +9,7 @@
       </template>
 
       <template #footer>
-        <ui-button asLink to="/tournaments" variant="secondary" size="sm" class="tournament-link">
+        <ui-button asLink to="/" variant="secondary" size="sm" class="tournament-link">
           Back to tournaments
         </ui-button>
       </template>
