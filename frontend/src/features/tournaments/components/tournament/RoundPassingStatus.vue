@@ -44,7 +44,7 @@
 
           <div v-else class="results-list">
             <div
-              v-for="(result, index) in results"
+              v-for="(result, index) in sortedResults"
               :key="result.registration_id"
               class="result-row"
               :class="{ 'cut-line': shouldShowCutLine(index) }"
@@ -153,8 +153,9 @@ const disqualifiedTeams = computed(() => {
 
 const shouldShowCutLine = (index: number) => {
   if (!passingCount.value) return false
-  const passedCount = passedTeams.value.length
-  return index === passedCount - 1 && eliminatedTeams.value.length > 0
+  const result = sortedResults.value[index]
+  const nextResult = sortedResults.value[index + 1]
+  return result?.passed && nextResult && !nextResult.passed
 }
 
 const getStatusText = (result: PassingStatusResult) => {
