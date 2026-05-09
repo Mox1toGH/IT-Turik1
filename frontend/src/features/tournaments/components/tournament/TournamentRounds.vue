@@ -129,6 +129,7 @@
       v-if="selectedPassingRound"
       :roundId="selectedPassingRound.id"
       :tournamentId="props.tournamentId"
+      @hide="selectedPassingRound = null"
     />
   </Transition>
 </template>

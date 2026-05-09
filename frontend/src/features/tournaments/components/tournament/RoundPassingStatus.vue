@@ -1,6 +1,12 @@
 <template>
   <section class="round-passing-status">
-    <ui-card>
+    <ui-card v-if="!isAdmin">
+      <div class="no-access">
+        <p>You don't have permission to view passing status.</p>
+      </div>
+    </ui-card>
+
+    <ui-card v-else>
       <template #header>
         <div class="header">
           <div>
@@ -35,7 +41,12 @@
           </template>
 
           <div v-if="isError" class="error-state">
-            <p>Failed to load passing status.</p>
+            <div class="error-content">
+              <p>{{ error?.message || 'Failed to load passing status.' }}</p>
+              <ui-button @click="handleRetry" size="sm" variant="secondary">
+                Try Again
+              </ui-button>
+            </div>
           </div>
 
           <div v-else-if="!results.length" class="empty-state">
@@ -63,6 +74,7 @@
                   v-if="result.is_active"
                   size="sm"
                   variant="danger"
+                  :disabled="isUpdating"
                   @click="openDisqualifyModal(result)"
                 >
                   Disqualify
@@ -71,6 +83,7 @@
                   v-else
                   size="sm"
                   variant="secondary"
+                  :disabled="isUpdating"
                   @click="openReactivateModal(result)"
                 >
                   Reactivate
@@ -95,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -104,6 +117,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { usePassingStatus, useUpdateRegistration } from '@/api/queries/tournaments'
 import { useTournamentRounds } from '@/api/queries/tournaments'
+import { useProfile } from '@/api/queries/accounts'
 import type { PassingStatusResult } from '@/api/services/tournaments/types'
 
 interface Props {
@@ -113,8 +127,29 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { data: passingStatusData, isLoading, isError } = usePassingStatus({ roundId: props.roundId })
+const emit = defineEmits<{
+  hide: []
+}>()
+
+const { data: user } = useProfile()
+const isAdmin = computed(() => user.value?.role === 'admin')
+
+const { data: passingStatusData, isLoading, isError, error, refetch } = usePassingStatus(
+  { roundId: props.roundId },
+  {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    enabled: isAdmin
+  }
+)
 const { data: roundsData } = useTournamentRounds({ id: props.tournamentId })
+
+// Watch for round status changes and hide component if needed
+watch(() => currentRound.value?.status, (newStatus) => {
+  if (newStatus && !['submission_closed', 'evaluated'].includes(newStatus)) {
+    emit('hide')
+  }
+})
 
 const results = computed(() => passingStatusData.value ?? [])
 
@@ -200,6 +235,10 @@ const handleConfirmAction = () => {
       pendingAction.value = null
     }
   })
+}
+
+const handleRetry = () => {
+  refetch()
 }
 
 function formatScore(value: number) {
@@ -313,6 +352,22 @@ function formatScore(value: number) {
   text-align: center;
 }
 
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.no-access {
+  display: flex;
+  height: 200px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
 @media (max-width: 768px) {
   .result-row {
     grid-template-columns: 50px 1fr 100px;
@@ -327,6 +382,13 @@ function formatScore(value: number) {
     grid-column: span 3;
     justify-content: center;
     margin-top: 0.5rem;
+  }
+
+  .team-name {
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 </style></content>
