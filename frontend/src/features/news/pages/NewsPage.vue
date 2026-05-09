@@ -142,6 +142,10 @@
             form.errors.value.content
           }}</small>
         </label>
+        <label class="notify-row">
+          <ui-switch v-model="form.fields.value.send_notification" />
+          <span>Send notification to all users</span>
+        </label>
 
         <ui-button type="submit" :disabled="isCreating">
           <loading-icon v-if="isCreating" />
@@ -179,6 +183,10 @@
             editForm.errors.value.content
           }}</small>
         </label>
+        <label class="notify-row">
+          <ui-switch v-model="editForm.fields.value.send_notification" />
+          <span>Send notification to all users</span>
+        </label>
 
         <ui-button type="submit" :disabled="isUpdating || !editingNewsId">
           <loading-icon v-if="isUpdating" />
@@ -210,6 +218,7 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSwitch from '@/components/ui/UiSwitch.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import EditorModal from '@/features/tournaments/components/create-round/modals/EditorModal.vue'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
@@ -224,15 +233,18 @@ import type { NewsArticle } from '@/api/dbTypes'
 interface CreateNewsForm {
   title: string
   content: JSONContent | null
+  send_notification: boolean
 }
 
 const form = useForm<CreateNewsForm>(CreateNewsSchema, {
   title: '',
   content: null,
+  send_notification: false,
 })
 const editForm = useForm<CreateNewsForm>(CreateNewsSchema, {
   title: '',
   content: null,
+  send_notification: false,
 })
 
 const { showNotification } = useNotification()
@@ -271,11 +283,12 @@ function handleCreate() {
       body: {
         title: form.fields.value.title,
         content: form.fields.value.content as JSONContent,
+        send_notification: form.fields.value.send_notification,
       },
     },
     {
       onSuccess() {
-        form.hydrate({ title: '', content: null })
+        form.hydrate({ title: '', content: null, send_notification: false })
         isCreateOpen.value = false
         showNotification('News created successfully.', 'success')
       },
@@ -302,6 +315,7 @@ function openEditModal(item: NewsArticle) {
   editForm.hydrate({
     title: item.title,
     content: item.content as JSONContent,
+    send_notification: false,
   })
   isEditOpen.value = true
 }
@@ -316,6 +330,7 @@ function handleEdit() {
       body: {
         title: editForm.fields.value.title,
         content: editForm.fields.value.content as JSONContent,
+        send_notification: editForm.fields.value.send_notification,
       },
     },
     {
@@ -473,6 +488,13 @@ watch(
 .create-form {
   display: grid;
   gap: 0.8rem;
+}
+
+.notify-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted-foreground);
 }
 
 .news-grid {

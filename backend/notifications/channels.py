@@ -20,6 +20,7 @@ EVENT_TYPE_LABELS = {
     'team_join_request_declined': 'Join Request Declined',
     'team_member_removed': 'Membership Update',
     'team_member_left': 'Membership Update',
+    'news_published': 'News',
 }
 
 # Events that go to /teams (general) — cannot link to a specific team
@@ -37,6 +38,7 @@ EVENT_ACTION_LABELS = {
     'team_join_request_declined': 'View Teams',
     'team_member_removed':        'Browse Teams',
     'team_member_left':           'View Team',
+    'news_published':             'View News',
 }
 
 
@@ -51,13 +53,15 @@ def _get_action(event_type: str, message: str) -> tuple[str, str]:
 
     if event_type in _GENERAL_TEAMS_EVENTS:
         return label, '/teams'
+    if event_type == 'news_published':
+        return label, '/news'
 
     # Try to extract team_id from [team:id:name:visibility] tag
     match = re.search(r'\[team:(\d+):', message)
     if match:
         return label, f'/teams/{match.group(1)}'
 
-    return label, '/teams'
+    return label, '/news' if event_type == 'news_published' else '/teams'
 
 
 def _strip_notification_tags(text: str) -> str:

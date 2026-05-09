@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from notifications.models import Notification
 from .models import NewsArticle
 
 
@@ -145,3 +146,21 @@ class NewsApiTests(APITestCase):
 
         self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_news_with_send_notification_creates_notifications_for_other_users(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            self.list_url,
+            {
+                'title': 'Broadcasted update',
+                'content': {'type': 'doc', 'content': [{'type': 'paragraph', 'content': [{'type': 'text', 'text': 'Hello all users'}]}]},
+                'send_notification': True,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Notification.objects.filter(event_type='news_published').count(), 2)
+        self.assertFalse(
+            Notification.objects.filter(event_type='news_published', recipient=self.admin).exists()
+        )

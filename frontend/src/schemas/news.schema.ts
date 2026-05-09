@@ -11,5 +11,5 @@ function tiptapJsonMinLength(min: number, message: string) {
 export const CreateNewsSchema = v.object({
   title: v.pipe(v.string(), v.minLength(3, 'Title must be at least 3 characters long')),
   content: tiptapJsonMinLength(20, 'Content must be at least 20 characters long'),
+  send_notification: v.optional(v.boolean(), false),
 })
-

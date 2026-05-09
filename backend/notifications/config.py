@@ -90,4 +90,11 @@ EVENTS = {
         title='Member Left Team',
         message='[user:{user_id}:{user_name}] has left team "[team:{team_id}:{team_name}]".',
     ),
+    'news_published': NotificationEvent(
+        key='news_published',
+        channels=['system', 'email'],
+        title='New Announcement',
+        message='A new post was published: "{news_title}".',
+        email_subject='New announcement: {news_title}',
+    ),
 }

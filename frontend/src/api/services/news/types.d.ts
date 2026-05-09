@@ -14,7 +14,9 @@ export interface PaginatedNewsResponse {
 
 export type GetNewsResponse = PaginatedNewsResponse
 
-export type CreateNewsBody = Pick<NewsArticle, 'title' | 'content'>
+export interface CreateNewsBody extends Pick<NewsArticle, 'title' | 'content'> {
+  send_notification?: boolean
+}
 export interface CreateNewsArgs {
   body: CreateNewsBody
 }
