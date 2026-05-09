@@ -967,7 +967,7 @@ class TournamentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_tournament_teams_returns_registrations_with_is_active(self):
+    def test_tournament_teams_returns_only_active_by_default(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
             status=Tournament.STATUS_RUNNING,
@@ -1003,12 +1003,50 @@ class TournamentApiTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]['team']['id'], self.team.id)
-        self.assertEqual(response.data[0]['team']['name'], self.team.name)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.team.id)
+        self.assertEqual(response.data[0]['name'], self.team.name)
         self.assertTrue(response.data[0]['is_active'])
-        self.assertEqual(response.data[1]['id'], inactive_registration.id)
-        self.assertFalse(response.data[1]['is_active'])
+
+    def test_tournament_teams_can_include_inactive(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        second_user = User.objects.create_user(
+            username='second-captain-include',
+            email='second-captain-include@example.com',
+            password='StrongPass123!',
+        )
+        second_team = Team.objects.create(
+            name='Second Team Include',
+            email='second-team-include@example.com',
+            captain=second_user,
+        )
+        TeamMember.objects.create(team=second_team, user=second_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=second_team,
+            created_by=second_user,
+            is_active=False,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'include_inactive': 'true'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertTrue(any(item['is_active'] for item in response.data))
+        self.assertTrue(any(not item['is_active'] for item in response.data))
 
     def test_tournament_teams_filters_only_active(self):
         tournament = Tournament.objects.create(
@@ -1043,12 +1081,31 @@ class TournamentApiTests(APITestCase):
 
         self.client.force_authenticate(user=self.captain)
         url = reverse('tournament_teams', kwargs={'pk': tournament.id})
-        response = self.client.get(url, {'only_active': 'true'})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['id'], active_registration.id)
+        self.assertEqual(response.data[0]['id'], active_registration.team_id)
         self.assertTrue(response.data[0]['is_active'])
+
+    def test_team_active_tournament_ignores_inactive_registration(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=False,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('team_active_tournament')
+        response = self.client.get(url, {'team_id': self.team.id})
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_tournament_teams_returns_404_for_missing_tournament(self):
         self.client.force_authenticate(user=self.captain)
