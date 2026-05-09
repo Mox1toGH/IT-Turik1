@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="page-shell news-page">
     <ui-card>
       <template #header>
@@ -69,10 +69,16 @@
         <ui-card v-for="item in newsItems" :key="item.id" class="news-item">
           <template #header>
             <div class="news-item-head">
-              <h3>{{ item.title }}</h3>
-              <p class="meta">
-                {{ item.created_by_name || 'Unknown author' }} · {{ formatDate(item.created_at) }}
-              </p>
+              <div>
+                <h3>{{ item.title }}</h3>
+                <p class="meta">
+                  {{ item.created_by_name || 'Unknown author' }} В· {{ formatDate(item.created_at) }}
+                </p>
+              </div>
+              <div v-if="canModifyNews(item)" class="news-actions">
+                <ui-button size="sm" variant="secondary" @click="openEditModal(item)">Edit</ui-button>
+                <ui-button size="sm" variant="danger" @click="openDeleteConfirm(item)">Delete</ui-button>
+              </div>
             </div>
           </template>
 
@@ -84,12 +90,7 @@
           Previous
         </ui-button>
         <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <ui-button
-          size="sm"
-          variant="secondary"
-          :disabled="currentPage === totalPages"
-          @click="nextPage"
-        >
+        <ui-button size="sm" variant="secondary" :disabled="currentPage === totalPages" @click="nextPage">
           Next
         </ui-button>
       </div>
@@ -135,6 +136,53 @@
         </ui-button>
       </form>
     </ui-modal>
+
+    <ui-modal v-if="canManageNews" v-model="isEditOpen" maxWidth="760px" :close-on-backdrop="!isUpdating">
+      <template #title>Edit news</template>
+
+      <form class="create-form" @submit.prevent="handleEdit">
+        <label class="form-item">
+          <span class="form-label">Title</span>
+          <ui-input
+            v-model="editForm.fields.value.title"
+            placeholder="Enter news title"
+            :isInvalid="!!editForm.errors.value.title"
+            @blur="editForm.validateField('title')"
+          />
+          <small v-if="editForm.errors.value.title" class="text-error">{{ editForm.errors.value.title }}</small>
+        </label>
+
+        <label class="form-item">
+          <span class="form-label">Content</span>
+          <editor-modal
+            v-model="editForm.fields.value.content"
+            title="News content"
+            addText="Add content"
+            editText="Edit content"
+            ariaLabel="News content editor"
+            @blur="editForm.validateField('content')"
+          />
+          <small v-if="editForm.errors.value.content" class="text-error">{{
+            editForm.errors.value.content
+          }}</small>
+        </label>
+
+        <ui-button type="submit" :disabled="isUpdating || !editingNewsId">
+          <loading-icon v-if="isUpdating" />
+          <span>Save</span>
+        </ui-button>
+      </form>
+    </ui-modal>
+
+    <ui-confirm-modal
+      v-model="isDeleteConfirmOpen"
+      title="Delete news"
+      message="Are you sure you want to delete this news?"
+      confirmText="Delete"
+      confirmVariant="danger"
+      :loading="isDeleting"
+      @confirm="handleDelete"
+    />
   </section>
 </template>
 
@@ -144,6 +192,7 @@ import type { JSONContent } from '@tiptap/core'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
@@ -152,11 +201,12 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import EditorModal from '@/features/tournaments/components/create-round/modals/EditorModal.vue'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
 import { useProfile } from '@/api/queries/accounts'
-import { useCreateNews, useNewsList } from '@/api/queries/news'
+import { useCreateNews, useDeleteNews, useNewsList, useUpdateNews } from '@/api/queries/news'
 import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'
 import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
+import type { NewsArticle } from '@/api/dbTypes'
 
 interface CreateNewsForm {
   title: string
@@ -167,11 +217,19 @@ const form = useForm<CreateNewsForm>(CreateNewsSchema, {
   title: '',
   content: null,
 })
+const editForm = useForm<CreateNewsForm>(CreateNewsSchema, {
+  title: '',
+  content: null,
+})
 
 const { showNotification } = useNotification()
 const { data: user } = useProfile()
 const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
 const isCreateOpen = ref(false)
+const isEditOpen = ref(false)
+const isDeleteConfirmOpen = ref(false)
+const editingNewsId = ref<number | null>(null)
+const deletingNewsId = ref<number | null>(null)
 const currentPage = ref(1)
 const pageSize = 10
 
@@ -187,6 +245,8 @@ const totalNews = computed(() => news.value?.count ?? 0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
 
 const { mutate: createNews, isPending: isCreating } = useCreateNews()
+const { mutate: updateNews, isPending: isUpdating } = useUpdateNews()
+const { mutate: deleteNews, isPending: isDeleting } = useDeleteNews()
 
 function handleCreate() {
   if (!form.validate()) return
@@ -209,6 +269,75 @@ function handleCreate() {
         for (const [field, errors] of Object.entries(parsed?.details || {})) {
           form.setError(field as keyof CreateNewsForm, errors?.[0] ?? 'Invalid value')
         }
+        showNotification(parsed?.message, 'error')
+      },
+    },
+  )
+}
+
+function canModifyNews(item: NewsArticle) {
+  if (user.value?.role === 'admin') return true
+  if (user.value?.role === 'organizer') return item.created_by === user.value.id
+  return false
+}
+
+function openEditModal(item: NewsArticle) {
+  if (!canModifyNews(item)) return
+  editingNewsId.value = item.id
+  editForm.hydrate({
+    title: item.title,
+    content: item.content as JSONContent,
+  })
+  isEditOpen.value = true
+}
+
+function handleEdit() {
+  if (!editingNewsId.value) return
+  if (!editForm.validate()) return
+
+  updateNews(
+    {
+      id: editingNewsId.value,
+      body: {
+        title: editForm.fields.value.title,
+        content: editForm.fields.value.content as JSONContent,
+      },
+    },
+    {
+      onSuccess() {
+        isEditOpen.value = false
+        editingNewsId.value = null
+        showNotification('News updated successfully.', 'success')
+      },
+      onError(error) {
+        const parsed = parseApiError(error)
+        for (const [field, errors] of Object.entries(parsed?.details || {})) {
+          editForm.setError(field as keyof CreateNewsForm, errors?.[0] ?? 'Invalid value')
+        }
+        showNotification(parsed?.message, 'error')
+      },
+    },
+  )
+}
+
+function openDeleteConfirm(item: NewsArticle) {
+  if (!canModifyNews(item)) return
+  deletingNewsId.value = item.id
+  isDeleteConfirmOpen.value = true
+}
+
+function handleDelete() {
+  if (!deletingNewsId.value) return
+  deleteNews(
+    { id: deletingNewsId.value },
+    {
+      onSuccess() {
+        isDeleteConfirmOpen.value = false
+        deletingNewsId.value = null
+        showNotification('News deleted successfully.', 'success')
+      },
+      onError(error) {
+        const parsed = parseApiError(error)
         showNotification(parsed?.message, 'error')
       },
     },
@@ -309,9 +438,21 @@ function nextPage() {
   background: var(--muted);
 }
 
+.news-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
 .news-item-head h3 {
   margin: 0;
   font-family: var(--font-display);
+}
+
+.news-actions {
+  display: flex;
+  gap: 0.45rem;
 }
 
 .meta {

@@ -25,11 +25,24 @@ class CanCreateNews(HasNewsPermission):
 class CanEditNews(HasNewsPermission):
     required_permission = Permission.EDIT_NEWS
 
+    def has_object_permission(self, request, view, obj):
+        if request.user.role == 'admin':
+            return True
+        if request.user.role == 'organizer':
+            return obj.created_by_id == request.user.id
+        return False
+
 
 class CanDeleteNews(HasNewsPermission):
     required_permission = Permission.DELETE_NEWS
 
+    def has_object_permission(self, request, view, obj):
+        if request.user.role == 'admin':
+            return True
+        if request.user.role == 'organizer':
+            return obj.created_by_id == request.user.id
+        return False
+
 
 class CanManageNewsOrReadOnly(HasNewsPermissionOrReadOnly):
     required_permission = Permission.CREATE_NEWS
-

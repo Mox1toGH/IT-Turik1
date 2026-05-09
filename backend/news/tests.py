@@ -116,11 +116,11 @@ class NewsApiTests(APITestCase):
         self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_organizer_can_update_and_delete_news(self):
+    def test_organizer_can_update_and_delete_own_news(self):
         article = NewsArticle.objects.create(
             title='Organizer item',
             content={'type': 'doc', 'content': []},
-            created_by=self.admin,
+            created_by=self.organizer,
         )
         detail_url = reverse('news_detail', kwargs={'pk': article.id})
         self.client.force_authenticate(user=self.organizer)
@@ -130,3 +130,18 @@ class NewsApiTests(APITestCase):
 
         delete_response = self.client.delete(detail_url)
         self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_organizer_cannot_update_or_delete_other_users_news(self):
+        article = NewsArticle.objects.create(
+            title='Admin item',
+            content={'type': 'doc', 'content': []},
+            created_by=self.admin,
+        )
+        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        self.client.force_authenticate(user=self.organizer)
+
+        update_response = self.client.patch(detail_url, {'title': 'Try change'}, format='json')
+        delete_response = self.client.delete(detail_url)
+
+        self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
