@@ -1,4 +1,4 @@
-from django.db.models import Count, IntegerField, Prefetch, Q, Value
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import NotFound, ValidationError
@@ -33,9 +33,10 @@ from .serializers import (
     TournamentAdminSerializer,
     TournamentPublicSerializer,
     TournamentTeamRegistrationCreateSerializer,
+    TournamentTeamLeaveSerializer,
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
-    TournamentTeamRegistrationUpdateSerializer,
+    TournamentTeamRegistrationDisqualificationSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -230,7 +231,21 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
 
 
-class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
+class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
+
+    def post(self, request, pk):
+        tournament = get_object_or_404(Tournament, pk=pk)
+        serializer = TournamentTeamLeaveSerializer(
+            data=request.data,
+            context={'request': request, 'tournament': tournament},
+        )
+        serializer.is_valid(raise_exception=True)
+        registration = serializer.save()
+        return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
+
+
+class TournamentTeamRegistrationDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, CanManageParticipants]
 
     def get_queryset(self):
@@ -242,10 +257,34 @@ class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
         queryset = self.get_queryset()
         return get_object_or_404(queryset, pk=self.kwargs['registration_pk'])
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TournamentTeamRegistrationSerializer
-        return TournamentTeamRegistrationUpdateSerializer
+    serializer_class = TournamentTeamRegistrationSerializer
+
+
+class TournamentTeamRegistrationDisqualificationView(APIView):
+    permission_classes = [IsAuthenticated, CanManageParticipants]
+
+    def patch(self, request, pk, registration_pk):
+        registration = get_object_or_404(
+            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team'),
+            pk=registration_pk,
+        )
+        serializer = TournamentTeamRegistrationDisqualificationSerializer(
+            registration,
+            data=request.data,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        action = 'activated' if registration.is_active else 'disqualified'
+
+        return Response({
+            'id': registration.id,
+            'team_id': registration.team_id,
+            'team_name': registration.team.name,
+            'tournament_id': registration.tournament_id,
+            'is_active': registration.is_active,
+            'action': action,
+        })
 
 
 class TournamentEligibleTeamsView(APIView):
@@ -256,7 +295,7 @@ class TournamentEligibleTeamsView(APIView):
         teams = (
             Team.objects.filter(captain_id=request.user.id)
             .annotate(
-                members_count=Count('team_members', distinct=True) + Value(1, output_field=IntegerField())
+                members_count=Count('team_members', distinct=True)
             )
             .values('id', 'name', 'members_count')
             .order_by('id')
@@ -272,10 +311,15 @@ class TournamentTeamsView(APIView):
  
         queryset = TournamentTeamRegistration.objects.filter(
             tournament_id=pk,
-        ).select_related('team').prefetch_related('team__team_members')
- 
-        only_active = request.query_params.get('only_active')
-        if only_active and only_active.lower() == 'true':
+        ).select_related('team', 'team__captain').prefetch_related('team__members')
+
+        status_filter = request.query_params.get('status')
+        if status_filter == 'disqualified':
+            queryset = queryset.filter(is_disqualified=True)
+        elif status_filter == 'all':
+            pass
+        else:
+            # Default: return only active teams (active=True, disqualified=False)
             queryset = queryset.filter(is_active=True)
  
         serializer = TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True)
@@ -294,6 +338,7 @@ class TeamActiveTournamentView(APIView):
                     Tournament.STATUS_REGISTRATION,
                     Tournament.STATUS_RUNNING,
                 ],
+                is_active=True,
             )
             .first()
         )
@@ -393,28 +438,66 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
 
 class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(round__tournament=tournament)
+            .exclude(team__tournament_registrations__tournament=tournament, team__tournament_registrations__is_disqualified=True)
+            .order_by('-updated_at')
+        )
+
+
+class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        tournament = get_object_or_404(Tournament, pk=self.kwargs['pk'])
+
+        team_registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .filter(
+                tournament=tournament,
+                is_active=True,
+            )
+            .filter(
+                Q(team__captain_id=user.id) | Q(team__team_members__user_id=user.id),
+            )
+            .first()
+        )
+        if team_registration is None:
+            raise NotFound('No team participation found for this tournament.')
+
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
+            .filter(
+                round__tournament=tournament,
+                team_id=team_registration.team_id,
+            )
             .order_by('-updated_at')
         )
 
 
 class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
-    # permission_classes = [IsAuthenticated, CanViewTournament]  # тільки для журі/адмін
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanSetResults]
 
     def get_queryset(self):
         round_obj = get_object_or_404(Round, pk=self.kwargs['pk'])
         return (
             Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury')
             .filter(round=round_obj)
+            .exclude(
+                team__tournament_registrations__tournament=round_obj.tournament,
+                team__tournament_registrations__is_disqualified=True,
+            )
             .order_by('-updated_at')
         )
 

@@ -1,11 +1,5 @@
 #  API Cheat Sheet
 
-## Access Updates (2026-05-07)
-
-- `POST /api/teams/` -> `Auth`, but `admin` and `superuser` are denied (`403`).
-- `PUT/PATCH/DELETE /api/teams/{id}/` -> `Auth + captain rules`, but `admin` and `superuser` are denied (`403`).
-- `POST /api/tournaments/{id}/register-team/` -> `Auth + tournament registration rules`, but `admin` and `superuser` are denied (`403`).
-
 ---
 
 ### 1. Турніри
@@ -21,18 +15,21 @@
 | **Зареєстровані команди турніру** | GET | `/api/tournaments/{id}/teams/` | Auth |
 | **Активний турнір команди** | GET | `/api/tournaments/active/?team_id={id}` | Auth |
 | **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
-| **Деталі/Зміна реєстрації**| GET/PATCH | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Вихід команди з турніру** | POST | `/api/tournaments/{id}/leave-team/` | Капітан |
+| **Деталі реєстрації**| GET | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Дискваліфікація/реактивація команди**| PATCH | `/api/tournaments/{id}/registrations/{reg_id}/disqualification/` | Admin |
 | **Список раундів** | GET | `/api/tournaments/{id}/rounds/` | Auth |
 | **Створити раунд** | POST | `/api/tournaments/{id}/rounds/` | Admin |
 | **Деталі/Зміна/Видалення раунду**| GET/PATCH/DEL | `/api/tournaments/rounds/{id}/` | GET: Auth, PATCH/DEL: Admin |
 | **Почати раунд** | POST | `/api/tournaments/rounds/{id}/start/` | Admin |
 | **Закрити прийом робіт**| POST | `/api/tournaments/rounds/{id}/close-submissions/` | Admin |
 | **Фіналізація оцінок** | POST | `/api/tournaments/rounds/{id}/mark-evaluated/` | Admin |
-| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth (журі/адмін) |
+| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth |
+| **Роботи моєї команди у турнірі** | GET | `/api/tournaments/{id}/my-submissions/` | Auth (автофільтр по команді) |
 | **Всі роботи раунду** | GET | `/api/tournaments/rounds/{id}/submissions/` | Auth (журі/адмін) |
 | **Мої роботи** | GET | `/api/tournaments/submissions/` | Команда |
-| **Подати роботу** | POST | `/api/tournaments/submissions/` | Команда |
-| **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | Команда |
+| **Подати роботу** | POST | `/api/tournaments/submissions/` | Лише капітан команди |
+| **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | GET: Команда, PATCH: Лише капітан |
 | **Поточне завдання** | GET | `/api/tournaments/current-task/?tournament_id={id}` *(опц.)* | Учасники |
 | **Список подій** | GET | `/api/tournaments/events/?tournament={id}` *(опц.)* | Всі |
 | **Деталі події** | GET | `/api/tournaments/events/{id}/` | Всі |
@@ -115,6 +112,16 @@
 > - Жоден учасник команди (включно з капітаном) не може одночасно брати участь в іншому активному турнірі у складі іншої команди.
 > - При конфлікті учасників API повертає email-и учасників, що вже беруть участь в іншому активному турнірі.
 
+**Вихід команди з турніру — POST `/api/tournaments/{id}/leave-team/`**
+```json
+{ "team_id": 10 }
+```
+> Доступно лише капітану цієї команди.
+> Endpoint **не видаляє команду з БД і не видаляє запис реєстрації фізично**.
+> Фактично виконується soft-delete участі: реєстрація лишається в історії, але стає неактивною (`is_active = false`).
+> Якщо команду намагається вивести не капітан — `400`.
+> Якщо команда не має активної реєстрації в цьому турнірі — `400`.
+
 **Доступні команди капітана — GET `/api/tournaments/{id}/eligible-teams/`**
 ```json
 [
@@ -143,9 +150,18 @@
   }
 ]
 ```
-> Повертає всі реєстрації команд у конкретному турнірі з ознакою активності `is_active`.
-> Доступний query-параметр `?only_active=true`, щоб повернути тільки активні команди (`is_active=true`).
+> За замовчуванням повертає тільки активні реєстрації (`is_active=true`).
+> Щоб отримати також неактивні (soft-deleted) реєстрації, використовуйте `?include_inactive=true`.
 > Якщо турнір не існує — `404`.
+>
+> `status` filter:
+> - `?status=active` -> only active registrations (`is_active=true`)
+> - `?status=disqualified` -> only disqualified registrations (`is_active=false` and `disqualification_reason` is not empty)
+> - `?status=all` -> all registrations (active + inactive)
+>
+> Important distinction:
+> - `left team` -> `is_active=false` and empty `disqualification_reason`
+> - `disqualified team` -> `is_active=false` and non-empty `disqualification_reason`
 
 **Активний турнір команди — GET `/api/tournaments/active/?team_id={id}`**
 ```json
@@ -156,14 +172,22 @@
   "start_date": "2026-05-01T10:00:00Z"
 }
 ```
-> Повертає активний турнір команди (статус `registration` або `running`).
+> Повертає активний турнір команди (статус `registration` або `running`) тільки для активної реєстрації (`is_active=true`).
 > Якщо активної участі для `team_id` немає — повертає `404`.
 
-**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/`**
+**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/disqualification/`**
 ```json
-{ "is_active": false }
+{ "action": "disqualify", "disqualification_reason": "Rules violation" }
 ```
+```json
+{ "action": "reactivate" }
+```
+```json
+{ "action": "disqualify" }
+```
+> If `disqualification_reason` is empty, backend saves default reason: `Disqualified by admin`.
 > Деактивовані команди (`is_active: false`) не можуть подавати роботи. Запис не видаляється.
+> Деактивація можлива як вручну через цей endpoint, так і автоматично після оцінювання раунду за правилом `passing_count`.
 
 > **Обмеження під час активного турніру (`registration` або `running`):**
 > - Заборонені: інвайти в команду, join-request, прийняття інвайту/заявки, зміна `name`, зміна `is_public`.
@@ -221,10 +245,16 @@
 >
 > **Валідація `passing_count`:**
 > Якщо вказано `passing_count` і в турнірі вже є зареєстровані команди, значення не може перевищувати кількість зареєстрованих команд. Якщо команд ще немає (реєстрація не відкрита), перевірка пропускається.
+>
+> **Авто-відсів за `passing_count` (після evaluated):**
+> - Застосовується під час переходу раунду в `evaluated` (manual `mark-evaluated` або auto-evaluation).
+> - Команди з `rank <= passing_count` залишаються активними.
+> - Команди з `rank > passing_count` автоматично деактивуються в `TournamentTeamRegistration` (`is_active=false`).
+> - Якщо `passing_count = null`, авто-відсів не застосовується.
 
 ### 3. Роботи (Команда)
 
-**Всі роботи турніру (Jury/Admin) — GET `/api/tournaments/{id}/submissions/`**
+**Всі роботи турніру — GET `/api/tournaments/{id}/submissions/`**
 ```json
 [
   {
@@ -252,6 +282,11 @@
 > Повертає всі submissions усіх раундів вказаного турніру, відсортовані за `updated_at` (спадання).
 > Якщо турнір не існує — `404`.
 
+**Роботи моєї команди у турнірі — GET `/api/tournaments/{id}/my-submissions/`**
+> Повертає submissions тільки однієї команди користувача в цьому турнірі.
+> `team_id` передавати не потрібно: бекенд сам знаходить команду користувача (капітан або учасник) в активній реєстрації турніру.
+> Якщо користувач не бере участі в цьому турнірі — `404`.
+
 **Всі роботи раунду (Jury/Admin) — GET `/api/tournaments/rounds/{id}/submissions/`**
 > Аналогічна структура відповіді, але фільтрує submissions тільки для конкретного раунду.
 > Якщо раунд не існує — `404`.
@@ -259,14 +294,16 @@
 **Подача роботи — POST `/api/tournaments/submissions/`**
 ```json
 {
-  "team": 1,
   "round": 1,
   "github_url": "https://github.com/user/repo",
   "demo_video_url": "https://youtube.com/...",
   "description": "Ready for review"
 }
 ```
-
+> `team` is not accepted in request payload.
+> Backend resolves team automatically from active tournament registration for selected `round`, where `request.user` is captain.
+> If user is not a captain of an active registered team in this tournament, API returns `400` with `team` error.
+> If multiple active captain teams are found in the same tournament, API returns `400` (ambiguous team).
 **Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
 ```json
 {
@@ -274,6 +311,8 @@
   "description": "Updated submission notes"
 }
 ```
+> Редагувати submission може тільки капітан відповідної команди.
+> Перегляд (`GET`) лишається доступним для капітана та учасників цієї команди.
 
 ### 4. Розклад / Події (Admin)
 
@@ -403,4 +442,4 @@
 > - Оцінка `score` має бути $\ge 0$ та $\le$ `max_score` критерію.
 > - Дублікати `criterion_id` не допускаються.
 > - Необхідно передати оцінки для **всіх** критеріїв раунду. Якщо потрібен 0, його потрібно передати явно (`"score": 0`).
-> - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. Якщо це останній раунд — турнір завершується автоматично.
+> - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. У цей момент також застосовується авто-відсів команд за `passing_count` поточного раунду. Якщо це останній раунд — турнір завершується автоматично.

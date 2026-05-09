@@ -9,8 +9,8 @@
     <template #default="{ close }">
       <div class="actions-list">
         <ui-button
-          v-if="props.status === 'draft'"
           variant="secondary"
+          :disabled="props.status !== 'draft'"
           size="sm"
           class="action-btn"
           @click="
@@ -23,8 +23,8 @@
         >
         <template v-if="profile?.role === 'admin'">
           <ui-button
-            v-if="props.status === 'active'"
             size="sm"
+            :disabled="props.status !== 'active'"
             class="action-btn"
             @click="
               () => {
@@ -37,8 +37,22 @@
           </ui-button>
           <ui-button
             size="sm"
+            :disabled="props.status !== 'submission_closed'"
+            class="action-btn"
+            @click="
+              () => {
+                close()
+                handleMarkEvaluated()
+              }
+            "
+          >
+            Mark evaluated
+          </ui-button>
+          <ui-button
+            size="sm"
             class="action-btn action-delete"
             variant="danger"
+            :disabled="props.status !== 'draft'"
             @click="
               () => {
                 close()
@@ -58,7 +72,12 @@
 import type { RoundId, RoundStatus, TournamentId } from '@/api/dbTypes'
 import { parseApiError } from '@/api/errors'
 import { useProfile } from '@/api/queries/accounts'
-import { useCloseSubmissions, useDeleteRound, useStartRound } from '@/api/queries/tournaments'
+import {
+  useCloseSubmissions,
+  useDeleteRound,
+  useMarkEvaluated,
+  useStartRound,
+} from '@/api/queries/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -77,6 +96,7 @@ const { data: profile } = useProfile()
 const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
 const { mutate: startRound } = useStartRound()
 const { mutate: closeSubmissions } = useCloseSubmissions()
+const { mutate: markEvaluated } = useMarkEvaluated()
 
 function handleDeleteRound() {
   deleteRound(
@@ -119,6 +139,20 @@ function handleCloseSubmissions() {
     },
   )
 }
+
+function handleMarkEvaluated() {
+  markEvaluated(
+    {
+      roundId: props.roundId,
+    },
+    {
+      onError: (error) => {
+        const parsedError = parseApiError(error)
+        showNotification(parsedError?.message, 'error')
+      },
+    },
+  )
+}
 </script>
 
 <style scoped>
@@ -136,6 +170,7 @@ function handleCloseSubmissions() {
   text-align: start;
   justify-content: start;
   background: transparent;
+  color: var(--foreground);
 }
 
 .action-btn:hover {
@@ -145,6 +180,7 @@ function handleCloseSubmissions() {
 .action-delete {
   border: 0;
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
 }
 
 .action-delete:hover {

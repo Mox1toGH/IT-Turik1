@@ -95,6 +95,19 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             if missing:
                 raise serializers.ValidationError({"scores": f"Missing scores for criteria: {', '.join(missing)}"})
 
+            enriched_scores = []
+            for s in scores:
+                c_id = s['criterion_id']
+                criterion = criteria_dict[c_id]
+                enriched_scores.append(
+                    {
+                        'criterion_id': c_id,
+                        'criterion_name': criterion.get('name'),
+                        'score': s['score'],
+                    }
+                )
+            attrs['scores'] = enriched_scores
+
         return attrs
 
 

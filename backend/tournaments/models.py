@@ -250,6 +250,9 @@ class Submission(models.Model):
         if self.round and self.round.status != Round.STATUS_ACTIVE:
             errors['round'] = 'Round is closed for submissions.'
 
+        if self.team_id and self.created_by_id and self.team.captain_id != self.created_by_id:
+            errors['team'] = 'Only team captain can create or update submissions.'
+
         if errors:
             raise ValidationError(errors)
 
@@ -274,6 +277,8 @@ class TournamentTeamRegistration(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_disqualified = models.BooleanField(default=False)
+    disqualification_reason = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ('-created_at',)
@@ -333,4 +338,3 @@ class Event(models.Model):
 
     def __str__(self):
         return f'{self.tournament_id}:{self.title}'
-

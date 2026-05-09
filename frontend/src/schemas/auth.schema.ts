@@ -12,7 +12,6 @@ export const PasswordSchema = v.pipe(
 
 export const LoginSchema = v.object({
   username: v.pipe(v.string(), v.minLength(1, 'Username cannot be empty')),
-  password: PasswordSchema,
 })
 
 export const RegisterSchema = v.object({

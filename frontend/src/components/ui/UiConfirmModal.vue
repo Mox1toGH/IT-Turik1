@@ -1,17 +1,25 @@
 <template>
-  <ui-modal :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :max-width="maxWidth">
+  <ui-modal
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
+    :max-width="maxWidth"
+  >
     <template #title v-if="title">
       <h3 class="confirm-modal-title">{{ title }}</h3>
     </template>
 
+    <p v-if="message">{{ message }}</p>
+
     <div class="confirm-modal-content">
-      <p>{{ message }}</p>
+      <slot />
     </div>
 
     <template #footer>
       <div class="confirm-modal-actions">
-        <ui-button variant="secondary" @click="cancel">{{ cancelText }}</ui-button>
-        <ui-button :variant="confirmVariant" @click="confirm" :disabled="loading">{{ confirmText }}</ui-button>
+        <ui-button size="sm" variant="secondary" @click="cancel">{{ cancelText }}</ui-button>
+        <ui-button size="sm" :variant="confirmVariant" @click="confirm" :disabled="loading">{{
+          confirmText
+        }}</ui-button>
       </div>
     </template>
   </ui-modal>
@@ -24,21 +32,21 @@ import UiButton from './UiButton.vue'
 interface Props {
   modelValue: boolean
   title?: string
-  message: string
+  message?: string
   confirmText?: string
   cancelText?: string
-  confirmVariant?: 'primary' | 'danger' | 'secondary'
+  confirmVariant?: 'default' | 'danger' | 'secondary'
   loading?: boolean
   maxWidth?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'Confirm Action',
   confirmText: 'Confirm',
   cancelText: 'Cancel',
-  confirmVariant: 'primary',
+  confirmVariant: 'default',
   loading: false,
-  maxWidth: '400px'
+  maxWidth: '400px',
 })
 
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
@@ -55,18 +63,12 @@ const confirm = () => {
 
 <style scoped>
 .confirm-modal-title {
-  margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--foreground);
 }
 
-.confirm-modal-content {
-  padding: 0.5rem 0;
-}
-
 .confirm-modal-content p {
-  margin: 0;
   color: var(--muted-foreground);
   line-height: 1.5;
 }

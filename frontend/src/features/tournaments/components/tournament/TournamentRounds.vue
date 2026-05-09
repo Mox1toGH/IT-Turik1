@@ -35,7 +35,11 @@
         </div>
       </ui-card>
 
-      <ui-card v-else-if="rounds.length === 0" class="empty-card">
+      <ui-card
+        v-else-if="rounds.length === 0"
+        class="empty-card"
+        style="display: flex; align-items: center; justify-content: center; height: 300px"
+      >
         <p class="empty-error">No rounds found</p>
       </ui-card>
 
@@ -69,18 +73,37 @@
               View details
             </ui-button>
 
+            <ui-button
+              v-if="user?.role === 'admin' && round.status === 'draft'"
+              size="sm"
+              variant="secondary"
+              @click="openEdit(round)"
+            >
+              Edit
+            </ui-button>
+
             <template v-if="round.status === 'active' && user?.role === 'team'">
-              <ui-button size="sm" @click="openSubmissionForm"> Submit </ui-button>
-              <submit-modal
-                :roundId="selectedRound?.id ?? 0"
-                :tournamentId="props.tournamentId"
-                v-model="isSubmitOpen"
-              />
+              <ui-button
+                v-if="submittedRoundIds.has(round.id)"
+                size="sm"
+                variant="secondary"
+                @click="openSubmissionsSection"
+              >
+                View submission
+              </ui-button>
+              <ui-button v-else size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
             </template>
           </div>
         </ui-card>
       </div>
     </ui-skeleton-loader>
+
+    <submit-modal
+      v-if="selectedSubmitRoundId !== null"
+      :roundId="selectedSubmitRoundId"
+      :tournamentId="props.tournamentId"
+      v-model="isSubmitOpen"
+    />
 
     <round-details-modal
       v-if="selectedRound"
@@ -90,6 +113,8 @@
       :mustHave="selectedRound?.must_have_requirements ?? {}"
       :technicalRequirements="selectedRound?.tech_requirements ?? {}"
     />
+
+    <edit-round-modal v-if="selectedRound" v-model="isEditOpen" :round="selectedRound" />
   </section>
 </template>
 
@@ -102,14 +127,16 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
-import { useTournamentRounds } from '@/api/queries/tournaments'
+import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
+import EditRoundModal from './modals/EditRoundModal.vue'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
   tournamentId: number
@@ -118,6 +145,8 @@ type Round = GetRoundsResponse[number]
 
 const props = defineProps<Props>()
 const { data: user } = useProfile()
+const router = useRouter()
+const route = useRoute()
 
 const {
   data,
@@ -125,22 +154,49 @@ const {
   error: roundsError,
   isError,
 } = useTournamentRounds({ id: props.tournamentId })
+const { data: submissions } = useTeamSubmissions({ tournamentId: props.tournamentId })
 
 const error = computed(() => parseApiError(roundsError.value))
 const rounds = computed(() => data.value ?? [])
+const submittedRoundIds = computed(
+  () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
+)
 
 const isDetailsOpen = ref(false)
 const isSubmitOpen = ref(false)
+const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
+const selectedSubmitRoundId = ref<number | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round
   isDetailsOpen.value = true
 }
 
-function openSubmissionForm() {
-  isSubmitOpen.value = !isSubmitOpen.value
+function openEdit(round: Round) {
+  selectedRound.value = round
+  isEditOpen.value = true
 }
+
+function openSubmissionForm(roundId: number) {
+  selectedSubmitRoundId.value = roundId
+  isSubmitOpen.value = true
+}
+
+function openSubmissionsSection() {
+  void router.replace({
+    query: {
+      ...route.query,
+      section: 'submissions',
+    },
+  })
+}
+
+watch(isSubmitOpen, (isOpen) => {
+  if (!isOpen) {
+    selectedSubmitRoundId.value = null
+  }
+})
 
 function badgeVariant(status: Round['status']): Variants {
   if (status === 'active') return 'primary'
@@ -244,5 +300,20 @@ function badgeStatus(status: Round['status']) {
   .rounds-list {
     grid-template-columns: 1fr;
   }
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 </style>

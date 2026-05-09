@@ -1,7 +1,7 @@
 <template>
   <nav class="main-nav">
     <div class="nav-container">
-      <div style="display: flex; justify-content: center; align-items: center; gap: 10px">
+      <div class="brand-group">
         <router-link to="/" class="brand">TournamentOS</router-link>
         <switch-theme-button />
       </div>
@@ -17,13 +17,14 @@
 
           <template v-else>
             <router-link to="/" :class="navItemClass('home')">Home</router-link>
-            <router-link v-if="user.role === 'team'" to="/teams" :class="navItemClass('teams')"
-              >Teams</router-link
-            >
+            <router-link to="/teams" :class="navItemClass('teams')">Teams</router-link>
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >
             <router-link to="/news" :class="navItemClass('news')">News</router-link>
+            <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
+              >Evaluations</router-link
+            >
             <router-link to="/profile" :class="navItemClass('profile')">Profile</router-link>
 
             <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
@@ -97,8 +98,19 @@
               :class="navItemClass('news')"
               @click="mobileMenuOpen = false"
               class="mobile-nav-item"
-              >News</router-link
             >
+              News
+            </router-link>
+
+            <router-link
+              v-if="isJury"
+              to="/evaluation"
+              :class="navItemClass('evaluation')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+            >
+              Evaluations
+            </router-link>
             <router-link
               to="/profile"
               :class="navItemClass('profile')"
@@ -145,8 +157,18 @@ const mobileMenuOpen = ref(false)
 const { data: user } = useProfile()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
+const isJury = computed(() => user.value?.role === 'jury')
 
-type Section = 'home' | 'teams' | 'tournaments' | 'news' | 'profile' | 'admin' | 'login' | 'register'
+type Section =
+  | 'home'
+  | 'teams'
+  | 'tournaments'
+  | 'news'
+  | 'evaluation'
+  | 'profile'
+  | 'admin'
+  | 'login'
+  | 'register'
 
 const navItemClass = (section: Section, cta = false) => ({
   'nav-item': true,
@@ -170,6 +192,8 @@ const isSectionActive = (section: Section) => {
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
   if (section === 'news') return path === '/news' || path.startsWith('/news/')
+  if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
+  if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
   if (section === 'admin') return path.startsWith('/admin/')
@@ -195,6 +219,13 @@ const isSectionActive = (section: Section) => {
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--foreground);
+}
+
+.brand-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 .nav-container {
