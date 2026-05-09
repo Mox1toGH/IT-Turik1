@@ -72,7 +72,7 @@
               <div>
                 <h3>{{ item.title }}</h3>
                 <p class="meta">
-                  {{ item.created_by_name || 'Unknown author' }} В· {{ formatDate(item.created_at) }}
+                  {{ item.created_by_name || 'Unknown author' }} · {{ formatDate(item.created_at) }}
                 </p>
               </div>
               <div v-if="canModifyNews(item)" class="news-actions">
@@ -82,7 +82,20 @@
             </div>
           </template>
 
-          <news-content-viewer :content="item.content" />
+          <div
+            class="news-content-wrap"
+            :class="{ expanded: isExpanded(item.id) }"
+          >
+            <news-content-viewer :content="item.content" />
+          </div>
+          <ui-button
+            v-if="isExpandable(item)"
+            size="sm"
+            variant="secondary"
+            @click="toggleExpanded(item.id)"
+          >
+            {{ isExpanded(item.id) ? 'Show less' : 'Show more' }}
+          </ui-button>
         </ui-card>
       </div>
       <div v-if="totalPages > 1" class="pagination-controls">
@@ -187,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { JSONContent } from '@tiptap/core'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -243,6 +256,8 @@ const parsedError = computed(() => parseApiError(newsError.value))
 const newsItems = computed(() => news.value?.results ?? [])
 const totalNews = computed(() => news.value?.count ?? 0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
+const expandedNewsIds = ref<number[]>([])
+const COLLAPSE_TEXT_LIMIT = 280
 
 const { mutate: createNews, isPending: isCreating } = useCreateNews()
 const { mutate: updateNews, isPending: isUpdating } = useUpdateNews()
@@ -356,6 +371,41 @@ function prevPage() {
 function nextPage() {
   if (currentPage.value < totalPages.value) currentPage.value += 1
 }
+
+function isExpanded(newsId: number) {
+  return expandedNewsIds.value.includes(newsId)
+}
+
+function toggleExpanded(newsId: number) {
+  if (isExpanded(newsId)) {
+    expandedNewsIds.value = expandedNewsIds.value.filter((id) => id !== newsId)
+    return
+  }
+  expandedNewsIds.value = [...expandedNewsIds.value, newsId]
+}
+
+function extractPlainText(value: unknown): string {
+  if (!value || typeof value !== 'object') return ''
+  const node = value as { text?: string; content?: unknown[] }
+  const ownText = typeof node.text === 'string' ? node.text : ''
+  const childText = Array.isArray(node.content)
+    ? node.content.map((child) => extractPlainText(child)).join(' ')
+    : ''
+  return `${ownText} ${childText}`.trim()
+}
+
+function isExpandable(item: NewsArticle) {
+  return extractPlainText(item.content).length > COLLAPSE_TEXT_LIMIT
+}
+
+watch(
+  [newsItems],
+  () => {
+    const currentIds = new Set(newsItems.value.map((item) => item.id))
+    expandedNewsIds.value = expandedNewsIds.value.filter((id) => currentIds.has(id))
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -453,6 +503,30 @@ function nextPage() {
 .news-actions {
   display: flex;
   gap: 0.45rem;
+}
+
+.news-content-wrap {
+  position: relative;
+  max-height: 180px;
+  overflow: hidden;
+  opacity: 0.96;
+  transition: max-height 0.32s ease, opacity 0.24s ease;
+  will-change: max-height, opacity;
+}
+
+.news-content-wrap:not(.expanded)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--muted));
+}
+
+.news-content-wrap.expanded {
+  max-height: 2200px;
+  opacity: 1;
 }
 
 .meta {
