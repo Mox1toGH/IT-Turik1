@@ -2,32 +2,92 @@
   <section class="page-shell news-page">
     <ui-card>
       <template #header>
-        <div>
+        <div class="news-hero">
           <div class="top-header">
             <p class="section-eyebrow">News</p>
             <ui-badge>Total posts: {{ news?.length ?? 0 }}</ui-badge>
           </div>
-          <h1>News board</h1>
-          <p class="section-subtitle">Important updates, announcements, and platform changes.</p>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="hero-actions" v-if="canManageNews">
-          <ui-button @click="isCreateOpen = !isCreateOpen" variant="secondary">
-            {{ isCreateOpen ? 'Hide editor' : 'Create news' }}
-          </ui-button>
+          <div class="title-row">
+            <h1>News board</h1>
+          </div>
+          <div class="subtitle-row">
+            <p class="section-subtitle">Important updates, announcements, and platform changes.</p>
+            <div class="create-news-action" v-if="canManageNews">
+              <ui-button @click="isCreateOpen = true" variant="secondary">Create news</ui-button>
+            </div>
+          </div>
         </div>
       </template>
     </ui-card>
 
-    <ui-card v-if="canManageNews && isCreateOpen" class="create-card">
+    <ui-card v-if="isLoadingNews">
       <template #header>
         <div class="section-head">
-          <h2>Create news</h2>
-          <span class="text-muted">Admins and organizers only</span>
+          <h2>Latest news</h2>
         </div>
       </template>
+      <ui-skeleton-loader :loading="isLoadingNews">
+        <template #skeleton>
+          <div class="news-grid">
+            <ui-card class="news-item" v-for="i in 2" :key="i">
+              <template #header>
+                <ui-skeleton variant="rect" width="65%" />
+                <ui-skeleton variant="rect" width="45%" />
+              </template>
+              <ui-skeleton variant="rect" height="90px" width="100%" />
+            </ui-card>
+          </div>
+        </template>
+      </ui-skeleton-loader>
+    </ui-card>
+
+    <ui-card v-else-if="isLoadingError" :isError="true">
+      <template #error>
+        <div class="error-box">
+          <p>Failed to fetch news (code: {{ parsedError?.code }})</p>
+        </div>
+      </template>
+    </ui-card>
+
+    <ui-card v-else-if="!news?.length">
+      <template #header>
+        <div class="section-head">
+          <h2>Latest news</h2>
+        </div>
+      </template>
+      <p class="text-muted">No news yet.</p>
+    </ui-card>
+
+    <ui-card v-else>
+      <template #header>
+        <div class="section-head">
+          <h2>Latest news</h2>
+          <span class="text-muted">{{ news?.length ?? 0 }} published</span>
+        </div>
+      </template>
+      <div class="news-grid">
+        <ui-card v-for="item in news" :key="item.id" class="news-item">
+          <template #header>
+            <div class="news-item-head">
+              <h3>{{ item.title }}</h3>
+              <p class="meta">
+                {{ item.created_by_name || 'Unknown author' }} · {{ formatDate(item.created_at) }}
+              </p>
+            </div>
+          </template>
+
+          <news-content-viewer :content="item.content" />
+        </ui-card>
+      </div>
+    </ui-card>
+
+    <ui-modal v-if="canManageNews" v-model="isCreateOpen" maxWidth="760px" :close-on-backdrop="!isCreating">
+      <template #title>Create news</template>
+
+      <div class="section-head">
+        <span class="text-muted">Admins and organizers only</span>
+      </div>
+
       <form class="create-form" @submit.prevent="handleCreate">
         <label class="form-item">
           <span class="form-label">Title</span>
@@ -60,68 +120,7 @@
           <span>Create</span>
         </ui-button>
       </form>
-    </ui-card>
-
-    <ui-card v-if="isLoadingNews">
-      <template #header>
-        <div class="section-head">
-          <h2>Latest posts</h2>
-        </div>
-      </template>
-      <ui-skeleton-loader :loading="isLoadingNews">
-        <template #skeleton>
-          <div class="news-grid">
-            <ui-card class="news-item" v-for="i in 2" :key="i">
-              <template #header>
-                <ui-skeleton variant="rect" width="65%" />
-                <ui-skeleton variant="rect" width="45%" />
-              </template>
-              <ui-skeleton variant="rect" height="90px" width="100%" />
-            </ui-card>
-          </div>
-        </template>
-      </ui-skeleton-loader>
-    </ui-card>
-
-    <ui-card v-else-if="isLoadingError" :isError="true">
-      <template #error>
-        <div class="error-box">
-          <p>Failed to fetch news (code: {{ parsedError?.code }})</p>
-        </div>
-      </template>
-    </ui-card>
-
-    <ui-card v-else-if="!news?.length">
-      <template #header>
-        <div class="section-head">
-          <h2>Latest posts</h2>
-        </div>
-      </template>
-      <p class="text-muted">No news yet.</p>
-    </ui-card>
-
-    <ui-card v-else>
-      <template #header>
-        <div class="section-head">
-          <h2>Latest posts</h2>
-          <span class="text-muted">{{ news?.length ?? 0 }} published</span>
-        </div>
-      </template>
-      <div class="news-grid">
-        <ui-card v-for="item in news" :key="item.id" class="news-item">
-          <template #header>
-            <div class="news-item-head">
-              <h3>{{ item.title }}</h3>
-              <p class="meta">
-                {{ item.created_by_name || 'Unknown author' }} · {{ formatDate(item.created_at) }}
-              </p>
-            </div>
-          </template>
-
-          <news-content-viewer :content="item.content" />
-        </ui-card>
-      </div>
-    </ui-card>
+    </ui-modal>
   </section>
 </template>
 
@@ -132,6 +131,7 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiModal from '@/components/ui/UiModal.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -157,7 +157,7 @@ const form = useForm<CreateNewsForm>(CreateNewsSchema, {
 const { showNotification } = useNotification()
 const { data: user } = useProfile()
 const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
-const isCreateOpen = ref(true)
+const isCreateOpen = ref(false)
 
 const {
   data: news,
@@ -182,6 +182,7 @@ function handleCreate() {
     {
       onSuccess() {
         form.hydrate({ title: '', content: null })
+        isCreateOpen.value = false
         showNotification('News created successfully.', 'success')
       },
       onError(error) {
@@ -213,11 +214,47 @@ function formatDate(value: string | Date) {
   align-items: center;
 }
 
-.hero-actions {
+.title-row {
   display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
+  gap: 0.8rem;
+}
+
+.create-news-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.news-hero h1 {
+  margin: 0;
+}
+
+.subtitle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.subtitle-row .section-subtitle {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .subtitle-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-news-action {
+    justify-content: flex-start;
+  }
 }
 
 .section-head {
@@ -235,7 +272,7 @@ function formatDate(value: string | Date) {
 .news-grid {
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .news-item {
