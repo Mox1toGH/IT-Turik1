@@ -23,6 +23,7 @@
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >
+            <router-link to="/news" :class="navItemClass('news')">News</router-link>
             <router-link to="/profile" :class="navItemClass('profile')">Profile</router-link>
 
             <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
@@ -92,6 +93,13 @@
               >Tournaments</router-link
             >
             <router-link
+              to="/news"
+              :class="navItemClass('news')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >News</router-link
+            >
+            <router-link
               to="/profile"
               :class="navItemClass('profile')"
               @click="mobileMenuOpen = false"
@@ -138,7 +146,7 @@ const { data: user } = useProfile()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 
-type Section = 'home' | 'teams' | 'tournaments' | 'profile' | 'admin' | 'login' | 'register'
+type Section = 'home' | 'teams' | 'tournaments' | 'news' | 'profile' | 'admin' | 'login' | 'register'
 
 const navItemClass = (section: Section, cta = false) => ({
   'nav-item': true,
@@ -161,6 +169,7 @@ const isSectionActive = (section: Section) => {
 
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
+  if (section === 'news') return path === '/news' || path.startsWith('/news/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
   if (section === 'admin') return path.startsWith('/admin/')

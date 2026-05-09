@@ -8,6 +8,7 @@ import { homeRoutes } from '@/features/home/routes'
 import { adminRoutes } from '@/features/admin/routes'
 import { teamsRoutes } from '@/features/teams/routes'
 import { tournamentsRoutes } from '@/features/tournaments/routes'
+import { newsRoutes } from '@/features/news/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,7 @@ const router = createRouter({
     ...adminRoutes,
     ...teamsRoutes,
     ...tournamentsRoutes,
+    ...newsRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
