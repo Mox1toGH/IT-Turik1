@@ -170,11 +170,18 @@ const { data: passingStatusData, isLoading, isError, error, refetch } = usePassi
 )
 const { data: roundsData } = useTournamentRounds({ id: props.tournamentId })
 
+// Watch for round status changes and hide component if needed
+watch(() => currentRound.value?.status, (newStatus) => {
+  if (newStatus && !['submission_closed', 'evaluated'].includes(newStatus)) {
+    emit('hide')
+  }
+})
+
+const results = computed(() => passingStatusData.value?.results ?? [])
+
 const currentRound = computed(() =>
   roundsData.value?.find(round => round.id === props.roundId)
 )
-
-const results = computed(() => passingStatusData.value?.results ?? [])
 
 const passingCount = computed(() => passingStatusData.value?.passing_count ?? null)
 
@@ -190,16 +197,6 @@ const roundBadgeVariant = computed(() => {
 const sortedResults = computed(() => {
   return [...results.value].sort((a, b) => a.rank - b.rank)
 })
-
-// Watch for round status changes and hide component if needed
-watch(
-  () => currentRound.value?.status,
-  (newStatus) => {
-    if (newStatus && !['submission_closed', 'evaluated'].includes(newStatus)) {
-      emit('hide')
-    }
-  },
-)
 
 const shouldShowCutLine = (index: number) => {
   if (!passingCount.value) return false
@@ -254,7 +251,7 @@ const handleConfirmAction = () => {
   if (!pendingAction.value) return
 
   const isDisqualifying = pendingAction.value.action === 'disqualified'
-
+  
   updateRegistration({
     tournamentId: props.tournamentId,
     registrationId: pendingAction.value.result.registration_id,
