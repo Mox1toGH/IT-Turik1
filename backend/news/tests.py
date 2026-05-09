@@ -84,6 +84,23 @@ class NewsApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], article.id)
 
+    def test_news_list_is_paginated(self):
+        self.client.force_authenticate(user=self.team_user)
+        for i in range(12):
+            NewsArticle.objects.create(
+                title=f'News {i}',
+                content={'type': 'doc', 'content': []},
+                created_by=self.admin,
+            )
+
+        response = self.client.get(self.list_url, {'page': 1, 'page_size': 10})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('count', response.data)
+        self.assertIn('results', response.data)
+        self.assertEqual(response.data['count'], 12)
+        self.assertEqual(len(response.data['results']), 10)
+
     def test_team_user_cannot_update_or_delete_news(self):
         article = NewsArticle.objects.create(
             title='Protected',

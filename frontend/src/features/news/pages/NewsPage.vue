@@ -5,7 +5,7 @@
         <div class="news-hero">
           <div class="top-header">
             <p class="section-eyebrow">News</p>
-            <ui-badge>Total posts: {{ news?.length ?? 0 }}</ui-badge>
+            <ui-badge>Total posts: {{ totalNews }}</ui-badge>
           </div>
           <div class="title-row">
             <h1>News board</h1>
@@ -49,7 +49,7 @@
       </template>
     </ui-card>
 
-    <ui-card v-else-if="!news?.length">
+    <ui-card v-else-if="!newsItems.length">
       <template #header>
         <div class="section-head">
           <h2>Latest news</h2>
@@ -62,11 +62,11 @@
       <template #header>
         <div class="section-head">
           <h2>Latest news</h2>
-          <span class="text-muted">{{ news?.length ?? 0 }} published</span>
+          <span class="text-muted">{{ totalNews }} published</span>
         </div>
       </template>
       <div class="news-grid">
-        <ui-card v-for="item in news" :key="item.id" class="news-item">
+        <ui-card v-for="item in newsItems" :key="item.id" class="news-item">
           <template #header>
             <div class="news-item-head">
               <h3>{{ item.title }}</h3>
@@ -78,6 +78,20 @@
 
           <news-content-viewer :content="item.content" />
         </ui-card>
+      </div>
+      <div v-if="totalPages > 1" class="pagination-controls">
+        <ui-button size="sm" variant="secondary" :disabled="currentPage === 1" @click="prevPage">
+          Previous
+        </ui-button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <ui-button
+          size="sm"
+          variant="secondary"
+          :disabled="currentPage === totalPages"
+          @click="nextPage"
+        >
+          Next
+        </ui-button>
       </div>
     </ui-card>
 
@@ -158,14 +172,19 @@ const { showNotification } = useNotification()
 const { data: user } = useProfile()
 const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
 const isCreateOpen = ref(false)
+const currentPage = ref(1)
+const pageSize = 10
 
 const {
   data: news,
   isLoading: isLoadingNews,
   isLoadingError,
   error: newsError,
-} = useNewsList()
+} = useNewsList({ page: currentPage, pageSize })
 const parsedError = computed(() => parseApiError(newsError.value))
+const newsItems = computed(() => news.value?.results ?? [])
+const totalNews = computed(() => news.value?.count ?? 0)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
 
 const { mutate: createNews, isPending: isCreating } = useCreateNews()
 
@@ -199,6 +218,14 @@ function handleCreate() {
 function formatDate(value: string | Date) {
   const date = typeof value === 'string' ? new Date(value) : value
   return date.toLocaleString()
+}
+
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value -= 1
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value += 1
 }
 </script>
 
@@ -302,5 +329,18 @@ function formatDate(value: string | Date) {
 
 .text-error {
   color: var(--destructive);
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.95rem;
+}
+
+.page-info {
+  font-size: 0.92rem;
+  color: var(--muted-foreground);
 }
 </style>

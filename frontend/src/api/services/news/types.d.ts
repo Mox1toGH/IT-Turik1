@@ -1,7 +1,18 @@
 import type { NewsArticle, NewsId } from '@/api/dbTypes'
 
-export interface GetNewsArgs {}
-export type GetNewsResponse = NewsArticle[]
+export interface GetNewsArgs {
+  page?: number
+  pageSize?: number
+}
+
+export interface PaginatedNewsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: NewsArticle[]
+}
+
+export type GetNewsResponse = PaginatedNewsResponse
 
 export type CreateNewsBody = Pick<NewsArticle, 'title' | 'content'>
 export interface CreateNewsArgs {
@@ -18,4 +29,3 @@ export type UpdateNewsResponse = NewsArticle
 export interface DeleteNewsArgs {
   id: NewsId
 }
-

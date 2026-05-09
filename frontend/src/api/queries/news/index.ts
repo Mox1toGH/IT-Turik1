@@ -3,6 +3,7 @@ import { $api } from '@/api/services'
 import type {
   CreateNewsArgs,
   CreateNewsResponse,
+  GetNewsArgs,
   DeleteNewsArgs,
   GetNewsResponse,
   UpdateNewsArgs,
@@ -12,11 +13,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import type { AxiosError } from 'axios'
 import type { MutationConfig, QueryConfig } from '../types'
 import { newsKeys } from '../keys'
+import { computed, type Ref, unref } from 'vue'
 
-export const useNewsList = (config?: QueryConfig<GetNewsResponse>) => {
+export const useNewsList = (
+  args?: { page?: Ref<number> | number; pageSize?: Ref<number> | number },
+  config?: QueryConfig<GetNewsResponse>,
+) => {
   return useQuery<GetNewsResponse, AxiosError<ApiError>>({
-    queryKey: newsKeys.list(),
-    queryFn: $api.news.getNews,
+    queryKey: computed(() => newsKeys.list(unref(args?.page ?? 1), unref(args?.pageSize ?? 10))),
+    queryFn: () =>
+      $api.news.getNews({
+        page: unref(args?.page ?? 1),
+        pageSize: unref(args?.pageSize ?? 10),
+      } as GetNewsArgs),
     ...config,
   })
 }
@@ -36,7 +45,7 @@ export const useCreateNews = (
   >({
     mutationFn: $api.news.createNews,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: newsKeys.list() })
+      queryClient.invalidateQueries({ queryKey: newsKeys.lists() })
     },
     ...config,
   })
@@ -57,7 +66,7 @@ export const useUpdateNews = (
   >({
     mutationFn: $api.news.updateNews,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: newsKeys.list() })
+      queryClient.invalidateQueries({ queryKey: newsKeys.lists() })
     },
     ...config,
   })
@@ -70,9 +79,8 @@ export const useDeleteNews = (
   return useMutation<unknown, AxiosError<ApiError>, DeleteNewsArgs>({
     mutationFn: $api.news.deleteNews,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: newsKeys.list() })
+      queryClient.invalidateQueries({ queryKey: newsKeys.lists() })
     },
     ...config,
   })
 }
-

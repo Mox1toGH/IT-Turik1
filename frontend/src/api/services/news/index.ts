@@ -3,6 +3,7 @@ import type {
   CreateNewsArgs,
   CreateNewsResponse,
   DeleteNewsArgs,
+  GetNewsArgs,
   GetNewsResponse,
   UpdateNewsArgs,
   UpdateNewsResponse,
@@ -11,8 +12,22 @@ import type {
 const prefix = '/api/news'
 
 export const newsService = {
-  async getNews() {
-    const { data } = await apiClient.get<GetNewsResponse>(`${prefix}/`)
+  async getNews(args?: GetNewsArgs) {
+    const page = args?.page ?? 1
+    const pageSize = args?.pageSize ?? 10
+    const { data } = await apiClient.get<GetNewsResponse | GetNewsResponse['results']>(`${prefix}/`, {
+      params: { page, page_size: pageSize },
+    })
+
+    if (Array.isArray(data)) {
+      return {
+        count: data.length,
+        next: null,
+        previous: null,
+        results: data,
+      }
+    }
+
     return data
   },
 
@@ -31,4 +46,3 @@ export const newsService = {
     return data
   },
 }
-
