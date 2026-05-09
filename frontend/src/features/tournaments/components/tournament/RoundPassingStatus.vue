@@ -391,5 +391,4 @@ function formatScore(value: number) {
     white-space: nowrap;
   }
 }
-</style></content>
-<parameter name="filePath">c:\Users\Cougar\Programing\IT-Turik1\frontend\src\features\tournaments\components\tournament\RoundPassingStatus.vue
+</style>

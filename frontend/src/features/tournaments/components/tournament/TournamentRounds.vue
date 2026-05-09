@@ -85,7 +85,7 @@
             <ui-button
               v-if="user?.role === 'admin' && (round.status === 'submission_closed' || round.status === 'evaluated')"
               size="sm"
-              variant="primary"
+              variant="default"
               @click="togglePassingStatus(round)"
             >
               View Results
@@ -151,7 +151,7 @@ import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournamen
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
-import EditRoundModal from './modals/EditRoundModal.vue'
+import _EditRoundModal from './modals/EditRoundModal.vue'
 import RoundPassingStatus from './RoundPassingStatus.vue'
 import { useRoute, useRouter } from 'vue-router'
 

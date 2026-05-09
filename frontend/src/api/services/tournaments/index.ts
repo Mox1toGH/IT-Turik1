@@ -22,6 +22,7 @@ import type {
   GetEventsResponse,
   GetPassingStatusArgs,
   GetPassingStatusResponse,
+  PassingStatusResult,
   LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
