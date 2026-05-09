@@ -1108,6 +1108,28 @@ class TournamentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_team_active_tournament_returns_404_after_leave_team(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        leave_url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        leave_response = self.client.post(leave_url, {'team_id': self.team.id}, format='json')
+        self.assertEqual(leave_response.status_code, status.HTTP_200_OK)
+
+        active_url = reverse('team_active_tournament')
+        active_response = self.client.get(active_url, {'team_id': self.team.id})
+        self.assertEqual(active_response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_tournament_teams_returns_404_for_missing_tournament(self):
         self.client.force_authenticate(user=self.captain)
         url = reverse('tournament_teams', kwargs={'pk': 999999})
