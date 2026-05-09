@@ -2,6 +2,8 @@ import type {
   EventId,
   Round,
   RoundId,
+  Submission,
+  SubmissionId,
   Team,
   TeamId,
   Tournament,
@@ -9,6 +11,7 @@ import type {
   TournamentId,
   TournamentStatus,
 } from '@/api/dbTypes'
+import type { MaybeRefOrGetter } from 'vue'
 
 // Get tournaments
 export interface GetTournamentsArgs {
@@ -19,7 +22,6 @@ export interface GetTournamentsArgs {
 }
 
 export interface GetTournamentsResponse {
-  // TODO: add rounds type annotation
   data: (Pick<
     Tournament,
     | 'id'
@@ -30,7 +32,7 @@ export interface GetTournamentsResponse {
     | 'max_teams'
     | 'min_team_members'
     | 'status'
-  > & { rounds: [] })[]
+  > & { rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'> })[]
   total: number
 }
 
@@ -45,13 +47,7 @@ export interface GetTournamentsArgs {
 // Create tournament
 export type CreateTournamentBody = Pick<
   Tournament,
-  | 'name'
-  | 'description'
-  | 'start_date'
-  | 'end_date'
-  | 'rounds_count'
-  | 'max_teams'
-  | 'min_team_members'
+  'name' | 'description' | 'start_date' | 'end_date' | 'max_teams' | 'min_team_members'
 >
 
 export interface CreateTournamentArgs {
@@ -64,7 +60,8 @@ export interface GetTournamentInfoArgs {
 }
 
 export type GetTournamentInfoResponse = Tournament & {
-  rounds: [] // TODO
+  rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
+  registered_team: Pick<Team, 'id' | 'name'> | null
 }
 
 // Get active team tournament
@@ -124,13 +121,31 @@ export interface CreateRoundArgs {
 }
 
 // delete round
-
 export interface DeleteRoundArgs {
   id: RoundId
 }
 
-// Get current round
+// edit round
+export interface EditRoundArgs {
+  id: RoundId
+  body: EditRoundBody
+}
 
+export type EditRoundBody = Pick<
+  Round,
+  | 'name'
+  | 'passing_count'
+  | 'description'
+  | 'tech_requirements'
+  | 'must_have_requirements'
+  | 'criteria'
+  | 'start_date'
+  | 'end_date'
+>
+
+export type EditRoundResponse = Round
+
+// Get current round
 export interface GetCurrentRoundArgs {
   id: TournamentId
 }
@@ -156,10 +171,19 @@ export interface RegisterTeamArgs {
   body: RegisterTeamBody
 }
 
+// Leave team from tournament
+export interface LeaveTeamBody {
+  team_id: TeamId
+}
+
+export interface LeaveTeamArgs {
+  id: TournamentId
+  body: LeaveTeamBody
+}
+
 // Submit round
 
 export interface SubmitRoundBody {
-  team: TeamId
   round: RoundId
   github_url: string
   demo_video_url: string
@@ -173,10 +197,8 @@ export interface SubmitRoundArgs {
 // create Event
 export type CreateEventBody = Pick<
   TournamentEvent,
-  'title' | 'description' | 'link' | 'start_datetime' | 'tournament'
-> & {
-  type: 'event' // TODO: remove this. We dont actually need to pass type of event
-}
+  'title' | 'description' | 'start_datetime' | 'tournament'
+>
 
 export interface CreateEventArgs {
   body: CreateEventBody
@@ -190,7 +212,7 @@ export interface GetEventsArgs {
 export type GetEventsResponse = TournamentEvent[]
 
 // Edit event
-export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime'>
+export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime' | 'description'>
 
 export interface EditEventArgs {
   eventId: EventId
@@ -220,3 +242,55 @@ export interface CloseSubmissionsArgs {
 }
 
 export type CloseSubmissionsResponse = Round
+
+// tournament submissions
+export interface GetTeamSubmissionsArgs {
+  tournamentId: TournamentId
+}
+
+export type GetTeamSubmissionsResponse = (Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+  assignments: {
+    id: number
+    jury: {
+      id: number
+      username: string
+      full_name: string
+      role: string
+    }
+    evaluation: {
+      id: number
+      scores: { criterion_id: string; criterion_name?: string; score: number }[]
+      total_score: number
+      final_score: number
+      comment: string
+      created_at: string
+    } | null
+    created_at: string
+  }[]
+})[]
+
+// edit submission
+export interface EditSubmissionArgs {
+  submissionId: SubmissionId
+  body: EditSubmissionBody
+}
+
+export interface EditSubmissionBody {
+  github_url: string
+  demo_video_url: string
+  description: string
+}
+
+export type EditSubmissionResponse = Submission & {
+  team_details: Pick<Team, 'id' | 'name' | 'is_public'>
+  round_details: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>
+}
+
+// round submissions
+export interface GetRoundSubmissionsArgs {
+  roundId: MaybeRefOrGetter<RoundId>
+}
+
+export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse

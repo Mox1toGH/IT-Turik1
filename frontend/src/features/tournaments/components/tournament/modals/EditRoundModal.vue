@@ -1,7 +1,13 @@
 <template>
-  <ui-card>
-    <template #header>
-      <h1>Create round</h1>
+  <ui-modal
+    :model-value="props.modelValue"
+    @update:model-value="toggleOpen"
+    @close="toggleClose"
+    max-width="1200px"
+    scrollable
+  >
+    <template #title>
+      <h2>Edit round</h2>
     </template>
 
     <form class="round-form" @submit.prevent="handleSubmit">
@@ -72,7 +78,7 @@
 
       <label class="form-item criteria-field">
         <span class="form-label">Evaluation criteria</span>
-        <AddCriteriaModal
+        <add-criteria-modal
           v-model="form.fields.value.criteria"
           @blur="form.validateField('criteria')"
         />
@@ -112,26 +118,32 @@
 
       <ui-button class="submit-btn" type="submit" :disabled="isPending">
         <loading-icon v-if="isPending" />
-        <p>Create</p></ui-button
+        <p>Edit</p></ui-button
       >
     </form>
-  </ui-card>
+  </ui-modal>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import AddCriteriaModal from '../components/create-round/modals/AddCriteriaModal.vue'
-import EditorModal from '../components/create-round/modals/EditorModal.vue'
+import UiModal from '@/components/ui/UiModal.vue'
 import { useForm } from '@/composables/useForm'
-import { CreateRoundSchema } from '@/schemas/tournaments.schema'
-import type { JSONContent } from '@tiptap/core'
-import { useCreateRound } from '@/api/queries/tournaments'
-import { useRoute, useRouter } from 'vue-router'
+import { EditRoundSchema } from '@/schemas/tournaments.schema'
+import { type JSONContent } from '@tiptap/vue-3'
+import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
+import UiButton from '@/components/ui/UiButton.vue'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
+import EditorModal from '../../create-round/modals/EditorModal.vue'
 import { parseApiError } from '@/api/errors'
+import { useEditRound } from '@/api/queries/tournaments'
+import type { Round } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
+
+interface Props {
+  modelValue: boolean
+  round: Round
+}
 
 interface RoundCriteriaItem {
   id: string
@@ -151,43 +163,40 @@ interface Form {
   end_date: Date
 }
 
-const form = useForm<Form>(CreateRoundSchema, {
-  name: '',
-  passing_count: 2,
-  description: null,
-  tech_requirements: null,
-  must_have_requirements: null,
-  criteria: [],
-  start_date: new Date(),
-  end_date: new Date(),
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+}>()
+
+const { showNotification } = useNotification()
+
+const form = useForm<Form>(EditRoundSchema, {
+  name: props.round.name,
+  passing_count: props.round.passing_count,
+  description: props.round.description,
+  tech_requirements: props.round.tech_requirements,
+  must_have_requirements: props.round.must_have_requirements,
+  criteria: props.round.criteria,
+  start_date: new Date(props.round.start_date),
+  end_date: new Date(props.round.end_date),
 })
 
-const route = useRoute()
-const router = useRouter()
-const { showNotification } = useNotification()
-const tournamentId = Number(route.params.id)
-
-const { mutate: createRound, isPending } = useCreateRound()
+const { mutate: createRound, isPending } = useEditRound()
 
 function handleSubmit() {
   if (!form.validate()) return
 
   createRound(
     {
-      id: tournamentId,
+      id: props.round.id,
       body: {
-        tournament: tournamentId,
         ...form.fields.value,
       },
     },
     {
       onSuccess: () => {
-        router.push({
-          path: `/tournaments/${tournamentId}`,
-          query: {
-            section: 'rounds',
-          },
-        })
+        emit('update:modelValue', false)
+        showNotification('Successfully changed round info', 'success')
       },
       onError(error) {
         const parsedError = parseApiError(error)
@@ -198,6 +207,15 @@ function handleSubmit() {
       },
     },
   )
+}
+
+const toggleOpen = () => {
+  emit('update:modelValue', !props.modelValue)
+}
+
+const toggleClose = () => {
+  toggleOpen()
+  form.reset()
 }
 </script>
 

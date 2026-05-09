@@ -8,6 +8,10 @@ import type {
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
+  EditRoundArgs,
+  EditRoundResponse,
+  EditSubmissionArgs,
+  EditSubmissionResponse,
   GetActiveTeamTournamentArgs,
   GetActiveTeamTournamentResponse,
   GetCurrentRoundArgs,
@@ -16,10 +20,15 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
   GetRoundsArgs,
   GetRoundsResponse,
+  GetRoundSubmissionsArgs,
+  GetRoundSubmissionsResponse,
+  GetTeamSubmissionsArgs,
+  GetTeamSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -29,6 +38,7 @@ import type {
   StartRoundResponse,
   SubmitRoundArgs,
 } from './types'
+import { toValue } from 'vue'
 
 const prefix = '/api/tournaments'
 
@@ -93,6 +103,14 @@ export const tournamentsService = {
     return data
   },
 
+  editRound: async (args: EditRoundArgs) => {
+    const { data } = await apiClient.patch<EditRoundResponse>(
+      `${prefix}/rounds/${args.id}/`,
+      args.body,
+    )
+    return data
+  },
+
   deleteRound: async (args: DeleteRoundArgs) => {
     const { data } = await apiClient.delete(`${prefix}/rounds/${args.id}/`)
     return data
@@ -107,6 +125,11 @@ export const tournamentsService = {
 
   registerTeam: async (args: RegisterTeamArgs) => {
     const { data } = await apiClient.post(`${prefix}/${args.id}/register-team/`, args.body)
+    return data
+  },
+
+  leaveTeam: async (args: LeaveTeamArgs) => {
+    const { data } = await apiClient.post(`${prefix}/${args.id}/leave-team/`, args.body)
     return data
   },
 
@@ -153,6 +176,28 @@ export const tournamentsService = {
   closeSubmissions: async (args: CloseSubmissionsArgs) => {
     const { data } = await apiClient.post<CloseSubmissionsResponse>(
       `${prefix}/rounds/${args.roundId}/close-submissions/`,
+    )
+    return data
+  },
+
+  getTeamSubmissions: async (args: GetTeamSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
+      `${prefix}/${args.tournamentId}/my-submissions/`,
+    )
+    return data
+  },
+
+  editSubmission: async (args: EditSubmissionArgs) => {
+    const { data } = await apiClient.patch<EditSubmissionResponse>(
+      `${prefix}/submissions/${args.submissionId}/`,
+      args.body,
+    )
+    return data
+  },
+
+  getRoundSubmissions: async (args: GetRoundSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
+      `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
     )
     return data
   },

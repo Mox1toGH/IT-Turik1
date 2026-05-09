@@ -1,7 +1,7 @@
 <template>
   <ui-modal :model-value="modelValue" @update:model-value="toggleOpen">
     <template #title>
-      <h3>Submit round</h3>
+      <h3>Edit round</h3>
     </template>
 
     <form class="submit-form">
@@ -44,31 +44,24 @@
 
     <template #footer>
       <ui-button variant="secondary" @click="toggleClose"> Close </ui-button>
-      <ui-button @click="submitRound"> <loading-icon v-if="isPending" /> Submit </ui-button>
+      <ui-button @click="editRound"> <loading-icon v-if="isPending" /> Save </ui-button>
     </template>
   </ui-modal>
 </template>
 
 <script setup lang="ts">
-import type { RoundId, TournamentId } from '@/api/dbTypes'
+import type { SubmissionId, TournamentId } from '@/api/dbTypes'
 import { parseApiError } from '@/api/errors'
 import { tournamentsKeys } from '@/api/queries/keys'
-import { useSubmitRound } from '@/api/queries/tournaments'
+import { useEditSubmission } from '@/api/queries/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
-import { SubmitRoundSchema } from '@/schemas/tournaments.schema'
+import { EditSubmissionSchema } from '@/schemas/tournaments.schema'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useRoute, useRouter } from 'vue-router'
-
-interface Props {
-  modelValue: boolean
-  roundId: RoundId
-  tournamentId: TournamentId
-}
 
 interface Form {
   github_url: string
@@ -76,33 +69,35 @@ interface Form {
   description: string
 }
 
+interface Props {
+  modelValue: boolean
+  tournamentId: TournamentId
+  submissionId: SubmissionId
+  defaultValues?: Partial<Form>
+}
+
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
-const { showNotification } = useNotification()
-const queryClient = useQueryClient()
-const route = useRoute()
-const router = useRouter()
 
-const form = useForm<Form>(SubmitRoundSchema, {
-  github_url: '',
-  demo_video_url: '',
-  description: '',
+const queryClient = useQueryClient()
+const { showNotification } = useNotification()
+
+const form = useForm<Form>(EditSubmissionSchema, {
+  github_url: props.defaultValues?.github_url ?? '',
+  demo_video_url: props.defaultValues?.demo_video_url ?? '',
+  description: props.defaultValues?.description ?? '',
 })
 
-const { mutate: submit, isPending } = useSubmitRound()
-const submitRound = () => {
+const { mutate: edit, isPending } = useEditSubmission()
+const editRound = () => {
   if (!form.validate()) return
-  if (!props.roundId || props.roundId <= 0) {
-    showNotification('Round is not selected', 'error')
-    return
-  }
 
-  submit(
+  edit(
     {
+      submissionId: props.submissionId,
       body: {
-        round: props.roundId,
         ...form.fields.value,
       },
     },
@@ -118,15 +113,8 @@ const submitRound = () => {
 
       onSuccess() {
         queryClient.invalidateQueries({ queryKey: tournamentsKeys.submissions(props.tournamentId) })
-        showNotification('Success', 'success')
-        form.reset()
+        showNotification('Updated successfully', 'success')
         emit('update:modelValue', false)
-        void router.replace({
-          query: {
-            ...route.query,
-            section: 'submissions',
-          },
-        })
       },
     },
   )

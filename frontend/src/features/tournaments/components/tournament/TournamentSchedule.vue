@@ -28,10 +28,12 @@
         </div>
       </ui-card>
 
-      <ui-card v-else-if="events?.length === 0">
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>No events founded for this tournament</p>
-        </div>
+      <ui-card
+        v-else-if="events?.length === 0"
+        class="empty-card"
+        style="display: flex; align-items: center; justify-content: center; height: 300px"
+      >
+        <p class="empty-error">No events founded for this tournament</p>
       </ui-card>
 
       <div v-else class="events-list">
@@ -42,7 +44,21 @@
                 <FinishIcon width="25px" height="25px" />
               </div>
 
-              <p>{{ event.title }}</p>
+              <div class="event-info">
+                <p>{{ event.title }}</p>
+                <LargeTextModal
+                  v-model="isDescriptionOpen"
+                  title="Event description"
+                  :text="event.description"
+                  max-length="100"
+                >
+                  <template #trigger="{ toggleOpen }">
+                    <p class="event-description" @click="toggleOpen">
+                      {{ truncateText(event.description, 100) }}
+                    </p>
+                  </template>
+                </LargeTextModal>
+              </div>
             </div>
 
             <div class="event-right-side">
@@ -59,6 +75,7 @@
               :event-id="event.id"
               :tournament-id="props.tournamentId"
               :title="event.title"
+              :description="event.description"
               :start-date="event.created_at!"
             />
 
@@ -89,6 +106,8 @@ import AddEventModal from './modals/AddEventModal.vue'
 import { useTournamentEvents } from '@/api/queries/tournaments'
 import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import LargeTextModal from '@/components/shared/LargeTextModal.vue'
+import { truncateText } from '@/lib/utils'
 
 interface Props {
   tournamentId: number
@@ -100,6 +119,7 @@ const { data: user } = useProfile()
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
+const isDescriptionOpen = ref(false)
 
 const {
   data: events,
@@ -149,6 +169,17 @@ const {
   background: var(--primary);
   color: #fff;
   border-radius: 50%;
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.event-description {
+  word-break: break-word;
+  max-width: 600px;
 }
 
 .event-left-side,

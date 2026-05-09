@@ -20,9 +20,11 @@ from .views import (
     TournamentEligibleTeamsView,
     TournamentStartRegistrationView,
     TournamentTeamRegistrationCreateView,
+    TournamentTeamLeaveView,
     TournamentTeamRegistrationDetailView,
     TournamentUpdateView,
     
+    TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
     RoundSubmissionsView,
 )
@@ -41,6 +43,7 @@ urlpatterns = [
         name='tournament_start_registration',
     ),
     path('<int:pk>/register-team/', TournamentTeamRegistrationCreateView.as_view(), name='tournament_register_team'),
+    path('<int:pk>/leave-team/', TournamentTeamLeaveView.as_view(), name='tournament_leave_team'),
     path('<int:pk>/eligible-teams/', TournamentEligibleTeamsView.as_view(), name='tournament_eligible_teams'),
     path('<int:pk>/teams/', TournamentTeamsView.as_view(), name='tournament_teams'),
     path('active/', TeamActiveTournamentView.as_view(), name='team_active_tournament'),
@@ -57,6 +60,7 @@ urlpatterns = [
     path('submissions/', SubmissionListCreateView.as_view(), name='submissions'),
     path('submissions/<int:pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
     path('<int:pk>/submissions/', TournamentSubmissionsView.as_view(), name='tournament_submissions'),
+    path('<int:pk>/my-submissions/', TournamentMyTeamSubmissionsView.as_view(), name='tournament_my_submissions'),
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),

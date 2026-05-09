@@ -87,7 +87,6 @@ interface Tournament {
   end_date: Date
   max_teams: number
   min_team_members: number
-  rounds_count: number
   status: TournamentStatus
 }
 
@@ -115,24 +114,31 @@ interface Round {
   must_have_requirements: JSONContent
   tech_requirements: JSONContent
   passing_count: number
-  winners_count: number
-  evaluation_criteria
   criteria: CriteriaItem[]
 }
 
 // Event
-
-type EventId = number
+export type EventId = number
 
 interface TournamentEvent {
   description: string
-  icon: 2
   id: EventId
-  link: string
   start_datetime: Date
   title: string
   tournament: TournamentId
-  type: 'event' // TODO: remove cuz we dont need this
+  created_at: Date
+  updated_at: Date
+}
+
+// Submission
+export type SubmissionId = number
+
+export interface Submission {
+  id: SubmissionId
+  github_url: string
+  demo_video_url: string
+  live_demo_url: string
+  description: string
   created_at: Date
   updated_at: Date
 }

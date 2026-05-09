@@ -1,5 +1,5 @@
 import type { GetRoleCodesFilter } from '@/api/services/accounts/types'
-import type { TeamId, TournamentId, UserId } from '@/api/dbTypes'
+import type { RoundId, TeamId, TournamentId, UserId } from '@/api/dbTypes'
 import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
 
 export const teamKeys = {
@@ -50,6 +50,8 @@ export const tournamentsKeys = {
     [...tournamentsKeys.detail(id), 'registered-teams'] as const,
   eligibleTeams: (id: TournamentId) => [...tournamentsKeys.detail(id), 'eligible-teams'] as const,
   events: (id: TournamentId) => [...tournamentsKeys.detail(id), 'events'] as const,
+  submissions: (id: TournamentId) => [...tournamentsKeys.detail(id), 'submissions'] as const,
+  roundSubmissions: (roundId: RoundId) => ['round-submissions', roundId] as const,
   activeTeamTournament: (teamId: TeamId) =>
     [...tournamentsKeys.all(), 'active-for-team', teamId] as const,
 }
@@ -61,4 +63,14 @@ export const notificationKeys = {
     [...notificationKeys.lists(), { page, pageSize }] as const,
   unreadCount: () => [...notificationKeys.all(), 'unread-count'] as const,
   settings: () => [...notificationKeys.all(), 'settings'] as const,
+}
+
+export const evaluationKeys = {
+  all: () => ['evaluation'] as const,
+  availableJury: (roundId: RoundId) => [...evaluationKeys.all(), 'availableJury', roundId] as const,
+  assignments: (roundId?: RoundId) => [...evaluationKeys.all(), 'assignments', roundId ?? 'all'] as const,
+  assignment: (assignmentId: number) => [...evaluationKeys.all(), 'assignment', assignmentId] as const,
+  roundLeaderboard: (roundId: RoundId) => [...evaluationKeys.all(), 'roundLeaderboard', roundId] as const,
+  tournamentLeaderboard: (tournamentId: TournamentId) =>
+    [...evaluationKeys.all(), 'tournamentLeaderboard', tournamentId] as const,
 }
