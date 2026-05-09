@@ -77,6 +77,7 @@ class AdminRoundAssignmentView(APIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(Round, pk=pk)
+        self.check_object_permissions(request, round_obj)
         serializer = JuryAssignmentItemSerializer(data=request.data, many=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         created_count = replace_round_jury_assignments(round_obj, serializer.validated_data)
@@ -91,6 +92,7 @@ class AvailableJuryListView(APIView):
 
     def get(self, request, pk):
         round_obj = get_object_or_404(Round, pk=pk)
+        self.check_object_permissions(request, round_obj)
         include_assigned_param = request.query_params.get('include_assigned', 'true').lower()
         if include_assigned_param not in {'true', 'false'}:
             raise ValidationError({'include_assigned': 'Expected "true" or "false".'})
@@ -151,6 +153,7 @@ class RoundPassingStatusView(APIView):
 
     def get(self, request, pk):
         round_obj = get_object_or_404(Round.objects.select_related('tournament'), pk=pk)
+        self.check_object_permissions(request, round_obj)
 
         if round_obj.status not in {Round.STATUS_SUBMISSION_CLOSED, Round.STATUS_EVALUATED}:
             raise ValidationError({'status': 'Round must be submission_closed or evaluated to check passing status.'})

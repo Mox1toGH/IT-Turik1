@@ -12,6 +12,31 @@ class HasTournamentPermission(BasePermission):
     def has_permission(self, request, view):
         return user_has_permission(request.user, self.required_permission)
 
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if user.is_superuser:
+            return True
+
+        from backend.permissions import TOURNAMENT_MANAGEMENT_PERMISSIONS
+        if self.required_permission not in TOURNAMENT_MANAGEMENT_PERMISSIONS:
+            return True
+
+        from .models import Tournament, Round, TournamentTeamRegistration
+        tournament = None
+        if isinstance(obj, Tournament):
+            tournament = obj
+        elif isinstance(obj, Round):
+            tournament = obj.tournament
+        elif isinstance(obj, TournamentTeamRegistration):
+            tournament = obj.tournament
+        elif hasattr(obj, 'submission') and hasattr(obj.submission, 'round'):
+            tournament = obj.submission.round.tournament
+
+        if tournament and tournament.created_by_id != user.id:
+            return False
+
+        return True
+
 
 class HasTournamentPermissionOrReadOnly(HasTournamentPermission):
     def has_permission(self, request, view):

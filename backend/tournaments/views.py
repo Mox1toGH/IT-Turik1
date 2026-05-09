@@ -213,6 +213,7 @@ class TournamentStartRegistrationView(APIView):
 
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
+        self.check_object_permissions(request, tournament)
         start_registration(tournament)
         return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_200_OK)
 
@@ -411,6 +412,7 @@ class RoundStartView(SyncStatusesMixin, APIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
+        self.check_object_permissions(request, round_obj)
         start_round(round_obj)
         round_obj.refresh_from_db()
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
@@ -421,6 +423,7 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
+        self.check_object_permissions(request, round_obj)
         mark_round_evaluated(round_obj)
         round_obj.refresh_from_db()
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
@@ -491,6 +494,7 @@ class RoundCloseSubmissionsView(SyncStatusesMixin, APIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
+        self.check_object_permissions(request, round_obj)
         close_submissions_on_round(round_obj)
         round_obj.refresh_from_db()
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
