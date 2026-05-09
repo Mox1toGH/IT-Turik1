@@ -41,7 +41,7 @@
               v-for="notification in unreadNotifications" 
               :key="notification.id"
               class="notification-item is-unread"
-              @click="markAsRead(notification.id)"
+              @click="markAsRead({ id: notification.id })"
             >
               <div class="item-content">
                 <div class="item-title-row">
@@ -131,7 +131,7 @@ const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
 
-const { data: notifications, isLoading, error } = useNotifications(1, 100)
+const { data: notifications, isLoading, error } = useNotifications({ page: 1, pageSize: 100 })
 const { data: unreadCount } = useUnreadCount()
 const { mutate: markAsRead } = useMarkAsRead()
 const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
@@ -174,7 +174,7 @@ const handleDelete = (id: number) => {
     message: 'Delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(id, {
+  deleteNotification({ id }, {
         onSuccess: () => {
           isConfirmModalOpen.value = false
         },
@@ -208,7 +208,7 @@ const handleDeleteAll = () => {
 
 const handleNotificationClick = (notification: any, event: Event) => {
   if (!notification.is_read) {
-    markAsRead(notification.id)
+    markAsRead({ id: notification.id })
   }
 
   const url = getRedirectUrl(notification)

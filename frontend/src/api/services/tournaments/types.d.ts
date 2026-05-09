@@ -11,7 +11,6 @@ import type {
   TournamentId,
   TournamentStatus,
 } from '@/api/dbTypes'
-import type { MaybeRefOrGetter } from 'vue'
 
 // Get tournaments
 export interface GetTournamentsArgs {
@@ -37,13 +36,6 @@ export interface GetTournamentsResponse {
 }
 
 // Get tournaments
-export interface GetTournamentsArgs {
-  page: number
-  pageSize?: number
-  searchQuery?: string
-  status: TournamentStatus
-}
-
 // Create tournament
 export type CreateTournamentBody = Pick<
   Tournament,
@@ -290,7 +282,7 @@ export type EditSubmissionResponse = Submission & {
 
 // round submissions
 export interface GetRoundSubmissionsArgs {
-  roundId: MaybeRefOrGetter<RoundId>
+  roundId: RoundId
 }
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse

@@ -39,31 +39,32 @@ import type {
   SubmitRoundArgs,
 } from './types'
 import { toValue } from 'vue'
+import type { MaybeRefArgs } from '@/api/queries/types'
 
 const prefix = '/api/tournaments'
 
 export const tournamentsService = {
-  getTournaments: async (args: GetTournamentsArgs) => {
+  getTournaments: async (args: MaybeRefArgs<GetTournamentsArgs>) => {
     const params = new URLSearchParams()
-    params.append('page', String(args.page))
+    params.append('page', String(toValue(args.page)))
 
-    if (args.pageSize) {
-      params.append('pageSize', String(args.pageSize))
+    if (toValue(args.pageSize)) {
+      params.append('pageSize', String(toValue(args.pageSize)))
     }
-    if (args.searchQuery) {
-      params.append('searchQuery', args.searchQuery)
+    if (toValue(args.searchQuery)) {
+      params.append('searchQuery', String(toValue(args.searchQuery)))
     }
-    if (args.status) {
-      params.append('status', args.status.join(','))
+    if (toValue(args.status)) {
+      params.append('status', toValue(args.status)!.join(','))
     }
 
     const { data } = await apiClient.get(`${prefix}?${params.toString()}`)
     return data
   },
 
-  async getActiveTeamTournament(args: GetActiveTeamTournamentArgs) {
+  async getActiveTeamTournament(args: MaybeRefArgs<GetActiveTeamTournamentArgs>) {
     const params = new URLSearchParams()
-    params.append('team_id', String(args.id))
+    params.append('team_id', String(toValue(args.id)))
 
     const { data } = await apiClient.get<GetActiveTeamTournamentResponse>(
       `${prefix}/active?${params.toString()}`,
@@ -71,131 +72,147 @@ export const tournamentsService = {
     return data
   },
 
-  getRegisteredTeams: async (args: GetRegisteredTeamsArgs) => {
-    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(`${prefix}/${args.id}/teams`)
+  getRegisteredTeams: async (args: MaybeRefArgs<GetRegisteredTeamsArgs>) => {
+    const { data } = await apiClient.get<GetRegisteredTeamsResponse>(
+      `${prefix}/${toValue(args.id)}/teams`,
+    )
     return data
   },
 
-  getRounds: async (args: GetRoundsArgs) => {
-    const { data } = await apiClient.get<GetRoundsResponse>(`${prefix}/${args.id}/rounds`)
+  getRounds: async (args: MaybeRefArgs<GetRoundsArgs>) => {
+    const { data } = await apiClient.get<GetRoundsResponse>(`${prefix}/${toValue(args.id)}/rounds`)
     return data
   },
 
-  createTournament: async (args: CreateTournamentArgs) => {
-    const { data } = await apiClient.post(`${prefix}/manage/`, args.body)
+  createTournament: async (args: MaybeRefArgs<CreateTournamentArgs>) => {
+    const { data } = await apiClient.post(`${prefix}/manage/`, toValue(args.body))
     return data
   },
 
-  getTournamentInfo: async (args: GetTournamentInfoArgs) => {
-    const { data } = await apiClient.get<GetTournamentInfoResponse>(`${prefix}/${args.id}`)
+  getTournamentInfo: async (args: MaybeRefArgs<GetTournamentInfoArgs>) => {
+    const { data } = await apiClient.get<GetTournamentInfoResponse>(`${prefix}/${toValue(args.id)}`)
     return data
   },
 
-  getEligibleTeams: async (args: GetEligibleTeamsArgs) => {
+  getEligibleTeams: async (args: MaybeRefArgs<GetEligibleTeamsArgs>) => {
     const { data } = await apiClient.get<GetEligibleTeamsResponse>(
-      `${prefix}/${args.id}/eligible-teams`,
+      `${prefix}/${toValue(args.id)}/eligible-teams`,
     )
     return data
   },
 
-  createRound: async (args: CreateRoundArgs) => {
-    const { data } = await apiClient.post(`${prefix}/${args.id}/rounds/`, args.body)
+  createRound: async (args: MaybeRefArgs<CreateRoundArgs>) => {
+    const { data } = await apiClient.post(
+      `${prefix}/${toValue(args.id)}/rounds/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  editRound: async (args: EditRoundArgs) => {
+  editRound: async (args: MaybeRefArgs<EditRoundArgs>) => {
     const { data } = await apiClient.patch<EditRoundResponse>(
-      `${prefix}/rounds/${args.id}/`,
-      args.body,
+      `${prefix}/rounds/${toValue(args.id)}/`,
+      toValue(args.body),
     )
     return data
   },
 
-  deleteRound: async (args: DeleteRoundArgs) => {
-    const { data } = await apiClient.delete(`${prefix}/rounds/${args.id}/`)
+  deleteRound: async (args: MaybeRefArgs<DeleteRoundArgs>) => {
+    const { data } = await apiClient.delete(`${prefix}/rounds/${toValue(args.id)}/`)
     return data
   },
 
-  getCurrentRound: async (args: GetCurrentRoundArgs) => {
+  getCurrentRound: async (args: MaybeRefArgs<GetCurrentRoundArgs>) => {
     const { data } = await apiClient.get<GetCurrentRoundResponse>(
-      `${prefix}/current-task/?tournament_id=${args.id}`,
+      `${prefix}/current-task/?tournament_id=${toValue(args.id)}`,
     )
     return data
   },
 
-  registerTeam: async (args: RegisterTeamArgs) => {
-    const { data } = await apiClient.post(`${prefix}/${args.id}/register-team/`, args.body)
+  registerTeam: async (args: MaybeRefArgs<RegisterTeamArgs>) => {
+    const { data } = await apiClient.post(
+      `${prefix}/${toValue(args.id)}/register-team/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  leaveTeam: async (args: LeaveTeamArgs) => {
-    const { data } = await apiClient.post(`${prefix}/${args.id}/leave-team/`, args.body)
+  leaveTeam: async (args: MaybeRefArgs<LeaveTeamArgs>) => {
+    const { data } = await apiClient.post(
+      `${prefix}/${toValue(args.id)}/leave-team/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  submitRound: async (args: SubmitRoundArgs) => {
-    const { data } = await apiClient.post(`${prefix}/submissions/`, args.body)
+  submitRound: async (args: MaybeRefArgs<SubmitRoundArgs>) => {
+    const { data } = await apiClient.post(`${prefix}/submissions/`, toValue(args.body))
     return data
   },
 
-  createEvent: async (args: CreateEventArgs) => {
-    const { data } = await apiClient.post(`${prefix}/events/`, args.body)
+  createEvent: async (args: MaybeRefArgs<CreateEventArgs>) => {
+    const { data } = await apiClient.post(`${prefix}/events/`, toValue(args.body))
     return data
   },
 
-  getEvents: async (args: GetEventsArgs) => {
+  getEvents: async (args: MaybeRefArgs<GetEventsArgs>) => {
     const params = new URLSearchParams()
-    params.append('tournament', String(args.tournamentId))
+    params.append('tournament', String(toValue(args.tournamentId)))
 
     const { data } = await apiClient.get<GetEventsResponse>(`${prefix}/events?${params.toString()}`)
     return data
   },
 
-  editEvent: async (args: EditEventArgs) => {
-    const { data } = await apiClient.patch(`${prefix}/events/${args.eventId}/`, args.body)
+  editEvent: async (args: MaybeRefArgs<EditEventArgs>) => {
+    const { data } = await apiClient.patch(
+      `${prefix}/events/${toValue(args.eventId)}/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  deleteEvent: async (args: DeleteEventArgs) => {
-    const { data } = await apiClient.delete(`${prefix}/events/${args.eventId}/`)
+  deleteEvent: async (args: MaybeRefArgs<DeleteEventArgs>) => {
+    const { data } = await apiClient.delete(`${prefix}/events/${toValue(args.eventId)}/`)
     return data
   },
 
-  startRegistration: async (args: StartRegistrationArgs) => {
-    const { data } = await apiClient.post(`${prefix}/${args.tournamentId}/start-registration/`)
+  startRegistration: async (args: MaybeRefArgs<StartRegistrationArgs>) => {
+    const { data } = await apiClient.post(
+      `${prefix}/${toValue(args.tournamentId)}/start-registration/`,
+    )
     return data
   },
 
-  startRound: async (args: StartRoundArgs) => {
+  startRound: async (args: MaybeRefArgs<StartRoundArgs>) => {
     const { data } = await apiClient.post<StartRoundResponse>(
-      `${prefix}/rounds/${args.roundId}/start/`,
+      `${prefix}/rounds/${toValue(args.roundId)}/start/`,
     )
     return data
   },
 
-  closeSubmissions: async (args: CloseSubmissionsArgs) => {
+  closeSubmissions: async (args: MaybeRefArgs<CloseSubmissionsArgs>) => {
     const { data } = await apiClient.post<CloseSubmissionsResponse>(
-      `${prefix}/rounds/${args.roundId}/close-submissions/`,
+      `${prefix}/rounds/${toValue(args.roundId)}/close-submissions/`,
     )
     return data
   },
 
-  getTeamSubmissions: async (args: GetTeamSubmissionsArgs) => {
+  getTeamSubmissions: async (args: MaybeRefArgs<GetTeamSubmissionsArgs>) => {
     const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
-      `${prefix}/${args.tournamentId}/my-submissions/`,
+      `${prefix}/${toValue(args.tournamentId)}/my-submissions/`,
     )
     return data
   },
 
-  editSubmission: async (args: EditSubmissionArgs) => {
+  editSubmission: async (args: MaybeRefArgs<EditSubmissionArgs>) => {
     const { data } = await apiClient.patch<EditSubmissionResponse>(
-      `${prefix}/submissions/${args.submissionId}/`,
-      args.body,
+      `${prefix}/submissions/${toValue(args.submissionId)}/`,
+      toValue(args.body),
     )
     return data
   },
 
-  getRoundSubmissions: async (args: GetRoundSubmissionsArgs) => {
+  getRoundSubmissions: async (args: MaybeRefArgs<GetRoundSubmissionsArgs>) => {
     const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
     )

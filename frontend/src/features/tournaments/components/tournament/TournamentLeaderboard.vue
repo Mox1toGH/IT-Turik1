@@ -124,6 +124,7 @@ type RoundEntry = GetRoundLeaderboardResponse['rankings'][number]
 type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
+const tournamentId = computed(() => props.tournamentId)
 
 type LeaderboardMode = 'average' | number
 const selectedLeaderboardMode = ref<LeaderboardMode>('average')
@@ -132,7 +133,7 @@ const {
   data: roundsData,
   isLoading: isLoadingRounds,
   isError: isRoundsError,
-} = useTournamentRounds({ id: props.tournamentId })
+} = useTournamentRounds({ id: tournamentId })
 const rounds = computed(() => roundsData.value ?? [])
 
 const roundOptions = computed(() => {
@@ -149,7 +150,7 @@ const selectedRoundId = computed(() =>
 )
 
 const tournamentQuery = useTournamentLeaderboard(
-  { tournamentId: props.tournamentId },
+  { tournamentId },
   { enabled: isAverageMode },
 )
 

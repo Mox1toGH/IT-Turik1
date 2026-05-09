@@ -1,5 +1,9 @@
 <template>
-  <ui-modal :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :max-width="maxWidth">
+  <ui-modal
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
+    :max-width="maxWidth"
+  >
     <template #title v-if="title">
       <h3 class="confirm-modal-title">{{ title }}</h3>
     </template>
@@ -11,7 +15,9 @@
     <template #footer>
       <div class="confirm-modal-actions">
         <ui-button variant="secondary" @click="cancel">{{ cancelText }}</ui-button>
-        <ui-button :variant="confirmVariant" @click="confirm" :disabled="loading">{{ confirmText }}</ui-button>
+        <ui-button :variant="confirmVariant" @click="confirm" :disabled="loading">{{
+          confirmText
+        }}</ui-button>
       </div>
     </template>
   </ui-modal>
@@ -19,7 +25,7 @@
 
 <script setup lang="ts">
 import UiModal from './UiModal.vue'
-import UiButton from './UiButton.vue'
+import UiButton, { type Variant } from './UiButton.vue'
 
 interface Props {
   modelValue: boolean
@@ -27,18 +33,18 @@ interface Props {
   message: string
   confirmText?: string
   cancelText?: string
-  confirmVariant?: 'primary' | 'danger' | 'secondary'
+  confirmVariant?: Variant
   loading?: boolean
   maxWidth?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'Confirm Action',
   confirmText: 'Confirm',
   cancelText: 'Cancel',
-  confirmVariant: 'primary',
+  confirmVariant: 'default',
   loading: false,
-  maxWidth: '400px'
+  maxWidth: '400px',
 })
 
 const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])

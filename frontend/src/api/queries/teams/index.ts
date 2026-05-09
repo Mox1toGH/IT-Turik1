@@ -2,6 +2,7 @@ import { $api } from '@/api/services'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { teamKeys } from '../keys'
 import type { AxiosError } from 'axios'
+import { computed, toValue } from 'vue'
 import type {
   AddMemberArgs,
   ChangeTeamVisibilityArgs,
@@ -25,7 +26,7 @@ import type {
   SendJoinRequestArgs,
   UpdateTeamInfoArgs,
 } from '@/api/services/teams/types'
-import type { MutationConfig, QueryConfig } from '../types'
+import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
 import type { ApiError } from '@/api/errors'
 
 export const useTeams = (config?: QueryConfig<GetTeamsResponse>) => {
@@ -37,23 +38,23 @@ export const useTeams = (config?: QueryConfig<GetTeamsResponse>) => {
 }
 
 export const useTeamInfo = (
-  payload: GetTeamInfoArgs,
+  payload: MaybeRefArgs<GetTeamInfoArgs>,
   config?: QueryConfig<GetTeamInfoResponse>,
 ) => {
   return useQuery<GetTeamInfoResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys.info(payload.id),
+    queryKey: computed(() => teamKeys.info(toValue(payload.id))),
     queryFn: () => $api.teams.getTeamInfo({ id: payload.id }),
     ...config,
   })
 }
 
 export const useTeamJoinRequests = (
-  payload: GetTeamJoinRequestsArgs,
+  payload: MaybeRefArgs<GetTeamJoinRequestsArgs>,
   config?: QueryConfig<GetTeamJoinRequestsResponse>,
 ) => {
   return useQuery<GetTeamJoinRequestsResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys.joinRequests(payload.teamId),
-    queryFn: () => $api.teams.getTeamJoinRequests(payload),
+    queryKey: computed(() => teamKeys.joinRequests(toValue(payload.teamId))),
+    queryFn: () => $api.teams.getTeamJoinRequests({ teamId: payload.teamId }),
     ...config,
   })
 }
@@ -67,12 +68,12 @@ export const useInvitations = (config?: QueryConfig<GetInvitationsResponse>) => 
 }
 
 export const useTeamInvitations = (
-  payload: GetTeamInvitationsArgs,
+  payload: MaybeRefArgs<GetTeamInvitationsArgs>,
   config?: QueryConfig<GetTeamInvitationsResponse>,
 ) => {
   return useQuery<GetTeamInvitationsResponse, AxiosError<ApiError>>({
-    queryKey: teamKeys.invitations(payload.teamId),
-    queryFn: () => $api.teams.getTeamInvitations(payload),
+    queryKey: computed(() => teamKeys.invitations(toValue(payload.teamId))),
+    queryFn: () => $api.teams.getTeamInvitations({ teamId: payload.teamId }),
     ...config,
   })
 }

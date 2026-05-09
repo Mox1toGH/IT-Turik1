@@ -133,7 +133,7 @@ const reviewJoinRequest = (id: JoinRequestId, action: ManageJoinRequestAction) =
         const pastTense = { accept: 'accepted', decline: 'declined' }
         showNotification(`Join request ${pastTense[action]}`, 'success')
 
-        queryClient.invalidateQueries({ queryKey: teamKeys.team(props.teamId) })
+        queryClient.invalidateQueries({ queryKey: teamKeys.joinRequests(props.teamId) })
       },
       onError: (err) => {
         showNotification(

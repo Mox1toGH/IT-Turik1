@@ -20,6 +20,7 @@ import type {
   UpdateEvaluationResponse,
 } from './types'
 import { toValue } from 'vue'
+import type { MaybeRefArgs } from '@/api/queries/types'
 
 const prefix = '/api/evaluation'
 
@@ -39,21 +40,21 @@ const normalizeAssignment = (
 }
 
 export const evaluationService = {
-  getAvailableJury: async (args: GetAvailableJuryArgs) => {
+  getAvailableJury: async (args: MaybeRefArgs<GetAvailableJuryArgs>) => {
     const { data } = await apiClient.get<GetAvailableJuryResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/available-jury/`,
     )
     return data
   },
 
-  getRoundLeaderboard: async (args: GetRoundLeaderboardArgs) => {
+  getRoundLeaderboard: async (args: MaybeRefArgs<GetRoundLeaderboardArgs>) => {
     const { data } = await apiClient.get<GetRoundLeaderboardResponse>(
       `${prefix}/tournaments/rounds/${toValue(args.roundId)}/leaderboard/`,
     )
     return data
   },
 
-  getTournamentLeaderboard: async (args: GetTournamentLeaderboardArgs) => {
+  getTournamentLeaderboard: async (args: MaybeRefArgs<GetTournamentLeaderboardArgs>) => {
     const { data } = await apiClient.get<GetTournamentLeaderboardResponse>(
       `${prefix}/tournaments/${toValue(args.tournamentId)}/leaderboard/`,
     )
@@ -68,26 +69,34 @@ export const evaluationService = {
     return data
   },
 
-  getAssignments: async (args?: GetAssignmentsArgs) => {
+  getAssignments: async (args?: MaybeRefArgs<GetAssignmentsArgs>) => {
     const params = new URLSearchParams()
-    if (args?.roundId) {
-      params.append('round_id', String(args.roundId))
+    const roundId = args?.roundId ? toValue(args.roundId) : undefined
+    if (roundId) {
+      params.append('round_id', String(roundId))
     }
 
     const query = params.toString()
     const { data } = await apiClient.get<GetAssignmentsResponse>(
       `${prefix}/assignments/${query ? `?${query}` : ''}`,
     )
-    return data.map((item) => normalizeAssignment(item as Omit<JuryAssignmentData, 'round_details' | 'criteria'>))
+    return data.map((item) =>
+      normalizeAssignment(item as Omit<JuryAssignmentData, 'round_details' | 'criteria'>),
+    )
   },
 
-  getAssignmentDetail: async (args: GetAssignmentDetailArgs) => {
-    const { data } = await apiClient.get<GetAssignmentDetailResponse>(`${prefix}/assignments/${args.id}/`)
+  getAssignmentDetail: async (args: MaybeRefArgs<GetAssignmentDetailArgs>) => {
+    const { data } = await apiClient.get<GetAssignmentDetailResponse>(
+      `${prefix}/assignments/${toValue(args.id)}/`,
+    )
     return normalizeAssignment(data as Omit<JuryAssignmentData, 'round_details' | 'criteria'>)
   },
 
   createEvaluation: async (args: CreateEvaluationArgs) => {
-    const { data } = await apiClient.post<CreateEvaluationResponse>(`${prefix}/evaluate/`, args.body)
+    const { data } = await apiClient.post<CreateEvaluationResponse>(
+      `${prefix}/evaluate/`,
+      args.body,
+    )
     return data
   },
 

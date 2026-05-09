@@ -1,21 +1,20 @@
 import type { RoundId, SubmissionId, User, UserId } from '@/api/dbTypes'
 import type { TournamentId } from '@/api/dbTypes'
-import type { MaybeRefOrGetter } from 'vue'
 
 // available jury
 export interface GetAvailableJuryArgs {
-  roundId: MaybeRefOrGetter<RoundId>
+  roundId: RoundId
 }
 
 export type GetAvailableJuryResponse = Pick<User, 'id' | 'username' | 'full_name' | 'email'>[]
 
 // leaderboard
 export interface GetRoundLeaderboardArgs {
-  roundId: MaybeRefOrGetter<RoundId>
+  roundId: RoundId
 }
 
 export interface GetTournamentLeaderboardArgs {
-  tournamentId: MaybeRefOrGetter<TournamentId>
+  tournamentId: TournamentId
 }
 
 export type CriteriaBreakdown = Record<string, number>

@@ -144,7 +144,7 @@ const isSettingsModalOpen = ref(false)
 const page = ref(1)
 const router = useRouter()
 
-const { data: notificationsData, isLoading, error } = useNotifications(page)
+const { data: notificationsData, isLoading, error } = useNotifications({ page })
 const { mutate: markAsRead } = useMarkAsRead()
 const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
@@ -182,7 +182,7 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead(id)
+  markAsRead({ id })
 }
 
 const handleMarkAllRead = () => {
@@ -198,7 +198,7 @@ const handleDelete = (id: number) => {
     message: 'Are you sure you want to delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(id, {
+      deleteNotification({ id }, {
         onSuccess: () => {
           showNotification('Notification deleted', 'success')
           isConfirmModalOpen.value = false
