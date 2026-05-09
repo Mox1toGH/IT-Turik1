@@ -58,6 +58,7 @@ import UiModal from '@/components/ui/UiModal.vue'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { ref, watch } from 'vue'
+import Highlight from '@tiptap/extension-highlight'
 
 interface Props {
   modelValue: boolean
@@ -80,7 +81,7 @@ const setActiveSection = (section: Section) => {
 }
 
 const descriptionEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.description,
   editable: false,
   editorProps: {
@@ -92,7 +93,7 @@ const descriptionEditor = useEditor({
 })
 
 const requirementsEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.technicalRequirements,
   editable: false,
   editorProps: {
@@ -104,7 +105,7 @@ const requirementsEditor = useEditor({
 })
 
 const mustHaveEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.mustHave,
   editable: false,
   editorProps: {

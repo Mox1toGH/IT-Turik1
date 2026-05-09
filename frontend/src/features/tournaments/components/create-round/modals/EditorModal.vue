@@ -206,7 +206,7 @@ function toggleUnderline() {
 }
 
 function toggleHighlight() {
-  editor.value?.chain().focus().toggleHighlight({ color: '#8ce99a' }).run()
+  editor.value?.chain().focus().toggleHighlight().run()
 }
 
 function toggleBulletList() {
@@ -243,6 +243,7 @@ function toggleH2() {
 
 .toolbar button.is-active {
   background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .editor {
@@ -250,7 +251,7 @@ function toggleH2() {
   border-radius: var(--radius);
   padding: 0.75rem;
   flex: 1 1 auto;
-  background: var(--input);
+  background: var(--accent);
   overflow: auto;
 }
 
