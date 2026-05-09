@@ -45,12 +45,16 @@
               <div v-for="team in filteredActiveTeams" :key="team.id" class="team-row">
                 <RouterLink :to="`/teams/${team.id}`" class="team-item">
                   <div class="team-info">
-                    <TeamIcon />
-                    {{ team.name }}
+                    <ui-badge v-if="!team.is_active" variant="red"> <CrossIcon /> </ui-badge>
+                    <TeamIcon :class="[{ 'text-muted': !team.is_active }]" />
+                    <p :title="team.name" :class="[{ 'text-muted': !team.is_active }]">
+                      {{ truncateText(team.name, 15) }}
+                    </p>
                   </div>
 
                   <div style="display: flex; align-items: center; gap: 0.5rem">
                     <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
+
                     <div v-if="isAdmin" class="team-actions">
                       <ui-button
                         size="sm"
@@ -109,7 +113,13 @@
 
                   <div style="display: flex; align-items: center; gap: 0.5rem">
                     <ui-badge variant="red"> Disqualified </ui-badge>
-                    <div v-if="isAdmin" class="team-actions">
+                    <div
+                      v-if="
+                        isAdmin &&
+                        (tournament?.status === 'registration' || tournament?.status === 'running')
+                      "
+                      class="team-actions"
+                    >
                       <ui-button
                         size="sm"
                         variant="default"
@@ -163,7 +173,11 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
 import { RouterLink } from 'vue-router'
 import { parseApiError } from '@/api/errors'
-import { useRegisteredTeams, useUpdateRegistration } from '@/api/queries/tournaments'
+import {
+  useRegisteredTeams,
+  useTournamentInfo,
+  useUpdateRegistration,
+} from '@/api/queries/tournaments'
 import { useProfile } from '@/api/queries/accounts'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
@@ -171,6 +185,7 @@ import type { GetRegisteredTeamsResponse } from '@/api/services/tournaments/type
 import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
 import AddTeamIcon from '@/icons/AddTeamIcon.vue'
 import { truncateText } from '@/lib/utils'
+import CrossIcon from '@/icons/CrossIcon.vue'
 
 interface Props {
   tournamentId: number
@@ -179,15 +194,15 @@ interface Props {
 type Team = GetRegisteredTeamsResponse[number]
 
 const props = defineProps<Props>()
-
 const search = ref('')
 
+const { data: tournament } = useTournamentInfo({ id: props.tournamentId })
 const {
   data: activeTeams,
   isLoading: isActiveTeamsLoading,
   error: activeTeamsError,
   isError: isActiveTeamsError,
-} = useRegisteredTeams({ id: props.tournamentId, status: 'active' })
+} = useRegisteredTeams({ id: props.tournamentId, status: 'all' })
 const {
   data: teams,
   isLoading: isTeamsLoading,
@@ -199,10 +214,11 @@ const error = computed(() => parseApiError(activeTeamsError.value || disqualifie
 
 const filteredActiveTeams = computed(() => {
   if (!activeTeams.value) return []
+  const visibleTeams = activeTeams.value.filter((team) => !team.is_disqualified)
   const term = search.value.trim().toLowerCase()
-  if (!term) return activeTeams.value
+  if (!term) return visibleTeams
 
-  return activeTeams.value.filter((team) => team.name.toLowerCase().includes(term))
+  return visibleTeams.filter((team) => team.name.toLowerCase().includes(term))
 })
 const filteredDisqualifiedTeams = computed(() => {
   if (!teams.value) return []
@@ -301,7 +317,7 @@ const handleConfirmAction = () => {
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid var(--border);
-  padding: 0.2rem 0;
+  padding: 0.7rem 0;
 }
 
 .team-item:hover {
@@ -341,8 +357,6 @@ const handleConfirmAction = () => {
 
 .team-actions {
   display: flex;
-  justify-content: flex-end;
-  padding: 0.5rem 0;
   gap: 0.5rem;
 }
 </style>

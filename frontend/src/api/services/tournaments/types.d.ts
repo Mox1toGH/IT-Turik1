@@ -10,6 +10,7 @@ import type {
   TournamentEvent,
   TournamentId,
   TournamentStatus,
+  User,
 } from '@/api/dbTypes'
 import type { MaybeRefOrGetter } from 'vue'
 
@@ -85,6 +86,9 @@ export type GetRegisteredTeamsResponse = (Pick<Team, 'id' | 'name' | 'is_public'
   registration_id: number
   members_count: number
   is_active: boolean
+  is_disqualified: boolean
+  members: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>[]
+  disqualification_reason: string
 })[]
 
 // Tournament rounds

@@ -1089,6 +1089,7 @@ class TournamentApiTests(APITestCase):
             team=disq_team,
             created_by=disq_user,
             is_active=False,
+            is_disqualified=True,
             disqualification_reason='Rules violation',
         )
         TournamentTeamRegistration.objects.create(
@@ -1137,6 +1138,7 @@ class TournamentApiTests(APITestCase):
             team=disq_team,
             created_by=disq_user,
             is_active=False,
+            is_disqualified=True,
             disqualification_reason='Rules violation',
         )
 

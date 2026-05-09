@@ -20,7 +20,7 @@ from .services import (
     leave_team_from_tournament,
     register_team_for_tournament,
 )
-from teams.serializers import TeamSummarySerializer
+from teams.serializers import TeamMemberSerializer, TeamSummarySerializer
 
 
 class RoundShortSerializer(serializers.ModelSerializer):
@@ -379,7 +379,16 @@ class TournamentTeamRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('id', 'tournament', 'team', 'team_name', 'is_active', 'disqualification_reason', 'created_at')
+        fields = (
+            'id',
+            'tournament',
+            'team',
+            'team_name',
+            'is_active',
+            'is_disqualified',
+            'disqualification_reason',
+            'created_at',
+        )
         read_only_fields = ('id', 'tournament', 'created_at')
 
 
@@ -423,13 +432,15 @@ class TournamentTeamRegistrationDisqualificationSerializer(serializers.Serialize
         action = validated_data['action']
         if action == self.ACTION_DISQUALIFY:
             instance.is_active = False
+            instance.is_disqualified = True
             reason = validated_data.get('disqualification_reason', '').strip()
             instance.disqualification_reason = reason or 'Disqualified by admin'
         else:
             instance.is_active = True
+            instance.is_disqualified = False
             instance.disqualification_reason = ''
 
-        instance.save(update_fields=['is_active', 'disqualification_reason'])
+        instance.save(update_fields=['is_active', 'is_disqualified', 'disqualification_reason'])
         return instance
 
 class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
@@ -438,6 +449,8 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='team.name')
     is_public = serializers.BooleanField(source='team.is_public')
     members_count = serializers.SerializerMethodField()
+    members = serializers.SerializerMethodField()
+    is_disqualified = serializers.BooleanField()
  
     class Meta:
         model = TournamentTeamRegistration
@@ -446,13 +459,32 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             'registration_id',
             'name',
             'members_count',
+            'members',
             'is_public',
             'is_active',
+            'is_disqualified',
             'disqualification_reason',
         )
  
     def get_members_count(self, obj):
-        return obj.team.team_members.count()
+        return len(self._get_unique_team_users(obj))
+
+    def _get_unique_team_users(self, obj):
+        users = list(obj.team.members.all())
+        if obj.team.captain_id is not None:
+            users.append(obj.team.captain)
+
+        seen = set()
+        unique_users = []
+        for user in users:
+            if user is None or user.id in seen:
+                continue
+            seen.add(user.id)
+            unique_users.append(user)
+        return unique_users
+
+    def get_members(self, obj):
+        return TeamMemberSerializer(self._get_unique_team_users(obj), many=True).data
 
 
 class IconSerializer(serializers.ModelSerializer):
