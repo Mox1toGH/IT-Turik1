@@ -265,7 +265,7 @@ const handleConfirmAction = () => {
 }
 
 .team-item:hover {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .team-item:not(:last-child) {

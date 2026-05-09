@@ -17,37 +17,42 @@
 
     <ui-card>
       <div class="sections">
-        <ui-button
+        <div
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'information' }]"
           @click="setActiveSection('information')"
-          >Information</ui-button
         >
-        <ui-button
+          Information
+        </div>
+        <div
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'rounds' }]"
           @click="setActiveSection('rounds')"
-          >Rounds</ui-button
         >
-        <ui-button
+          Rounds
+        </div>
+        <div
           variant="secondary"
           :disabled="user?.role !== 'admin' && user?.role !== 'team'"
           :class="['sections-btn', { active: currentSection === 'submissions' }]"
           @click="setActiveSection('submissions')"
-          >Submissions</ui-button
         >
-        <ui-button
+          Submissions
+        </div>
+        <div
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'schedule' }]"
           @click="setActiveSection('schedule')"
-          >Schedule</ui-button
         >
-        <ui-button
+          Schedule
+        </div>
+        <div
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'leaderboard' }]"
           @click="setActiveSection('leaderboard')"
-          >Leaderboard</ui-button
         >
+          Leaderboard
+        </div>
       </div>
     </ui-card>
 
@@ -148,13 +153,30 @@ watch(
 
 .sections {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
+  border-bottom: 2px solid var(--border);
 }
 
-.sections-btn.active {
-  background: var(--primary);
-  color: var(--primary-foreground);
+.sections-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sections-btn:hover {
+  cursor: pointer;
+}
+
+.sections-btn.active,
+.sections-btn:hover {
+  border-bottom: 2px solid var(--primary);
+  color: var(--primary);
 }
 
 .tournament-grid {

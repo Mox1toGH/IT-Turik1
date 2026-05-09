@@ -294,8 +294,7 @@ function handleSubmit() {
 }
 
 .submit-btn {
-  grid-column: 2;
-  grid-row: 6;
+  grid-column: 1 / -1;
 }
 
 .text-error {

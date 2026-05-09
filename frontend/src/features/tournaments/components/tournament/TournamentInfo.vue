@@ -100,8 +100,13 @@
     </div>
 
     <div class="tournament-action">
-      <!-- TODO add link to round info -->
-      <ui-button v-if="currentRound" variant="ghost" class="tournament-action-btn">
+      <ui-button
+        v-if="currentRound"
+        asLink
+        :to="`/tournaments/1?section=rounds`"
+        variant="ghost"
+        class="tournament-action-btn"
+      >
         Current round: {{ currentRound.name }}
       </ui-button>
 
