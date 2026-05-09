@@ -2,6 +2,8 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from accounts.models import User
 from tournaments.models import Round
+from tournaments.models import TournamentTeamRegistration
+
 from .models import JuryAssignment
 
 
@@ -90,3 +92,57 @@ def try_auto_evaluate_round(round_obj):
     if total == evaluated:
         from tournaments.services import mark_round_evaluated
         mark_round_evaluated(round_obj)
+
+
+def apply_passing_count(round_obj) -> dict:
+    """
+    Apply automatic elimination based on passing_count.
+    """
+    passing_count = round_obj.passing_count
+    if passing_count is None:
+        return {
+            'applied': False,
+            'passing_count': None,
+            'total_teams': 0,
+            'eliminated_team_ids': [],
+            'passed_team_ids': [],
+        }
+
+    from evaluation.leaderboard_service import compute_leaderboard
+
+    rankings = compute_leaderboard(round_obj.id)
+    total_teams = len(rankings)
+    if total_teams == 0:
+        return {
+            'applied': True,
+            'passing_count': passing_count,
+            'total_teams': 0,
+            'eliminated_team_ids': [],
+            'passed_team_ids': [],
+        }
+
+    passed_team_ids = [
+        row['team_id']
+        for row in rankings
+        if row['rank'] <= passing_count
+    ]
+    eliminated_team_ids = [
+        row['team_id']
+        for row in rankings
+        if row['rank'] > passing_count
+    ]
+
+    if eliminated_team_ids:
+        TournamentTeamRegistration.objects.filter(
+            tournament=round_obj.tournament,
+            team_id__in=eliminated_team_ids,
+            is_active=True,
+        ).update(is_active=False)
+
+    return {
+        'applied': True,
+        'passing_count': passing_count,
+        'total_teams': total_teams,
+        'eliminated_team_ids': eliminated_team_ids,
+        'passed_team_ids': passed_team_ids,
+    }

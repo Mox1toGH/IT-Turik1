@@ -106,6 +106,9 @@ def mark_round_evaluated(round_obj):
     round_obj.status = Round.STATUS_EVALUATED
     round_obj.save(update_fields=['status', 'updated_at'])
 
+    from evaluation.services import apply_passing_count
+    apply_passing_count(round_obj)
+
     _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
 
     return round_obj

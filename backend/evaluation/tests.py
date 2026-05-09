@@ -13,8 +13,9 @@ from evaluation.leaderboard_service import (
     save_leaderboard_snapshot,
 )
 from evaluation.models import LeaderboardEntry, SubmissionEvaluation
+from evaluation.services import try_auto_evaluate_round
 from teams.models import Team
-from tournaments.models import Round, Submission, Tournament
+from tournaments.models import Round, Submission, Tournament, TournamentTeamRegistration
 from tournaments.services import mark_round_evaluated
 
 
@@ -280,6 +281,16 @@ class LeaderboardTests(APITestCase):
 
         self.team1 = Team.objects.create(name='Team Alpha', email='alpha@example.com', captain=self.team_user, is_public=True)
         self.team2 = Team.objects.create(name='Team Beta', email='beta@example.com', captain=self.team_user2, is_public=True)
+        TournamentTeamRegistration.objects.create(
+            tournament=self.tournament,
+            team=self.team1,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=self.tournament,
+            team=self.team2,
+            is_active=True,
+        )
 
         self.sub1 = Submission.objects.create(
             team=self.team1,
@@ -466,3 +477,59 @@ class LeaderboardTests(APITestCase):
         save_leaderboard_snapshot(self.tournament.id, self.round_obj2.id)
         second_count = LeaderboardEntry.objects.filter(tournament=self.tournament, round__isnull=True).count()
         self.assertEqual(first_count, second_count)
+
+    def test_mark_round_evaluated_eliminates_teams_outside_passing_count(self):
+        self.round_obj.passing_count = 1
+        self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj.save(update_fields=['passing_count', 'status', 'updated_at'])
+
+        mark_round_evaluated(self.round_obj)
+
+        team1_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team1,
+        )
+        team2_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team2,
+        )
+        self.assertTrue(team1_registration.is_active)
+        self.assertFalse(team2_registration.is_active)
+
+    def test_mark_round_evaluated_keeps_teams_active_when_passing_count_missing(self):
+        self.round_obj.passing_count = None
+        self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj.save(update_fields=['passing_count', 'status', 'updated_at'])
+
+        mark_round_evaluated(self.round_obj)
+
+        team1_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team1,
+        )
+        team2_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team2,
+        )
+        self.assertTrue(team1_registration.is_active)
+        self.assertTrue(team2_registration.is_active)
+
+    def test_try_auto_evaluate_round_uses_mark_round_evaluated_elimination_logic(self):
+        self.round_obj.passing_count = 1
+        self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj.save(update_fields=['passing_count', 'status', 'updated_at'])
+
+        try_auto_evaluate_round(self.round_obj)
+
+        self.round_obj.refresh_from_db()
+        team1_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team1,
+        )
+        team2_registration = TournamentTeamRegistration.objects.get(
+            tournament=self.tournament,
+            team=self.team2,
+        )
+        self.assertEqual(self.round_obj.status, Round.STATUS_EVALUATED)
+        self.assertTrue(team1_registration.is_active)
+        self.assertFalse(team2_registration.is_active)
