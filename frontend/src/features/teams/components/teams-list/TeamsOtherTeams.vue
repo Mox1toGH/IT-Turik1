@@ -111,7 +111,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useNotification } from '@/composables/useNotification'
 import type { TeamId } from '@/api/dbTypes'
-import type { GetTeamsResponse } from '@/api/services/teams/types'
+import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { computed, ref } from 'vue'
 import { useSendJoinRequest, useTeams } from '@/api/queries/teams'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -132,14 +132,12 @@ const { showNotification } = useNotification()
 const otherPage = ref(1)
 const loadingIds = ref<Set<TeamId>>(new Set())
 
-type TeamListItem = GetTeamsResponse[number]
-
-const isCaptain = (team: TeamListItem) => team.captain_id === user.value?.id
-const captainName = (team: TeamListItem) => {
+const isCaptain = (team: GetTeamInfoResponse) => team.captain_id === user.value?.id
+const captainName = (team: GetTeamInfoResponse) => {
   const captain = team.members.find((member) => member.id === team.captain_id)
   return captain?.username || `User #${team.captain_id}`
 }
-const isAcceptedMember = (team: TeamListItem) => team.is_member || isCaptain(team)
+const isAcceptedMember = (team: GetTeamInfoResponse) => team.is_member || isCaptain(team)
 
 const otherTeams = computed(() => teams.value?.filter((team) => !isAcceptedMember(team)))
 const otherPages = computed(() =>
