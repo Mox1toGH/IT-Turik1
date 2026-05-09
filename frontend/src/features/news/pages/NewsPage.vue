@@ -84,7 +84,10 @@
 
           <div
             class="news-content-wrap"
-            :class="{ expanded: isExpanded(item.id) }"
+            :class="{
+              collapsible: isExpandable(item),
+              expanded: isExpandable(item) && isExpanded(item.id),
+            }"
           >
             <news-content-viewer :content="item.content" />
           </div>
@@ -529,6 +532,9 @@ watch(
 
 .news-content-wrap {
   position: relative;
+}
+
+.news-content-wrap.collapsible {
   max-height: 180px;
   overflow: hidden;
   opacity: 0.96;
@@ -536,7 +542,7 @@ watch(
   will-change: max-height, opacity;
 }
 
-.news-content-wrap:not(.expanded)::after {
+.news-content-wrap.collapsible:not(.expanded)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -544,9 +550,10 @@ watch(
   bottom: 0;
   height: 48px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--muted));
+  pointer-events: none;
 }
 
-.news-content-wrap.expanded {
+.news-content-wrap.collapsible.expanded {
   max-height: 2200px;
   opacity: 1;
 }
