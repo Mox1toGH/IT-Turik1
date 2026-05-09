@@ -151,7 +151,7 @@ class RoundSerializer(serializers.ModelSerializer):
 
         passing_count = attrs.get('passing_count', getattr(instance, 'passing_count', None))
         if passing_count is not None and tournament:
-            registered_teams_count = tournament.team_registrations.count()
+            registered_teams_count = tournament.team_registrations.filter(is_active=True).count()
             if registered_teams_count > 0 and passing_count > registered_teams_count:
                 errors['passing_count'] = (
                     f'passing_count ({passing_count}) cannot exceed '

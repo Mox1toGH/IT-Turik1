@@ -288,9 +288,10 @@ class TournamentTeamsView(APIView):
         queryset = TournamentTeamRegistration.objects.filter(
             tournament_id=pk,
         ).select_related('team').prefetch_related('team__team_members')
- 
-        only_active = request.query_params.get('only_active')
-        if only_active and only_active.lower() == 'true':
+
+        include_inactive = request.query_params.get('include_inactive')
+        include_inactive = isinstance(include_inactive, str) and include_inactive.lower() == 'true'
+        if not include_inactive:
             queryset = queryset.filter(is_active=True)
  
         serializer = TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True)
@@ -305,6 +306,7 @@ class TeamActiveTournamentView(APIView):
             TournamentTeamRegistration.objects.select_related('tournament')
             .filter(
                 team_id=team_id,
+                is_active=True,
                 tournament__status__in=[
                     Tournament.STATUS_REGISTRATION,
                     Tournament.STATUS_RUNNING,
