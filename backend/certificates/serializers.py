@@ -51,3 +51,19 @@ class CertificateSerializer(serializers.ModelSerializer):
 
     def get_tournament_name(self, obj):
         return obj.tournament_name
+
+    def _resolve_default_template(self):
+        return CertificateTemplate.objects.filter(is_default=True).first()
+
+    def create(self, validated_data):
+        # If "Default template" was selected (template=null), pin the current
+        # default template to keep certificate background immutable over time.
+        if validated_data.get('template') is None:
+            validated_data['template'] = self._resolve_default_template()
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Preserve deterministic template selection for updates as well.
+        if 'template' in validated_data and validated_data.get('template') is None:
+            validated_data['template'] = self._resolve_default_template()
+        return super().update(instance, validated_data)
