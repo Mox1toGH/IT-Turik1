@@ -50,7 +50,7 @@
             size="sm"
             variant="secondary"
             :disabled="!editor"
-            :aria-pressed="editor?.isActive('bold') ?? false"
+            :aria-pressed="editor?.isActive('underline') ?? false"
             @click="toggleUnderline"
             :class="{ 'is-active': editor?.isActive('underline') }"
           >
@@ -60,7 +60,7 @@
             size="sm"
             variant="secondary"
             :disabled="!editor"
-            :aria-pressed="editor?.isActive('bold') ?? false"
+            :aria-pressed="editor?.isActive('highlight') ?? false"
             @click="toggleHighlight"
             :class="{ 'is-active': editor?.isActive('highlight') }"
           >
@@ -206,7 +206,15 @@ function toggleUnderline() {
 }
 
 function toggleHighlight() {
-  editor.value?.chain().focus().toggleHighlight({ color: '#8ce99a' }).run()
+  if (!editor.value) return
+
+  const chain = editor.value.chain().focus()
+  if (editor.value.isActive('highlight')) {
+    chain.unsetHighlight().run()
+    return
+  }
+
+  chain.setHighlight({ color: '#8ce99a' }).run()
 }
 
 function toggleBulletList() {
