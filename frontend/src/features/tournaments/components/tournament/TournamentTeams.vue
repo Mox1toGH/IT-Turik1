@@ -50,6 +50,9 @@
               <div class="team-info">
                 <TeamIcon />
                 {{ team.name }}
+                <ui-badge v-if="!team.is_active" variant="red">
+                  Disqualified
+                </ui-badge>
               </div>
 
               <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
