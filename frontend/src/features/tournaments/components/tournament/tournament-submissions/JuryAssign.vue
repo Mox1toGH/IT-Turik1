@@ -62,7 +62,10 @@
             <span style="text-align: end">Actions</span>
           </div>
 
-          <div v-for="submission in submissions" :key="submission.id" class="table-row">
+          <ui-card v-if="submissions?.length === 0" class="empty-card"
+            ><p class="empty-error">No submissions was submited to this round</p></ui-card
+          >
+          <div v-else v-for="submission in submissions" :key="submission.id" class="table-row">
             <div class="team-cell">
               <div class="team-avatar">{{ teamAbbr(submission.team_details.name) }}</div>
               <div>
