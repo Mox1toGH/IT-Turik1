@@ -39,6 +39,10 @@ import type {
   StartRoundArgs,
   StartRoundResponse,
   SubmitRoundArgs,
+  GetPassingStatusArgs,
+  GetPassingStatusResponse,
+  UpdateRegistrationArgs,
+  UpdateRegistrationResponse,
 } from '@/api/services/tournaments/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { $api } from '@/api/services'
@@ -394,6 +398,39 @@ export const useRoundSubmissions = (
   return useQuery<GetRoundSubmissionsResponse, AxiosError<ApiError>>({
     queryKey: computed(() => tournamentsKeys.roundSubmissions(toValue(payload.roundId))),
     queryFn: () => $api.tournaments.getRoundSubmissions({ roundId: toValue(payload.roundId) }),
+    ...config,
+  })
+}
+
+export const usePassingStatus = (
+  payload: GetPassingStatusArgs,
+  config?: QueryConfig<GetPassingStatusResponse>,
+) => {
+  return useQuery<GetPassingStatusResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.passingStatus(payload.roundId),
+    queryFn: () => $api.tournaments.getPassingStatus({ roundId: payload.roundId }),
+    ...config,
+  })
+}
+
+export const useUpdateRegistration = (
+  config?: MutationConfig<
+    UpdateRegistrationResponse,
+    AxiosError<ApiError<keyof UpdateRegistrationArgs>>,
+    UpdateRegistrationArgs
+  >,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<
+    UpdateRegistrationResponse,
+    AxiosError<ApiError<keyof UpdateRegistrationArgs>>,
+    UpdateRegistrationArgs
+  >({
+    mutationFn: $api.tournaments.updateRegistration,
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.tournamentId) })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.passingStatus(vars.roundId) })
+    },
     ...config,
   })
 }

@@ -20,6 +20,8 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  GetPassingStatusArgs,
+  GetPassingStatusResponse,
   LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
@@ -37,6 +39,8 @@ import type {
   StartRoundArgs,
   StartRoundResponse,
   SubmitRoundArgs,
+  UpdateRegistrationArgs,
+  UpdateRegistrationResponse,
 } from './types'
 import { toValue } from 'vue'
 
@@ -204,6 +208,21 @@ export const tournamentsService = {
   getRoundSubmissions: async (args: GetRoundSubmissionsArgs) => {
     const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
+    )
+    return data
+  },
+
+  getPassingStatus: async (args: GetPassingStatusArgs) => {
+    const { data } = await apiClient.get<GetPassingStatusResponse>(
+      `/api/evaluation/rounds/${args.roundId}/passing-status/`,
+    )
+    return data
+  },
+
+  updateRegistration: async (args: UpdateRegistrationArgs) => {
+    const { data } = await apiClient.patch<UpdateRegistrationResponse>(
+      `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/`,
+      { action: args.action },
     )
     return data
   },
