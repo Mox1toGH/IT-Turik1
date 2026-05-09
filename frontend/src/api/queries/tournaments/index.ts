@@ -407,8 +407,8 @@ export const usePassingStatus = (
   config?: QueryConfig<GetPassingStatusResponse>,
 ) => {
   return useQuery<GetPassingStatusResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.passingStatus(payload.roundId),
-    queryFn: () => $api.tournaments.getPassingStatus({ roundId: payload.roundId }),
+    queryKey: tournamentsKeys.passingStatus(payload.id),
+    queryFn: () => $api.tournaments.getPassingStatus({ id: payload.id }),
     ...config,
   })
 }

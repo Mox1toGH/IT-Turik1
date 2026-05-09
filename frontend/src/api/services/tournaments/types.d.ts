@@ -297,32 +297,44 @@ export interface GetRoundSubmissionsArgs {
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse
 
-// Passing status - using leaderboard data with additional logic
+// Passing status
 export interface PassingStatusResult {
   rank: number
-  team_id: number
+  team_id: TeamId
   team_name: string
   total_score: number
   average_score: number
   passed: boolean
   is_active: boolean
+  disqualification_reason: string | null
   registration_id: number
 }
 
-export interface GetPassingStatusArgs {
-  roundId: RoundId
+export interface GetPassingStatusResponse {
+  round_id: RoundId
+  round_name: string
+  passing_count: number | null
+  total_teams: number
+  results: PassingStatusResult[]
 }
 
-export type GetPassingStatusResponse = PassingStatusResult[]
+export interface GetPassingStatusArgs {
+  id: RoundId
+}
 
 // Update registration
 export interface UpdateRegistrationArgs {
   tournamentId: TournamentId
   registrationId: number
-  action: 'activated' | 'disqualified'
+  body: {
+    is_active?: boolean
+    disqualification_reason?: string
+  }
 }
 
-export type UpdateRegistrationResponse = {
+export interface UpdateRegistrationResponse {
   id: number
   is_active: boolean
+  disqualification_reason: string | null
+  action: 'activated' | 'disqualified'
 }

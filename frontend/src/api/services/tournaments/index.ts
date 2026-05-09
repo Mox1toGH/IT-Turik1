@@ -214,55 +214,16 @@ export const tournamentsService = {
   },
 
   getPassingStatus: async (args: GetPassingStatusArgs) => {
-    // TODO: Replace with actual passing-status endpoint when backend is ready
-    // For now, using leaderboard data and computing passed status
-    const { data: leaderboardData } = await apiClient.get(
-      `/api/evaluation/tournaments/rounds/${args.roundId}/leaderboard/`
+    const { data } = await apiClient.get<GetPassingStatusResponse>(
+      `/api/evaluation/rounds/${args.id}/passing-status/`,
     )
-
-    // Get round data to determine passing_count
-    const { data: roundData } = await apiClient.get(`/api/tournaments/rounds/${args.roundId}/`)
-
-    // Get registered teams to determine active status
-    const { data: registeredTeams } = await apiClient.get(
-      `/api/tournaments/${roundData.tournament}/teams/`
-    )
-
-    const passingCount = roundData.passing_count
-    const rankings = leaderboardData.rankings || []
-
-    // Create team active status map and registration ID map
-    const teamActiveMap = new Map()
-    const teamRegistrationMap = new Map()
-    registeredTeams.forEach((team: any) => {
-      teamActiveMap.set(team.id, team.is_active)
-      teamRegistrationMap.set(team.id, team.registration_id)
-    })
-
-    // Transform leaderboard data to passing status format
-    const results: PassingStatusResult[] = rankings.map((ranking: any, index: number) => {
-      const passed = passingCount ? ranking.rank <= passingCount : true
-      const is_active = teamActiveMap.get(ranking.team_id) ?? true
-
-      return {
-        rank: ranking.rank,
-        team_id: ranking.team_id,
-        team_name: ranking.team_name,
-        total_score: ranking.total_score,
-        average_score: ranking.average_score,
-        passed,
-        is_active,
-        registration_id: teamRegistrationMap.get(ranking.team_id) ?? ranking.team_id
-      }
-    })
-
-    return results
+    return data
   },
 
   updateRegistration: async (args: UpdateRegistrationArgs) => {
     const { data } = await apiClient.patch<UpdateRegistrationResponse>(
       `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/`,
-      { is_active: args.action === 'activated' },
+      args.body,
     )
     return data
   },
