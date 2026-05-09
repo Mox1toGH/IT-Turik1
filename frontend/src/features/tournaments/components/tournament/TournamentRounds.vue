@@ -81,11 +81,15 @@
             >
               Edit
             </ui-button>
-            <edit-round-modal
-              v-if="selectedRound && user?.role === 'admin'"
-              :round="selectedRound"
-              v-model="isEditOpen"
-            />
+
+            <ui-button
+              v-if="user?.role === 'admin' && (round.status === 'submission_closed' || round.status === 'evaluated')"
+              size="sm"
+              variant="primary"
+              @click="togglePassingStatus(round)"
+            >
+              View Results
+            </ui-button>
 
             <template v-if="round.status === 'active' && user?.role === 'team'">
               <ui-button
@@ -119,6 +123,14 @@
       :technicalRequirements="selectedRound?.tech_requirements ?? {}"
     />
   </section>
+
+  <Transition name="slide-down">
+    <RoundPassingStatus
+      v-if="selectedPassingRound"
+      :roundId="selectedPassingRound.id"
+      :tournamentId="props.tournamentId"
+    />
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -139,6 +151,7 @@ import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
 import EditRoundModal from './modals/EditRoundModal.vue'
+import RoundPassingStatus from './RoundPassingStatus.vue'
 import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
@@ -170,6 +183,7 @@ const isSubmitOpen = ref(false)
 const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
+const selectedPassingRound = ref<Round | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round
@@ -184,6 +198,14 @@ function openEdit(round: Round) {
 function openSubmissionForm(roundId: number) {
   selectedSubmitRoundId.value = roundId
   isSubmitOpen.value = true
+}
+
+function togglePassingStatus(round: Round) {
+  if (selectedPassingRound.value?.id === round.id) {
+    selectedPassingRound.value = null
+  } else {
+    selectedPassingRound.value = round
+  }
 }
 
 function openSubmissionsSection() {
