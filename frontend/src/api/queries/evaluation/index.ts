@@ -8,6 +8,10 @@ import type {
   GetAssignmentsResponse,
   GetAvailableJuryArgs,
   GetAvailableJuryResponse,
+  GetRoundLeaderboardArgs,
+  GetRoundLeaderboardResponse,
+  GetTournamentLeaderboardArgs,
+  GetTournamentLeaderboardResponse,
   UpdateEvaluationArgs,
   UpdateEvaluationResponse,
 } from '@/api/services/evaluation/types'
@@ -26,6 +30,29 @@ export const useAvailableJury = (
   return useQuery<GetAvailableJuryResponse, AxiosError<ApiError>>({
     queryKey: evaluationKeys.availableJury(toValue(payload.roundId)),
     queryFn: () => $api.evaluation.getAvailableJury({ roundId: toValue(payload.roundId) }),
+    ...config,
+  })
+}
+
+export const useRoundLeaderboard = (
+  payload: GetRoundLeaderboardArgs,
+  config?: QueryConfig<GetRoundLeaderboardResponse>,
+) => {
+  return useQuery<GetRoundLeaderboardResponse, AxiosError<ApiError>>({
+    queryKey: computed(() => evaluationKeys.roundLeaderboard(toValue(payload.roundId))),
+    queryFn: () => $api.evaluation.getRoundLeaderboard({ roundId: toValue(payload.roundId) }),
+    ...config,
+  })
+}
+
+export const useTournamentLeaderboard = (
+  payload: GetTournamentLeaderboardArgs,
+  config?: QueryConfig<GetTournamentLeaderboardResponse>,
+) => {
+  return useQuery<GetTournamentLeaderboardResponse, AxiosError<ApiError>>({
+    queryKey: computed(() => evaluationKeys.tournamentLeaderboard(toValue(payload.tournamentId))),
+    queryFn: () =>
+      $api.evaluation.getTournamentLeaderboard({ tournamentId: toValue(payload.tournamentId) }),
     ...config,
   })
 }

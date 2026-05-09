@@ -9,8 +9,8 @@
     <template #default="{ close }">
       <div class="actions-list">
         <ui-button
-          v-if="props.status === 'draft'"
           variant="secondary"
+          :disabled="props.status !== 'draft'"
           size="sm"
           class="action-btn"
           @click="
@@ -23,8 +23,8 @@
         >
         <template v-if="profile?.role === 'admin'">
           <ui-button
-            v-if="props.status === 'active'"
             size="sm"
+            :disabled="props.status !== 'active'"
             class="action-btn"
             @click="
               () => {
@@ -39,6 +39,7 @@
             size="sm"
             class="action-btn action-delete"
             variant="danger"
+            :disabled="props.status !== 'draft'"
             @click="
               () => {
                 close()

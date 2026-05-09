@@ -31,6 +31,7 @@
         >
         <ui-button
           variant="secondary"
+          :disabled="user?.role !== 'admin' && user?.role !== 'team'"
           :class="['sections-btn', { active: currentSection === 'submissions' }]"
           @click="setActiveSection('submissions')"
           >Submissions</ui-button
@@ -57,17 +58,19 @@
 
     <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
     <TournamentSchedule :tournament-id="id" v-if="currentSection === 'schedule'" />
+    <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
 
-    <TournamentSubmissions
-      :tournament-id="id"
-      v-if="currentSection === 'submissions' && user?.role === 'team'"
-    />
-    <JuryAssign
-      :tournament-id="id"
-      v-if="currentSection === 'submissions' && user?.role === 'admin'"
-    />
+    <template
+      v-if="currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')"
+    >
+      <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
+      <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
+    </template>
+
     <ui-card
-      v-if="currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'"
+      v-if="
+        currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'
+      "
     >
       <p>Submissions are available for team members and admins.</p>
     </ui-card>
@@ -86,6 +89,7 @@ import TournamentRounds from '../components/tournament/TournamentRounds.vue'
 import JuryAssign from '../components/tournament/tournament-submissions/JuryAssign.vue'
 import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
 import { useProfile } from '@/api/queries/accounts'
+import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 

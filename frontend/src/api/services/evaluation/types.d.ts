@@ -1,4 +1,5 @@
 import type { RoundId, SubmissionId, User, UserId } from '@/api/dbTypes'
+import type { TournamentId } from '@/api/dbTypes'
 import type { MaybeRefOrGetter } from 'vue'
 
 // available jury
@@ -7,6 +8,56 @@ export interface GetAvailableJuryArgs {
 }
 
 export type GetAvailableJuryResponse = Pick<User, 'id' | 'username' | 'full_name' | 'email'>[]
+
+// leaderboard
+export interface GetRoundLeaderboardArgs {
+  roundId: MaybeRefOrGetter<RoundId>
+}
+
+export interface GetTournamentLeaderboardArgs {
+  tournamentId: MaybeRefOrGetter<TournamentId>
+}
+
+export type CriteriaBreakdown = Record<string, number>
+
+export interface RoundLeaderboardRanking {
+  rank: number
+  team_id: number
+  team_name: string
+  total_score: number
+  average_score: number
+  criteria_breakdown: CriteriaBreakdown
+  jury_breakdown: unknown | null
+}
+
+export interface GetRoundLeaderboardResponse {
+  round_id: number
+  is_snapshot: boolean
+  rankings: RoundLeaderboardRanking[]
+}
+
+export interface TournamentLeaderboardRoundBreakdown {
+  round_id: number
+  round_name: string
+  total_score: number
+  average_score: number
+  criteria_breakdown: CriteriaBreakdown
+  jury_breakdown: unknown | null
+}
+
+export interface TournamentLeaderboardRanking {
+  rank: number
+  team_id: number
+  team_name: string
+  total_score: number
+  rounds: TournamentLeaderboardRoundBreakdown[]
+}
+
+export interface GetTournamentLeaderboardResponse {
+  tournament_id: number
+  is_snapshot: boolean
+  rankings: TournamentLeaderboardRanking[]
+}
 
 // assign jury
 export interface AssignJuryArgs {
