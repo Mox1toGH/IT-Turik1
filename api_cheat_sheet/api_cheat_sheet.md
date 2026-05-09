@@ -16,7 +16,8 @@
 | **Активний турнір команди** | GET | `/api/tournaments/active/?team_id={id}` | Auth |
 | **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
 | **Вихід команди з турніру** | POST | `/api/tournaments/{id}/leave-team/` | Капітан |
-| **Деталі/Зміна реєстрації**| GET/PATCH | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Деталі реєстрації**| GET | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Дискваліфікація/реактивація команди**| PATCH | `/api/tournaments/{id}/registrations/{reg_id}/disqualification/` | Admin |
 | **Список раундів** | GET | `/api/tournaments/{id}/rounds/` | Auth |
 | **Створити раунд** | POST | `/api/tournaments/{id}/rounds/` | Admin |
 | **Деталі/Зміна/Видалення раунду**| GET/PATCH/DEL | `/api/tournaments/rounds/{id}/` | GET: Auth, PATCH/DEL: Admin |
@@ -149,9 +150,18 @@
   }
 ]
 ```
-> Повертає всі реєстрації команд у конкретному турнірі з ознакою активності `is_active`.
-> Доступний query-параметр `?only_active=true`, щоб повернути тільки активні команди (`is_active=true`).
+> За замовчуванням повертає тільки активні реєстрації (`is_active=true`).
+> Щоб отримати також неактивні (soft-deleted) реєстрації, використовуйте `?include_inactive=true`.
 > Якщо турнір не існує — `404`.
+>
+> `status` filter:
+> - `?status=active` -> only active registrations (`is_active=true`)
+> - `?status=disqualified` -> only disqualified registrations (`is_active=false` and `disqualification_reason` is not empty)
+> - `?status=all` -> all registrations (active + inactive)
+>
+> Important distinction:
+> - `left team` -> `is_active=false` and empty `disqualification_reason`
+> - `disqualified team` -> `is_active=false` and non-empty `disqualification_reason`
 
 **Активний турнір команди — GET `/api/tournaments/active/?team_id={id}`**
 ```json
@@ -162,14 +172,22 @@
   "start_date": "2026-05-01T10:00:00Z"
 }
 ```
-> Повертає активний турнір команди (статус `registration` або `running`).
+> Повертає активний турнір команди (статус `registration` або `running`) тільки для активної реєстрації (`is_active=true`).
 > Якщо активної участі для `team_id` немає — повертає `404`.
 
-**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/`**
+**Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/disqualification/`**
 ```json
-{ "is_active": false }
+{ "action": "disqualify", "disqualification_reason": "Rules violation" }
 ```
+```json
+{ "action": "reactivate" }
+```
+```json
+{ "action": "disqualify" }
+```
+> If `disqualification_reason` is empty, backend saves default reason: `Disqualified by admin`.
 > Деактивовані команди (`is_active: false`) не можуть подавати роботи. Запис не видаляється.
+> Деактивація можлива як вручну через цей endpoint, так і автоматично після оцінювання раунду за правилом `passing_count`.
 
 > **Обмеження під час активного турніру (`registration` або `running`):**
 > - Заборонені: інвайти в команду, join-request, прийняття інвайту/заявки, зміна `name`, зміна `is_public`.
@@ -227,6 +245,12 @@
 >
 > **Валідація `passing_count`:**
 > Якщо вказано `passing_count` і в турнірі вже є зареєстровані команди, значення не може перевищувати кількість зареєстрованих команд. Якщо команд ще немає (реєстрація не відкрита), перевірка пропускається.
+>
+> **Авто-відсів за `passing_count` (після evaluated):**
+> - Застосовується під час переходу раунду в `evaluated` (manual `mark-evaluated` або auto-evaluation).
+> - Команди з `rank <= passing_count` залишаються активними.
+> - Команди з `rank > passing_count` автоматично деактивуються в `TournamentTeamRegistration` (`is_active=false`).
+> - Якщо `passing_count = null`, авто-відсів не застосовується.
 
 ### 3. Роботи (Команда)
 
@@ -418,4 +442,4 @@
 > - Оцінка `score` має бути $\ge 0$ та $\le$ `max_score` критерію.
 > - Дублікати `criterion_id` не допускаються.
 > - Необхідно передати оцінки для **всіх** критеріїв раунду. Якщо потрібен 0, його потрібно передати явно (`"score": 0`).
-> - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. Якщо це останній раунд — турнір завершується автоматично.
+> - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. У цей момент також застосовується авто-відсів команд за `passing_count` поточного раунду. Якщо це останній раунд — турнір завершується автоматично.

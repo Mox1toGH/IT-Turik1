@@ -81,11 +81,6 @@
             >
               Edit
             </ui-button>
-            <edit-round-modal
-              v-if="selectedRound && user?.role === 'admin'"
-              :round="selectedRound"
-              v-model="isEditOpen"
-            />
 
             <template v-if="round.status === 'active' && user?.role === 'team'">
               <ui-button
@@ -118,6 +113,8 @@
       :mustHave="selectedRound?.must_have_requirements ?? {}"
       :technicalRequirements="selectedRound?.tech_requirements ?? {}"
     />
+
+    <edit-round-modal v-if="selectedRound" v-model="isEditOpen" :round="selectedRound" />
   </section>
 </template>
 
@@ -303,5 +300,20 @@ function badgeStatus(status: Round['status']) {
   .rounds-list {
     grid-template-columns: 1fr;
   }
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 </style>

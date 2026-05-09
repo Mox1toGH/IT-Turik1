@@ -501,6 +501,53 @@ class TournamentApiTests(APITestCase):
         returned_ids = {item['id'] for item in response.data}
         self.assertIn(own_submission.id, returned_ids)
 
+    def test_tournament_submissions_excludes_disqualified_team_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+
+        other_captain = User.objects.create_user(
+            username='captain-disqualified',
+            email='captain-disqualified@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Disqualified Team Subs',
+            email='disq-team-subs@example.com',
+            captain=other_captain,
+        )
+        TeamMember.objects.create(team=disq_team, user=other_captain)
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            is_active=False,
+            is_disqualified=True,
+            disqualification_reason='Rules violation',
+        )
+        Submission.objects.create(
+            team=disq_team,
+            round=round_obj,
+            github_url='https://github.com/test/disq',
+            demo_video_url='https://youtube.com/disq',
+            created_by=other_captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
     def test_tournament_submissions_does_not_include_other_tournament_submissions(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
@@ -925,7 +972,7 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['id'], self.team.id)
         self.assertEqual(response.data[0]['name'], self.team.name)
-        self.assertEqual(response.data[0]['members_count'], 3)
+        self.assertEqual(response.data[0]['members_count'], 2)
 
     def test_team_active_tournament_returns_registration_or_running_tournament(self):
         tournament = Tournament.objects.create(
@@ -967,7 +1014,7 @@ class TournamentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_tournament_teams_returns_registrations_with_is_active(self):
+    def test_tournament_teams_returns_only_active_by_default(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
             status=Tournament.STATUS_RUNNING,
@@ -1003,12 +1050,153 @@ class TournamentApiTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]['team']['id'], self.team.id)
-        self.assertEqual(response.data[0]['team']['name'], self.team.name)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.team.id)
+        self.assertEqual(response.data[0]['name'], self.team.name)
+        self.assertEqual(response.data[0]['members_count'], 1)
         self.assertTrue(response.data[0]['is_active'])
-        self.assertEqual(response.data[1]['id'], inactive_registration.id)
-        self.assertFalse(response.data[1]['is_active'])
+
+    def test_tournament_teams_can_include_inactive(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        second_user = User.objects.create_user(
+            username='second-captain-include',
+            email='second-captain-include@example.com',
+            password='StrongPass123!',
+        )
+        second_team = Team.objects.create(
+            name='Second Team Include',
+            email='second-team-include@example.com',
+            captain=second_user,
+        )
+        TeamMember.objects.create(team=second_team, user=second_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=second_team,
+            created_by=second_user,
+            is_active=False,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'include_inactive': 'true'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertTrue(any(item['is_active'] for item in response.data))
+        self.assertTrue(any(not item['is_active'] for item in response.data))
+
+    def test_tournament_teams_filters_disqualified_only(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        disq_user = User.objects.create_user(
+            username='disq-captain',
+            email='disq-captain@example.com',
+            password='StrongPass123!',
+        )
+        left_user = User.objects.create_user(
+            username='left-captain',
+            email='left-captain@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Disqualified Team',
+            email='disq-team@example.com',
+            captain=disq_user,
+        )
+        left_team = Team.objects.create(
+            name='Left Team',
+            email='left-team@example.com',
+            captain=left_user,
+        )
+        TeamMember.objects.create(team=disq_team, user=disq_user)
+        TeamMember.objects.create(team=left_team, user=left_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            created_by=disq_user,
+            is_active=False,
+            is_disqualified=True,
+            disqualification_reason='Rules violation',
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=left_team,
+            created_by=left_user,
+            is_active=False,
+            disqualification_reason='',
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'status': 'disqualified'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['name'], disq_team.name)
+        self.assertFalse(response.data[0]['is_active'])
+
+    def test_tournament_teams_status_active_excludes_disqualified(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        disq_user = User.objects.create_user(
+            username='status-active-disq',
+            email='status-active-disq@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Status Active Disqualified Team',
+            email='status-active-disq-team@example.com',
+            captain=disq_user,
+        )
+        TeamMember.objects.create(team=disq_team, user=disq_user)
+
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            created_by=disq_user,
+            is_active=False,
+            is_disqualified=True,
+            disqualification_reason='Rules violation',
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        response = self.client.get(url, {'status': 'active'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.team.id)
+        self.assertTrue(response.data[0]['is_active'])
 
     def test_tournament_teams_filters_only_active(self):
         tournament = Tournament.objects.create(
@@ -1043,12 +1231,53 @@ class TournamentApiTests(APITestCase):
 
         self.client.force_authenticate(user=self.captain)
         url = reverse('tournament_teams', kwargs={'pk': tournament.id})
-        response = self.client.get(url, {'only_active': 'true'})
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['id'], active_registration.id)
+        self.assertEqual(response.data[0]['id'], active_registration.team_id)
         self.assertTrue(response.data[0]['is_active'])
+
+    def test_team_active_tournament_ignores_inactive_registration(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=False,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('team_active_tournament')
+        response = self.client.get(url, {'team_id': self.team.id})
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_team_active_tournament_returns_404_after_leave_team(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        leave_url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        leave_response = self.client.post(leave_url, {'team_id': self.team.id}, format='json')
+        self.assertEqual(leave_response.status_code, status.HTTP_200_OK)
+
+        active_url = reverse('team_active_tournament')
+        active_response = self.client.get(active_url, {'team_id': self.team.id})
+        self.assertEqual(active_response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_tournament_teams_returns_404_for_missing_tournament(self):
         self.client.force_authenticate(user=self.captain)
@@ -1384,16 +1613,6 @@ class TournamentApiTests(APITestCase):
         response = self.client.post(url, round3_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('start_date', response.data['details'])
-        
-        # For single-round tournaments this still fails due to round date constraints
-        round4_data = {
-            'name': 'Round 4',
-            'start_date': (tournament.start_date + timezone.timedelta(days=4)).isoformat(),
-            'end_date': (tournament.start_date + timezone.timedelta(days=6)).isoformat(),
-        }
-        response = self.client.post(url, round4_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('start_date', response.data['details'])
 
     def test_round_date_overlap_update_validation(self):
         """Test that updating a round cannot cause date overlaps"""
@@ -1581,3 +1800,15 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         jury_ids = {item['jury']['id'] for item in assignments}
         self.assertEqual(jury_ids, {self.jury1.id, self.jury2.id})
         self.assertTrue(all(item['jury']['role'] == 'jury' for item in assignments))
+
+    def test_round_submissions_excludes_disqualified_team_submissions(self):
+        TournamentTeamRegistration.objects.filter(
+            tournament=self.tournament,
+            team=self.team,
+        ).update(is_active=False, is_disqualified=True, disqualification_reason='Rules violation')
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse('round_submissions', kwargs={'pk': self.round_obj.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)

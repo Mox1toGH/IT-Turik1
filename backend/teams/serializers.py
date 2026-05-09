@@ -133,7 +133,6 @@ class TeamSerializer(serializers.ModelSerializer):
     )
     members = TeamMemberSerializer(many=True, read_only=True)
     is_member = serializers.SerializerMethodField()
-    is_captain = serializers.SerializerMethodField()
     can_request_to_join = serializers.SerializerMethodField()
     is_in_active_tournament = serializers.SerializerMethodField()
 
@@ -150,7 +149,6 @@ class TeamSerializer(serializers.ModelSerializer):
             'contact_discord',
             'members',
             'is_member',
-            'is_captain',
             'can_request_to_join',
             'is_in_active_tournament',
             'member_ids',
@@ -172,10 +170,12 @@ class TeamSerializer(serializers.ModelSerializer):
         if not user:
             return False
         return self._is_member_for_user(obj, user)
-
+    
     def get_is_captain(self, obj):
         user = self._request_user()
         return bool(user) and obj.captain_id == user.id
+
+
 
     def get_can_request_to_join(self, obj):
         user = self._request_user()

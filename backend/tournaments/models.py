@@ -277,6 +277,8 @@ class TournamentTeamRegistration(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_disqualified = models.BooleanField(default=False)
+    disqualification_reason = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ('-created_at',)
