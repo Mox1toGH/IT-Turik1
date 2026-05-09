@@ -93,12 +93,10 @@ const error = computed(() => parseApiError(teamsError.value))
 
 const filteredTeams = computed(() => {
   if (!teams.value) return []
-  const activeTeams = teams.value.filter((team) => team.is_active)
-
   const term = search.value.trim().toLowerCase()
-  if (!term) return activeTeams
+  if (!term) return teams.value
 
-  return activeTeams.filter((team) => team.name.toLowerCase().includes(term))
+  return teams.value.filter((team) => team.name.toLowerCase().includes(term))
 })
 </script>
 
