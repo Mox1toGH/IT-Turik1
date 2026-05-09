@@ -326,4 +326,19 @@ function badgeStatus(status: Round['status']) {
     grid-template-columns: 1fr;
   }
 }
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
 </style>
