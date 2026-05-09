@@ -116,15 +116,6 @@
 
     <edit-round-modal v-if="selectedRound" v-model="isEditOpen" :round="selectedRound" />
   </section>
-
-  <Transition name="slide-down">
-    <RoundPassingStatus
-      v-if="selectedPassingRound"
-      :roundId="selectedPassingRound.id"
-      :tournamentId="props.tournamentId"
-      @hide="selectedPassingRound = null"
-    />
-  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -176,7 +167,6 @@ const isSubmitOpen = ref(false)
 const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
-const selectedPassingRound = ref<Round | null>(null)
 
 function openDetails(round: Round) {
   selectedRound.value = round

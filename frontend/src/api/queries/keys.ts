@@ -47,7 +47,6 @@ export const tournamentsKeys = {
   roundSubmissions: (roundId: RoundId) => ['round-submissions', roundId] as const,
   activeTeamTournament: (teamId: TeamId) =>
     [...tournamentsKeys.all(), 'active-for-team', teamId] as const,
-  passingStatus: (roundId: RoundId) => [...tournamentsKeys.all(), 'passing-status', roundId] as const,
 }
 
 export const notificationKeys = {
@@ -62,9 +61,12 @@ export const notificationKeys = {
 export const evaluationKeys = {
   all: () => ['evaluation'] as const,
   availableJury: (roundId: RoundId) => [...evaluationKeys.all(), 'availableJury', roundId] as const,
-  assignments: (roundId?: RoundId) => [...evaluationKeys.all(), 'assignments', roundId ?? 'all'] as const,
-  assignment: (assignmentId: number) => [...evaluationKeys.all(), 'assignment', assignmentId] as const,
-  roundLeaderboard: (roundId: RoundId) => [...evaluationKeys.all(), 'roundLeaderboard', roundId] as const,
+  assignments: (roundId?: RoundId) =>
+    [...evaluationKeys.all(), 'assignments', roundId ?? 'all'] as const,
+  assignment: (assignmentId: number) =>
+    [...evaluationKeys.all(), 'assignment', assignmentId] as const,
+  roundLeaderboard: (roundId: RoundId) =>
+    [...evaluationKeys.all(), 'roundLeaderboard', roundId] as const,
   tournamentLeaderboard: (tournamentId: TournamentId) =>
     [...evaluationKeys.all(), 'tournamentLeaderboard', tournamentId] as const,
 }

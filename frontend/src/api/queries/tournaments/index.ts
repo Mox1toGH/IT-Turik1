@@ -430,7 +430,6 @@ export const useUpdateRegistration = (
       queryClient.invalidateQueries({
         queryKey: tournamentsKeys.registeredTeams(vars.tournamentId),
       })
-      queryClient.invalidateQueries({ queryKey: ['tournaments', 'passing-status'] })
     },
     ...config,
   })
