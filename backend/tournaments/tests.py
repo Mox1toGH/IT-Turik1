@@ -322,6 +322,27 @@ class TournamentApiTests(APITestCase):
         # without strictly requiring 'non_field_errors' or 'team' key
         self.assertTrue(response.data.get('details'))
 
+    def test_close_submissions_auto_evaluates_round_without_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        url = reverse('round_close_submissions', kwargs={'pk': round_obj.id})
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        round_obj.refresh_from_db()
+        self.assertEqual(round_obj.status, Round.STATUS_EVALUATED)
+
     def test_submission_requires_team_tournament_registration(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
@@ -1248,7 +1269,7 @@ class TournamentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_sync_time_based_statuses(self):
+    def test_sync_time_based_statuses_auto_evaluates_closed_round_without_submissions(self):
         from .services import sync_time_based_statuses
         
         tournament = Tournament.objects.create(
@@ -1263,6 +1284,34 @@ class TournamentApiTests(APITestCase):
             end_date=timezone.now() - timezone.timedelta(days=1),
         )
         
+        sync_time_based_statuses()
+        round_obj.refresh_from_db()
+        self.assertEqual(round_obj.status, Round.STATUS_EVALUATED)
+
+    def test_sync_time_based_statuses_keeps_closed_when_submissions_exist(self):
+        from .services import sync_time_based_statuses
+
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(days=2),
+            end_date=timezone.now() - timezone.timedelta(days=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+        Submission.objects.create(
+            team=self.team,
+            round=round_obj,
+            github_url='https://github.com/test/repo-sync',
+            demo_video_url='https://youtube.com/test-sync',
+            description='Sync submission',
+            created_by=self.captain,
+        )
+
         sync_time_based_statuses()
         round_obj.refresh_from_db()
         self.assertEqual(round_obj.status, Round.STATUS_SUBMISSION_CLOSED)
