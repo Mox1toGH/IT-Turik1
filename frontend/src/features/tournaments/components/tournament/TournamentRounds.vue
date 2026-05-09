@@ -122,6 +122,12 @@
       :mustHave="selectedRound?.must_have_requirements ?? {}"
       :technicalRequirements="selectedRound?.tech_requirements ?? {}"
     />
+
+    <edit-round-modal
+      v-if="selectedRound"
+      v-model="isEditOpen"
+      :round="selectedRound"
+    />
   </section>
 
   <Transition name="slide-down">
@@ -151,7 +157,7 @@ import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournamen
 import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
-import _EditRoundModal from './modals/EditRoundModal.vue'
+import EditRoundModal from './modals/EditRoundModal.vue'
 import RoundPassingStatus from './RoundPassingStatus.vue'
 import { useRoute, useRouter } from 'vue-router'
 
