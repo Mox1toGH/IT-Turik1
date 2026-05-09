@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import Highlight from '@tiptap/extension-highlight'
+import Link from '@tiptap/extension-link'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { watch } from 'vue'
@@ -15,7 +16,19 @@ interface Props {
 const props = defineProps<Props>()
 
 const editor = useEditor({
-  extensions: [StarterKit, Highlight],
+  extensions: [
+    StarterKit,
+    Highlight,
+    Link.configure({
+      openOnClick: true,
+      autolink: true,
+      defaultProtocol: 'https',
+      HTMLAttributes: {
+        rel: 'noopener noreferrer nofollow',
+        target: '_blank',
+      },
+    }),
+  ],
   content: props.content,
   editable: false,
   editorProps: {
@@ -61,5 +74,15 @@ watch(
   line-height: 1.25;
   margin: 0.8rem 0 0.55rem;
 }
-</style>
 
+.news-content :deep(.ProseMirror a) {
+  color: #1c7ed6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.news-content :deep(.ProseMirror a:hover) {
+  color: #1864ab;
+}
+</style>

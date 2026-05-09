@@ -96,6 +96,16 @@
           >
             <numeric-list-icon width="20px" height="20" />
           </ui-button>
+          <ui-button
+            size="sm"
+            variant="secondary"
+            :disabled="!editor"
+            @click="toggleLink"
+            :aria-pressed="editor?.isActive('link') ?? false"
+            :class="{ 'is-active': editor?.isActive('link') }"
+          >
+            Link
+          </ui-button>
         </div>
       </ui-card>
 
@@ -127,6 +137,8 @@ import { tiptapJsonToText } from '@/lib/utils'
 import UnderlineIcon from '@/icons/typography/UnderlineIcon.vue'
 import HighlightIcon from '@/icons/typography/HighlightIcon.vue'
 import Highlight from '@tiptap/extension-highlight'
+import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
 
 interface Props {
   title: string
@@ -158,7 +170,20 @@ const editTextComputed = computed(() => props.editText || `Edit ${props.title.to
 const hasValue = computed(() => tiptapJsonToText(modelValue.value).length > 0)
 
 const editor = useEditor({
-  extensions: [StarterKit, Highlight],
+  extensions: [
+    StarterKit,
+    Underline,
+    Highlight,
+    Link.configure({
+      openOnClick: true,
+      autolink: true,
+      defaultProtocol: 'https',
+      HTMLAttributes: {
+        rel: 'noopener noreferrer nofollow',
+        target: '_blank',
+      },
+    }),
+  ],
   content: draftJson.value ?? '',
   editorProps: {
     attributes: {
@@ -232,6 +257,28 @@ function toggleH1() {
 function toggleH2() {
   editor.value?.chain().focus().toggleHeading({ level: 2 }).run()
 }
+
+function toggleLink() {
+  if (!editor.value) return
+
+  const { from, to, empty } = editor.value.state.selection
+
+  if (empty) return
+
+  if (editor.value.isActive('link')) {
+    editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+    return
+  }
+
+  const selectedText = editor.value.state.doc.textBetween(from, to, ' ').trim()
+  if (!selectedText) return
+
+  const href = /^(https?:\/\/|mailto:|tel:)/i.test(selectedText)
+    ? selectedText
+    : `https://${selectedText}`
+
+  editor.value.chain().focus().extendMarkRange('link').setLink({ href }).run()
+}
 </script>
 
 <style scoped>
@@ -281,5 +328,17 @@ function toggleH2() {
   font-size: 1.25rem;
   line-height: 1.3;
   margin: 0.85rem 0 0.55rem;
+}
+
+.editor :deep(.ProseMirror a) {
+  color: #1c7ed6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.editor :deep(.ProseMirror a:hover) {
+  color: #1864ab;
 }
 </style>
