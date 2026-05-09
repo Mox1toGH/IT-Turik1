@@ -81,6 +81,7 @@ export interface GetRegisteredTeamsArgs {
 }
 
 export type GetRegisteredTeamsResponse = (Pick<Team, 'id' | 'name' | 'is_public'> & {
+  registration_id: number
   members_count: number
   is_active: boolean
 })[]
@@ -296,7 +297,7 @@ export interface GetRoundSubmissionsArgs {
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse
 
-// Passing status
+// Passing status - using leaderboard data with additional logic
 export interface PassingStatusResult {
   rank: number
   team_id: number
