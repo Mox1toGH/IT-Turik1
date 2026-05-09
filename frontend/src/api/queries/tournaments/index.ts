@@ -416,14 +416,14 @@ export const usePassingStatus = (
 export const useUpdateRegistration = (
   config?: MutationConfig<
     UpdateRegistrationResponse,
-    AxiosError<ApiError<keyof UpdateRegistrationArgs>>,
+    AxiosError<ApiError>,
     UpdateRegistrationArgs
   >,
 ) => {
   const queryClient = useQueryClient()
   return useMutation<
     UpdateRegistrationResponse,
-    AxiosError<ApiError<keyof UpdateRegistrationArgs>>,
+    AxiosError<ApiError>,
     UpdateRegistrationArgs
   >({
     mutationFn: $api.tournaments.updateRegistration,
