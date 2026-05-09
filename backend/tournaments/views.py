@@ -314,15 +314,13 @@ class TournamentTeamsView(APIView):
         ).select_related('team', 'team__captain').prefetch_related('team__members')
 
         status_filter = request.query_params.get('status')
-        if status_filter == 'active':
-            queryset = queryset.filter(is_active=True)
-        elif status_filter == 'disqualified':
+        if status_filter == 'disqualified':
             queryset = queryset.filter(is_disqualified=True)
         elif status_filter == 'all':
             pass
         else:
-            # Default: return all teams (active + disqualified).
-            pass
+            # Default: return only active teams (active=True, disqualified=False)
+            queryset = queryset.filter(is_active=True)
  
         serializer = TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -340,6 +338,7 @@ class TeamActiveTournamentView(APIView):
                     Tournament.STATUS_REGISTRATION,
                     Tournament.STATUS_RUNNING,
                 ],
+                is_active=True,
             )
             .first()
         )
@@ -447,6 +446,7 @@ class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
             Submission.objects.select_related('team', 'round', 'round__tournament')
             .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(round__tournament=tournament)
+            .exclude(team__tournament_registrations__tournament=tournament, team__tournament_registrations__is_disqualified=True)
             .order_by('-updated_at')
         )
 
@@ -494,6 +494,10 @@ class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
             Submission.objects.select_related('team', 'round', 'round__tournament')
             .prefetch_related('jury_assignments__jury')
             .filter(round=round_obj)
+            .exclude(
+                team__tournament_registrations__tournament=round_obj.tournament,
+                team__tournament_registrations__is_disqualified=True,
+            )
             .order_by('-updated_at')
         )
 

@@ -495,6 +495,18 @@ class LeaderboardTests(APITestCase):
         )
         self.assertTrue(team1_registration.is_active)
         self.assertFalse(team2_registration.is_active)
+        self.assertFalse(team2_registration.is_disqualified)
+
+    def test_compute_leaderboard_excludes_disqualified_teams(self):
+        TournamentTeamRegistration.objects.filter(
+            tournament=self.tournament,
+            team=self.team2,
+        ).update(is_active=False, is_disqualified=True, disqualification_reason='Rules violation')
+
+        rankings = compute_leaderboard(self.round_obj.id)
+        team_ids = {row['team_id'] for row in rankings}
+        self.assertIn(self.team1.id, team_ids)
+        self.assertNotIn(self.team2.id, team_ids)
 
     def test_mark_round_evaluated_keeps_teams_active_when_passing_count_missing(self):
         self.round_obj.passing_count = None
