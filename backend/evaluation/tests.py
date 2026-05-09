@@ -533,3 +533,145 @@ class LeaderboardTests(APITestCase):
         self.assertEqual(self.round_obj.status, Round.STATUS_EVALUATED)
         self.assertTrue(team1_registration.is_active)
         self.assertFalse(team2_registration.is_active)
+
+
+class PassingCountTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user('admin_pc', 'admin_pc@example.com', 'TestPass123!', role='admin')
+        self.team_user1 = User.objects.create_user('team_pc1', 'team_pc1@example.com', 'TestPass123!', role='team')
+        self.team_user2 = User.objects.create_user('team_pc2', 'team_pc2@example.com', 'TestPass123!', role='team')
+        
+        now = timezone.now()
+        self.tournament = Tournament.objects.create(
+            name='PC Tournament',
+            description='desc',
+            start_date=now - timedelta(days=2),
+            end_date=now + timedelta(days=2),
+            status=Tournament.STATUS_RUNNING,
+            created_by=self.admin,
+        )
+        self.round1 = Round.objects.create(
+            tournament=self.tournament,
+            name='Round 1',
+            start_date=now - timedelta(days=2),
+            end_date=now - timedelta(days=1),
+            status=Round.STATUS_SUBMISSION_CLOSED,
+            criteria=[{'id': 'crit1', 'name': 'Crit 1', 'max_score': 10}],
+            passing_count=1,
+        )
+        self.round2 = Round.objects.create(
+            tournament=self.tournament,
+            name='Round 2',
+            start_date=now - timedelta(hours=12),
+            end_date=now + timedelta(hours=12),
+            status=Round.STATUS_ACTIVE,
+            criteria=[{'id': 'crit1', 'name': 'Crit 1', 'max_score': 10}],
+        )
+        
+        self.team1 = Team.objects.create(name='Team 1', email='team1@example.com', captain=self.team_user1)
+        self.team2 = Team.objects.create(name='Team 2', email='team2@example.com', captain=self.team_user2)
+        
+        self.reg1 = TournamentTeamRegistration.objects.create(tournament=self.tournament, team=self.team1, is_active=True)
+        self.reg2 = TournamentTeamRegistration.objects.create(tournament=self.tournament, team=self.team2, is_active=True)
+        
+        self.sub1 = Submission.objects.create(
+            team=self.team1, round=self.round1, github_url='https://github.com/1', created_by=self.team_user1
+        )
+        self.sub2 = Submission.objects.create(
+            team=self.team2, round=self.round1, github_url='https://github.com/2', created_by=self.team_user2
+        )
+        
+        jury = User.objects.create_user('jury_pc', 'jury_pc@example.com', 'TestPass123!', role='jury')
+        assign1 = JuryAssignment.objects.create(submission=self.sub1, jury=jury)
+        assign2 = JuryAssignment.objects.create(submission=self.sub2, jury=jury)
+        
+        SubmissionEvaluation.objects.create(
+            assignment=assign1,
+            scores=[{'criterion_id': 'crit1', 'criterion_name': 'Crit 1', 'score': 10}]
+        )
+        SubmissionEvaluation.objects.create(
+            assignment=assign2,
+            scores=[{'criterion_id': 'crit1', 'criterion_name': 'Crit 1', 'score': 5}]
+        )
+
+    def test_apply_passing_count_eliminates_lower_ranked_teams(self):
+        from evaluation.services import apply_passing_count
+        apply_passing_count(self.round1)
+        self.reg1.refresh_from_db()
+        self.reg2.refresh_from_db()
+        self.assertTrue(self.reg1.is_active)
+        self.assertFalse(self.reg2.is_active)
+
+    def test_apply_passing_count_none_does_nothing(self):
+        from evaluation.services import apply_passing_count
+        self.round1.passing_count = None
+        self.round1.save(update_fields=['passing_count'])
+        apply_passing_count(self.round1)
+        self.reg1.refresh_from_db()
+        self.reg2.refresh_from_db()
+        self.assertTrue(self.reg1.is_active)
+        self.assertTrue(self.reg2.is_active)
+
+    def test_mark_round_evaluated_triggers_apply_passing_count(self):
+        mark_round_evaluated(self.round1)
+        self.reg1.refresh_from_db()
+        self.reg2.refresh_from_db()
+        self.assertTrue(self.reg1.is_active)
+        self.assertFalse(self.reg2.is_active)
+
+    def test_eliminated_team_cannot_submit_to_next_round(self):
+        from rest_framework.exceptions import ValidationError
+        from tournaments.services import ensure_team_registered_for_tournament
+        
+        mark_round_evaluated(self.round1)
+        self.reg2.refresh_from_db()
+        self.assertFalse(self.reg2.is_active)
+        
+        with self.assertRaises(ValidationError):
+            ensure_team_registered_for_tournament(self.tournament, self.team2)
+
+    def test_passing_status_endpoint(self):
+        self.round1.status = Round.STATUS_EVALUATED
+        self.round1.save()
+        
+        self.client.force_authenticate(self.admin)
+        url = reverse('round_passing_status', kwargs={'pk': self.round1.id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['passing_count'], 1)
+        self.assertEqual(response.data['total_teams'], 2)
+        
+        results = response.data['results']
+        self.assertEqual(len(results), 2)
+        
+        team1_result = next(r for r in results if r['team_id'] == self.team1.id)
+        team2_result = next(r for r in results if r['team_id'] == self.team2.id)
+        
+        self.assertTrue(team1_result['passed'])
+        self.assertFalse(team2_result['passed'])
+
+    def test_admin_can_manually_disqualify_team(self):
+        self.client.force_authenticate(self.admin)
+        url = reverse('tournament_registration_detail', kwargs={
+            'pk': self.tournament.id,
+            'registration_pk': self.reg1.id
+        })
+        response = self.client.patch(url, {'is_active': False}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['action'], 'disqualified')
+        self.assertFalse(response.data['is_active'])
+
+    def test_admin_can_reactivate_team(self):
+        self.reg1.is_active = False
+        self.reg1.save(update_fields=['is_active'])
+        
+        self.client.force_authenticate(self.admin)
+        url = reverse('tournament_registration_detail', kwargs={
+            'pk': self.tournament.id,
+            'registration_pk': self.reg1.id
+        })
+        response = self.client.patch(url, {'is_active': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['action'], 'activated')
+        self.assertTrue(response.data['is_active'])
