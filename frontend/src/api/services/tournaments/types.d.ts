@@ -246,6 +246,13 @@ export interface CloseSubmissionsArgs {
 
 export type CloseSubmissionsResponse = Round
 
+// mark evaluated
+export interface MarkEvaluatedArgs {
+  roundId: RoundId
+}
+
+export type MarkEvaluatedResponse = Round
+
 // tournament submissions
 export interface GetTeamSubmissionsArgs {
   tournamentId: TournamentId
@@ -297,31 +304,6 @@ export interface GetRoundSubmissionsArgs {
 }
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse
-
-// Passing status
-export interface PassingStatusResult {
-  rank: number
-  team_id: TeamId
-  team_name: string
-  total_score: number
-  average_score: number
-  passed: boolean
-  is_active: boolean
-  disqualification_reason: string | null
-  registration_id: number
-}
-
-export interface GetPassingStatusResponse {
-  round_id: RoundId
-  round_name: string
-  passing_count: number | null
-  total_teams: number
-  results: PassingStatusResult[]
-}
-
-export interface GetPassingStatusArgs {
-  id: RoundId
-}
 
 // Update registration
 export interface UpdateRegistrationArgs {

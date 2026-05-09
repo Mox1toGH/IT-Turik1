@@ -82,15 +82,6 @@
               Edit
             </ui-button>
 
-            <ui-button
-              v-if="user?.role === 'admin' && (round.status === 'submission_closed' || round.status === 'evaluated')"
-              size="sm"
-              variant="default"
-              @click="togglePassingStatus(round)"
-            >
-              View Results
-            </ui-button>
-
             <template v-if="round.status === 'active' && user?.role === 'team'">
               <ui-button
                 v-if="submittedRoundIds.has(round.id)"
@@ -123,11 +114,7 @@
       :technicalRequirements="selectedRound?.tech_requirements ?? {}"
     />
 
-    <edit-round-modal
-      v-if="selectedRound"
-      v-model="isEditOpen"
-      :round="selectedRound"
-    />
+    <edit-round-modal v-if="selectedRound" v-model="isEditOpen" :round="selectedRound" />
   </section>
 
   <Transition name="slide-down">
@@ -158,7 +145,6 @@ import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
 import EditRoundModal from './modals/EditRoundModal.vue'
-import RoundPassingStatus from './RoundPassingStatus.vue'
 import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
@@ -205,14 +191,6 @@ function openEdit(round: Round) {
 function openSubmissionForm(roundId: number) {
   selectedSubmitRoundId.value = roundId
   isSubmitOpen.value = true
-}
-
-function togglePassingStatus(round: Round) {
-  if (selectedPassingRound.value?.id === round.id) {
-    selectedPassingRound.value = null
-  } else {
-    selectedPassingRound.value = round
-  }
 }
 
 function openSubmissionsSection() {
