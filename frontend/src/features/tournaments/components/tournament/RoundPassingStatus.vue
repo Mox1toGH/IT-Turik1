@@ -137,20 +137,6 @@ const sortedResults = computed(() => {
   return [...results.value].sort((a, b) => a.rank - b.rank)
 })
 
-const passedTeams = computed(() => {
-  if (!passingCount.value) return sortedResults.value
-  return sortedResults.value.filter(result => result.passed)
-})
-
-const eliminatedTeams = computed(() => {
-  if (!passingCount.value) return []
-  return sortedResults.value.filter(result => !result.passed && result.is_active)
-})
-
-const disqualifiedTeams = computed(() => {
-  return sortedResults.value.filter(result => !result.is_active)
-})
-
 const shouldShowCutLine = (index: number) => {
   if (!passingCount.value) return false
   const result = sortedResults.value[index]
