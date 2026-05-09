@@ -184,6 +184,7 @@ class RoundPassingStatusView(APIView):
                 'average_score': row['average_score'],
                 'passed': passed,
                 'is_active': reg.is_active if reg else None,
+                'disqualification_reason': reg.disqualification_reason if reg else None,
                 'registration_id': reg.id if reg else None,
             })
 

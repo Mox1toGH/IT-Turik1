@@ -137,7 +137,10 @@ def apply_passing_count(round_obj) -> dict:
             tournament=round_obj.tournament,
             team_id__in=eliminated_team_ids,
             is_active=True,
-        ).update(is_active=False)
+        ).update(
+            is_active=False,
+            disqualification_reason=f'Eliminated by rank in {round_obj.name}'
+        )
 
     return {
         'applied': True,

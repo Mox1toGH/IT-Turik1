@@ -379,7 +379,7 @@ class TournamentTeamRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('id', 'tournament', 'team', 'team_name', 'is_active', 'created_at')
+        fields = ('id', 'tournament', 'team', 'team_name', 'is_active', 'disqualification_reason', 'created_at')
         read_only_fields = ('id', 'tournament', 'created_at')
 
 
@@ -412,15 +412,9 @@ class TournamentTeamLeaveSerializer(serializers.Serializer):
 
 
 class TournamentTeamRegistrationUpdateSerializer(serializers.ModelSerializer):
-    disqualification_reason = serializers.CharField(write_only=True, required=False)
-
     class Meta:
         model = TournamentTeamRegistration
         fields = ('is_active', 'disqualification_reason')
-
-    def validate(self, attrs):
-        attrs.pop('disqualification_reason', None)
-        return attrs
 
 
 class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
@@ -432,7 +426,15 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
  
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('id', 'registration_id', 'name', 'members_count', 'is_public', 'is_active')
+        fields = (
+            'id',
+            'registration_id',
+            'name',
+            'members_count',
+            'is_public',
+            'is_active',
+            'disqualification_reason',
+        )
  
     def get_members_count(self, obj):
         return obj.team.team_members.count()
