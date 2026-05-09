@@ -92,6 +92,9 @@ def close_submissions_on_round(round_obj):
     round_obj.status = Round.STATUS_SUBMISSION_CLOSED
     round_obj.save(update_fields=['status', 'updated_at'])
 
+    if not round_obj.submissions.exists():
+        return mark_round_evaluated(round_obj)
+
     return round_obj
 
 
@@ -125,6 +128,9 @@ def sync_time_based_statuses(reference_time=None):
     updated_round_ids = list(active_rounds_to_close.values_list('id', flat=True))
     if updated_round_ids:
         active_rounds_to_close.update(status=Round.STATUS_SUBMISSION_CLOSED, updated_at=now)
+        for closed_round in Round.objects.filter(id__in=updated_round_ids).only('id'):
+            if not closed_round.submissions.exists():
+                mark_round_evaluated(closed_round)
 
     running_tournaments = Tournament.objects.filter(status=Tournament.STATUS_RUNNING).prefetch_related('rounds')
     for tournament in running_tournaments:
