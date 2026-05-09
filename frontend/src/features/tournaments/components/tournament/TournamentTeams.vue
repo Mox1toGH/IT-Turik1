@@ -186,7 +186,7 @@ const handleConfirmAction = () => {
       tournamentId: props.tournamentId,
       registrationId: pendingAction.value.team.registration_id,
       body: {
-        is_active: !isDisqualifying,
+        action: isDisqualifying ? 'disqualify' : 'reactivate',
         disqualification_reason: isDisqualifying ? disqualificationReason.value : '',
       },
     },

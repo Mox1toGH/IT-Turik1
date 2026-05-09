@@ -327,7 +327,7 @@ export interface UpdateRegistrationArgs {
   tournamentId: TournamentId
   registrationId: number
   body: {
-    is_active?: boolean
+    action: 'disqualify' | 'reactivate'
     disqualification_reason?: string
   }
 }

@@ -222,7 +222,7 @@ export const tournamentsService = {
 
   updateRegistration: async (args: UpdateRegistrationArgs) => {
     const { data } = await apiClient.patch<UpdateRegistrationResponse>(
-      `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/`,
+      `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/disqualification/`,
       args.body,
     )
     return data
