@@ -412,20 +412,27 @@ class TournamentTeamLeaveSerializer(serializers.Serializer):
 
 
 class TournamentTeamRegistrationUpdateSerializer(serializers.ModelSerializer):
+    disqualification_reason = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('is_active',)
+        fields = ('is_active', 'disqualification_reason')
+
+    def validate(self, attrs):
+        attrs.pop('disqualification_reason', None)
+        return attrs
 
 
 class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='team.id')
+    registration_id = serializers.IntegerField(source='pk')
     name = serializers.CharField(source='team.name')
     is_public = serializers.BooleanField(source='team.is_public')
     members_count = serializers.SerializerMethodField()
  
     class Meta:
         model = TournamentTeamRegistration
-        fields = ('id', 'name', 'members_count', 'is_public', 'is_active')
+        fields = ('id', 'registration_id', 'name', 'members_count', 'is_public', 'is_active')
  
     def get_members_count(self, obj):
         return obj.team.team_members.count()

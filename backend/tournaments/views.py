@@ -262,6 +262,24 @@ class TournamentTeamRegistrationDetailView(generics.RetrieveUpdateAPIView):
             return TournamentTeamRegistrationSerializer
         return TournamentTeamRegistrationUpdateSerializer
 
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        registration = self.get_object()
+        serializer = self.get_serializer(registration, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        action = 'activated' if registration.is_active else 'disqualified'
+
+        return Response({
+            'id': registration.id,
+            'team_id': registration.team_id,
+            'team_name': registration.team.name,
+            'tournament_id': registration.tournament_id,
+            'is_active': registration.is_active,
+            'action': action,
+        })
+
 
 class TournamentEligibleTeamsView(APIView):
     permission_classes = [IsAuthenticated]
