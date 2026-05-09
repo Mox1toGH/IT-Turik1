@@ -46,7 +46,7 @@ class NewsArticleSerializer(serializers.ModelSerializer):
             NotificationService.notify(
                 recipients=recipients,
                 event_type='news_published',
-                context={'news_title': article.title},
+                context={'news_id': article.id, 'news_title': article.title},
             )
         return article
 
@@ -67,6 +67,6 @@ class NewsArticleSerializer(serializers.ModelSerializer):
             NotificationService.notify(
                 recipients=recipients,
                 event_type='news_published',
-                context={'news_title': instance.title},
+                context={'news_id': instance.id, 'news_title': instance.title},
             )
         return instance

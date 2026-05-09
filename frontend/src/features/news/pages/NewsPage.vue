@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <section class="page-shell news-page">
     <ui-card>
       <template #header>
@@ -66,7 +66,7 @@
         </div>
       </template>
       <div class="news-grid">
-        <ui-card v-for="item in newsItems" :key="item.id" class="news-item">
+        <ui-card v-for="item in newsItems" :key="item.id" :id="`news-${item.id}`" class="news-item">
           <template #header>
             <div class="news-item-head">
               <div>
@@ -211,7 +211,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import type { JSONContent } from '@tiptap/core'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -251,6 +252,7 @@ const editForm = useForm<CreateNewsForm>(CreateNewsSchema, {
 })
 
 const { showNotification } = useNotification()
+const route = useRoute()
 const { data: user } = useProfile()
 const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
 const isCreateOpen = ref(false)
@@ -416,11 +418,31 @@ function isExpandable(item: NewsArticle) {
   return extractPlainText(item.content).length > COLLAPSE_TEXT_LIMIT
 }
 
+function scrollToNewsFromHash() {
+  const hash = route.hash || ''
+  if (!hash.startsWith('#news-')) return
+
+  const targetId = hash.slice(1)
+  const el = document.getElementById(targetId)
+  if (!el) return
+
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 watch(
   [newsItems],
   () => {
     const currentIds = new Set(newsItems.value.map((item) => item.id))
     expandedNewsIds.value = expandedNewsIds.value.filter((id) => currentIds.has(id))
+  },
+  { immediate: true },
+)
+
+watch(
+  [newsItems, () => route.hash],
+  async () => {
+    await nextTick()
+    scrollToNewsFromHash()
   },
   { immediate: true },
 )

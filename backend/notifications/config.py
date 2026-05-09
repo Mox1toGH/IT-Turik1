@@ -94,7 +94,7 @@ EVENTS = {
         key='news_published',
         channels=['system', 'email'],
         title='New Announcement',
-        message='A new post was published: "{news_title}".',
+        message='A new post was published: [news:{news_id}:{news_title}].',
         email_subject='New announcement: {news_title}',
     ),
 }

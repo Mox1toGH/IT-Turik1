@@ -68,6 +68,7 @@ def _strip_notification_tags(text: str) -> str:
     """Convert [user:id:name] and [team:id:name:visibility] tags to plain names."""
     text = re.sub(r'\[user:\d+:(.+?)\]', r'\1', text)
     text = re.sub(r'\[team:\d+:(.+?)(?::(?:public|private))?\]', r'\1', text)
+    text = re.sub(r'\[news:\d+:(.+?)\]', r'\1', text)
     return text
 
 
