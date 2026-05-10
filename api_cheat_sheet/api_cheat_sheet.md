@@ -478,3 +478,38 @@ curl -X DELETE "http://localhost:8000/api/teams/3/banner/" \
 **Поле в Team API**
 - У відповідях `GET /api/teams/` та `GET /api/teams/{id}/` присутнє поле:
   - `banner: string | null` (URL банера або `null`).
+
+---
+
+### Tournament Banner API
+
+**Оновлення банера турніру — PATCH `/api/tournaments/manage/{id}/banner/`**
+- Auth required.
+- Доступ на зміну: користувач із правом редагування турнірів (`CanEditTournament` / admin).
+- `Content-Type: multipart/form-data`
+- Поле: `banner` (image file)
+
+Приклад (curl):
+```bash
+curl -X PATCH "http://localhost:8000/api/tournaments/manage/5/banner/" \
+  -H "Authorization: Bearer <token>" \
+  -F "banner=@/path/to/banner.jpg"
+```
+
+Успіх: `200 OK` + оновлений об'єкт турніру (включно з полем `banner`).
+
+**Видалення банера турніру — DELETE `/api/tournaments/manage/{id}/banner/`**
+- Auth required.
+- Доступ на видалення: користувач із правом редагування турнірів (`CanEditTournament` / admin).
+
+Приклад (curl):
+```bash
+curl -X DELETE "http://localhost:8000/api/tournaments/manage/5/banner/" \
+  -H "Authorization: Bearer <token>"
+```
+
+Успіх: `200 OK` + оновлений об'єкт турніру, де `banner: null`.
+
+**Поле в Tournament API**
+- У відповідях `GET /api/tournaments/` та `GET /api/tournaments/{id}/` присутнє поле:
+  - `banner: string | null` (URL банера або `null`).
