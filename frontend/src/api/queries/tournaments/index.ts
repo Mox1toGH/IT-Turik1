@@ -21,6 +21,8 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  MarkEvaluatedArgs,
+  MarkEvaluatedResponse,
   LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
@@ -39,8 +41,6 @@ import type {
   StartRoundArgs,
   StartRoundResponse,
   SubmitRoundArgs,
-  GetPassingStatusArgs,
-  GetPassingStatusResponse,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
 } from '@/api/services/tournaments/types'
@@ -84,7 +84,7 @@ export const useRegisteredTeams = (
   return useQuery<GetRegisteredTeamsResponse, AxiosError<ApiError>>({
     queryKey: [
       ...tournamentsKeys.registeredTeams(payload.id),
-      { includeInactive: !!payload.includeInactive, status: payload.status ?? null },
+      { includeInactive: !!payload.includeInactive, status: payload.status ?? 'all' },
     ],
     queryFn: () =>
       $api.tournaments.getRegisteredTeams({
@@ -375,6 +375,20 @@ export const useCloseSubmissions = (
   })
 }
 
+export const useMarkEvaluated = (
+  config?: MutationConfig<MarkEvaluatedResponse, AxiosError<ApiError>, MarkEvaluatedArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<MarkEvaluatedResponse, AxiosError<ApiError>, MarkEvaluatedArgs>({
+    mutationFn: $api.tournaments.markEvaluated,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(data.tournament) })
+      queryClient.resetQueries({ queryKey: tournamentsKeys.currentRound(data.tournament) })
+    },
+    ...config,
+  })
+}
+
 export const useTeamSubmissions = (
   payload: GetTeamSubmissionsArgs,
   config?: QueryConfig<GetTeamSubmissionsResponse>,
@@ -406,34 +420,16 @@ export const useRoundSubmissions = (
   })
 }
 
-export const usePassingStatus = (
-  payload: GetPassingStatusArgs,
-  config?: QueryConfig<GetPassingStatusResponse>,
-) => {
-  return useQuery<GetPassingStatusResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.passingStatus(payload.id),
-    queryFn: () => $api.tournaments.getPassingStatus({ id: payload.id }),
-    ...config,
-  })
-}
-
 export const useUpdateRegistration = (
-  config?: MutationConfig<
-    UpdateRegistrationResponse,
-    AxiosError<ApiError>,
-    UpdateRegistrationArgs
-  >,
+  config?: MutationConfig<UpdateRegistrationResponse, AxiosError<ApiError>, UpdateRegistrationArgs>,
 ) => {
   const queryClient = useQueryClient()
-  return useMutation<
-    UpdateRegistrationResponse,
-    AxiosError<ApiError>,
-    UpdateRegistrationArgs
-  >({
+  return useMutation<UpdateRegistrationResponse, AxiosError<ApiError>, UpdateRegistrationArgs>({
     mutationFn: $api.tournaments.updateRegistration,
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.tournamentId) })
-      queryClient.invalidateQueries({ queryKey: ['tournaments', 'passing-status'] })
+      queryClient.invalidateQueries({
+        queryKey: tournamentsKeys.registeredTeams(vars.tournamentId),
+      })
     },
     ...config,
   })

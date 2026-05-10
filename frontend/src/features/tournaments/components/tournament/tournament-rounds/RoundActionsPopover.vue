@@ -37,6 +37,19 @@
           </ui-button>
           <ui-button
             size="sm"
+            :disabled="props.status !== 'submission_closed'"
+            class="action-btn"
+            @click="
+              () => {
+                close()
+                handleMarkEvaluated()
+              }
+            "
+          >
+            Mark evaluated
+          </ui-button>
+          <ui-button
+            size="sm"
             class="action-btn action-delete"
             variant="danger"
             :disabled="props.status !== 'draft'"
@@ -59,7 +72,12 @@
 import type { RoundId, RoundStatus, TournamentId } from '@/api/dbTypes'
 import { parseApiError } from '@/api/errors'
 import { useProfile } from '@/api/queries/accounts'
-import { useCloseSubmissions, useDeleteRound, useStartRound } from '@/api/queries/tournaments'
+import {
+  useCloseSubmissions,
+  useDeleteRound,
+  useMarkEvaluated,
+  useStartRound,
+} from '@/api/queries/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -78,6 +96,7 @@ const { data: profile } = useProfile()
 const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
 const { mutate: startRound } = useStartRound()
 const { mutate: closeSubmissions } = useCloseSubmissions()
+const { mutate: markEvaluated } = useMarkEvaluated()
 
 function handleDeleteRound() {
   deleteRound(
@@ -109,6 +128,20 @@ function handleStartRound() {
 
 function handleCloseSubmissions() {
   closeSubmissions(
+    {
+      roundId: props.roundId,
+    },
+    {
+      onError: (error) => {
+        const parsedError = parseApiError(error)
+        showNotification(parsedError?.message, 'error')
+      },
+    },
+  )
+}
+
+function handleMarkEvaluated() {
+  markEvaluated(
     {
       roundId: props.roundId,
     },

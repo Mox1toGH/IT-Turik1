@@ -139,6 +139,7 @@ def apply_passing_count(round_obj) -> dict:
             is_active=True,
         ).update(
             is_active=False,
+            is_disqualified=False,
             disqualification_reason=f'Eliminated by rank in {round_obj.name}'
         )
 

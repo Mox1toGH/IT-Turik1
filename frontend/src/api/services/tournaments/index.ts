@@ -20,9 +20,6 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
-  GetPassingStatusArgs,
-  GetPassingStatusResponse,
-  PassingStatusResult,
   LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
@@ -35,6 +32,8 @@ import type {
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
+  MarkEvaluatedArgs,
+  MarkEvaluatedResponse,
   RegisterTeamArgs,
   StartRegistrationArgs,
   StartRoundArgs,
@@ -194,6 +193,13 @@ export const tournamentsService = {
     return data
   },
 
+  markEvaluated: async (args: MarkEvaluatedArgs) => {
+    const { data } = await apiClient.post<MarkEvaluatedResponse>(
+      `${prefix}/rounds/${args.roundId}/mark-evaluated/`,
+    )
+    return data
+  },
+
   getTeamSubmissions: async (args: GetTeamSubmissionsArgs) => {
     const { data } = await apiClient.get<GetTeamSubmissionsResponse>(
       `${prefix}/${args.tournamentId}/my-submissions/`,
@@ -212,13 +218,6 @@ export const tournamentsService = {
   getRoundSubmissions: async (args: GetRoundSubmissionsArgs) => {
     const { data } = await apiClient.get<GetRoundSubmissionsResponse>(
       `${prefix}/rounds/${toValue(args.roundId)}/submissions`,
-    )
-    return data
-  },
-
-  getPassingStatus: async (args: GetPassingStatusArgs) => {
-    const { data } = await apiClient.get<GetPassingStatusResponse>(
-      `/api/evaluation/rounds/${args.id}/passing-status/`,
     )
     return data
   },

@@ -70,7 +70,7 @@
               <div class="team-avatar">{{ teamAbbr(submission.team_details.name) }}</div>
               <div>
                 <p class="team-name">{{ submission.team_details.name }}</p>
-                <p class="team-meta">
+                <p class="team-meta" :title="submission.description">
                   {{ truncateText(submission.description || 'No description', 25) }}
                 </p>
               </div>

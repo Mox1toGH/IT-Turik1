@@ -18,111 +18,78 @@
         :disabled="isTeamsLoading"
       />
 
-      <div class="team-label">
-        <p>Team</p>
-
-        <ui-skeleton-loader :loading="isTeamsLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="60px" />
-          </template>
-
-          <p class="text-muted">
-            {{ filteredActiveTeams.length }} team{{ filteredActiveTeams.length === 1 ? '' : 's' }}
-          </p>
-        </ui-skeleton-loader>
-      </div>
-
-      <div class="teams-list">
-        <ui-skeleton-loader :loading="isActiveTeamsLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.4rem">
-              <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="48px" width="100%" />
+      <TournamentTeamSection
+        sectionType="active"
+        :teams="activeTeams"
+        :loading="isActiveTeamsLoading"
+        :search="search"
+      >
+        <template #default="{ team }">
+          <RouterLink :to="`/teams/${team.id}`" class="team-item">
+            <div class="team-info">
+              <ui-badge v-if="!team.is_active" variant="red">
+                <CrossIcon />
+              </ui-badge>
+              <TeamIcon :class="[{ 'text-muted': !team.is_active }]" />
+              <p :title="team.name" :class="[{ 'text-muted': !team.is_active }]">
+                {{ truncateText(team.name, 15) }}
+              </p>
             </div>
-          </template>
 
-          <template v-if="filteredActiveTeams.length">
-            <div v-for="team in filteredActiveTeams" :key="team.id" class="team-row">
-              <RouterLink :to="`/teams/${team.id}`" class="team-item">
-                <div class="team-info">
-                  <TeamIcon />
-                  {{ team.name }}
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 0.5rem">
-                  <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
-                  <div v-if="isAdmin" class="team-actions">
-                    <ui-button size="sm" variant="danger" :disabled="isUpdating" @click.prevent="openDisqualifyModal(team)">
-                      <TeamDeleteIcon />
-                    </ui-button>
-                  </div>
-                </div>
-              </RouterLink>
+            <div class="team-action-group">
+              <ui-badge variant="primary">{{ team.members_count }} members</ui-badge>
+              <ui-button
+                v-if="isAdmin"
+                size="sm"
+                variant="danger"
+                :disabled="isUpdating"
+                @click.prevent.stop="openDisqualifyModal(team)"
+              >
+                <TeamDeleteIcon />
+              </ui-button>
             </div>
-          </template>
+          </RouterLink>
+        </template>
+      </TournamentTeamSection>
 
-          <p v-else class="text-muted">No teams found.</p>
-        </ui-skeleton-loader>
-      </div>
+      <TournamentTeamSection
+        v-if="hasDisqualifiedTeams"
+        sectionType="disqualified"
+        :teams="teams"
+        :loading="isTeamsLoading"
+        :search="search"
+      >
+        <template #default="{ team }">
+          <RouterLink :to="`/teams/${team.id}`" class="team-item">
+            <div class="team-info">
+              <TeamIcon />
+              {{ team.name }}
+            </div>
 
-      <div v-if="hasDisqualifiedTeams" class="disqualified-wrap">
-        <div class="team-label">
-          <div class="label-with-icon">
-            <!-- <AddTeamIcon /> -->
-            <p>Disqualified Teams</p>
-          </div>
-
-          <ui-skeleton-loader :loading="isDisqualifiedTeamsLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="60px" />
-            </template>
-
-            <p class="text-muted">
-              {{ filteredDisqualifiedTeams.length }} team{{ filteredDisqualifiedTeams.length === 1 ? '' : 's' }}
-            </p>
-          </ui-skeleton-loader>
-        </div>
-
-        <div class="teams-list">
-          <ui-skeleton-loader :loading="isDisqualifiedTeamsLoading">
-            <template #skeleton>
-              <div style="display: flex; flex-direction: column; gap: 0.4rem">
-                <ui-skeleton v-for="i in 3" :key="i" variant="rect" height="48px" width="100%" />
-              </div>
-            </template>
-
-            <template v-if="filteredDisqualifiedTeams.length">
-              <div v-for="team in filteredDisqualifiedTeams" :key="team.id" class="team-row">
-                <RouterLink :to="`/teams/${team.id}`" class="team-item">
-                  <div class="team-info">
-                    <TeamIcon />
-                    {{ team.name }}
-                    <ui-badge variant="red"> Disqualified </ui-badge>
-                  </div>
-
-                  <div style="display: flex; align-items: center; gap: 0.5rem">
-                    <ui-badge variant="primary"> {{ team.members_count }} members </ui-badge>
-                    <div v-if="isAdmin" class="team-actions">
-                      <ui-button
-                        size="sm"
-                        variant="default"
-                        :disabled="isUpdating"
-                        @click.prevent="openReactivateModal(team)"
-                      >
-                        <AddTeamIcon />
-                      </ui-button>
-                    </div>
-                  </div>
-                </RouterLink>
-              </div>
-            </template>
-          </ui-skeleton-loader>
-        </div>
-      </div>
+            <div class="team-action-group">
+              <ui-badge variant="red">Disqualified</ui-badge>
+              <ui-button
+                v-if="
+                  isAdmin &&
+                  (tournament?.status === 'registration' || tournament?.status === 'running')
+                "
+                size="sm"
+                variant="default"
+                :disabled="isUpdating"
+                @click.prevent.stop="openReactivateModal(team)"
+              >
+                <AddTeamIcon />
+              </ui-button>
+            </div>
+          </RouterLink>
+        </template>
+      </TournamentTeamSection>
     </div>
 
     <ui-confirm-modal
       v-model="showConfirmModal"
       :title="confirmModalTitle"
+      :message="confirmModalConfirmMessage"
       :confirm-text="confirmModalConfirmText"
       :confirm-variant="confirmModalVariant"
       :loading="isUpdating"
@@ -147,19 +114,25 @@ import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
 import { RouterLink } from 'vue-router'
 import { parseApiError } from '@/api/errors'
-import { useRegisteredTeams, useUpdateRegistration } from '@/api/queries/tournaments'
+import {
+  useRegisteredTeams,
+  useTournamentInfo,
+  useUpdateRegistration,
+} from '@/api/queries/tournaments'
 import { useProfile } from '@/api/queries/accounts'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import type { GetRegisteredTeamsResponse } from '@/api/services/tournaments/types'
 import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
 import AddTeamIcon from '@/icons/AddTeamIcon.vue'
 import { truncateText } from '@/lib/utils'
+import CrossIcon from '@/icons/CrossIcon.vue'
+import { useQueryClient } from '@tanstack/vue-query'
+import { evaluationKeys, tournamentsKeys } from '@/api/queries/keys'
 
 interface Props {
   tournamentId: number
@@ -168,44 +141,34 @@ interface Props {
 type Team = GetRegisteredTeamsResponse[number]
 
 const props = defineProps<Props>()
-
 const search = ref('')
 
+const queryClient = useQueryClient()
+
+const { data: tournament } = useTournamentInfo({ id: props.tournamentId })
 const {
   data: activeTeams,
   isLoading: isActiveTeamsLoading,
   error: activeTeamsError,
   isError: isActiveTeamsError,
-} = useRegisteredTeams({ id: props.tournamentId, status: 'active' })
+} = useRegisteredTeams({ id: props.tournamentId, status: 'all' })
 const {
-  data: disqualifiedTeams,
-  isLoading: isDisqualifiedTeamsLoading,
+  data: teams,
+  isLoading: isTeamsLoading,
   error: disqualifiedTeamsError,
   isError: isDisqualifiedTeamsError,
 } = useRegisteredTeams({ id: props.tournamentId, status: 'disqualified' })
 const isError = computed(() => isActiveTeamsError.value || isDisqualifiedTeamsError.value)
 const error = computed(() => parseApiError(activeTeamsError.value || disqualifiedTeamsError.value))
 
-const filteredActiveTeams = computed(() => {
-  if (!activeTeams.value) return []
-  const term = search.value.trim().toLowerCase()
-  if (!term) return activeTeams.value
-
-  return activeTeams.value.filter((team) => team.name.toLowerCase().includes(term))
-})
-const filteredDisqualifiedTeams = computed(() => {
-  if (!disqualifiedTeams.value) return []
-  const term = search.value.trim().toLowerCase()
-  if (!term) return disqualifiedTeams.value
-  return disqualifiedTeams.value.filter((team) => team.name.toLowerCase().includes(term))
-})
-const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
+const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
 const { data: user } = useProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 
 const showConfirmModal = ref(false)
 const confirmModalTitle = ref('')
 const confirmModalConfirmText = ref('')
+const confirmModalConfirmMessage = ref<string | undefined>()
 const confirmModalVariant = ref<'default' | 'danger'>('default')
 const disqualificationReason = ref('')
 const pendingAction = ref<{ team: Team; action: 'activated' | 'disqualified' } | null>(null)
@@ -225,6 +188,7 @@ const openReactivateModal = (team: Team) => {
   pendingAction.value = { team, action: 'activated' }
   confirmModalTitle.value = `Reactivate ${truncateText(team.name, 10)}`
   confirmModalConfirmText.value = 'Reactivate'
+  confirmModalConfirmMessage.value = 'Are you sure you want to reactivate this team?'
   confirmModalVariant.value = 'default'
   showConfirmModal.value = true
 }
@@ -248,6 +212,14 @@ const handleConfirmAction = () => {
         showConfirmModal.value = false
         pendingAction.value = null
         disqualificationReason.value = ''
+
+        queryClient.invalidateQueries({
+          queryKey: [
+            evaluationKeys.tournamentLeaderboard(props.tournamentId),
+            evaluationKeys.roundLeaderboard(props.tournamentId),
+            tournamentsKeys.submissions(props.tournamentId),
+          ],
+        })
       },
       onError: () => {
         showConfirmModal.value = false
@@ -273,6 +245,10 @@ const handleConfirmAction = () => {
   margin-bottom: 1rem;
 }
 
+.teams-list-wrap {
+  background-color: var(--muted);
+}
+
 .team-info {
   display: flex;
   align-items: center;
@@ -284,8 +260,21 @@ const handleConfirmAction = () => {
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid var(--border);
+  padding: 0.7rem 0;
+}
+
+.team-item:hover {
+  background: var(--accent);
+}
+
+.team-item:not(:last-child) {
   border-bottom: 1px solid var(--border);
-  padding: 0.7rem 10px 0.7rem 0;
+}
+
+.team-action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .team-label {
@@ -313,25 +302,5 @@ const handleConfirmAction = () => {
   display: flex;
   flex-direction: column;
   border-bottom: 1px solid var(--border);
-}
-
-.team-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.7rem 10px 0.7rem 0;
-  text-decoration: none;
-  color: inherit;
-}
-
-.team-item:hover {
-  background: var(--accent);
-}
-
-.team-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.5rem 0;
-  gap: 0.5rem;
 }
 </style>

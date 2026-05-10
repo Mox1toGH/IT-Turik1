@@ -495,6 +495,18 @@ class LeaderboardTests(APITestCase):
         )
         self.assertTrue(team1_registration.is_active)
         self.assertFalse(team2_registration.is_active)
+        self.assertFalse(team2_registration.is_disqualified)
+
+    def test_compute_leaderboard_excludes_disqualified_teams(self):
+        TournamentTeamRegistration.objects.filter(
+            tournament=self.tournament,
+            team=self.team2,
+        ).update(is_active=False, is_disqualified=True, disqualification_reason='Rules violation')
+
+        rankings = compute_leaderboard(self.round_obj.id)
+        team_ids = {row['team_id'] for row in rankings}
+        self.assertIn(self.team1.id, team_ids)
+        self.assertNotIn(self.team2.id, team_ids)
 
     def test_mark_round_evaluated_keeps_teams_active_when_passing_count_missing(self):
         self.round_obj.passing_count = None
@@ -666,11 +678,13 @@ class PassingCountTests(APITestCase):
         self.assertEqual(response.data['action'], 'disqualified')
         self.assertFalse(response.data['is_active'])
         self.reg1.refresh_from_db()
+        self.assertTrue(self.reg1.is_disqualified)
         self.assertEqual(self.reg1.disqualification_reason, 'Rules violation')
 
     def test_admin_can_reactivate_team(self):
         self.reg1.is_active = False
-        self.reg1.save(update_fields=['is_active'])
+        self.reg1.is_disqualified = True
+        self.reg1.save(update_fields=['is_active', 'is_disqualified'])
         
         self.client.force_authenticate(self.admin)
         url = reverse('tournament_registration_disqualification', kwargs={
@@ -682,6 +696,7 @@ class PassingCountTests(APITestCase):
         self.assertEqual(response.data['action'], 'activated')
         self.assertTrue(response.data['is_active'])
         self.reg1.refresh_from_db()
+        self.assertFalse(self.reg1.is_disqualified)
         self.assertEqual(self.reg1.disqualification_reason, '')
 
     def test_disqualification_action_is_required(self):
@@ -706,4 +721,5 @@ class PassingCountTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.reg1.refresh_from_db()
+        self.assertTrue(self.reg1.is_disqualified)
         self.assertEqual(self.reg1.disqualification_reason, 'Disqualified by admin')

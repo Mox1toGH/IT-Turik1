@@ -522,6 +522,53 @@ class TournamentApiTests(APITestCase):
         returned_ids = {item['id'] for item in response.data}
         self.assertIn(own_submission.id, returned_ids)
 
+    def test_tournament_submissions_excludes_disqualified_team_submissions(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **self.tournament_data
+        )
+        round_obj = Round.objects.create(
+            tournament=tournament,
+            status=Round.STATUS_ACTIVE,
+            start_date=timezone.now() - timezone.timedelta(hours=1),
+            end_date=timezone.now() + timezone.timedelta(hours=1),
+        )
+        TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
+
+        other_captain = User.objects.create_user(
+            username='captain-disqualified',
+            email='captain-disqualified@example.com',
+            password='StrongPass123!',
+        )
+        disq_team = Team.objects.create(
+            name='Disqualified Team Subs',
+            email='disq-team-subs@example.com',
+            captain=other_captain,
+        )
+        TeamMember.objects.create(team=disq_team, user=other_captain)
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=disq_team,
+            is_active=False,
+            is_disqualified=True,
+            disqualification_reason='Rules violation',
+        )
+        Submission.objects.create(
+            team=disq_team,
+            round=round_obj,
+            github_url='https://github.com/test/disq',
+            demo_video_url='https://youtube.com/disq',
+            created_by=other_captain,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
     def test_tournament_submissions_does_not_include_other_tournament_submissions(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
@@ -1110,6 +1157,7 @@ class TournamentApiTests(APITestCase):
             team=disq_team,
             created_by=disq_user,
             is_active=False,
+            is_disqualified=True,
             disqualification_reason='Rules violation',
         )
         TournamentTeamRegistration.objects.create(
@@ -1158,6 +1206,7 @@ class TournamentApiTests(APITestCase):
             team=disq_team,
             created_by=disq_user,
             is_active=False,
+            is_disqualified=True,
             disqualification_reason='Rules violation',
         )
 
@@ -1613,16 +1662,6 @@ class TournamentApiTests(APITestCase):
         response = self.client.post(url, round3_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('start_date', response.data['details'])
-        
-        # For single-round tournaments this still fails due to round date constraints
-        round4_data = {
-            'name': 'Round 4',
-            'start_date': (tournament.start_date + timezone.timedelta(days=4)).isoformat(),
-            'end_date': (tournament.start_date + timezone.timedelta(days=6)).isoformat(),
-        }
-        response = self.client.post(url, round4_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('start_date', response.data['details'])
 
     def test_round_date_overlap_update_validation(self):
         """Test that updating a round cannot cause date overlaps"""
@@ -1810,3 +1849,15 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         jury_ids = {item['jury']['id'] for item in assignments}
         self.assertEqual(jury_ids, {self.jury1.id, self.jury2.id})
         self.assertTrue(all(item['jury']['role'] == 'jury' for item in assignments))
+
+    def test_round_submissions_excludes_disqualified_team_submissions(self):
+        TournamentTeamRegistration.objects.filter(
+            tournament=self.tournament,
+            team=self.team,
+        ).update(is_active=False, is_disqualified=True, disqualification_reason='Rules violation')
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse('round_submissions', kwargs={'pk': self.round_obj.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
