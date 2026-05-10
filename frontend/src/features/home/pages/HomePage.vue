@@ -36,36 +36,38 @@
           <ul class="account-data">
             <li>
               Ваш турнір:
-              <span>{{ activeTournament?.name ?? '-' }}</span>
+              <RouterLink
+                v-if="activeTournament"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}`"
+              >
+                {{ activeTournament.name }}
+              </RouterLink>
+              <span v-else>-</span>
             </li>
             <li>
               Ваше завдання:
-              <span>{{ currentRound?.name ?? '-' }}</span>
+              <RouterLink
+                v-if="activeTournament && currentRound?.name"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}?section=rounds`"
+              >
+                {{ currentRound.name }}
+              </RouterLink>
+              <span v-else>{{ currentRound?.name ?? '-' }}</span>
             </li>
             <li>
               Ваш сабміт:
-              <span>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
+              <RouterLink
+                v-if="activeTournament && lastSubmission?.round_details?.name"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}?section=submissions`"
+              >
+                {{ lastSubmission.round_details.name }}
+              </RouterLink>
+              <span v-else>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
             </li>
-          </ul>
-
-          <div class="quick-links" v-if="activeTournament">
-            <ui-button asLink size="sm" :to="`/tournaments/${activeTournament.id}`">Ваш турнір</ui-button>
-            <ui-button
-              asLink
-              size="sm"
-              variant="secondary"
-              :to="`/tournaments/${activeTournament.id}?section=rounds`"
-              >Ваше завдання</ui-button
-            >
-            <ui-button
-              asLink
-              size="sm"
-              variant="secondary"
-              :to="`/tournaments/${activeTournament.id}?section=submissions`"
-              >Ваш сабміт</ui-button
-            >
-          </div>
-        </ui-skeleton-loader>
+          </ul>       </ui-skeleton-loader>
       </ui-card>
 
       <ui-card class="info-card" :is-error="isLoadingError">
@@ -160,7 +162,6 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useProfile } from '@/api/queries/accounts'
 import { parseApiError } from '@/api/errors'
 import { useCurrentRound, useTeamSubmissions, useTournaments } from '@/api/queries/tournaments'
-import UiButton from '@/components/ui/UiButton.vue'
 import { useTeams } from '@/api/queries/teams'
 
 const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
@@ -278,14 +279,7 @@ h1 {
   flex-direction: column;
   gap: 5px;
 }
-
-.quick-links {
-  margin-top: 0.8rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
+`r`n
 .info-card h2 {
   margin-top: 0;
   font-family: var(--font-display);
@@ -313,6 +307,15 @@ li {
 li span {
   font-weight: 700;
 }
+.quick-link {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.quick-link:hover {
+  text-decoration: underline;
+}
 
 @media (max-width: 760px) {
   .hero {
@@ -329,3 +332,4 @@ li span {
   }
 }
 </style>
+
