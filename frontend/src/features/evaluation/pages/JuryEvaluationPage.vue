@@ -44,7 +44,7 @@
 
         <template #default>
           <ui-card v-if="filteredAssignments.length === 0" class="empty-card">
-            <p class="empty-text">No assignments found for selected round filters</p>
+            <p class="empty-text">No pending assignments found for selected round filters</p>
           </ui-card>
 
           <div v-else class="assignments-grid">

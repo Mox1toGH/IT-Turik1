@@ -17,42 +17,42 @@
 
     <ui-card>
       <div class="sections">
-        <div
+        <button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'information' }]"
           @click="setActiveSection('information')"
         >
           Information
-        </div>
-        <div
+        </button>
+        <button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'rounds' }]"
           @click="setActiveSection('rounds')"
         >
           Rounds
-        </div>
-        <div
+        </button>
+        <button
           variant="secondary"
           :disabled="user?.role !== 'admin' && user?.role !== 'team'"
           :class="['sections-btn', { active: currentSection === 'submissions' }]"
           @click="setActiveSection('submissions')"
         >
           Submissions
-        </div>
-        <div
+        </button>
+        <button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'schedule' }]"
           @click="setActiveSection('schedule')"
         >
           Schedule
-        </div>
-        <div
+        </button>
+        <button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'leaderboard' }]"
           @click="setActiveSection('leaderboard')"
         >
           Leaderboard
-        </div>
+        </button>
       </div>
     </ui-card>
 
@@ -159,6 +159,9 @@ watch(
 }
 
 .sections-btn {
+  background: transparent;
+  border: 0;
+  color: var(--foreground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,6 +170,11 @@ watch(
   border-bottom: 2px solid transparent;
   font-weight: 600;
   transition: all 0.2s ease;
+}
+
+.sections-btn:disabled {
+  color: var(--muted-foreground);
+  cursor: not-allowed !important;
 }
 
 .sections-btn:hover {

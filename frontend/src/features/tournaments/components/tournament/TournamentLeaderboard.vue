@@ -9,6 +9,7 @@
           </div>
 
           <div class="controls">
+            <ui-button v-if="rankings.length !== 0" @click="exportToCsv">Export CSV</ui-button>
             <ui-select
               v-model="selectedLeaderboardMode"
               :options="roundOptions"
@@ -113,6 +114,7 @@ import type {
   GetRoundLeaderboardResponse,
   GetTournamentLeaderboardResponse,
 } from '@/api/services/evaluation/types'
+import UiButton from '@/components/ui/UiButton.vue'
 
 interface Props {
   tournamentId: number
@@ -176,6 +178,77 @@ const errorMessage = computed(() => {
   if (error.value.code === 'forbidden') return 'Leaderboard is not available yet.'
   return error.value.message || 'Failed to load leaderboard.'
 })
+
+function exportToCsv() {
+  if (!rankings.value.length) return
+
+  const isTournamentMode = isAverageMode.value
+
+  let headers: string[] = []
+  let rows: (string | number)[][] = []
+
+  if (isTournamentMode) {
+    const tournamentRankings = rankings.value as TournamentEntry[]
+
+    const roundNames = [
+      ...new Set(
+        tournamentRankings.flatMap((team) => team.rounds.map((round) => round.round_name)),
+      ),
+    ]
+
+    headers = [
+      'Rank',
+      'Team Name',
+      'Total Score',
+      ...roundNames.map((r) => `${r} Score`),
+      ...roundNames.map((r) => `${r} Avg`),
+    ]
+    rows = tournamentRankings.map((team) => {
+      const roundMap = Object.fromEntries(team.rounds.map((r) => [r.round_name, r]))
+
+      return [
+        team.rank,
+        `"${team.team_name}"`,
+        team.total_score,
+        ...roundNames.map((name) => roundMap[name]?.total_score ?? ''),
+        ...roundNames.map((name) => roundMap[name]?.average_score ?? ''),
+      ]
+    })
+  } else {
+    const roundRankings = rankings.value as RoundEntry[]
+
+    headers = ['Rank', 'Team Name', 'Total Score', 'Average Score']
+    rows = roundRankings.map((team) => [
+      team.rank,
+      `"${team.team_name}"`,
+      team.total_score,
+      team.average_score,
+    ])
+  }
+
+  const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
+
+  const blob = new Blob([csvContent], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+
+  const filename = isTournamentMode
+    ? 'tournament-leaderboard.csv'
+    : `round-${selectedRoundId.value}-leaderboard.csv`
+
+  link.setAttribute('download', filename)
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <style scoped>
