@@ -41,7 +41,15 @@
               v-for="member in filteredMembers"
               :key="`member-${member.id}`"
             >
-              <div>
+              <div class="member-row">
+                <div v-if="member.avatar" class="member-avatar-wrap">
+                  <img :src="member.avatar" :alt="`${member.username} avatar`" class="member-avatar" />
+                </div>
+                <div v-else class="member-avatar member-avatar-fallback">
+                  {{ getMemberInitials(member.full_name || member.username) }}
+                </div>
+
+                <div class="member-main">
                 <div style="display: flex; justify-content: space-between">
                   <p class="member-name">
                     <RouterLink :to="`/users/${member.id}`" class="member-link">
@@ -56,6 +64,7 @@
                 </div>
 
                 <p class="text-muted member-email">{{ member.email }}</p>
+                </div>
               </div>
             </ui-card>
 
@@ -98,6 +107,13 @@ const matches = (parts: (string | undefined)[]) => {
 const filteredMembers = computed(() =>
   props.team?.members.filter((m) => matches([m.username, m.email, m.full_name])),
 )
+
+const getMemberInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+}
 </script>
 
 <style scoped>
@@ -162,6 +178,40 @@ const filteredMembers = computed(() =>
 
 .member-name {
   font-weight: 700;
+}
+
+.member-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.member-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-avatar-wrap {
+  width: 42px;
+  height: 42px;
+}
+
+.member-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+
+.member-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-700);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--brand-100) 40%, white);
 }
 
 .member-link {

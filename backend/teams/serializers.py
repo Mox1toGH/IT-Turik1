@@ -88,7 +88,7 @@ def get_user_join_request_status(*, team, user):
 class TeamMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar')
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
