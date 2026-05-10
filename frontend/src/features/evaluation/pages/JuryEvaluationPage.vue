@@ -135,6 +135,7 @@ const progressPercent = computed(() =>
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .progress-wrap {

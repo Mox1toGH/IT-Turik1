@@ -47,7 +47,7 @@
         <ui-card v-for="round in rounds" :key="round.id" class="round-card">
           <template #header>
             <div class="round-header">
-              <h4>{{ truncateText(round.name, 70) }}</h4>
+              <h4 :title="round.name" class="round-title">{{ truncateText(round.name, 70) }}</h4>
 
               <div class="header-right">
                 <ui-badge :variant="roundStatusBadge(round.status)">{{
@@ -225,6 +225,10 @@ function badgeStatus(status: Round['status']) {
   gap: 0.8rem;
 }
 
+.round-title {
+  max-width: 150px;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -246,6 +250,7 @@ function badgeStatus(status: Round['status']) {
 
 .round-card {
   min-width: 0;
+  justify-content: space-between;
 }
 
 .details-grid {
