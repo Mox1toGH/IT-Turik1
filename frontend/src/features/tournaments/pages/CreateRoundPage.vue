@@ -1,8 +1,16 @@
 <template>
   <ui-card>
-    <template #header>
+    <div class="round-form-header">
       <h1>Create round</h1>
-    </template>
+      <ui-button
+        asLink
+        variant="secondary"
+        size="sm"
+        :to="`/tournaments/${tournamentId}?section=rounds`"
+      >
+        Back to rounds
+      </ui-button>
+    </div>
 
     <form class="round-form" @submit.prevent="handleSubmit">
       <label class="form-item title-field">
@@ -256,6 +264,12 @@ function handleSubmit() {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto auto auto;
   gap: 1rem;
+}
+
+.round-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .title-field {

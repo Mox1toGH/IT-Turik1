@@ -210,6 +210,7 @@ function badgeStatus(status: Round['status']) {
   display: flex;
   justify-content: end;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .rounds-list {

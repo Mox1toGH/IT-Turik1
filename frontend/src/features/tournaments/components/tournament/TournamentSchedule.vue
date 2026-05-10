@@ -189,6 +189,10 @@ const {
   gap: 1rem;
 }
 
+.top-actions {
+  margin-bottom: 1rem;
+}
+
 .top-actions,
 .event-actions {
   display: flex;

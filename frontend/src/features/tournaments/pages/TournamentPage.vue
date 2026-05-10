@@ -56,29 +56,30 @@
       </div>
     </ui-card>
 
-    <div class="tournament-grid" v-if="currentSection === 'information'">
-      <TournamentInfo :tournament-id="id" />
-      <TournamentTeams :tournament-id="id" />
-    </div>
+    <transition name="fade" mode="out-in">
+      <div :key="currentSection">
+        <div class="tournament-grid" v-if="currentSection === 'information'">
+          <TournamentInfo :tournament-id="id" />
+          <TournamentTeams :tournament-id="id" />
+        </div>
 
-    <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
-    <TournamentSchedule :tournament-id="id" v-if="currentSection === 'schedule'" />
-    <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
+        <TournamentRounds :tournament-id="id" v-else-if="currentSection === 'rounds'" />
+        <TournamentSchedule :tournament-id="id" v-else-if="currentSection === 'schedule'" />
+        <TournamentLeaderboard :tournament-id="id" v-else-if="currentSection === 'leaderboard'" />
 
-    <template
-      v-if="currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')"
-    >
-      <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
-      <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
-    </template>
-
-    <ui-card
-      v-if="
-        currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'
-      "
-    >
-      <p>Submissions are available for team members and admins.</p>
-    </ui-card>
+        <div v-else-if="currentSection === 'submissions'">
+          <template v-if="user?.role === 'admin' || user?.role === 'team'">
+            <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
+            <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
+          </template>
+          <template v-else>
+            <ui-card>
+              <p>Submissions are available for team members and admins.</p>
+            </ui-card>
+          </template>
+        </div>
+      </div>
+    </transition>
   </section>
 </template>
 
@@ -147,6 +148,28 @@ watch(
 </script>
 
 <style scoped>
+.fade-enter-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.fade-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 .tournament-link {
   width: max-content;
 }
