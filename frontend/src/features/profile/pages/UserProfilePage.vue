@@ -17,6 +17,7 @@
           </div>
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
         </div>
+        <img v-if="user?.avatar" :src="user.avatar" alt="Avatar" class="profile-avatar" />
       </template>
 
       <div class="details">
@@ -180,6 +181,15 @@ const formatDate = (date: Date) => {
 .meta {
   margin: 0;
   font-size: 0.86rem;
+}
+
+.profile-avatar {
+  margin-top: 0.8rem;
+  width: 108px;
+  height: 108px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--line-soft);
 }
 
 .details {

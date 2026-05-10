@@ -10,6 +10,7 @@ export interface User {
   full_name?: string
   phone: string
   city?: string
+  avatar?: string | null
   created_at: Date
   needs_onboarding: boolean
   teams: Pick<Team, 'id' | 'name' | 'contact_telegram' | 'contact_discord'>[]

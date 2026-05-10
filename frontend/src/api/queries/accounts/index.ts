@@ -22,6 +22,7 @@ import type {
   ResetPasswordArgs,
   ResetPasswordResponse,
   UpdateProfileArgs,
+  UpdateAvatarArgs,
   ValidateResetLinkArgs,
   ValidateResetLinkResponse,
 } from '@/api/services/accounts/types'
@@ -78,6 +79,22 @@ export const useUpdateProfile = (
 export const useDeleteAccount = (config?: MutationConfig<unknown>) => {
   return useMutation<unknown, AxiosError<ApiError>>({
     mutationFn: $api.accounts.deleteAccount,
+    ...config,
+  })
+}
+
+export const useUpdateAvatar = (
+  config?: MutationConfig<unknown, AxiosError<ApiError>, UpdateAvatarArgs>,
+) => {
+  return useMutation<unknown, AxiosError<ApiError>, UpdateAvatarArgs>({
+    mutationFn: $api.accounts.updateAvatar,
+    ...config,
+  })
+}
+
+export const useRemoveAvatar = (config?: MutationConfig<unknown, AxiosError<ApiError>>) => {
+  return useMutation<unknown, AxiosError<ApiError>>({
+    mutationFn: $api.accounts.removeAvatar,
     ...config,
   })
 }
