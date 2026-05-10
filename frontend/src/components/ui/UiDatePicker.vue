@@ -67,6 +67,7 @@
               :tabindex="cell.isCurrentMonth ? 0 : -1"
               :aria-selected="cell.isSelected"
               :disabled="cell.isDisabled"
+              data-testid="day-btn"
               @click="handleDateClick(cell.date)"
               @mouseenter="hoverDate = range ? cell.date : null"
               @mouseleave="hoverDate = null"
