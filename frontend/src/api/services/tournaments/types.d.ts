@@ -325,3 +325,9 @@ export interface UpdateRegistrationResponse {
   disqualification_reason: string | null
   action: 'activated' | 'disqualified'
 }
+
+// tournament banner
+export interface UpdateTournamentBannerArgs {
+  tournamentId: TournamentId
+  file: File
+}

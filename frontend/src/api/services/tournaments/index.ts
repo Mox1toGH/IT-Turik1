@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client'
+import type { TournamentId } from '@/api/dbTypes'
 import type {
   CloseSubmissionsArgs,
   CloseSubmissionsResponse,
@@ -41,6 +42,7 @@ import type {
   SubmitRoundArgs,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
+  UpdateTournamentBannerArgs,
 } from './types'
 import { toValue } from 'vue'
 
@@ -226,6 +228,23 @@ export const tournamentsService = {
     const { data } = await apiClient.patch<UpdateRegistrationResponse>(
       `${prefix}/${args.tournamentId}/registrations/${args.registrationId}/disqualification/`,
       args.body,
+    )
+    return data
+  },
+
+  updateBanner: async (args: UpdateTournamentBannerArgs) => {
+    const formData = new FormData()
+    formData.append('banner', args.file)
+    const { data } = await apiClient.patch<GetTournamentInfoResponse>(
+      `${prefix}/manage/${args.tournamentId}/banner/`,
+      formData,
+    )
+    return data
+  },
+
+  removeBanner: async (args: { tournamentId: TournamentId }) => {
+    const { data } = await apiClient.delete<GetTournamentInfoResponse>(
+      `${prefix}/manage/${args.tournamentId}/banner/`,
     )
     return data
   },

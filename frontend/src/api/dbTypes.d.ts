@@ -90,6 +90,7 @@ interface Tournament {
   max_teams: number
   min_team_members: number
   status: TournamentStatus
+  banner?: string | null
 }
 
 // Round

@@ -43,6 +43,7 @@ import type {
   SubmitRoundArgs,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
+  UpdateTournamentBannerArgs,
 } from '@/api/services/tournaments/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { $api } from '@/api/services'
@@ -431,6 +432,36 @@ export const useUpdateRegistration = (
       queryClient.invalidateQueries({
         queryKey: tournamentsKeys.registeredTeams(vars.tournamentId),
       })
+    },
+    ...config,
+  })
+}
+
+export const useUpdateTournamentBanner = (
+  config?: MutationConfig<GetTournamentInfoResponse, AxiosError<ApiError>, UpdateTournamentBannerArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<GetTournamentInfoResponse, AxiosError<ApiError>, UpdateTournamentBannerArgs>({
+    mutationFn: $api.tournaments.updateBanner,
+    onSuccess: (_, { tournamentId }) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(tournamentId) })
+    },
+    ...config,
+  })
+}
+
+export const useRemoveTournamentBanner = (
+  config?: MutationConfig<GetTournamentInfoResponse, AxiosError<ApiError>, { tournamentId: TournamentId }>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<
+    GetTournamentInfoResponse,
+    AxiosError<ApiError>,
+    { tournamentId: TournamentId }
+  >({
+    mutationFn: $api.tournaments.removeBanner,
+    onSuccess: (_, { tournamentId }) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(tournamentId) })
     },
     ...config,
   })
