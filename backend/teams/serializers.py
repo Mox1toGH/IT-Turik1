@@ -147,12 +147,14 @@ class TeamSerializer(serializers.ModelSerializer):
             'organization',
             'contact_telegram',
             'contact_discord',
+            'banner',
             'members',
             'is_member',
             'can_request_to_join',
             'is_in_active_tournament',
             'member_ids',
         )
+        read_only_fields = ('banner',)
 
     def _request_user(self):
         request = self.context.get('request')
@@ -255,3 +257,9 @@ class TeamSerializer(serializers.ModelSerializer):
                 invite_user_to_team(team=instance, user=user, invited_by=request_user)
 
         return instance
+
+
+class TeamBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ('banner',)
