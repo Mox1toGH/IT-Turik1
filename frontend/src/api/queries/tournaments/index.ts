@@ -216,12 +216,12 @@ export const useDeleteRound = (
 }
 
 export const useCurrentRound = (
-  payload: GetCurrentRoundArgs,
+  payload: MaybeRefArgs<GetCurrentRoundArgs>,
   config?: QueryConfig<GetCurrentRoundResponse>,
 ) => {
   return useQuery<GetCurrentRoundResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.currentRound(payload.id),
-    queryFn: () => $api.tournaments.getCurrentRound({ id: payload.id }),
+    queryKey: computed(() => tournamentsKeys.currentRound(toValue(payload.id))),
+    queryFn: () => $api.tournaments.getCurrentRound({ id: toValue(payload.id) }),
     ...config,
   })
 }
@@ -390,12 +390,12 @@ export const useMarkEvaluated = (
 }
 
 export const useTeamSubmissions = (
-  payload: GetTeamSubmissionsArgs,
+  payload: MaybeRefArgs<GetTeamSubmissionsArgs>,
   config?: QueryConfig<GetTeamSubmissionsResponse>,
 ) => {
   return useQuery<GetTeamSubmissionsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.submissions(payload.tournamentId),
-    queryFn: () => $api.tournaments.getTeamSubmissions({ tournamentId: payload.tournamentId }),
+    queryKey: computed(() => tournamentsKeys.submissions(toValue(payload.tournamentId))),
+    queryFn: () => $api.tournaments.getTeamSubmissions({ tournamentId: toValue(payload.tournamentId) }),
     ...config,
   })
 }

@@ -146,7 +146,11 @@ class TournamentListView(SyncStatusesMixin, APIView):
         offset = (page - 1) * page_size
         page_queryset = queryset[offset:offset + page_size]
 
-        serializer = TournamentPublicSerializer(page_queryset, many=True)
+        serializer = TournamentPublicSerializer(
+            page_queryset,
+            many=True,
+            context={'request': request},
+        )
         return Response({'data': serializer.data, 'total': total})
 
 
@@ -177,7 +181,10 @@ class TournamentCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tournament = serializer.save()
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_201_CREATED)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
@@ -200,7 +207,10 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(tournament, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         tournament = serializer.save()
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_200_OK)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         tournament = self.get_object()
@@ -214,7 +224,10 @@ class TournamentStartRegistrationView(APIView):
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
         start_registration(tournament)
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_200_OK)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
