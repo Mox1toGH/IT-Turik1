@@ -87,17 +87,25 @@
                   :key="tournament.id"
                   class="tournament-card"
                 >
-                  <template #header>
+                  <div
+                    class="tournament-top"
+                    :class="{ 'tournament-top--with-banner': Boolean(tournament.banner) }"
+                    :style="
+                      tournament.banner
+                        ? { backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})` }
+                        : {}
+                    "
+                  >
                     <h3 class="tounament-title" :title="tournament.name">
                       {{ truncateText(tournament.name, 80) }}
                     </h3>
-                  </template>
 
-                  <div class="tournament-info">
                     <p class="tournaments-description" :title="tournament.description">
                       {{ truncateText(tournament.description, 200) }}
                     </p>
+                  </div>
 
+                  <div class="tournament-info">
                     <div class="tournaments-meta">
                       <div class="tournaments-date">
                         <p>Start date:</p>
@@ -302,6 +310,22 @@ const onStatusChange = () => {
   word-break: break-word;
 }
 
+.tournament-top {
+  border-radius: 12px;
+  padding: 12px;
+  margin: -4px -4px 12px;
+  background: color-mix(in srgb, var(--muted) 90%, #000 10%);
+  background-size: cover;
+  background-position: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tournament-top--with-banner {
+  color: #fff;
+}
+
 .tournament-info {
   display: flex;
   flex-direction: column;
@@ -310,7 +334,7 @@ const onStatusChange = () => {
 
 .tournaments-description {
   flex: 1;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   line-height: 1.5;
   word-break: break-word;
 }
