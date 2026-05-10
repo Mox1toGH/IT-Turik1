@@ -51,6 +51,7 @@ class TournamentPublicSerializer(serializers.ModelSerializer):
             'end_date',
             'max_teams',
             'min_team_members',
+            'banner',
             'status',
             'rounds',
             'registered_team',  # <-- додати
@@ -87,9 +88,16 @@ class ActiveTournamentSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'status', 'start_date')
 
 
+
+
+class TournamentBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tournament
+        fields = ('banner',)
+
 class TournamentAdminSerializer(TournamentPublicSerializer):
     class Meta(TournamentPublicSerializer.Meta):
-        read_only_fields = ('status',)
+        read_only_fields = ('status', 'banner')
 
     def validate(self, attrs):
         start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
@@ -543,3 +551,4 @@ class EventSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+

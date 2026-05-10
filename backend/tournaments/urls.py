@@ -24,6 +24,7 @@ from .views import (
     TournamentTeamRegistrationDetailView,
     TournamentTeamRegistrationDisqualificationView,
     TournamentUpdateView,
+    TournamentBannerView,
     
     TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
@@ -38,6 +39,7 @@ urlpatterns = [
     path('<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
     path('manage/', TournamentCreateView.as_view(), name='tournament_manage_create'),
     path('manage/<int:pk>/', TournamentUpdateView.as_view(), name='tournament_manage_update'),
+    path('manage/<int:pk>/banner/', TournamentBannerView.as_view(), name='tournament_manage_banner'),
     path(
         '<int:pk>/start-registration/',
         TournamentStartRegistrationView.as_view(),

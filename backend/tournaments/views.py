@@ -2,6 +2,7 @@ from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,6 +38,7 @@ from .serializers import (
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationDisqualificationSerializer,
+    TournamentBannerSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -216,6 +218,27 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
         tournament = self.get_object()
         tournament.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TournamentBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Tournament.objects.all()
+    permission_classes = [IsAuthenticated, CanEditTournament]
+    serializer_class = TournamentBannerSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        tournament = self.get_object()
+        if tournament.banner:
+            tournament.banner.delete(save=False)
+            tournament.banner = None
+            tournament.save(update_fields=['banner'])
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TournamentStartRegistrationView(APIView):
