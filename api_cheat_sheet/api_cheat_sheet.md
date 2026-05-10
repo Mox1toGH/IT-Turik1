@@ -443,3 +443,38 @@
 > - Дублікати `criterion_id` не допускаються.
 > - Необхідно передати оцінки для **всіх** критеріїв раунду. Якщо потрібен 0, його потрібно передати явно (`"score": 0`).
 > - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. У цей момент також застосовується авто-відсів команд за `passing_count` поточного раунду. Якщо це останній раунд — турнір завершується автоматично.
+
+---
+
+### Team Banner API
+
+**Оновлення банера команди — PATCH `/api/teams/{id}/banner/`**
+- Auth required.
+- Доступ на зміну: тільки капітан команди.
+- `Content-Type: multipart/form-data`
+- Поле: `banner` (image file)
+
+Приклад (curl):
+```bash
+curl -X PATCH "http://localhost:8000/api/teams/3/banner/" \
+  -H "Authorization: Bearer <token>" \
+  -F "banner=@/path/to/banner.jpg"
+```
+
+Успіх: `200 OK` + оновлений об'єкт команди (включно з полем `banner`).
+
+**Видалення банера команди — DELETE `/api/teams/{id}/banner/`**
+- Auth required.
+- Доступ на видалення: тільки капітан команди.
+
+Приклад (curl):
+```bash
+curl -X DELETE "http://localhost:8000/api/teams/3/banner/" \
+  -H "Authorization: Bearer <token>"
+```
+
+Успіх: `200 OK` + оновлений об'єкт команди, де `banner: null`.
+
+**Поле в Team API**
+- У відповідях `GET /api/teams/` та `GET /api/teams/{id}/` присутнє поле:
+  - `banner: string | null` (URL банера або `null`).
