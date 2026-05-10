@@ -279,7 +279,7 @@ h1 {
   flex-direction: column;
   gap: 5px;
 }
-`r`n
+
 .info-card h2 {
   margin-top: 0;
   font-family: var(--font-display);
@@ -309,7 +309,7 @@ li span {
 }
 .quick-link {
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-strong);
   text-decoration: none;
 }
 
@@ -332,4 +332,3 @@ li span {
   }
 }
 </style>
-
