@@ -241,6 +241,7 @@ export const useRegisterTeam = (
   >({
     mutationFn: $api.tournaments.registerTeam,
     onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(vars.id) })
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.eligibleTeams(vars.id) })
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.registeredTeams(vars.id) })
     },
