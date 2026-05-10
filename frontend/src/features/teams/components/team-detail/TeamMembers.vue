@@ -42,12 +42,12 @@
               :key="`member-${member.id}`"
             >
               <div class="member-row">
-                <div v-if="member.avatar" class="member-avatar-wrap">
-                  <img :src="member.avatar" :alt="`${member.username} avatar`" class="member-avatar" />
-                </div>
-                <div v-else class="member-avatar member-avatar-fallback">
-                  {{ getMemberInitials(member.full_name || member.username) }}
-                </div>
+                <user-avatar
+                  :avatar="member.avatar"
+                  :username="member.username"
+                  :full-name="member.full_name || ''"
+                  :size="42"
+                />
 
                 <div class="member-main">
                 <div style="display: flex; justify-content: space-between">
@@ -85,6 +85,7 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
 
 interface Props {
@@ -108,12 +109,6 @@ const filteredMembers = computed(() =>
   props.team?.members.filter((m) => matches([m.username, m.email, m.full_name])),
 )
 
-const getMemberInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-}
 </script>
 
 <style scoped>
@@ -189,29 +184,6 @@ const getMemberInitials = (name: string) => {
 .member-main {
   flex: 1;
   min-width: 0;
-}
-
-.member-avatar-wrap {
-  width: 42px;
-  height: 42px;
-}
-
-.member-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  object-fit: cover;
-  border: 1px solid var(--line-soft);
-  flex-shrink: 0;
-}
-
-.member-avatar-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-gray-700);
-  font-weight: 700;
-  background: color-mix(in srgb, var(--brand-100) 40%, white);
 }
 
 .member-link {

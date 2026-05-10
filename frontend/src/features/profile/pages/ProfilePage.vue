@@ -16,10 +16,12 @@
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
         </div>
         <div class="avatar-row">
-          <img v-if="user?.avatar" :src="user.avatar" alt="Avatar" class="profile-avatar" />
-          <div v-else class="profile-avatar avatar-fallback">
-            {{ avatarInitials }}
-          </div>
+          <user-avatar
+            :avatar="user?.avatar"
+            :username="user?.username || 'user'"
+            :full-name="user?.full_name || ''"
+            :size="108"
+          />
           <avatar-modal :user="user" :disabled="isLoading" />
         </div>
       </template>
@@ -161,6 +163,7 @@ import { useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { parseApiError } from '@/api/errors'
 
 const store = useUserStore()
@@ -188,13 +191,6 @@ const formatDate = (date: Date) => {
   return new Date(date).toLocaleDateString('uk-UA')
 }
 
-const avatarInitials = computed(() => {
-  const base = user.value?.full_name || user.value?.username || ''
-  const parts = base.trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-})
 </script>
 
 <style scoped>
@@ -214,28 +210,11 @@ const avatarInitials = computed(() => {
   font-size: 0.86rem;
 }
 
-.profile-avatar {
-  width: 108px;
-  height: 108px;
-  border-radius: 999px;
-  object-fit: cover;
-  border: 1px solid var(--line-soft);
-}
-
 .avatar-row {
   margin-top: 0.8rem;
   display: flex;
   align-items: center;
   gap: 0.7rem;
-}
-
-.avatar-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: var(--color-gray-700);
-  background: color-mix(in srgb, var(--brand-100) 40%, white);
 }
 
 .details {
