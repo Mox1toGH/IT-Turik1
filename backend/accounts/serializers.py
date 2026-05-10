@@ -139,6 +139,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(read_only=True)
 
     class Meta:
         model = User
@@ -150,6 +151,7 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name',
             'phone',
             'city',
+            'avatar',
             'created_at',
             'needs_onboarding',
             'teams',
@@ -283,6 +285,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                 role_code.save(update_fields=['is_used', 'used_by', 'used_at'])
 
         return instance
+
+
+class UserAvatarUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('avatar',)
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):

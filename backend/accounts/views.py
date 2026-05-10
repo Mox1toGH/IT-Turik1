@@ -8,6 +8,7 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import generics, status
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,6 +23,7 @@ from .serializers import (
     RoleActivationCodeSerializer,
     RegisterSerializer,
     TeamUserListSerializer,
+    UserAvatarUpdateSerializer,
     UserSerializer,
     UserUpdateSerializer,
 )
@@ -143,6 +145,23 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class UserAvatarView(generics.UpdateAPIView, generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = UserAvatarUpdateSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=['avatar'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserListView(generics.ListAPIView):
