@@ -1,6 +1,6 @@
 <template>
   <template v-if="user?.role === 'team' && (hasEligibleTeams || props.registeredTeamId)">
-    <ui-button :disabled="isPending" @click="open">
+    <ui-button v-if="!props.registeredTeamId" :disabled="isPending" @click="open">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
     </ui-button>
