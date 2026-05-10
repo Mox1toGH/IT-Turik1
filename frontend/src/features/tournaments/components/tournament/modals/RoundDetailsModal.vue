@@ -175,7 +175,7 @@ const handleClose = () => {
 
 .editor-card {
   overflow-y: auto;
-  max-height: 450px;
+  max-height: 550px;
   background: var(--accent);
 }
 </style>

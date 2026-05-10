@@ -7,13 +7,13 @@
     <div>
       <p class="modal-text">
         This action cannot be undone. Enter
-        <ui-badge variant="red">{{ props.title }}</ui-badge>
+        <ui-badge variant="red">{{ props.eventTitle }}</ui-badge>
         to confirm deletion.
       </p>
 
       <ui-input
         v-model="confirmInput"
-        :placeholder="props.title"
+        :placeholder="props.eventTitle"
         style="width: 100%"
         :disabled="isPending"
       />
@@ -52,7 +52,7 @@ interface Props {
   modelValue: boolean
   eventId: number
   tournamentId: TournamentId
-  title: string
+  eventTitle: string
 }
 
 const props = defineProps<Props>()
@@ -73,12 +73,12 @@ const { showNotification } = useNotification()
 const queryClient = useQueryClient()
 const { mutate: deleteEvent, isPending } = useDeleteEvent()
 const canDelete = computed(() => {
-  return confirmInput.value === props.title && !isPending.value
+  return confirmInput.value === props.eventTitle && !isPending.value
 })
 
 async function handleDelete() {
   if (!canDelete.value) {
-    errorMessage.value = `Please enter "${props.title}" exactly.`
+    errorMessage.value = `Please enter "${props.eventTitle}" exactly.`
     return
   }
 
