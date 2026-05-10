@@ -33,6 +33,7 @@ export interface GetTournamentsResponse {
     | 'max_teams'
     | 'min_team_members'
     | 'status'
+    | 'banner'
   > & { rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'> })[]
   total: number
 }
