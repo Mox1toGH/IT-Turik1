@@ -24,9 +24,11 @@ import type {
   RespondToInvitationArgs,
   SendJoinRequestArgs,
   UpdateTeamInfoArgs,
+  UpdateTeamBannerArgs,
 } from '@/api/services/teams/types'
 import type { MutationConfig, QueryConfig } from '../types'
 import type { ApiError } from '@/api/errors'
+import type { TeamId } from '@/api/dbTypes'
 
 export const useTeams = (config?: QueryConfig<GetTeamsResponse>) => {
   return useQuery<GetTeamsResponse, AxiosError<ApiError>>({
@@ -200,6 +202,32 @@ export const useUpdateTeamInfo = (
   const queryClient = useQueryClient()
   return useMutation<unknown, AxiosError<ApiError>, UpdateTeamInfoArgs>({
     mutationFn: $api.teams.updateInfo,
+    onSuccess: (_, { teamId }) => {
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
+    },
+    ...config,
+  })
+}
+
+export const useUpdateTeamBanner = (
+  config?: MutationConfig<GetTeamInfoResponse, AxiosError<ApiError>, UpdateTeamBannerArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<GetTeamInfoResponse, AxiosError<ApiError>, UpdateTeamBannerArgs>({
+    mutationFn: $api.teams.updateBanner,
+    onSuccess: (_, { teamId }) => {
+      queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
+    },
+    ...config,
+  })
+}
+
+export const useRemoveTeamBanner = (
+  config?: MutationConfig<GetTeamInfoResponse, AxiosError<ApiError>, { teamId: TeamId }>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<GetTeamInfoResponse, AxiosError<ApiError>, { teamId: TeamId }>({
+    mutationFn: $api.teams.removeBanner,
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: teamKeys.info(teamId) })
     },

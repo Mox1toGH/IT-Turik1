@@ -44,6 +44,7 @@ export interface Team {
   organization: string
   contact_telegram: string
   contact_discord: string
+  banner?: string | null
 }
 
 // ── Invatation ────────────────────────────────────────────────────
