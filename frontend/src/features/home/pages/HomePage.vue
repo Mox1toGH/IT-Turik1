@@ -99,12 +99,8 @@
                       :text="tournament.description"
                       max-length="200"
                     >
-                      <template #trigger="{ toggleOpen }">
-                        <p
-                          class="tournaments-description"
-                          :title="tournament.description"
-                          @click="toggleOpen"
-                        >
+                      <template #trigger>
+                        <p class="tournaments-description" :title="tournament.description">
                           {{ truncateText(tournament.description, 200) }}
                         </p>
                       </template>

@@ -49,10 +49,9 @@
             :text="tournament?.description ?? ''"
             max-length="190"
           >
-            <template #trigger="{ toggleOpen }">
+            <template #trigger>
               <p
                 :title="tournament?.description"
-                @click="toggleOpen"
                 :class="['tournament-description-text', { large: isDescriptionLarge }]"
               >
                 {{ truncateText(tournament?.description ?? '', 190) }}
