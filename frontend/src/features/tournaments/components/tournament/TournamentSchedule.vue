@@ -52,8 +52,8 @@
                   :text="event.description"
                   max-length="100"
                 >
-                  <template #trigger="{ toggleOpen }">
-                    <p class="event-description" @click="toggleOpen">
+                  <template #trigger>
+                    <p class="event-description">
                       {{ truncateText(event.description, 100) }}
                     </p>
                   </template>
@@ -187,6 +187,10 @@ const {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.top-actions {
+  margin-bottom: 1rem;
 }
 
 .top-actions,

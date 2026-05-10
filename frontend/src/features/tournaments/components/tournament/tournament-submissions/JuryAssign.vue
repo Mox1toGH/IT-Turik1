@@ -11,10 +11,10 @@
         <div class="submissions-header">
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="150px" />
+              <ui-skeleton variant="rect" width="150px" height="40px" />
             </template>
 
-            <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
+            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
           </ui-skeleton-loader>
           <ui-button
             @click="handleAssignJury"

@@ -1,5 +1,5 @@
 import { combineDateAndTime } from '@/lib/date'
-import { tiptapJsonToText } from '@/lib/utils'
+import { tiptapJsonToText } from '@/lib/tiptap'
 import * as v from 'valibot'
 
 export const TimeSchema = v.pipe(

@@ -27,11 +27,15 @@
         <editor-modal
           v-model="form.fields.value.description"
           title="Description"
-          addText="Add description"
-          editText="Edit description"
           ariaLabel="Description editor"
           @blur="form.validateField('description')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Edit description' : 'Add description' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.description" class="text-error">{{
           form.errors.value.description
         }}</small>
@@ -42,11 +46,15 @@
         <editor-modal
           v-model="form.fields.value.tech_requirements"
           title="Technical requirements"
-          addText="Add technical requirements"
-          editText="Edit technical requirements"
           ariaLabel="Technical requirements editor"
           @blur="form.validateField('tech_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add tech requirements' : 'Edit tech requirements' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.tech_requirements" class="text-error">{{
           form.errors.value.tech_requirements
         }}</small>
@@ -116,11 +124,15 @@
         <editor-modal
           v-model="form.fields.value.must_have_requirements"
           title="Must have"
-          addText="Add must have"
-          editText="Edit must have"
           ariaLabel="Must have editor"
           @blur="form.validateField('must_have_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add must have' : 'Edit must have' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.must_have_requirements" class="text-error">{{
           form.errors.value.must_have_requirements
         }}</small>
@@ -159,7 +171,7 @@ import { type JSONContent } from '@tiptap/vue-3'
 import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
+import EditorModal from '../../../../../components/shared/EditorModal.vue'
 import { parseApiError } from '@/api/errors'
 import { useEditRound } from '@/api/queries/tournaments'
 import type { Round } from '@/api/dbTypes'

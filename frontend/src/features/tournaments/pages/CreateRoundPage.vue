@@ -1,8 +1,16 @@
 <template>
   <ui-card>
-    <template #header>
+    <div class="round-form-header">
       <h1>Create round</h1>
-    </template>
+      <ui-button
+        asLink
+        variant="secondary"
+        size="sm"
+        :to="`/tournaments/${tournamentId}?section=rounds`"
+      >
+        Back to rounds
+      </ui-button>
+    </div>
 
     <form class="round-form" @submit.prevent="handleSubmit">
       <label class="form-item title-field">
@@ -21,11 +29,16 @@
         <editor-modal
           v-model="form.fields.value.description"
           title="Description"
-          addText="Add description"
-          editText="Edit description"
           ariaLabel="Description editor"
           @blur="form.validateField('description')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Edit description' : 'Add description' }}
+            </ui-button>
+          </template>
+        </editor-modal>
+
         <small v-if="form.errors.value.description" class="text-error">{{
           form.errors.value.description
         }}</small>
@@ -36,11 +49,15 @@
         <editor-modal
           v-model="form.fields.value.tech_requirements"
           title="Technical requirements"
-          addText="Add technical requirements"
-          editText="Edit technical requirements"
           ariaLabel="Technical requirements editor"
           @blur="form.validateField('tech_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add tech requirements' : 'Edit tech requirements' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.tech_requirements" class="text-error">{{
           form.errors.value.tech_requirements
         }}</small>
@@ -96,7 +113,7 @@
 
       <label class="form-item criteria-field">
         <span class="form-label">Evaluation criteria</span>
-        <AddCriteriaModal
+        <add-criteria-modal
           v-model="form.fields.value.criteria"
           @blur="form.validateField('criteria')"
         />
@@ -114,7 +131,13 @@
           editText="Edit must have"
           ariaLabel="Must have editor"
           @blur="form.validateField('must_have_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add mush have' : 'Edit must have' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.must_have_requirements" class="text-error">{{
           form.errors.value.must_have_requirements
         }}</small>
@@ -149,7 +172,7 @@ import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import AddCriteriaModal from '../components/create-round/modals/AddCriteriaModal.vue'
-import EditorModal from '../components/create-round/modals/EditorModal.vue'
+import EditorModal from '../../../components/shared/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateRoundSchema } from '@/schemas/tournaments.schema'
 import type { JSONContent } from '@tiptap/core'
@@ -241,6 +264,12 @@ function handleSubmit() {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto auto auto;
   gap: 1rem;
+}
+
+.round-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .title-field {

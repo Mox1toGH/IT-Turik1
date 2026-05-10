@@ -31,6 +31,35 @@
   border-bottom: 0.5px solid var(--pm-border);
 }
 
+/* Link */
+.ProseMirror a {
+  color: var(--pm-link);
+  text-decoration: none;
+  border-bottom: 1px solid var(--pm-link);
+  padding-bottom: 1px;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: var(--pm-link);
+  border-bottom-color: color-mix(in srgb, var(--pm-link) 50%, transparent);
+  background: color-mix(in srgb, var(--pm-link) 10%, transparent);
+  padding: 1px 3px;
+  margin: 0 -3px;
+  border-radius: 2px;
+}
+
+.ProseMirror a[target='_blank']::after {
+  content: ' ↗';
+  font-size: 0.72em;
+  opacity: 0.5;
+  vertical-align: super;
+}
+
 /* Body */
 .ProseMirror p {
   font-size: 16px;

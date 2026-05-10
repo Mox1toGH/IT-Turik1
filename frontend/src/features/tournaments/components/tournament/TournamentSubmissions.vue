@@ -114,8 +114,8 @@
                 max-length="200"
                 style="max-width: 800px"
               >
-                <template #trigger="{ toggleOpen }">
-                  <p class="text-muted" :title="submission.description" @click="toggleOpen">
+                <template #trigger>
+                  <p class="text-muted" :title="submission.description">
                     {{ truncateText(submission.description, 200) }}
                   </p>
                 </template>

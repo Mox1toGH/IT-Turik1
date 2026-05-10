@@ -140,7 +140,11 @@ const roundOptions = computed(() => {
   const options: { label: string; value: string | number }[] = [
     { label: 'Average', value: 'average' },
   ]
-  options.push(...rounds.value.map((round) => ({ label: round.name, value: round.id })))
+  options.push(
+    ...rounds.value
+      .filter((round) => round.status === 'submission_closed' || round.status === 'evaluated')
+      .map((round) => ({ label: round.name, value: round.id })),
+  )
   return options
 })
 

@@ -62,6 +62,8 @@
   --pm-accent-soft: #c8a25a;
 
   --pm-placeholder: #b0a38f;
+
+  --pm-link: #4486a5;
 }
 
 :root[data-theme='dark'] {
@@ -111,6 +113,8 @@
   --pm-accent-soft: #7a6330;
 
   --pm-placeholder: #4a4640;
+
+  --pm-link: #7eb8d4;
 }
 
 * {
