@@ -305,6 +305,7 @@ const onStatusChange = () => {
 .tournament-info {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   flex: 1;
 }
 
