@@ -9,7 +9,6 @@ from teams.models import TeamMember
 
 from .models import (
     Event,
-    Icon,
     Round,
     Submission,
     Tournament,
@@ -136,7 +135,6 @@ class RoundSerializer(serializers.ModelSerializer):
             'end_date',
             'passing_count',
             'evaluation_criteria',
-            'materials',
             'status',
         )
         read_only_fields = ('status',)
@@ -487,58 +485,26 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
         return TeamMemberSerializer(self._get_unique_team_users(obj), many=True).data
 
 
-class IconSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Icon
-        fields = ('id', 'name', 'path')
-
-
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = (
             'id',
             'tournament',
-            'type',
             'title',
             'description',
-            'link',
             'start_datetime',
-            'icon',
             'created_at',
             'updated_at',
         )
         read_only_fields = ('created_at', 'updated_at')
 
-    def validate(self, attrs):
-        instance = self.instance
-        event_type = attrs.get('type', getattr(instance, 'type', None))
-
-        if event_type == Event.TYPE_EVENT:
-            attrs.pop('link', None)
-            attrs['link'] = ''
-
-        return attrs
-
-    def _resolve_default_icon(self, event_type):
-        if event_type == Event.TYPE_MEET:
-            default_name = 'meet_default'
-        else:
-            default_name = 'event_default'
-        return Icon.objects.filter(name=default_name).first()
-
     @transaction.atomic
     def create(self, validated_data):
-        if 'icon' not in validated_data or validated_data['icon'] is None:
-            validated_data['icon'] = self._resolve_default_icon(validated_data.get('type'))
         return Event.objects.create(**validated_data)
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        if 'icon' in validated_data and validated_data['icon'] is None:
-            validated_data['icon'] = self._resolve_default_icon(
-                validated_data.get('type', instance.type)
-            )
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
