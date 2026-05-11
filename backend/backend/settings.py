@@ -124,3 +124,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:5173')
+

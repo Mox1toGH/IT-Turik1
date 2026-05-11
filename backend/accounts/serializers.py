@@ -7,6 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import transaction
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -126,12 +127,22 @@ class RegisterSerializer(serializers.ModelSerializer):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
 
-            activation_link = f"http://localhost:5173/activate/{uid}/{token}"
+            site_url = getattr(settings, 'SITE_URL', 'http://localhost:5173')
+            activation_link = f"{site_url}/activate/{uid}/{token}"
+
+            context = {
+                'user': user,
+                'activation_link': activation_link,
+                'subject': 'Activate your IT-Turik account',
+            }
+            html_message = render_to_string('notifications/activation_email.html', context)
+
             send_mail(
-                subject='Account activation',
+                subject=context['subject'],
                 message=f'Open this link to activate your account: {activation_link}',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
+                html_message=html_message,
             )
             return user
 
@@ -299,13 +310,23 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        reset_link = f"http://localhost:5173/reset-password/{uid}/{token}"
+        
+        site_url = getattr(settings, 'SITE_URL', 'http://localhost:5173')
+        reset_link = f"{site_url}/reset-password/{uid}/{token}"
+
+        context = {
+            'user': user,
+            'reset_link': reset_link,
+            'subject': 'Password Reset for IT-Turik',
+        }
+        html_message = render_to_string('notifications/password_reset_email.html', context)
 
         send_mail(
-            subject='Password reset',
+            subject=context['subject'],
             message=f'Open this link to reset your password: {reset_link}',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
+            html_message=html_message,
         )
 
         return user
