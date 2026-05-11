@@ -28,6 +28,7 @@ from .views import (
     TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
     RoundSubmissionsView,
+    MyCalendarView,
 )
 
 router = DefaultRouter()
@@ -69,6 +70,7 @@ urlpatterns = [
     path('<int:pk>/my-submissions/', TournamentMyTeamSubmissionsView.as_view(), name='tournament_my_submissions'),
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
+    path('my-calendar/', MyCalendarView.as_view(), name='my_calendar'),
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),
     path('icons/', IconListView.as_view(), name='icon_list'),
 ] + router.urls

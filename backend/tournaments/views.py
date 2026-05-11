@@ -572,6 +572,39 @@ class EventViewSet(viewsets.ModelViewSet):
         return queryset
 
 
+class MyCalendarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user_has_permission(user, Permission.VIEW_TOURNAMENT):
+            tournament_ids = Tournament.objects.exclude(
+                status=Tournament.STATUS_DRAFT
+            ).values_list('id', flat=True)
+        else:
+            tournament_ids = TournamentTeamRegistration.objects.filter(
+                is_active=True,
+            ).filter(
+                Q(team__captain_id=user.id) | Q(team__team_members__user_id=user.id),
+            ).values_list('tournament_id', flat=True)
+
+        events = (
+            Event.objects.select_related('icon', 'tournament')
+            .filter(tournament_id__in=tournament_ids)
+            .order_by('start_datetime')
+        )
+        rounds = (
+            Round.objects.select_related('tournament')
+            .filter(tournament_id__in=tournament_ids)
+            .order_by('start_date')
+        )
+
+        return Response({
+            'events': EventSerializer(events, many=True).data,
+            'rounds': RoundSerializer(rounds, many=True).data,
+        })
+
+
 class IconListView(generics.ListAPIView):
     queryset = Icon.objects.all()
     serializer_class = IconSerializer
