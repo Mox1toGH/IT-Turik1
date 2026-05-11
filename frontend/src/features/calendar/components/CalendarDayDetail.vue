@@ -15,7 +15,8 @@
       <div
         v-for="item in items"
         :key="item.id"
-        :class="['day-detail-item', `day-detail-item--${item.color}`]"
+        :class="['day-detail-item', `day-detail-item--${item.color}`, 'day-detail-item--clickable']"
+        @click="$emit('navigate', item)"
       >
         <div class="day-detail-item-header">
           <ui-badge :variant="item.color">{{ typeLabel(item.type) }}</ui-badge>
@@ -62,7 +63,7 @@ interface Props {
 }
 
 defineProps<Props>()
-defineEmits<{ close: [] }>()
+defineEmits<{ close: []; navigate: [item: CalendarItem] }>()
 
 function typeLabel(type: CalendarItem['type']): string {
   switch (type) {
@@ -119,6 +120,14 @@ function formatTime(date: Date): string {
   padding: 0.6rem;
   border-radius: var(--radius);
   border-left: 3px solid;
+}
+
+.day-detail-item--clickable {
+  cursor: pointer;
+}
+
+.day-detail-item--clickable:hover {
+  filter: brightness(0.97);
 }
 
 .day-detail-item--primary {
