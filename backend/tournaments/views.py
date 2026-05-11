@@ -24,6 +24,8 @@ from .permissions import (
     IsPlatformAdminOrTeamMemberPermission,
 )
 from .serializers import (
+    TournamentArchiveDetailSerializer,
+    TournamentArchiveListSerializer,
     ActiveTournamentSerializer,
     CurrentTaskSerializer,
     EventSerializer,
@@ -612,3 +614,55 @@ class IconListView(generics.ListAPIView):
     queryset = Icon.objects.all()
     serializer_class = IconSerializer
     permission_classes = [AllowAny]
+
+
+class TournamentArchiveListView(SyncStatusesMixin, generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = TournamentArchiveListSerializer
+
+    def get_queryset(self):
+        return (
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+            .prefetch_related(
+                Prefetch('rounds', queryset=Round.objects.order_by('start_date')),
+                'team_registrations__team',
+                'leaderboard_entries__team',
+            )
+            .order_by('-end_date', '-created_at')
+        )
+
+
+class TournamentArchiveDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = TournamentArchiveDetailSerializer
+
+    def get_queryset(self):
+        return (
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+            .prefetch_related(
+                Prefetch('rounds', queryset=Round.objects.order_by('start_date')),
+                'team_registrations__team',
+                'leaderboard_entries__team',
+            )
+        )
+
+
+class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        tournament = get_object_or_404(
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED),
+            pk=self.kwargs['pk'],
+        )
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
+            .filter(round__tournament=tournament)
+            .exclude(
+                team__tournament_registrations__tournament=tournament,
+                team__tournament_registrations__is_disqualified=True,
+            )
+            .order_by('-updated_at')
+        )

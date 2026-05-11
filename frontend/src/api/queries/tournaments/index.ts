@@ -32,6 +32,11 @@ import type {
   GetRoundSubmissionsResponse,
   GetTeamSubmissionsArgs,
   GetTeamSubmissionsResponse,
+  GetTournamentArchiveDetailArgs,
+  GetTournamentArchiveDetailResponse,
+  GetTournamentArchiveListResponse,
+  GetTournamentArchiveSubmissionsArgs,
+  GetTournamentArchiveSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -463,6 +468,36 @@ export const useRemoveTournamentBanner = (
     onSuccess: (_, { tournamentId }) => {
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(tournamentId) })
     },
+    ...config,
+  })
+}
+
+export const useTournamentArchive = (config?: QueryConfig<GetTournamentArchiveListResponse>) => {
+  return useQuery<GetTournamentArchiveListResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.archiveList(),
+    queryFn: () => $api.tournaments.getArchiveList(),
+    ...config,
+  })
+}
+
+export const useTournamentArchiveDetail = (
+  payload: GetTournamentArchiveDetailArgs,
+  config?: QueryConfig<GetTournamentArchiveDetailResponse>,
+) => {
+  return useQuery<GetTournamentArchiveDetailResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.archiveDetail(payload.id),
+    queryFn: () => $api.tournaments.getArchiveDetail({ id: payload.id }),
+    ...config,
+  })
+}
+
+export const useTournamentArchiveSubmissions = (
+  payload: GetTournamentArchiveSubmissionsArgs,
+  config?: QueryConfig<GetTournamentArchiveSubmissionsResponse>,
+) => {
+  return useQuery<GetTournamentArchiveSubmissionsResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.archiveSubmissions(payload.id),
+    queryFn: () => $api.tournaments.getArchiveSubmissions({ id: payload.id }),
     ...config,
   })
 }

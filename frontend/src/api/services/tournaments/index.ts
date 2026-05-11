@@ -30,6 +30,11 @@ import type {
   GetRoundSubmissionsResponse,
   GetTeamSubmissionsArgs,
   GetTeamSubmissionsResponse,
+  GetTournamentArchiveDetailArgs,
+  GetTournamentArchiveDetailResponse,
+  GetTournamentArchiveListResponse,
+  GetTournamentArchiveSubmissionsArgs,
+  GetTournamentArchiveSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -245,6 +250,25 @@ export const tournamentsService = {
   removeBanner: async (args: { tournamentId: TournamentId }) => {
     const { data } = await apiClient.delete<GetTournamentInfoResponse>(
       `${prefix}/manage/${args.tournamentId}/banner/`,
+    )
+    return data
+  },
+
+  getArchiveList: async () => {
+    const { data } = await apiClient.get<GetTournamentArchiveListResponse>(`${prefix}/archive/`)
+    return data
+  },
+
+  getArchiveDetail: async (args: GetTournamentArchiveDetailArgs) => {
+    const { data } = await apiClient.get<GetTournamentArchiveDetailResponse>(
+      `${prefix}/archive/${args.id}/`,
+    )
+    return data
+  },
+
+  getArchiveSubmissions: async (args: GetTournamentArchiveSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetTournamentArchiveSubmissionsResponse>(
+      `${prefix}/archive/${args.id}/submissions/`,
     )
     return data
   },

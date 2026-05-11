@@ -4,14 +4,17 @@
       <template #header>
         <div class="tournaments-header">
           <h1 class="tournaments-title">Tournaments list</h1>
-          <ui-button
-            v-if="user?.role === 'admin'"
-            size="sm"
-            asLink
-            to="/tournaments/create"
-            class="create-new-btn"
-            >Create new</ui-button
-          >
+          <div class="header-actions">
+            <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary">Archive</ui-button>
+            <ui-button
+              v-if="user?.role === 'admin'"
+              size="sm"
+              asLink
+              to="/tournaments/create"
+              class="create-new-btn"
+              >Create new</ui-button
+            >
+          </div>
         </div>
       </template>
 
@@ -275,6 +278,11 @@ const onStatusChange = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .filters-wrapper {
