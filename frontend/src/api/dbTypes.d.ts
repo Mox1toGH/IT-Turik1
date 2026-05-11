@@ -120,11 +120,15 @@ interface Round {
 // Event
 export type EventId = number
 
+type EventType = 'meet' | 'event'
+
 interface TournamentEvent {
   description: string
   id: EventId
-  start_datetime: Date
+  type: EventType
   title: string
+  link: string
+  start_datetime: Date
   tournament: TournamentId
   created_at: Date
   updated_at: Date

@@ -47,6 +47,7 @@ export const tournamentsKeys = {
   roundSubmissions: (roundId: RoundId) => ['round-submissions', roundId] as const,
   activeTeamTournament: (teamId: TeamId) =>
     [...tournamentsKeys.all(), 'active-for-team', teamId] as const,
+  calendar: () => [...tournamentsKeys.all(), 'calendar'] as const,
 }
 
 export const notificationKeys = {
