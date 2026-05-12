@@ -8,6 +8,7 @@
             <ui-badge>Total posts: {{ totalNews }}</ui-badge>
           </div>
           <div class="title-row">
+            <news-board-title-icon class="title-icon" />
             <h1>News board</h1>
           </div>
           <div class="subtitle-row">
@@ -224,6 +225,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
+import NewsBoardTitleIcon from '@/icons/NewsBoardTitleIcon.vue'
 import EditorModal from '@/features/tournaments/components/create-round/modals/EditorModal.vue'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
 import { useProfile } from '@/api/queries/accounts'
@@ -462,9 +464,14 @@ watch(
 
 .title-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 0.8rem;
+}
+
+.title-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  opacity: 0.86;
 }
 
 .create-news-action {
