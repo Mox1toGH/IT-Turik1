@@ -21,7 +21,12 @@
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >
-            <router-link to="/news" :class="navItemClass('news')">News</router-link>
+            <router-link to="/news" :class="navItemClass('news')">
+              News
+            </router-link>
+            <router-link to="/calendar" :class="navItemClass('calendar')">
+              Calendar
+            </router-link>
             <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
               >Evaluations</router-link
             >
@@ -93,7 +98,7 @@
               class="mobile-nav-item"
               >Tournaments</router-link
             >
-            <router-link
+            
               to="/news"
               :class="navItemClass('news')"
               @click="mobileMenuOpen = false"
@@ -101,7 +106,13 @@
             >
               News
             </router-link>
-
+            <router-link
+              to="/calendar"
+              :class="navItemClass('calendar')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >Calendar</router-link
+            >
             <router-link
               v-if="isJury"
               to="/evaluation"
@@ -164,6 +175,7 @@ type Section =
   | 'teams'
   | 'tournaments'
   | 'news'
+  | 'calendar'
   | 'evaluation'
   | 'profile'
   | 'admin'
@@ -193,6 +205,7 @@ const isSectionActive = (section: Section) => {
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
   if (section === 'news') return path === '/news' || path.startsWith('/news/')
   if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
+  if (section === 'calendar') return path === '/calendar'
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'

@@ -21,6 +21,7 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  GetMyCalendarResponse,
   MarkEvaluatedArgs,
   MarkEvaluatedResponse,
   LeaveTeamArgs,
@@ -416,6 +417,16 @@ export const useRoundSubmissions = (
   return useQuery<GetRoundSubmissionsResponse, AxiosError<ApiError>>({
     queryKey: computed(() => tournamentsKeys.roundSubmissions(toValue(payload.roundId))),
     queryFn: () => $api.tournaments.getRoundSubmissions({ roundId: toValue(payload.roundId) }),
+    ...config,
+  })
+}
+
+export const useMyCalendar = (
+  config?: QueryConfig<GetMyCalendarResponse>,
+) => {
+  return useQuery<GetMyCalendarResponse, AxiosError<ApiError>>({
+    queryKey: tournamentsKeys.calendar(),
+    queryFn: () => $api.tournaments.getMyCalendar(),
     ...config,
   })
 }
