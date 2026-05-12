@@ -31,7 +31,12 @@
         </ui-card>
 
         <template v-else>
-          <div class="leaderboard-table-wrap">
+          <div
+            ref="tableWrapRef"
+            class="leaderboard-table-wrap"
+            :class="{ 'is-rounds-scroll-capped': hasRoundOverflow }"
+            @wheel="onTableWheel"
+          >
             <table class="leaderboard-table" :style="tableVars">
               <thead>
                 <tr>
@@ -54,7 +59,9 @@
                   </td>
                   <td v-for="round in roundColumns" :key="`${entry.team_id}-${round.id}`" class="round-cell">
                     <template v-if="hasRoundParticipation(entry, round.id)">
-                      {{ formatScore(getRoundScore(entry, round.id) ?? 0) }}
+                      {{ formatScore(getRoundScore(entry, round.id) ?? 0) }}/{{
+                        formatScore(getRoundMaxScore(entry, round.id) ?? 0)
+                      }}
                     </template>
                     <span v-else class="missed-round">x</span>
                   </td>
@@ -76,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -100,6 +107,7 @@ interface RoundColumn {
 type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
+const tableWrapRef = ref<HTMLElement | null>(null)
 
 const {
   data: roundsData,
@@ -171,9 +179,11 @@ const roundColumns = computed<RoundColumn[]>(() => {
 })
 
 const hasRoundOverflow = computed(() => roundColumns.value.length > 3)
+const visibleRoundCols = computed(() => Math.min(roundColumns.value.length, 3))
 
 const tableVars = computed(() => ({
   '--round-cols': String(Math.max(roundColumns.value.length, 1)),
+  '--visible-round-cols': String(Math.max(visibleRoundCols.value, 1)),
 }))
 
 const errorMessage = computed(() => {
@@ -183,34 +193,94 @@ const errorMessage = computed(() => {
 })
 
 function getRoundScore(entry: TournamentEntry, roundId: number) {
-  const round = entry.rounds?.find((item) => item.round_id === roundId)
+  const round = getRoundBreakdown(entry, roundId)
   return round ? round.total_score : null
 }
 
 function hasRoundParticipation(entry: TournamentEntry, roundId: number) {
-  return getRoundScore(entry, roundId) !== null
+  return !!getRoundBreakdown(entry, roundId)
+}
+
+function getRoundMaxScore(entry: TournamentEntry, roundId: number) {
+  const round = getRoundBreakdown(entry, roundId)
+  if (!round) return null
+
+  const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
+  const juryCount = getJuryCount(
+    round.jury_breakdown,
+    round.total_score,
+    round.average_score,
+    roundMaxScore,
+  )
+  return roundMaxScore * juryCount
 }
 
 function getEntryMaxScore(entry: TournamentEntry) {
   return (entry.rounds ?? []).reduce((sum, round) => {
     const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
-    const juryCount = getJuryCount(round.jury_breakdown)
+    const juryCount = getJuryCount(
+      round.jury_breakdown,
+      round.total_score,
+      round.average_score,
+      roundMaxScore,
+    )
     return sum + roundMaxScore * juryCount
   }, 0)
 }
 
-function getJuryCount(juryBreakdown: unknown) {
+function getRoundBreakdown(entry: TournamentEntry, roundId: number) {
+  return entry.rounds?.find((item) => item.round_id === roundId) ?? null
+}
+
+function getJuryCount(
+  juryBreakdown: unknown,
+  totalScore?: number,
+  averageScore?: number,
+  roundMaxScore?: number,
+) {
   if (Array.isArray(juryBreakdown)) return juryBreakdown.length || 1
   if (juryBreakdown && typeof juryBreakdown === 'object') {
     const count = Object.keys(juryBreakdown as Record<string, unknown>).length
     return count || 1
   }
+
+  // Fallback for hidden jury breakdown (team role): infer from aggregate values per round.
+  if (roundMaxScore && roundMaxScore > 0 && averageScore && averageScore > 0 && totalScore !== undefined) {
+    const estimated = totalScore / (roundMaxScore * averageScore)
+    if (Number.isFinite(estimated) && estimated > 0) return Math.max(1, Math.round(estimated))
+  }
+
   return 1
 }
 
 function formatScore(value: number) {
   if (Number.isNaN(value)) return '0'
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+}
+
+function onTableWheel(event: WheelEvent) {
+  const container = tableWrapRef.value
+  if (!container || !hasRoundOverflow.value) return
+
+  const maxScrollLeft = container.scrollWidth - container.clientWidth
+  if (maxScrollLeft <= 0) return
+
+  const dominantDelta =
+    Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+  if (!dominantDelta) return
+
+  const scrollSpeedFactor = 0.4
+  const slowedDelta = dominantDelta * scrollSpeedFactor
+
+  const nextScrollLeft = Math.min(
+    maxScrollLeft,
+    Math.max(0, container.scrollLeft + slowedDelta),
+  )
+
+  if (nextScrollLeft !== container.scrollLeft) {
+    event.preventDefault()
+    container.scrollLeft = nextScrollLeft
+  }
 }
 </script>
 
@@ -219,6 +289,7 @@ function formatScore(value: number) {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-width: 0;
 }
 
 .header {
@@ -245,10 +316,18 @@ function formatScore(value: number) {
 }
 
 .leaderboard-table-wrap {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--card);
+}
+
+.leaderboard-table-wrap.is-rounds-scroll-capped {
+  max-width: min(100%, calc(5.5rem + 15rem + (var(--visible-round-cols) * 7.5rem) + 10rem));
 }
 
 .leaderboard-table {
@@ -275,7 +354,9 @@ function formatScore(value: number) {
   background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
   position: sticky;
   top: 0;
-  z-index: 4;
+  z-index: 10;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .leaderboard-table tbody tr:hover td {
@@ -317,8 +398,17 @@ function formatScore(value: number) {
 .sticky-left,
 .sticky-right {
   position: sticky;
-  z-index: 3;
+  z-index: 5;
   background: var(--card);
+}
+
+.leaderboard-table thead .sticky-left,
+.leaderboard-table thead .sticky-right {
+  z-index: 12;
+}
+
+.leaderboard-table thead .rank-col.sticky-left {
+  z-index: 13;
 }
 
 .rank-col.sticky-left {
@@ -380,6 +470,10 @@ function formatScore(value: number) {
 
   .leaderboard-table {
     min-width: calc(5rem + 12rem + (var(--round-cols) * 7rem) + 9rem);
+  }
+
+  .leaderboard-table-wrap.is-rounds-scroll-capped {
+    max-width: min(100%, calc(5rem + 12rem + (var(--visible-round-cols) * 7rem) + 9rem));
   }
 
   .rank-col {
