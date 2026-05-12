@@ -98,14 +98,21 @@
       </template>
 
       <div class="banner-modal-body">
-        <img
+        <div
           v-if="bannerPreviewUrl"
-          :src="bannerPreviewUrl"
-          alt="Tournament banner preview"
-          class="banner-preview"
-        />
+          class="banner-preview-frame"
+          @pointerdown="onBannerPreviewPointerDown"
+        >
+          <img
+            :src="bannerPreviewUrl"
+            alt="Tournament banner preview"
+            class="banner-preview"
+            :style="{ objectPosition: bannerObjectPosition }"
+          />
+        </div>
         <div v-else class="banner-empty">No banner</div>
 
+        <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
         <input type="file" accept="image/*" @change="onBannerChange" />
       </div>
 
@@ -150,6 +157,7 @@ import {
   useUpdateTournamentBanner,
 } from '@/api/queries/tournaments'
 import { useNotification } from '@/composables/useNotification'
+import { clearImagePosition, readImagePosition, toObjectPosition, writeImagePosition } from '@/lib/imagePosition'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
@@ -163,12 +171,20 @@ const { showNotification } = useNotification()
 const isBannerModalOpen = ref(false)
 const selectedBanner = ref<File | null>(null)
 const selectedBannerUrl = ref('')
+const bannerPositionX = ref(50)
+const bannerPositionY = ref(50)
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTournamentBanner()
 const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useRemoveTournamentBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 const bannerPreviewUrl = computed(() => selectedBannerUrl.value || tournament.value?.banner || '')
+const bannerPositionKey = computed(() => `image-position:banner:tournament:${id}`)
+const bannerObjectPosition = computed(() =>
+  toObjectPosition({ x: bannerPositionX.value, y: bannerPositionY.value }),
+)
 const heroBannerStyle = computed(() =>
-  tournament.value?.banner ? { backgroundImage: `url(${tournament.value.banner})` } : {},
+  tournament.value?.banner
+    ? { backgroundImage: `url(${tournament.value.banner})`, backgroundPosition: bannerObjectPosition.value }
+    : {},
 )
 
 const currentSection = ref<Sections>('information')
@@ -195,6 +211,9 @@ const closeBannerModal = () => {
 
 const resetBannerState = () => {
   selectedBanner.value = null
+  const saved = readImagePosition(bannerPositionKey.value)
+  bannerPositionX.value = saved.x
+  bannerPositionY.value = saved.y
   if (selectedBannerUrl.value) {
     URL.revokeObjectURL(selectedBannerUrl.value)
     selectedBannerUrl.value = ''
@@ -209,6 +228,7 @@ const onBannerChange = (event: Event) => {
 
 const saveBanner = () => {
   if (!selectedBanner.value) return
+  writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
   updateBanner(
     { tournamentId: id, file: selectedBanner.value },
     {
@@ -228,6 +248,7 @@ const removeBanner = () => {
     { tournamentId: id },
     {
       onSuccess: () => {
+        clearImagePosition(bannerPositionKey.value)
         showNotification('Banner removed.', 'success')
         resetBannerState()
       },
@@ -236,6 +257,34 @@ const removeBanner = () => {
       },
     },
   )
+}
+
+const onBannerPreviewPointerDown = (event: PointerEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  target.setPointerCapture(event.pointerId)
+
+  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
+    const rect = target.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
+    bannerPositionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
+    bannerPositionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
+  }
+
+  applyPositionFromPointer(event)
+
+  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
+  const handleUp = (pointerEvent: PointerEvent) => {
+    applyPositionFromPointer(pointerEvent)
+    writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
+    target.removeEventListener('pointermove', handleMove)
+    target.removeEventListener('pointerup', handleUp)
+    target.removeEventListener('pointercancel', handleUp)
+  }
+
+  target.addEventListener('pointermove', handleMove)
+  target.addEventListener('pointerup', handleUp)
+  target.addEventListener('pointercancel', handleUp)
 }
 
 watch(selectedBanner, (file) => {
@@ -247,6 +296,16 @@ watch(selectedBanner, (file) => {
     selectedBannerUrl.value = URL.createObjectURL(file)
   }
 })
+
+watch(
+  bannerPositionKey,
+  (key) => {
+    const saved = readImagePosition(key)
+    bannerPositionX.value = saved.x
+    bannerPositionY.value = saved.y
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query[sectionQueryKey],
@@ -355,7 +414,7 @@ watch(
   gap: 0.75rem;
 }
 
-.banner-preview,
+.banner-preview-frame,
 .banner-empty {
   width: 100%;
   max-width: 480px;
@@ -364,8 +423,23 @@ watch(
   border: 1px solid var(--line-soft);
 }
 
+.banner-preview-frame {
+  overflow: hidden;
+  cursor: move;
+}
+
+.position-hint {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: 0.82rem;
+}
+
 .banner-preview {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  user-select: none;
+  pointer-events: none;
 }
 
 .banner-empty {

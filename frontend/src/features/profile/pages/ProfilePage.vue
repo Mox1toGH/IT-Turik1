@@ -21,6 +21,7 @@
             :username="user?.username || 'user'"
             :full-name="user?.full_name || ''"
             :size="108"
+            :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
           />
           <avatar-modal :user="user" :disabled="isLoading" />
         </div>
@@ -142,7 +143,7 @@
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
         <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
-        <ui-button variant="secondary" :disabled="isLoading || isDeleting" @click="logout">
+        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
           Log Out
         </ui-button>
       </div>

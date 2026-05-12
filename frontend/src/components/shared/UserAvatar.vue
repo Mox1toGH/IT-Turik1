@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { readImagePosition, toObjectPosition } from '@/lib/imagePosition'
 
 const props = withDefaults(
   defineProps<{
@@ -25,6 +26,7 @@ const props = withDefaults(
     username: string
     fullName?: string
     size?: number
+    positionKey?: string
   }>(),
   {
     avatar: null,
@@ -37,14 +39,15 @@ const sourceName = computed(() => props.fullName?.trim() || props.username?.trim
 const initials = computed(() => {
   const parts = sourceName.value.split(/\s+/).filter(Boolean)
   if (!parts.length) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  if (parts.length === 1) return (parts[0] ?? '').slice(0, 2).toUpperCase()
+  return `${parts[0]?.charAt(0) ?? ''}${parts[1]?.charAt(0) ?? ''}`.toUpperCase()
 })
 
 const altText = computed(() => `${props.username} avatar`)
 const avatarStyle = computed(() => ({
   width: `${props.size}px`,
   height: `${props.size}px`,
+  objectPosition: toObjectPosition(readImagePosition(props.positionKey)),
 }))
 </script>
 
