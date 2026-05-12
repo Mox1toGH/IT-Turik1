@@ -2,7 +2,10 @@
   <div class="summary">
     <div class="scores">
       <div v-for="item in normalizedScores" :key="item.criterion_id" class="score-row">
-        <span class="criterion">{{ item.criterion_name }}</span>
+        <span class="criterion">
+          <span class="criterion-dot" :style="{ backgroundColor: item.color }" aria-hidden="true"></span>
+          {{ item.criterion_name }}
+        </span>
         <span class="value">{{ item.score }} / {{ item.max }}</span>
       </div>
     </div>
@@ -25,21 +28,12 @@
       />
     </div>
 
-    <div class="metric">
-      <div class="metric-head">
-        <p><strong>Final:</strong> {{ evaluation.final_score }}</p>
-        <p class="range">{{ minScore }} - {{ maxScore }}</p>
-      </div>
-
-      <ui-progress-bar :percent="finalPercent" />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { EvaluationData, RoundCriterion } from '@/api/services/evaluation/types'
-import UiProgressBar from '@/components/ui/UiProgressBar.vue'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
 
 interface Props {
@@ -73,7 +67,7 @@ const scoreByCriterion = computed(() => {
 })
 
 const normalizedScores = computed(() =>
-  props.criteria.map((criterion) => {
+  props.criteria.map((criterion, index) => {
     const max = Number(criterion.max_score || 0)
     const rawScore = scoreByCriterion.value.get(criterion.id) ?? 0
     const score = Math.max(0, Math.min(rawScore, max))
@@ -83,6 +77,7 @@ const normalizedScores = computed(() =>
       criterion_name: criterion.name,
       max,
       score,
+      color: palette[index % palette.length],
     }
   }),
 )
@@ -93,23 +88,17 @@ const scoredSum = computed(() =>
 
 const usedSegments = computed(() => {
   const usedTotal = scoredSum.value || 1
-  return normalizedScores.value.map((item, index) => ({
+  return normalizedScores.value.map((item) => ({
     id: item.criterion_id,
     widthPercent: (item.score / usedTotal) * 100,
     title: `${item.criterion_name}: ${item.score} / ${item.max}`,
-    color: palette[index % palette.length],
+    color: item.color,
   }))
 })
 
 const totalPercent = computed(() => {
   if (!maxScore.value) return 0
   const clamped = Math.max(0, Math.min(Number(props.evaluation.total_score || 0), maxScore.value))
-  return (clamped / maxScore.value) * 100
-})
-
-const finalPercent = computed(() => {
-  if (!maxScore.value) return 0
-  const clamped = Math.max(0, Math.min(Number(props.evaluation.final_score || 0), maxScore.value))
   return (clamped / maxScore.value) * 100
 })
 </script>
@@ -157,8 +146,18 @@ const finalPercent = computed(() => {
 }
 
 .criterion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   color: var(--foreground);
   font-weight: 600;
+}
+
+.criterion-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .value {

@@ -9,36 +9,16 @@
           </div>
 
           <div class="controls">
-            <ui-select
-              v-model="selectedLeaderboardMode"
-              :options="roundOptions"
-              :is-loading="isLoadingRounds"
-              :is-error="isRoundsError"
-              error="Failed to fetch rounds"
-              placeholder="Select round"
-              align-to="right"
-              min-width="200px"
-            />
+            <ui-badge variant="green">Snapshot</ui-badge>
           </div>
         </div>
       </template>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
-          <div class="cards">
-            <ui-card v-for="i in 3" :key="i" class="entry">
-              <template #header>
-                <div class="entry-header">
-                  <ui-skeleton variant="rect" width="150px" height="22px" />
-                  <ui-skeleton variant="rect" width="70px" height="22px" />
-                </div>
-              </template>
-
-              <div class="entry-body">
-                <ui-skeleton variant="rect" width="200px" />
-                <ui-skeleton variant="rect" width="230px" />
-              </div>
-            </ui-card>
+          <div class="table-skeleton">
+            <ui-skeleton variant="rect" height="40px" />
+            <ui-skeleton v-for="i in 5" :key="i" variant="rect" height="52px" />
           </div>
         </template>
 
@@ -50,52 +30,53 @@
           <p>No leaderboard data yet.</p>
         </ui-card>
 
-        <div v-else class="cards">
-          <ui-card v-for="entry in rankings" :key="entry.team_id" class="entry">
-            <template #header>
-              <div class="entry-header">
-                <div class="entry-title">
-                  <p class="entry-rank">#{{ entry.rank }}</p>
-                  <h4 class="entry-team">{{ entry.team_name }}</h4>
-                </div>
+        <template v-else>
+          <div
+            ref="tableWrapRef"
+            class="leaderboard-table-wrap"
+            :class="{ 'is-rounds-scroll-capped': hasRoundOverflow }"
+            @wheel="onTableWheel"
+          >
+            <table class="leaderboard-table" :style="tableVars">
+              <thead>
+                <tr>
+                  <th class="rank-col sticky-left">Place</th>
+                  <th class="team-col sticky-left">Team</th>
+                  <th v-for="round in roundColumns" :key="round.id" class="round-col">
+                    {{ round.name }}
+                  </th>
+                  <th class="total-col sticky-right">Total</th>
+                </tr>
+              </thead>
 
-                <div class="entry-meta">
-                  <ui-badge :variant="isSnapshot ? 'green' : 'gray'">
-                    {{ isSnapshot ? 'Snapshot' : 'Live' }}
-                  </ui-badge>
-                  <p class="entry-score">{{ formatScore(entry.total_score) }}</p>
-                </div>
-              </div>
-            </template>
+              <tbody>
+                <tr v-for="entry in rankings" :key="entry.team_id">
+                  <td class="rank-col sticky-left">{{ entry.rank }}</td>
+                  <td class="team-col sticky-left">
+                    <RouterLink :to="`/teams/${entry.team_id}`" class="team-link">
+                      {{ entry.team_name }}
+                    </RouterLink>
+                  </td>
+                  <td v-for="round in roundColumns" :key="`${entry.team_id}-${round.id}`" class="round-cell">
+                    <template v-if="hasRoundParticipation(entry, round.id)">
+                      {{ formatScore(getRoundScore(entry, round.id) ?? 0) }}/{{
+                        formatScore(getRoundMaxScore(entry, round.id) ?? 0)
+                      }}
+                    </template>
+                    <span v-else class="missed-round">x</span>
+                  </td>
+                  <td class="total-col sticky-right total-value">
+                    {{ formatScore(entry.total_score) }}/{{ formatScore(getEntryMaxScore(entry)) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-            <div class="entry-body">
-              <template v-if="isAverageMode">
-                <div class="rounds" v-if="(entry as TournamentEntry).rounds?.length">
-                  <div
-                    class="round-row"
-                    v-for="round in (entry as TournamentEntry).rounds"
-                    :key="round.round_id"
-                  >
-                    <div class="round-left">
-                      <p class="round-name">{{ round.round_name }}</p>
-                      <p class="text-muted">Avg: {{ formatScore(round.average_score) }}</p>
-                    </div>
-
-                    <div class="round-right">
-                      <p class="round-score">{{ formatScore(round.total_score) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </template>
-
-              <template v-else>
-                <p class="text-muted">
-                  Avg: {{ formatScore((entry as RoundEntry).average_score) }}
-                </p>
-              </template>
-            </div>
-          </ui-card>
-        </div>
+          <p v-if="hasRoundOverflow" class="scroll-hint text-muted">
+            Scroll horizontally to view all rounds.
+          </p>
+        </template>
       </ui-skeleton-loader>
     </ui-card>
   </section>
@@ -103,77 +84,107 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { parseApiError } from '@/api/errors'
 import { useTournamentRounds } from '@/api/queries/tournaments'
-import { useRoundLeaderboard, useTournamentLeaderboard } from '@/api/queries/evaluation'
-import type {
-  GetRoundLeaderboardResponse,
-  GetTournamentLeaderboardResponse,
-} from '@/api/services/evaluation/types'
+import { useTournamentLeaderboard } from '@/api/queries/evaluation'
+import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation/types'
 
 interface Props {
   tournamentId: number
 }
 
-type RoundEntry = GetRoundLeaderboardResponse['rankings'][number]
+interface RoundColumn {
+  id: number
+  name: string
+  maxScore: number
+}
+
 type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
-
-type LeaderboardMode = 'average' | number
-const selectedLeaderboardMode = ref<LeaderboardMode>('average')
+const tableWrapRef = ref<HTMLElement | null>(null)
 
 const {
   data: roundsData,
-  isLoading: isLoadingRounds,
-  isError: isRoundsError,
 } = useTournamentRounds({ id: props.tournamentId })
 const rounds = computed(() => roundsData.value ?? [])
 
-const roundOptions = computed(() => {
-  const options: { label: string; value: string | number }[] = [
-    { label: 'Average', value: 'average' },
-  ]
-  options.push(...rounds.value.map((round) => ({ label: round.name, value: round.id })))
-  return options
+const tournamentQuery = useTournamentLeaderboard({ tournamentId: props.tournamentId })
+const isLoading = computed(() => tournamentQuery.isLoading.value)
+const isError = computed(() => tournamentQuery.isError.value)
+const error = computed(() => parseApiError(tournamentQuery.error.value))
+const rankings = computed<TournamentEntry[]>(() => tournamentQuery.data.value?.rankings ?? [])
+
+const leaderboardRoundIds = computed(() => {
+  const ids = new Set<number>()
+  for (const entry of rankings.value) {
+    for (const round of entry.rounds ?? []) {
+      ids.add(round.round_id)
+    }
+  }
+
+  return ids
 })
 
-const isAverageMode = computed(() => selectedLeaderboardMode.value === 'average')
-const selectedRoundId = computed(() =>
-  typeof selectedLeaderboardMode.value === 'number' ? selectedLeaderboardMode.value : null,
-)
+const roundMaxScoreMap = computed(() => {
+  const scoreMap = new Map<number, number>()
 
-const tournamentQuery = useTournamentLeaderboard(
-  { tournamentId: props.tournamentId },
-  { enabled: isAverageMode },
-)
+  for (const round of rounds.value) {
+    const criteria = Array.isArray(round.criteria) ? round.criteria : []
+    const maxScore = criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
+    scoreMap.set(round.id, maxScore)
+  }
 
-const roundQuery = useRoundLeaderboard(
-  { roundId: computed(() => selectedRoundId.value ?? 0) },
-  { enabled: computed(() => !isAverageMode.value && !!selectedRoundId.value) },
-)
-
-const activeQuery = computed(() => (isAverageMode.value ? tournamentQuery : roundQuery))
-
-const isLoading = computed(() => activeQuery.value.isLoading.value)
-const isError = computed(() => activeQuery.value.isError.value)
-const error = computed(() => parseApiError(activeQuery.value.error.value))
-
-const isSnapshot = computed(() =>
-  isAverageMode.value
-    ? !!tournamentQuery.data.value?.is_snapshot
-    : !!roundQuery.data.value?.is_snapshot,
-)
-
-const rankings = computed<(RoundEntry | TournamentEntry)[]>(() => {
-  if (isAverageMode.value) return (tournamentQuery.data.value?.rankings ?? []) as TournamentEntry[]
-  return (roundQuery.data.value?.rankings ?? []) as RoundEntry[]
+  return scoreMap
 })
+
+const roundColumns = computed<RoundColumn[]>(() => {
+  const idsFromLeaderboard = leaderboardRoundIds.value
+  const shouldFilterByLeaderboard = idsFromLeaderboard.size > 0
+
+  const baseRounds = shouldFilterByLeaderboard
+    ? rounds.value.filter((round) => idsFromLeaderboard.has(round.id))
+    : rounds.value
+
+  const columnsFromRounds: RoundColumn[] = baseRounds.map((round) => ({
+    id: round.id,
+    name: round.name,
+    maxScore: roundMaxScoreMap.value.get(round.id) ?? 0,
+  }))
+
+  if (!shouldFilterByLeaderboard) return columnsFromRounds
+
+  const existingIds = new Set(columnsFromRounds.map((round) => round.id))
+  const fallbackColumns: RoundColumn[] = []
+
+  for (const entry of rankings.value) {
+    for (const round of entry.rounds ?? []) {
+      if (existingIds.has(round.round_id)) continue
+
+      fallbackColumns.push({
+        id: round.round_id,
+        name: round.round_name,
+        maxScore: roundMaxScoreMap.value.get(round.round_id) ?? 0,
+      })
+      existingIds.add(round.round_id)
+    }
+  }
+
+  return [...columnsFromRounds, ...fallbackColumns]
+})
+
+const hasRoundOverflow = computed(() => roundColumns.value.length > 3)
+const visibleRoundCols = computed(() => Math.min(roundColumns.value.length, 3))
+
+const tableVars = computed(() => ({
+  '--round-cols': String(Math.max(roundColumns.value.length, 1)),
+  '--visible-round-cols': String(Math.max(visibleRoundCols.value, 1)),
+}))
 
 const errorMessage = computed(() => {
   if (!error.value) return 'Failed to load leaderboard.'
@@ -181,9 +192,95 @@ const errorMessage = computed(() => {
   return error.value.message || 'Failed to load leaderboard.'
 })
 
+function getRoundScore(entry: TournamentEntry, roundId: number) {
+  const round = getRoundBreakdown(entry, roundId)
+  return round ? round.total_score : null
+}
+
+function hasRoundParticipation(entry: TournamentEntry, roundId: number) {
+  return !!getRoundBreakdown(entry, roundId)
+}
+
+function getRoundMaxScore(entry: TournamentEntry, roundId: number) {
+  const round = getRoundBreakdown(entry, roundId)
+  if (!round) return null
+
+  const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
+  const juryCount = getJuryCount(
+    round.jury_breakdown,
+    round.total_score,
+    round.average_score,
+    roundMaxScore,
+  )
+  return roundMaxScore * juryCount
+}
+
+function getEntryMaxScore(entry: TournamentEntry) {
+  return (entry.rounds ?? []).reduce((sum, round) => {
+    const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
+    const juryCount = getJuryCount(
+      round.jury_breakdown,
+      round.total_score,
+      round.average_score,
+      roundMaxScore,
+    )
+    return sum + roundMaxScore * juryCount
+  }, 0)
+}
+
+function getRoundBreakdown(entry: TournamentEntry, roundId: number) {
+  return entry.rounds?.find((item) => item.round_id === roundId) ?? null
+}
+
+function getJuryCount(
+  juryBreakdown: unknown,
+  totalScore?: number,
+  averageScore?: number,
+  roundMaxScore?: number,
+) {
+  if (Array.isArray(juryBreakdown)) return juryBreakdown.length || 1
+  if (juryBreakdown && typeof juryBreakdown === 'object') {
+    const count = Object.keys(juryBreakdown as Record<string, unknown>).length
+    return count || 1
+  }
+
+  // Fallback for hidden jury breakdown (team role): infer from aggregate values per round.
+  if (roundMaxScore && roundMaxScore > 0 && averageScore && averageScore > 0 && totalScore !== undefined) {
+    const estimated = totalScore / (roundMaxScore * averageScore)
+    if (Number.isFinite(estimated) && estimated > 0) return Math.max(1, Math.round(estimated))
+  }
+
+  return 1
+}
+
 function formatScore(value: number) {
   if (Number.isNaN(value)) return '0'
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+}
+
+function onTableWheel(event: WheelEvent) {
+  const container = tableWrapRef.value
+  if (!container || !hasRoundOverflow.value) return
+
+  const maxScrollLeft = container.scrollWidth - container.clientWidth
+  if (maxScrollLeft <= 0) return
+
+  const dominantDelta =
+    Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+  if (!dominantDelta) return
+
+  const scrollSpeedFactor = 0.4
+  const slowedDelta = dominantDelta * scrollSpeedFactor
+
+  const nextScrollLeft = Math.min(
+    maxScrollLeft,
+    Math.max(0, container.scrollLeft + slowedDelta),
+  )
+
+  if (nextScrollLeft !== container.scrollLeft) {
+    event.preventDefault()
+    container.scrollLeft = nextScrollLeft
+  }
 }
 </script>
 
@@ -192,6 +289,7 @@ function formatScore(value: number) {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-width: 0;
 }
 
 .header {
@@ -211,97 +309,149 @@ function formatScore(value: number) {
   margin-left: auto;
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.entry {
-  min-width: 0;
-}
-
-.entry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.entry-title {
-  display: flex;
-  gap: 0.6rem;
-  align-items: baseline;
-  min-width: 0;
-}
-
-.entry-rank {
-  font-weight: 700;
-  color: var(--foreground);
-  flex-shrink: 0;
-}
-
-.entry-team {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.entry-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
-
-.entry-score {
-  font-weight: 700;
-}
-
-.entry-body {
+.table-skeleton {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.rounds {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.round-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.65rem;
+.leaderboard-table-wrap {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--input);
+  border-radius: var(--radius-lg);
+  background: var(--card);
 }
 
-.round-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
+.leaderboard-table-wrap.is-rounds-scroll-capped {
+  max-width: min(100%, calc(5.5rem + 15rem + (var(--visible-round-cols) * 7.5rem) + 10rem));
 }
 
-.round-name {
+.leaderboard-table {
+  width: 100%;
+  min-width: calc(5.5rem + 15rem + (var(--round-cols) * 7.5rem) + 10rem);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.75rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--card);
+}
+
+.leaderboard-table thead th {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.round-right {
-  flex-shrink: 0;
+.leaderboard-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--card) 92%, var(--primary) 8%);
 }
 
-.round-score {
+.rank-col {
+  width: 5.5rem;
+  min-width: 5.5rem;
+  text-align: center;
   font-weight: 700;
+}
+
+.team-col {
+  width: 15rem;
+  min-width: 15rem;
+  max-width: 15rem;
+}
+
+.round-col,
+.round-cell {
+  width: 7.5rem;
+  min-width: 7.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-col {
+  width: 10rem;
+  min-width: 10rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-value {
+  font-weight: 700;
+}
+
+.sticky-left,
+.sticky-right {
+  position: sticky;
+  z-index: 5;
+  background: var(--card);
+}
+
+.leaderboard-table thead .sticky-left,
+.leaderboard-table thead .sticky-right {
+  z-index: 12;
+}
+
+.leaderboard-table thead .rank-col.sticky-left {
+  z-index: 13;
+}
+
+.rank-col.sticky-left {
+  left: 0;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.team-col.sticky-left {
+  left: 5.5rem;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.total-col.sticky-right {
+  right: 0;
+  box-shadow: -1px 0 0 var(--border);
+}
+
+.team-link {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-link:hover,
+.team-link:focus-visible {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.missed-round {
+  display: inline-block;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.scroll-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  text-align: right;
 }
 
 .empty {
@@ -312,8 +462,38 @@ function formatScore(value: number) {
 }
 
 @media (max-width: 900px) {
-  .cards {
-    grid-template-columns: 1fr;
+  .team-col {
+    width: 12rem;
+    min-width: 12rem;
+    max-width: 12rem;
+  }
+
+  .leaderboard-table {
+    min-width: calc(5rem + 12rem + (var(--round-cols) * 7rem) + 9rem);
+  }
+
+  .leaderboard-table-wrap.is-rounds-scroll-capped {
+    max-width: min(100%, calc(5rem + 12rem + (var(--visible-round-cols) * 7rem) + 9rem));
+  }
+
+  .rank-col {
+    width: 5rem;
+    min-width: 5rem;
+  }
+
+  .team-col.sticky-left {
+    left: 5rem;
+  }
+
+  .round-col,
+  .round-cell {
+    width: 7rem;
+    min-width: 7rem;
+  }
+
+  .total-col {
+    width: 9rem;
+    min-width: 9rem;
   }
 }
 </style>
