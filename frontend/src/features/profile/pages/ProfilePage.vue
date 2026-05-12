@@ -134,6 +134,10 @@
         </ui-card>
       </div>
 
+      <div class="stats-link-row">
+        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary">My Statistics</ui-button>
+      </div>
+
       <div class="actions">
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
@@ -281,6 +285,10 @@ const formatDate = (date: Date) => {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.stats-link-row {
+  margin-top: 0.9rem;
 }
 
 .danger-zone {
