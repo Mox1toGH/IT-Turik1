@@ -20,15 +20,35 @@
       </template>
 
       <template #footer>
-        <ui-button
-          asLink
-          to="/tournaments"
-          variant="secondary"
-          size="sm"
-          class="tournament-link hero-content"
-        >
-          Back to tournaments
-        </ui-button>
+        <div class="hero-actions hero-content">
+          <ui-button
+            asLink
+            to="/tournaments"
+            variant="secondary"
+            size="sm"
+            class="tournament-link"
+          >
+            Back to tournaments
+          </ui-button>
+          <ui-button
+            v-if="user?.role === 'admin'"
+            asLink
+            :to="`/tournaments/${id}/edit`"
+            variant="secondary"
+            size="sm"
+          >
+            Edit
+          </ui-button>
+          <ui-button
+            v-if="user?.role === 'admin'"
+            variant="danger"
+            size="sm"
+            :disabled="isDeletingTournament"
+            @click="handleDeleteTournament"
+          >
+            Delete
+          </ui-button>
+        </div>
       </template>
     </ui-card>
 
@@ -152,6 +172,7 @@ import TournamentSubmissions from '../components/tournament/TournamentSubmission
 import { useProfile } from '@/api/queries/accounts'
 import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
 import {
+  useDeleteTournament,
   useRemoveTournamentBanner,
   useTournamentInfo,
   useUpdateTournamentBanner,
@@ -175,6 +196,7 @@ const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTournamentBanner()
 const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useRemoveTournamentBanner()
+const { mutate: deleteTournament, isPending: isDeletingTournament } = useDeleteTournament()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 const bannerPreviewUrl = computed(() => selectedBannerUrl.value || tournament.value?.banner || '')
 const bannerPositionKey = computed(() => `image-position:banner:tournament:${id}`)
@@ -203,6 +225,25 @@ if (initialSection) currentSection.value = initialSection
 
 const setActiveSection = (section: Sections) => {
   currentSection.value = section
+}
+
+const handleDeleteTournament = () => {
+  if (!window.confirm('Delete this tournament? This action cannot be undone.')) {
+    return
+  }
+
+  deleteTournament(
+    { id },
+    {
+      onSuccess: () => {
+        showNotification('Tournament deleted successfully.', 'success')
+        router.push('/tournaments')
+      },
+      onError: () => {
+        showNotification('Failed to delete tournament.', 'error')
+      },
+    },
+  )
 }
 
 const closeBannerModal = () => {
@@ -391,6 +432,12 @@ watch(
 
 .tournament-link {
   width: max-content;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .sections {
