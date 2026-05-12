@@ -78,14 +78,18 @@ export const CreateRoundSchema = v.pipe(
     ),
 
     start_date: v.date(),
+    start_time: TimeSchema,
     end_date: v.date(),
+    end_time: TimeSchema,
   }),
 
   v.forward(
     v.partialCheck(
-      [['start_date'], ['end_date']],
-      (input) => input.end_date > input.start_date,
-      'End date must be after start date',
+      [['start_date'], ['start_time'], ['end_date'], ['end_time']],
+      (input) =>
+        combineDateAndTime(input.end_date, input.end_time) >
+        combineDateAndTime(input.start_date, input.start_time),
+      'End date/time must be after start date/time',
     ),
     ['end_date'],
   ),
