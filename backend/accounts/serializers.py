@@ -16,6 +16,7 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from .models import RoleActivationCode, User
+from drf_spectacular.utils import extend_schema_field
 
 
 RESTRICTED_ROLES = {'jury', 'organizer', 'admin'}
@@ -144,6 +145,11 @@ class ActivationResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     message = serializers.CharField()
 
+class UserTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    contact_telegram = serializers.CharField()
+    contact_discord = serializers.CharField()
 
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
@@ -165,6 +171,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
 
+    @extend_schema_field(UserTeamSerializer(many=True))
     def get_teams(self, obj):
         return [
             {

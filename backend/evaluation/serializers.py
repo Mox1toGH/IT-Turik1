@@ -4,6 +4,7 @@ from tournaments.models import Submission
 from .models import JuryAssignment, SubmissionEvaluation
 from tournaments.serializers import SubmissionSerializer
 from tournaments.models import Tournament
+from .models import Round
 
 
 class JuryAssignmentItemSerializer(serializers.Serializer):
@@ -110,15 +111,20 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
 
         return attrs
 
+class RoundShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Round
+        fields = ('id', 'name','start_date', 'end_date', 'status', 'tournament')
 
 class JuryAssignmentSerializer(serializers.ModelSerializer):
     submission_details = SubmissionSerializer(source='submission', read_only=True)
+    round_details = RoundShortSerializer(source='submission.round', read_only=True)
     evaluation = SubmissionEvaluationSerializer(read_only=True)
     is_evaluated = serializers.SerializerMethodField()
 
     class Meta:
         model = JuryAssignment
-        fields = ('id', 'submission', 'submission_details', 'evaluation', 'is_evaluated', 'created_at')
+        fields = ('id', 'submission', 'submission_details', 'round_details', 'evaluation', 'is_evaluated', 'created_at')
 
     def get_is_evaluated(self, obj):
         return hasattr(obj, 'evaluation')

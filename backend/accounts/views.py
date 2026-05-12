@@ -6,11 +6,11 @@ from django.db.models import Q
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
+from rest_framework.exceptions import  PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 from backend.openapi import _400, _401, _403, _404
 
@@ -54,7 +54,7 @@ class RegisterView(generics.CreateAPIView):
 class ActivationView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request, uidb64, token):
+    def patch(self, request, uidb64, token):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
@@ -128,10 +128,16 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
         return self.request.user
 
 
-@extend_schema(operation_id='listUsers', responses={
-    200: TeamUserListSerializer(many=True),
-    401: _401,
-})
+@extend_schema(
+    operation_id='listUsers',
+    parameters=[
+        OpenApiParameter('search', str, required=False, description='Filter by username, email, or full name'),
+    ],
+    responses={
+        200: TeamUserListSerializer(many=True),
+        401: _401,
+    },
+)
 class UserListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamUserListSerializer
@@ -247,11 +253,16 @@ class ChangePasswordView(generics.GenericAPIView):
         )
 
 
-@extend_schema(methods=['GET'], operation_id='listRoleActivationCodes', responses={
-    200: RoleActivationCodeListResponseSerializer,
-    401: _401,
-    403: _403,
-})
+@extend_schema(methods=['GET'], operation_id='listRoleActivationCodes',
+    parameters=[
+        OpenApiParameter('role', str, required=False, description='Filter by role: jury, organizer, admin'),
+    ],
+    responses={
+        200: RoleActivationCodeListResponseSerializer,
+        401: _401,
+        403: _403,
+    },
+)
 @extend_schema(methods=['POST'], operation_id='generateRoleActivationCodes', request=RoleActivationCodeGenerateSerializer, responses={
     201: RoleActivationCodeGenerateResponseSerializer,
     400: _400,

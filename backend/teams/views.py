@@ -8,7 +8,7 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiResponse
 
 from backend.permissions import is_platform_admin
 from backend.openapi import _400, _401, _403, _404
@@ -61,7 +61,10 @@ def is_team_member(team, user):
     return any(member.id == user.id for member in team.members.all())
 
 
-@extend_schema(methods=['GET'], operation_id='listTeams', responses={
+@extend_schema(methods=['GET'], operation_id='listTeams', parameters=[
+    OpenApiParameter('search', str, required=False),
+    OpenApiParameter('isPublic', bool, required=False),
+], responses={
     200: TeamSerializer(many=True),
     401: _401,
 })
