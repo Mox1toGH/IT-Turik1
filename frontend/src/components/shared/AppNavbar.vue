@@ -48,10 +48,6 @@
             >
 
             <notification-dropdown />
-
-            <ui-button @click="logout" size="sm" variant="danger" class="logout-btn"
-              >Logout</ui-button
-            >
           </template>
         </div>
 
@@ -148,13 +144,6 @@
               class="mobile-nav-item"
               >Admin</router-link
             >
-            <ui-button
-              @click="handleMobileLogout"
-              size="sm"
-              variant="danger"
-              class="mobile-logout-btn"
-              >Logout</ui-button
-            >
           </template>
         </div>
       </transition>
@@ -164,17 +153,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import UiButton from '../ui/UiButton.vue'
-import { useUserStore } from '@/stores/user'
+import { useRoute } from 'vue-router'
 import { useProfile } from '@/api/queries/accounts'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
 
 const route = useRoute()
-const router = useRouter()
-const store = useUserStore()
 const mobileMenuOpen = ref(false)
 
 const { data: user } = useProfile()
@@ -199,16 +184,6 @@ const navItemClass = (section: Section, cta = false) => ({
   'nav-cta': cta,
   active: isSectionActive(section),
 })
-
-const logout = () => {
-  store.logout()
-  router.push('/login')
-}
-
-const handleMobileLogout = () => {
-  mobileMenuOpen.value = false
-  logout()
-}
 
 const isSectionActive = (section: Section) => {
   const path = route.path
@@ -278,11 +253,6 @@ const isSectionActive = (section: Section) => {
   border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.logout-btn {
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
 }
 
 .profile-avatar-link {
@@ -406,12 +376,6 @@ const isSectionActive = (section: Section) => {
 
 .mobile-nav-item.nav-cta:hover {
   background: linear-gradient(120deg, var(--brand-600), var(--brand-500));
-}
-
-.mobile-logout-btn {
-  width: 100%;
-  margin-top: 0.5rem;
-  border-radius: 999px;
 }
 
 @media (max-width: 817px) {

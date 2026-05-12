@@ -142,7 +142,7 @@
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
         <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
-        <ui-button variant="secondary" :disabled="isLoading || isDeleting" @click="logout">
+        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
           Log Out
         </ui-button>
       </div>
