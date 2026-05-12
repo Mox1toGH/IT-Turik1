@@ -255,3 +255,10 @@ class TeamSerializer(serializers.ModelSerializer):
                 invite_user_to_team(team=instance, user=user, invited_by=request_user)
 
         return instance
+
+class DetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class JoinRequestDetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()

@@ -4,35 +4,53 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Q
 from django.utils.http import urlsafe_base64_decode
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 from rest_framework import generics, status
-from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+
+from backend.openapi import _400, _401, _403, _404
 
 from .models import RoleActivationCode, User
 from .serializers import (
+    MessageResponseSerializer,
     ChangePasswordSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RoleActivationCodeGenerateSerializer,
     RoleActivationCodeSerializer,
+    GoogleAuthResponseSerializer,
+    GoogleAuthSerializer,
     RegisterSerializer,
+    RoleActivationCodeGenerateResponseSerializer,
+    RoleActivationCodeListResponseSerializer,
+    ActivationResponseSerializer,
     TeamUserListSerializer,
     UserSerializer,
     UserUpdateSerializer,
 )
 
 
+@extend_schema(operation_id='registerUser', responses={
+    201: RegisterSerializer,
+    400: _400,
+})
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
 
 
+@extend_schema(
+    operation_id='activateAccount',
+    responses={
+        200: ActivationResponseSerializer,
+        400: _400,
+    },
+)
 class ActivationView(APIView):
     permission_classes = (AllowAny,)
 
@@ -46,93 +64,58 @@ class ActivationView(APIView):
         if user is not None and default_token_generator.check_token(user, token):
             user.is_active = True
             user.save(update_fields=['is_active'])
-            return Response({'status': 'success', 'message': 'Account activated!'}, status=status.HTTP_200_OK)
+            return Response(
+                ActivationResponseSerializer({'status': 'success', 'message': 'Account activated!'}).data,
+                status=status.HTTP_200_OK,
+            )
 
         raise ValidationError({'message': ['Activation link is invalid or expired.']})
 
 
-class GoogleAuthView(APIView):
+@extend_schema(
+    operation_id='googleAuth',
+    responses={
+        200: GoogleAuthResponseSerializer,
+        400: _400,
+    },
+)
+class GoogleAuthView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
-
-    @staticmethod
-    def _generate_unique_username(email):
-        base = re.sub(r'[^a-zA-Z0-9_]', '', email.split('@')[0]) or 'user'
-        base = base[:140]
-        username = base
-        index = 1
-
-        while User.objects.filter(username=username).exists():
-            suffix = str(index)
-            username = f"{base[:150 - len(suffix)]}{suffix}"
-            index += 1
-
-        return username
+    serializer_class = GoogleAuthSerializer
 
     def post(self, request):
-        raw_id_token = request.data.get('id_token') or request.data.get('credential')
-        if not raw_id_token:
-            raise ValidationError({'id_token': ['id_token is required.']})
-
-        if not settings.GOOGLE_OAUTH_CLIENT_ID:
-            raise APIException('Google auth is not configured.')
-
-        try:
-            payload = id_token.verify_oauth2_token(
-                raw_id_token,
-                google_requests.Request(),
-                settings.GOOGLE_OAUTH_CLIENT_ID,
-            )
-        except ValueError:
-            raise ValidationError({'id_token': ['Invalid Google token.']}) from None
-
-        issuer = payload.get('iss')
-        if issuer not in {'accounts.google.com', 'https://accounts.google.com'}:
-            raise ValidationError({'id_token': ['Invalid token issuer.']})
-
-        if not payload.get('email_verified'):
-            raise ValidationError({'id_token': ['Google email is not verified.']})
-
-        email = payload.get('email')
-        if not email:
-            raise ValidationError({'id_token': ['Google account email is missing.']})
-
-        full_name = payload.get('name', '')
-
-        user = User.objects.filter(email=email).first()
-        if user is None:
-            username = self._generate_unique_username(email)
-            user = User.objects.create(
-                username=username,
-                email=email,
-                full_name=full_name,
-                is_active=True,
-                needs_onboarding=True,
-            )
-            user.set_unusable_password()
-            user.save()
-        else:
-            updated_fields = []
-            if not user.is_active:
-                user.is_active = True
-                updated_fields.append('is_active')
-            if full_name and not user.full_name:
-                user.full_name = full_name
-                updated_fields.append('full_name')
-            if updated_fields:
-                user.save(update_fields=updated_fields)
-
-        refresh = RefreshToken.for_user(user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, refresh = serializer.save()
         return Response(
-            {
+            GoogleAuthResponseSerializer({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
-                'user': UserSerializer(user).data,
+                'user': user,
                 'onboarding_required': user.needs_onboarding,
-            },
+            }).data,
             status=status.HTTP_200_OK,
         )
 
 
+@extend_schema(methods=['GET'], operation_id='getUserProfile', responses={
+    200: UserSerializer,
+    401: _401,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceUserProfile', responses={
+    200: UserSerializer,
+    400: _400,
+    401: _401,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateUserProfile', responses={
+    200: UserSerializer,
+    400: _400,
+    401: _401,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteUserProfile', responses={
+    204: OpenApiResponse(description='Account deleted successfully.'),
+    401: _401,
+})
 class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -145,6 +128,10 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
         return self.request.user
 
 
+@extend_schema(operation_id='listUsers', responses={
+    200: TeamUserListSerializer(many=True),
+    401: _401,
+})
 class UserListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamUserListSerializer
@@ -161,27 +148,50 @@ class UserListView(generics.ListAPIView):
         return queryset
 
 
+@extend_schema(operation_id='getUser', responses={
+    200: UserSerializer,
+    401: _401,
+    404: _404,
+})
 class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True, is_superuser=False)
 
 
-class PasswordResetRequestView(APIView):
+@extend_schema(
+    operation_id='requestPasswordReset',
+    request=PasswordResetRequestSerializer,
+    responses={
+        200: MessageResponseSerializer,
+        400: _400,
+    },
+)
+class PasswordResetRequestView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
+    serializer_class = PasswordResetRequestSerializer
 
     def post(self, request):
-        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            {'message': 'Password reset email sent successfully.'},
+            MessageResponseSerializer({'message': 'Password reset email sent successfully.'}).data,
             status=status.HTTP_200_OK,
         )
 
 
-class PasswordResetConfirmView(APIView):
+@extend_schema(methods=['GET'], operation_id='validatePasswordResetLink', responses={
+    200: MessageResponseSerializer,
+    400: _400,
+})
+@extend_schema(methods=['POST'], operation_id='confirmPasswordReset', request=PasswordResetConfirmSerializer, responses={
+    200: MessageResponseSerializer,
+    400: _400,
+})
+class PasswordResetConfirmView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
+    serializer_class = PasswordResetConfirmSerializer
 
     @staticmethod
     def _get_user(uidb64):
@@ -195,34 +205,66 @@ class PasswordResetConfirmView(APIView):
         user = self._get_user(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             raise ValidationError({'message': ['Password reset link is invalid or expired.']})
-        return Response({'message': 'Password reset link is valid.'}, status=status.HTTP_200_OK)
+        return Response(
+            MessageResponseSerializer({'message': 'Password reset link is valid.'}).data,
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, uidb64, token):
         user = self._get_user(uidb64)
         if user is None or not default_token_generator.check_token(user, token):
             raise ValidationError({'message': ['Password reset link is invalid or expired.']})
 
-        serializer = PasswordResetConfirmSerializer(data=request.data, context={'user': user})
+        serializer = self.get_serializer(data=request.data, context={'user': user})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            {'message': 'Password has been reset successfully.'},
+            MessageResponseSerializer({'message': 'Password has been reset successfully.'}).data,
             status=status.HTTP_200_OK,
         )
 
 
-class ChangePasswordView(APIView):
+@extend_schema(
+    operation_id='changePassword',
+    request=ChangePasswordSerializer,
+    responses={
+        200: MessageResponseSerializer,
+        400: _400,
+        401: _401,
+    },
+)
+class ChangePasswordView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data, context={'user': request.user})
+        serializer = self.get_serializer(data=request.data, context={'user': request.user})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+        return Response(
+            MessageResponseSerializer({'message': 'Password changed successfully.'}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
-class RoleActivationCodeAdminView(APIView):
+@extend_schema(methods=['GET'], operation_id='listRoleActivationCodes', responses={
+    200: RoleActivationCodeListResponseSerializer,
+    401: _401,
+    403: _403,
+})
+@extend_schema(methods=['POST'], operation_id='generateRoleActivationCodes', request=RoleActivationCodeGenerateSerializer, responses={
+    201: RoleActivationCodeGenerateResponseSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
+class RoleActivationCodeAdminView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return RoleActivationCodeGenerateSerializer
+        return RoleActivationCodeSerializer
 
     @staticmethod
     def _is_platform_admin(user):
@@ -251,12 +293,11 @@ class RoleActivationCodeAdminView(APIView):
         if role:
             queryset = queryset.filter(role=role)
 
-        serializer = RoleActivationCodeSerializer(queryset, many=True)
         return Response(
-            {
-                'codes': serializer.data,
+            RoleActivationCodeListResponseSerializer({
+                'codes': queryset,
                 'active_counts': self._active_counts(),
-            },
+            }).data,
             status=status.HTTP_200_OK,
         )
 
@@ -265,13 +306,13 @@ class RoleActivationCodeAdminView(APIView):
         if denied:
             return denied
 
-        serializer = RoleActivationCodeGenerateSerializer(data=request.data, context={'request': request})
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         codes = serializer.save()
         return Response(
-            {
-                'created': RoleActivationCodeSerializer(codes, many=True).data,
+            RoleActivationCodeGenerateResponseSerializer({
+                'created': codes,
                 'active_counts': self._active_counts(),
-            },
+            }).data,
             status=status.HTTP_201_CREATED,
         )

@@ -509,3 +509,22 @@ class EventSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+class TournamentListResponseSerializer(serializers.Serializer):
+    data = TournamentPublicSerializer(many=True)
+    total = serializers.IntegerField()
+
+
+class DisqualificationResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    tournament_id = serializers.IntegerField()
+    is_active = serializers.BooleanField()
+    action = serializers.CharField()
+
+
+class EligibleTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    members_count = serializers.IntegerField()

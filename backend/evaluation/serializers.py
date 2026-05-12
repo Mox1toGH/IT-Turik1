@@ -128,3 +128,47 @@ class AvailableJurySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'full_name')
+
+class AssignJuryResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    created_assignments = serializers.IntegerField()
+
+
+class RankingItemSerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    average_score = serializers.FloatField()
+    rank = serializers.IntegerField()
+
+
+class RoundLeaderboardResponseSerializer(serializers.Serializer):
+    round_id = serializers.IntegerField()
+    is_snapshot = serializers.BooleanField()
+    rankings = RankingItemSerializer(many=True)
+
+
+class TournamentLeaderboardResponseSerializer(serializers.Serializer):
+    tournament_id = serializers.IntegerField()
+    is_snapshot = serializers.BooleanField()
+    rankings = RankingItemSerializer(many=True)
+
+
+class PassingStatusItemSerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    average_score = serializers.FloatField()
+    passed = serializers.BooleanField()
+    is_active = serializers.BooleanField(allow_null=True)
+    disqualification_reason = serializers.CharField(allow_null=True)
+    registration_id = serializers.IntegerField(allow_null=True)
+
+
+class RoundPassingStatusResponseSerializer(serializers.Serializer):
+    round_id = serializers.IntegerField()
+    round_name = serializers.CharField()
+    passing_count = serializers.IntegerField(allow_null=True)
+    total_teams = serializers.IntegerField()
+    results = PassingStatusItemSerializer(many=True)

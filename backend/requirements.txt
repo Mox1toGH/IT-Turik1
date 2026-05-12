@@ -5,4 +5,5 @@ djangorestframework-simplejwt
 requests
 google-auth
 python-dotenv
+drf-spectacular
 
