@@ -76,7 +76,9 @@
               :tournament-id="props.tournamentId"
               :title="event.title"
               :description="event.description"
-              :start-date="event.created_at!"
+              :start-date="event.start_datetime"
+              :event-type="event.type"
+              :link="event.link"
             />
 
             <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>

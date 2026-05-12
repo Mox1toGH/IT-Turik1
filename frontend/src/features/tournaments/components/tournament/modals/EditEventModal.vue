@@ -86,6 +86,8 @@ interface Props {
   title: string
   description: string
   startDate: Date | string
+  eventType: 'meet' | 'event'
+  link: string
 }
 
 interface Form {
@@ -120,6 +122,8 @@ const editEvent = () => {
       body: {
         title: form.fields.value.title,
         description: form.fields.value.description,
+        type: props.eventType,
+        link: props.link,
         start_datetime: combineDateAndTime(
           form.fields.value.startDate,
           form.fields.value.startTime,
