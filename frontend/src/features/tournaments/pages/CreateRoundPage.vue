@@ -268,12 +268,12 @@ function handleSubmit() {
   grid-row: 1;
 }
 
-.end-date-field {
+.start-time-field {
   grid-column: 2;
   grid-row: 2;
 }
 
-.start-time-field {
+.end-date-field {
   grid-column: 2;
   grid-row: 3;
 }
