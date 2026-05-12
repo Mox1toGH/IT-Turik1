@@ -96,6 +96,61 @@ class TeamApiTests(APITestCase):
         self.assertEqual(invitations.count(), 1)
         self.assertEqual(invitations.first().status, TeamInvitation.STATUS_INVITED)
 
+    def test_create_team_allows_empty_telegram_and_discord(self):
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.post(
+            self.teams_url,
+            {
+                'name': 'No Contacts Team',
+                'email': 'no-contacts@example.com',
+                'is_public': False,
+                'organization': 'T-Org',
+                'contact_telegram': '',
+                'contact_discord': '',
+                'member_ids': [],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['contact_telegram'], '')
+        self.assertEqual(response.data['contact_discord'], '')
+
+    def test_create_team_rejects_duplicate_name(self):
+        self.client.force_authenticate(user=self.captain)
+        first_response = self.client.post(
+            self.teams_url,
+            {
+                'name': 'Unique Team Name',
+                'email': 'unique-team-1@example.com',
+                'is_public': False,
+                'organization': '',
+                'contact_telegram': '',
+                'contact_discord': '',
+                'member_ids': [],
+            },
+            format='json',
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+
+        second_response = self.client.post(
+            self.teams_url,
+            {
+                'name': 'Unique Team Name',
+                'email': 'unique-team-2@example.com',
+                'is_public': False,
+                'organization': '',
+                'contact_telegram': '',
+                'contact_discord': '',
+                'member_ids': [],
+            },
+            format='json',
+        )
+        self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        details = second_response.data.get('details', {}) if isinstance(second_response.data, dict) else {}
+        self.assertIn('name', details)
+
     def test_admin_cannot_create_team(self):
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post(

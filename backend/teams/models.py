@@ -6,7 +6,7 @@ class Team(models.Model):
     VISIBILITY_PUBLIC = True
     VISIBILITY_PRIVATE = False
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     email = models.EmailField()
     captain = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='captained_teams')
     is_public = models.BooleanField(default=False)

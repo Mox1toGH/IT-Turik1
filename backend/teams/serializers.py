@@ -155,6 +155,10 @@ class TeamSerializer(serializers.ModelSerializer):
             'member_ids',
         )
         read_only_fields = ('banner',)
+        extra_kwargs = {
+            'contact_telegram': {'required': False, 'allow_blank': True},
+            'contact_discord': {'required': False, 'allow_blank': True},
+        }
 
     def _request_user(self):
         request = self.context.get('request')
