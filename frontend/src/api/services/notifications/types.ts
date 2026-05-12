@@ -33,10 +33,3 @@ export interface PaginatedResponse<T> {
   previous: string | null
   results: T[]
 }
-
-export interface GetNotificationsArgs {
-  page?: number
-  pageSize?: number
-}
-
-export type GetNotificationsResponse = PaginatedResponse<Notification>

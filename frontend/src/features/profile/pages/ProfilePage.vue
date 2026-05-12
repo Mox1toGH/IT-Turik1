@@ -27,7 +27,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.username || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -40,7 +40,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.email || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -66,7 +66,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.full_name || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -79,7 +79,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.city || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -269,10 +269,10 @@ const formatDate = (date: Date) => {
   padding-top: 1rem;
   border: 1px solied var(--destructive);
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
-  align-items: start;
 }
 
 .danger-text {
+  margin: 0 0 0.6rem;
   color: color-mix(in srgb, var(--destructive) 80%, transparent);
   font-weight: 600;
 }

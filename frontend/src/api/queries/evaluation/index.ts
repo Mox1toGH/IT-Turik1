@@ -15,7 +15,7 @@ import type {
   UpdateEvaluationArgs,
   UpdateEvaluationResponse,
 } from '@/api/services/evaluation/types'
-import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
+import type { MutationConfig, QueryConfig } from '../types'
 import type { AxiosError } from 'axios'
 import type { ApiError } from '@/api/errors'
 import { evaluationKeys } from '../keys'
@@ -24,7 +24,7 @@ import { computed, toValue } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
 export const useAvailableJury = (
-  payload: MaybeRefArgs<GetAvailableJuryArgs>,
+  payload: GetAvailableJuryArgs,
   config?: QueryConfig<GetAvailableJuryResponse>,
 ) => {
   return useQuery<GetAvailableJuryResponse, AxiosError<ApiError>>({
@@ -35,7 +35,7 @@ export const useAvailableJury = (
 }
 
 export const useRoundLeaderboard = (
-  payload: MaybeRefArgs<GetRoundLeaderboardArgs>,
+  payload: GetRoundLeaderboardArgs,
   config?: QueryConfig<GetRoundLeaderboardResponse>,
 ) => {
   return useQuery<GetRoundLeaderboardResponse, AxiosError<ApiError>>({
@@ -46,7 +46,7 @@ export const useRoundLeaderboard = (
 }
 
 export const useTournamentLeaderboard = (
-  payload: MaybeRefArgs<GetTournamentLeaderboardArgs>,
+  payload: GetTournamentLeaderboardArgs,
   config?: QueryConfig<GetTournamentLeaderboardResponse>,
 ) => {
   return useQuery<GetTournamentLeaderboardResponse, AxiosError<ApiError>>({
@@ -71,7 +71,7 @@ export const useAssignJury = (
 }
 
 export const useAssignments = (
-  payload: MaybeRefArgs<GetAssignmentsArgs> = {},
+  payload: GetAssignmentsArgs = {},
   config?: QueryConfig<GetAssignmentsResponse>,
 ) => {
   return useQuery<GetAssignmentsResponse, AxiosError<ApiError>>({
@@ -82,7 +82,7 @@ export const useAssignments = (
 }
 
 export const useAssignmentDetail = (
-  payload: MaybeRefArgs<GetAssignmentDetailArgs>,
+  payload: GetAssignmentDetailArgs,
   config?: QueryConfig<GetAssignmentDetailResponse>,
 ) => {
   return useQuery<GetAssignmentDetailResponse, AxiosError<ApiError>>({

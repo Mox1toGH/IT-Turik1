@@ -114,8 +114,8 @@
                 max-length="200"
                 style="max-width: 800px"
               >
-                <template #trigger>
-                  <p class="text-muted" :title="submission.description">
+                <template #trigger="{ toggleOpen }">
+                  <p class="text-muted" :title="submission.description" @click="toggleOpen">
                     {{ truncateText(submission.description, 200) }}
                   </p>
                 </template>
@@ -159,11 +159,7 @@
                     evaluated
                     <template v-if="evaluatedCount(submission) > 0">
                       • Avg:
-                      <strong>{{ averageJuryScore(submission).toFixed(2) }}</strong>
-                    </template>
-                    <template v-if="evaluatedCount(submission) > 0">
-                      • Total:
-                      <strong>{{ totalScore(submission).toFixed(2) }}</strong>
+                      <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
                     </template>
                   </p>
                 </div>
@@ -174,17 +170,15 @@
                   class="submission-result-item"
                 >
                   <div class="jury-head">
-                    <p class="jury-name">
-                      {{ assignment.jury.full_name }}
-                    </p>
-                    <ui-badge :variant="assignment.evaluation ? 'green' : 'orange'">
+                    <p class="jury-name">{{ assignment.jury.full_name || assignment.jury.username }}</p>
+                    <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
                       {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
                     </ui-badge>
                   </div>
 
                   <template v-if="assignment.evaluation">
                     <div class="jury-metrics">
-                      <p><strong>Average:</strong> {{ assignment.evaluation.average_score }}</p>
+                      <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
                       <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
                       <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
                     </div>
@@ -193,16 +187,12 @@
                       <div class="score-track-head">
                         <p class="text-muted">Score</p>
                         <p class="text-muted">
-                          {{ assignment.evaluation.total_score }} /
-                          {{ roundMaxScore(submission.round_details.id) }}
+                          {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
                         </p>
                       </div>
                       <ui-progress-bar
                         :percent="
-                          scorePercent(
-                            submission.round_details.id,
-                            assignment.evaluation.total_score,
-                          )
+                          scorePercent(submission.round_details.id, assignment.evaluation.total_score)
                         "
                         :height="10"
                         fill-color="color-mix(in srgb, var(--primary) 55%, transparent)"
@@ -218,9 +208,7 @@
                       >
                         <span>{{ score.criterion_name || score.criterion_id }}</span>
                         <span>
-                          {{ score.score }}/{{
-                            criterionMaxScore(submission.round_details.id, score.criterion_id)
-                          }}
+                          {{ score.score }}/{{ criterionMaxScore(submission.round_details.id, score.criterion_id) }}
                         </span>
                       </div>
                     </div>
@@ -336,23 +324,14 @@ const scorePercent = (roundId: number, totalScore: number) => {
   return (clamped / max) * 100
 }
 
-const averageJuryScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
   const evaluations = submissionEvaluations(submission)
   if (!evaluations.length) return 0
   const total = evaluations.reduce(
-    (sum, assignment) => sum + Number(assignment.evaluation?.total_score ?? 0),
+    (sum, assignment) => sum + Number(assignment.evaluation?.final_score ?? 0),
     0,
   )
   return total / evaluations.length
-}
-
-const totalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
-  const evaluations = submissionEvaluations(submission)
-  if (!evaluations.length) return 0
-  return evaluations.reduce(
-    (sum, assignment) => sum + Number(assignment.evaluation?.total_score ?? 0),
-    0,
-  )
 }
 </script>
 
@@ -518,3 +497,5 @@ const totalScore = (submission: NonNullable<typeof submissions.value>[number]) =
   }
 }
 </style>
+
+

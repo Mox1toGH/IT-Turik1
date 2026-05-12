@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CurrentTaskView,
     EventViewSet,
+    IconListView,
     RoundCloseSubmissionsView,
     RoundDetailView,
     RoundListCreateView,
@@ -69,4 +70,5 @@ urlpatterns = [
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),
+    path('icons/', IconListView.as_view(), name='icon_list'),
 ] + router.urls

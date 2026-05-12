@@ -3,9 +3,8 @@
     class="modal-trigger"
     v-bind="$attrs"
     :class="{ 'modal-trigger--active': text.length > Number(maxLength) }"
-    @click="toggleOpen"
   >
-    <slot name="trigger" />
+    <slot name="trigger" :toggleOpen="toggleOpen" />
 
     <external-link-icon
       v-if="text.length > Number(maxLength)"
@@ -49,7 +48,6 @@ const toggleOpen = () => {
 .modal-trigger {
   position: relative;
   padding-right: 22px;
-  transition: all 0.2s ease;
 }
 
 .modal-trigger__icon {
@@ -61,7 +59,6 @@ const toggleOpen = () => {
 .modal-trigger--active:hover {
   cursor: pointer;
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  padding: 3px 22px 5px 3px;
 }
 
 .large-text {

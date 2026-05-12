@@ -90,6 +90,7 @@ class Round(models.Model):
         choices=EVALUATION_CRITERIA_CHOICES,
         default=EVALUATION_SCORE,
     )
+    materials = models.JSONField(default=list, blank=True)
     status = models.CharField(max_length=24, choices=STATUS_CHOICES, default=STATUS_DRAFT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -292,15 +293,43 @@ class TournamentTeamRegistration(models.Model):
         return f'{self.tournament_id}:{self.team_id}'
 
 
+class Icon(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    path = models.CharField(max_length=500)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name or self.path
+
+
 class Event(models.Model):
+    TYPE_MEET = 'meet'
+    TYPE_EVENT = 'event'
+
+    TYPE_CHOICES = (
+        (TYPE_MEET, 'Meet'),
+        (TYPE_EVENT, 'Event'),
+    )
+
     tournament = models.ForeignKey(
         Tournament,
         on_delete=models.CASCADE,
         related_name='events',
     )
+    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    link = models.URLField(blank=True)
     start_datetime = models.DateTimeField()
+    icon = models.ForeignKey(
+        Icon,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='events',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

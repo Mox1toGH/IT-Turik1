@@ -1,13 +1,7 @@
 <template>
   <ui-card>
     <template #header>
-      <div class="tournament-form-header">
-        <p class="section-eyebrow">Tournaments</p>
-        <h1 class="section-title">Create new tournament</h1>
-        <ui-button asLink class="back-link" variant="secondary" size="sm" to="/"
-          >Back to tournaments</ui-button
-        >
-      </div>
+      <h1 class="section-title">Create tournament</h1>
     </template>
 
     <form class="tournament-form" @submit.prevent="handleSubmit">
@@ -201,7 +195,7 @@ const handleSubmit = () => {
     },
     {
       onSuccess() {
-        router.push('/')
+        router.push('/tournaments')
       },
 
       onError: (error) => {
@@ -218,15 +212,6 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.back-link {
-  justify-self: start;
-  margin-top: 0.5rem;
-}
-
-.tournament-form-header {
-  margin-bottom: 1rem;
-}
-
 .tournament-form {
   display: grid;
   grid-template-columns: 1fr 1fr;

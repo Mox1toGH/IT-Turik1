@@ -56,7 +56,7 @@
             @click="
               () => {
                 close()
-                showDeleteModal = true
+                handleDeleteRound()
               }
             "
           >
@@ -66,15 +66,6 @@
       </div>
     </template>
   </ui-popover>
-
-  <ui-confirm-modal
-    v-model="showDeleteModal"
-    title="Delete round?"
-    message="This action cannot be undone. The round and all its data will be permanently removed."
-    confirm-text="Delete"
-    confirm-variant="danger"
-    @confirm="handleDeleteRound"
-  />
 </template>
 
 <script setup lang="ts">
@@ -88,11 +79,9 @@ import {
   useStartRound,
 } from '@/api/queries/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import { useNotification } from '@/composables/useNotification'
 import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
-import { ref } from 'vue'
 
 interface Props {
   roundId: RoundId
@@ -102,8 +91,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-
-const showDeleteModal = ref(false)
 
 const { data: profile } = useProfile()
 const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })

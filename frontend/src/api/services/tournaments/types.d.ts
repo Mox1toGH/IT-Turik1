@@ -12,6 +12,7 @@ import type {
   TournamentStatus,
   User,
 } from '@/api/dbTypes'
+import type { MaybeRefOrGetter } from 'vue'
 
 // Get tournaments
 export interface GetTournamentsArgs {
@@ -37,6 +38,13 @@ export interface GetTournamentsResponse {
 }
 
 // Get tournaments
+export interface GetTournamentsArgs {
+  page: number
+  pageSize?: number
+  searchQuery?: string
+  status: TournamentStatus
+}
+
 // Create tournament
 export type CreateTournamentBody = Pick<
   Tournament,
@@ -269,7 +277,7 @@ export type GetTeamSubmissionsResponse = (Submission & {
       id: number
       scores: { criterion_id: string; criterion_name?: string; score: number }[]
       total_score: number
-      average_score: number
+      final_score: number
       comment: string
       created_at: string
     } | null
@@ -296,7 +304,7 @@ export type EditSubmissionResponse = Submission & {
 
 // round submissions
 export interface GetRoundSubmissionsArgs {
-  roundId: RoundId
+  roundId: MaybeRefOrGetter<RoundId>
 }
 
 export type GetRoundSubmissionsResponse = GetTeamSubmissionsResponse

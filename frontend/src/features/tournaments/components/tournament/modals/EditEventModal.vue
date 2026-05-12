@@ -83,9 +83,9 @@ interface Props {
   modelValue: boolean
   eventId: number
   tournamentId: TournamentId
-  eventTitle: string
-  eventDescription: string
-  eventStartDate: Date | string
+  title: string
+  description: string
+  startDate: Date | string
 }
 
 interface Form {
@@ -103,12 +103,11 @@ const emit = defineEmits<{
 const { showNotification } = useNotification()
 const queryClient = useQueryClient()
 
-const date =
-  props.eventStartDate instanceof Date ? props.eventStartDate : new Date(props.eventStartDate)
+const date = props.startDate instanceof Date ? props.startDate : new Date(props.startDate)
 const pad = (value: number) => String(value).padStart(2, '0')
 const form = useForm<Form>(EditEventSchema, {
-  title: props.eventTitle,
-  description: props.eventDescription,
+  title: props.title,
+  description: props.description,
   startDate: date,
   startTime: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
 })

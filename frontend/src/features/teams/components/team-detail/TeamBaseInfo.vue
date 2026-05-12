@@ -115,12 +115,12 @@
     <template #footer>
       <div class="info-actions">
         <ui-button
-          v-if="props.team?.can_request_to_join && user?.role === 'team'"
+          v-if="props.team?.can_request_to_join"
           size="sm"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
         >
-          <loading-icon v-if="joinRequestLoading && user?.role === 'team'" size="md" />
+          <loading-icon v-if="joinRequestLoading" size="md" />
           {{ joinRequestLoading ? 'Sending...' : 'Request to join this team' }}
         </ui-button>
 
@@ -143,7 +143,6 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { truncateText } from '@/lib/utils'
-import { useProfile } from '@/api/queries/accounts'
 
 interface Props {
   team?: GetTeamInfoResponse
@@ -154,7 +153,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification, hideNotification } = useNotification()
-const { data: user } = useProfile()
 
 const emit = defineEmits<{
   (e: 'deleted'): void
@@ -170,6 +168,7 @@ const canLeaveTeam = computed(() => props.team?.is_member && !props.isCaptain)
 
 // ── Join Request ────────────────────────────────────────────────────
 const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useSendJoinRequest()
+
 const sendJoinRequest = () => {
   if (!props.team) return
   hideNotification()
@@ -193,6 +192,7 @@ const sendJoinRequest = () => {
 
 // ── Leave Team ────────────────────────────────────────────────────
 const { mutate: leaveTeamMutate } = useLeaveTeam()
+
 const leaveTeam = () => {
   if (!props.team) return
   hideNotification()

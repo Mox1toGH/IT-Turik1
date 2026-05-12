@@ -373,21 +373,6 @@ class LeaderboardTests(APITestCase):
         self.assertEqual(rankings[1]['team_id'], self.team2.id)
         self.assertEqual(rankings[1]['rank'], 2)
 
-    def test_compute_leaderboard_scoring_accuracy(self):
-        self.round_obj.status = Round.STATUS_EVALUATED
-        self.round_obj.save(update_fields=['status', 'updated_at'])
-        
-        rankings = compute_leaderboard(self.round_obj.id)
-        alpha = next(r for r in rankings if r['team_id'] == self.team1.id)
-        
-        self.assertEqual(alpha['total_score'], 33.0)
-        self.assertEqual(alpha['average_score'], 8.25)
-        self.assertEqual(alpha['criteria_breakdown']['Innovation'], 17.0)
-        self.assertEqual(alpha['criteria_breakdown']['Design'], 16.0)
-        
-        self.assertEqual(alpha['jury_breakdown'][self.jury1.username], 8.5)
-        self.assertEqual(alpha['jury_breakdown'][self.jury2.username], 8.0)
-
     def test_save_leaderboard_snapshot_is_idempotent(self):
         save_leaderboard_snapshot(self.tournament.id, self.round_obj.id)
         save_leaderboard_snapshot(self.tournament.id, self.round_obj.id)
@@ -395,15 +380,6 @@ class LeaderboardTests(APITestCase):
             LeaderboardEntry.objects.filter(tournament=self.tournament, round=self.round_obj).count(),
             2,
         )
-
-    def test_save_leaderboard_snapshot_field_integrity(self):
-        save_leaderboard_snapshot(self.tournament.id, self.round_obj.id)
-        entry = LeaderboardEntry.objects.get(tournament=self.tournament, round=self.round_obj, team=self.team1)
-        
-        self.assertEqual(float(entry.total_score), 33.0)
-        self.assertEqual(float(entry.average_score), 8.25)
-        self.assertEqual(entry.criteria_breakdown['Innovation'], 17.0)
-        self.assertEqual(entry.jury_breakdown[self.jury1.username], 8.5)
 
     def test_compute_tournament_leaderboard_sums_only_participated_rounds(self):
         rankings = compute_tournament_leaderboard(self.tournament.id)

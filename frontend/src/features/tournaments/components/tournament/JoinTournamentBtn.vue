@@ -62,8 +62,6 @@ import { parseApiError } from '@/api/errors'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useProfile } from '@/api/queries/accounts'
-import { useQueryClient } from '@tanstack/vue-query'
-import { tournamentsKeys } from '@/api/queries/keys'
 
 interface Props {
   tournamentId: TournamentId
@@ -72,7 +70,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const queryClient = useQueryClient()
 const { data: user } = useProfile()
 
 const isOpen = ref(false)
@@ -106,10 +103,7 @@ function handleJoin(teamId: TeamId) {
   register(
     { id: props.tournamentId, body: { team_id: teamId } },
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(props.tournamentId) })
-        close()
-      },
+      onSuccess: () => close(),
       onError: (error) => {
         const parsedError = parseApiError(error)
         showNotification(parsedError?.message, 'error')

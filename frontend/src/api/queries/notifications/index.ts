@@ -1,123 +1,118 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { notificationKeys } from '../keys'
 import type {
-  GetNotificationsArgs,
-  GetNotificationsResponse,
+  Notification,
   NotificationSettings,
   UpdateEventConfigPayload,
   UpdateGlobalConfigPayload,
+  PaginatedResponse,
 } from '@/api/services/notifications/types'
-import { computed, toValue } from 'vue'
+import { type Ref, unref, computed } from 'vue'
 import { notificationsService } from '@/api/services/notifications'
-import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
-import type { AxiosError } from 'axios'
-import type { ApiError } from '@/api/errors'
 
 export const useNotifications = (
-  payload: MaybeRefArgs<GetNotificationsArgs> = {},
-  config?: QueryConfig<GetNotificationsResponse>,
+  page: Ref<number> | number = 1,
+  pageSize: Ref<number> | number = 10,
 ) => {
-  const page = computed(() => toValue(payload.page) ?? 1)
-  const pageSize = computed(() => toValue(payload.pageSize) ?? 10)
-
-  return useQuery<GetNotificationsResponse, AxiosError<ApiError>>({
-    queryKey: computed(() => notificationKeys.list(page.value, pageSize.value)),
-    queryFn: () => notificationsService.getNotifications({ page, pageSize }),
-    ...config,
+  return useQuery({
+    queryKey: computed(() => notificationKeys.list(unref(page), unref(pageSize))),
+    queryFn: async (): Promise<PaginatedResponse<Notification>> => {
+      return await notificationsService.getNotifications(unref(page), unref(pageSize))
+    },
   })
 }
 
-export const useUnreadCount = (config?: QueryConfig<{ unread_count: number }>) => {
-  return useQuery<{ unread_count: number }, AxiosError<ApiError>>({
+export const useUnreadCount = () => {
+  return useQuery({
     queryKey: notificationKeys.unreadCount(),
-    queryFn: notificationsService.getUnreadCount,
+    queryFn: async (): Promise<{ unread_count: number }> => {
+      return await notificationsService.getUnreadCount()
+    },
     refetchInterval: 30000, // Poll every 30s
-    ...config,
   })
 }
 
-export const useNotificationSettings = (config?: QueryConfig<NotificationSettings>) => {
-  return useQuery<NotificationSettings, AxiosError<ApiError>>({
+export const useNotificationSettings = () => {
+  return useQuery({
     queryKey: notificationKeys.settings(),
-    queryFn: notificationsService.getNotificationSettings,
-    ...config,
-  })
-}
-
-export const useMarkAsRead = (
-  config?: MutationConfig<unknown, AxiosError<ApiError>, { id: number }>,
-) => {
-  const queryClient = useQueryClient()
-  return useMutation<unknown, AxiosError<ApiError>, { id: number }>({
-    mutationFn: notificationsService.markAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
+    queryFn: async (): Promise<NotificationSettings> => {
+      return await notificationsService.getNotificationSettings()
     },
-    ...config,
   })
 }
 
-export const useMarkAllAsRead = (config?: MutationConfig) => {
+export const useMarkAsRead = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: notificationsService.markAllAsRead,
+    mutationFn: async (id: number) => {
+      return await notificationsService.markAsRead(id)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
       queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
     },
-    ...config,
   })
 }
 
-export const useDeleteNotification = (
-  config?: MutationConfig<unknown, AxiosError<ApiError>, { id: number }>,
-) => {
-  const queryClient = useQueryClient()
-  return useMutation<unknown, AxiosError<ApiError>, { id: number }>({
-    mutationFn: notificationsService.deleteNotification,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
-    },
-    ...config,
-  })
-}
-
-export const useDeleteAllNotifications = (config?: MutationConfig) => {
+export const useMarkAllAsRead = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: notificationsService.deleteAllNotifications,
+    mutationFn: async () => {
+      return await notificationsService.markAllAsRead()
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
       queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
     },
-    ...config,
   })
 }
 
-export const useUpdateEventConfig = (
-  config?: MutationConfig<unknown, AxiosError<ApiError>, UpdateEventConfigPayload>,
-) => {
+export const useDeleteNotification = () => {
   const queryClient = useQueryClient()
-  return useMutation<unknown, AxiosError<ApiError>, UpdateEventConfigPayload>({
-    mutationFn: notificationsService.updateEventConfig,
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return await notificationsService.deleteNotification(id)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
+    },
+  })
+}
+
+export const useDeleteAllNotifications = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      return await notificationsService.deleteAllNotifications()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() })
+    },
+  })
+}
+
+export const useUpdateEventConfig = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: UpdateEventConfigPayload) => {
+      return await notificationsService.updateEventConfig(payload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.settings() })
     },
-    ...config,
   })
 }
 
-export const useUpdateGlobalConfig = (
-  config?: MutationConfig<unknown, AxiosError<ApiError>, UpdateGlobalConfigPayload>,
-) => {
+export const useUpdateGlobalConfig = () => {
   const queryClient = useQueryClient()
-  return useMutation<unknown, AxiosError<ApiError>, UpdateGlobalConfigPayload>({
-    mutationFn: notificationsService.updateGlobalConfig,
+  return useMutation({
+    mutationFn: async (payload: UpdateGlobalConfigPayload) => {
+      return await notificationsService.updateGlobalConfig(payload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.settings() })
     },
-    ...config,
   })
 }

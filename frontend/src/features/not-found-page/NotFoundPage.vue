@@ -5,7 +5,7 @@
       <p class="text">The page you’re looking for doesn’t exist or was moved.</p>
       <div class="actions">
         <ui-button asLink to="/">Go home</ui-button>
-        <ui-button variant="secondary" asLink to="/">Browse tournaments</ui-button>
+        <ui-button variant="secondary" asLink to="/tournaments">Browse tournaments</ui-button>
       </div>
     </div>
   </ui-card>
