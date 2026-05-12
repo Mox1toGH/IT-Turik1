@@ -30,7 +30,18 @@
             <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
               >Evaluations</router-link
             >
-            <router-link to="/profile" :class="navItemClass('profile')">Profile</router-link>
+            <router-link
+              to="/profile"
+              class="profile-avatar-link"
+              :class="{ active: isSectionActive('profile') }"
+            >
+              <user-avatar
+                :avatar="user?.avatar"
+                :username="user?.username || 'User'"
+                :full-name="user?.full_name || ''"
+                :size="34"
+              />
+            </router-link>
 
             <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
               >Admin</router-link
@@ -159,6 +170,7 @@ import { useUserStore } from '@/stores/user'
 import { useProfile } from '@/api/queries/accounts'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
+import UserAvatar from './UserAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -271,6 +283,20 @@ const isSectionActive = (section: Section) => {
 .logout-btn {
   padding: 0.45rem 0.85rem;
   border-radius: 999px;
+}
+
+.profile-avatar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.profile-avatar-link:hover,
+.profile-avatar-link.active {
+  background: var(--secondary);
 }
 
 .nav-item:hover {
