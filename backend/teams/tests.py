@@ -96,6 +96,26 @@ class TeamApiTests(APITestCase):
         self.assertEqual(invitations.count(), 1)
         self.assertEqual(invitations.first().status, TeamInvitation.STATUS_INVITED)
 
+    def test_create_team_allows_empty_telegram_and_discord(self):
+        self.client.force_authenticate(user=self.captain)
+        response = self.client.post(
+            self.teams_url,
+            {
+                'name': 'No Contacts Team',
+                'email': 'no-contacts@example.com',
+                'is_public': False,
+                'organization': 'T-Org',
+                'contact_telegram': '',
+                'contact_discord': '',
+                'member_ids': [],
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['contact_telegram'], '')
+        self.assertEqual(response.data['contact_discord'], '')
+
     def test_admin_cannot_create_team(self):
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.post(
