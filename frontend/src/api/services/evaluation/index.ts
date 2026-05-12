@@ -73,12 +73,32 @@ export const evaluationService = {
     if (args?.roundId) {
       params.append('round_id', String(args.roundId))
     }
+    if (args?.roundIds?.length) {
+      params.append('round_ids', args.roundIds.join(','))
+    }
+    if (args?.tournamentIds?.length) {
+      params.append('tournament_ids', args.tournamentIds.join(','))
+    }
+    if (args?.evaluationStatus) {
+      params.append('evaluation_status', args.evaluationStatus)
+    }
+    if (args?.page) {
+      params.append('page', String(args.page))
+    }
+    if (args?.pageSize) {
+      params.append('page_size', String(args.pageSize))
+    }
 
     const query = params.toString()
     const { data } = await apiClient.get<GetAssignmentsResponse>(
       `${prefix}/assignments/${query ? `?${query}` : ''}`,
     )
-    return data.map((item) => normalizeAssignment(item as Omit<JuryAssignmentData, 'round_details' | 'criteria'>))
+    return {
+      ...data,
+      results: data.results.map((item) =>
+        normalizeAssignment(item as Omit<JuryAssignmentData, 'round_details' | 'criteria'>),
+      ),
+    }
   },
 
   getAssignmentDetail: async (args: GetAssignmentDetailArgs) => {

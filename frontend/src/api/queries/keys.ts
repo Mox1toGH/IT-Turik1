@@ -80,8 +80,26 @@ export const newsKeys = {
 export const evaluationKeys = {
   all: () => ['evaluation'] as const,
   availableJury: (roundId: RoundId) => [...evaluationKeys.all(), 'availableJury', roundId] as const,
-  assignments: (roundId?: RoundId) =>
-    [...evaluationKeys.all(), 'assignments', roundId ?? 'all'] as const,
+  assignments: (args?: {
+    roundId?: RoundId
+    roundIds?: RoundId[]
+    tournamentIds?: TournamentId[]
+    evaluationStatus?: 'all' | 'evaluated' | 'not_evaluated'
+    page?: number
+    pageSize?: number
+  }) =>
+    [
+      ...evaluationKeys.all(),
+      'assignments',
+      {
+        roundId: args?.roundId ?? null,
+        roundIds: args?.roundIds ?? [],
+        tournamentIds: args?.tournamentIds ?? [],
+        evaluationStatus: args?.evaluationStatus ?? 'all',
+        page: args?.page ?? 1,
+        pageSize: args?.pageSize ?? 8,
+      },
+    ] as const,
   assignment: (assignmentId: number) =>
     [...evaluationKeys.all(), 'assignment', assignmentId] as const,
   roundLeaderboard: (roundId: RoundId) =>

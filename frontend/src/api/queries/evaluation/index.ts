@@ -15,7 +15,7 @@ import type {
   UpdateEvaluationArgs,
   UpdateEvaluationResponse,
 } from '@/api/services/evaluation/types'
-import type { MutationConfig, QueryConfig } from '../types'
+import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
 import type { AxiosError } from 'axios'
 import type { ApiError } from '@/api/errors'
 import { evaluationKeys } from '../keys'
@@ -71,12 +71,29 @@ export const useAssignJury = (
 }
 
 export const useAssignments = (
-  payload: GetAssignmentsArgs = {},
+  payload: MaybeRefArgs<GetAssignmentsArgs> = {},
   config?: QueryConfig<GetAssignmentsResponse>,
 ) => {
   return useQuery<GetAssignmentsResponse, AxiosError<ApiError>>({
-    queryKey: computed(() => evaluationKeys.assignments(toValue(payload.roundId))),
-    queryFn: () => $api.evaluation.getAssignments({ roundId: toValue(payload.roundId) }),
+    queryKey: computed(() =>
+      evaluationKeys.assignments({
+        roundId: toValue(payload.roundId),
+        roundIds: toValue(payload.roundIds),
+        tournamentIds: toValue(payload.tournamentIds),
+        evaluationStatus: toValue(payload.evaluationStatus),
+        page: toValue(payload.page),
+        pageSize: toValue(payload.pageSize),
+      }),
+    ),
+    queryFn: () =>
+      $api.evaluation.getAssignments({
+        roundId: toValue(payload.roundId),
+        roundIds: toValue(payload.roundIds),
+        tournamentIds: toValue(payload.tournamentIds),
+        evaluationStatus: toValue(payload.evaluationStatus),
+        page: toValue(payload.page),
+        pageSize: toValue(payload.pageSize),
+      }),
     ...config,
   })
 }

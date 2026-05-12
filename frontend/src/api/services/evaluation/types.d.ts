@@ -73,6 +73,11 @@ export type AssignJuryBody = {
 // assignments
 export interface GetAssignmentsArgs {
   roundId?: RoundId
+  roundIds?: RoundId[]
+  tournamentIds?: TournamentId[]
+  evaluationStatus?: 'all' | 'evaluated' | 'not_evaluated'
+  page?: number
+  pageSize?: number
 }
 
 export interface GetAssignmentDetailArgs {
@@ -132,7 +137,15 @@ export interface JuryAssignmentData {
   created_at: string
 }
 
-export type GetAssignmentsResponse = JuryAssignmentData[]
+export interface PaginatedAssignmentsResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  evaluated_count: number
+  results: JuryAssignmentData[]
+}
+
+export type GetAssignmentsResponse = PaginatedAssignmentsResponse
 export type GetAssignmentDetailResponse = JuryAssignmentData
 
 // create/update evaluation

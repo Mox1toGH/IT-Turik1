@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,15 +23,76 @@ from .serializers import (
 class JuryAssignmentListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = JuryAssignmentSerializer
+    pagination_class = None
+
+    class JuryAssignmentPagination(PageNumberPagination):
+        page_size = 8
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = JuryAssignmentPagination
+
+    @staticmethod
+    def _parse_int_list(value, field_name):
+        if not value:
+            return []
+
+        items = [item.strip() for item in value.split(',') if item.strip()]
+        if not items:
+            return []
+
+        parsed = []
+        for item in items:
+            if not item.isdigit():
+                raise ValidationError({field_name: 'Expected comma-separated positive integers.'})
+            parsed.append(int(item))
+        return parsed
 
     def get_queryset(self):
         qs = JuryAssignment.objects.filter(jury=self.request.user).select_related(
-            'submission', 'submission__team', 'submission__round', 'submission__round__tournament'
+            'submission',
+            'submission__team',
+            'submission__round',
+            'submission__round__tournament',
+            'evaluation',
         )
+
         round_id = self.request.query_params.get('round_id')
         if round_id:
             qs = qs.filter(submission__round_id=round_id)
+
+        round_ids = self._parse_int_list(self.request.query_params.get('round_ids'), 'round_ids')
+        if round_ids:
+            qs = qs.filter(submission__round_id__in=round_ids)
+
+        tournament_ids = self._parse_int_list(
+            self.request.query_params.get('tournament_ids'),
+            'tournament_ids',
+        )
+        if tournament_ids:
+            qs = qs.filter(submission__round__tournament_id__in=tournament_ids)
+
+        evaluation_status = self.request.query_params.get('evaluation_status', 'all')
+        if evaluation_status == 'evaluated':
+            qs = qs.filter(evaluation__isnull=False)
+        elif evaluation_status == 'not_evaluated':
+            qs = qs.filter(evaluation__isnull=True)
+        elif evaluation_status != 'all':
+            raise ValidationError(
+                {'evaluation_status': 'Expected one of: all, evaluated, not_evaluated.'}
+            )
+
         return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        evaluated_count = queryset.filter(evaluation__isnull=False).count()
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        response = self.get_paginated_response(serializer.data)
+        response.data['evaluated_count'] = evaluated_count
+        return response
 
 
 class JuryAssignmentDetailView(generics.RetrieveAPIView):
