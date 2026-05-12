@@ -39,15 +39,12 @@
           >
             Edit
           </ui-button>
-          <ui-button
+          <DeleteTournamentModal
             v-if="user?.role === 'admin'"
-            variant="danger"
-            size="sm"
-            :disabled="isDeletingTournament"
-            @click="handleDeleteTournament"
-          >
-            Delete
-          </ui-button>
+            :tournament-id="id"
+            :tournament-name="tournament?.name ?? `Tournament ${id}`"
+            @deleted="onTournamentDeleted"
+          />
         </div>
       </template>
     </ui-card>
@@ -171,8 +168,8 @@ import JuryAssign from '../components/tournament/tournament-submissions/JuryAssi
 import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
 import { useProfile } from '@/api/queries/accounts'
 import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
+import DeleteTournamentModal from '../components/tournament/modals/DeleteTournamentModal.vue'
 import {
-  useDeleteTournament,
   useRemoveTournamentBanner,
   useTournamentInfo,
   useUpdateTournamentBanner,
@@ -196,7 +193,6 @@ const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTournamentBanner()
 const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useRemoveTournamentBanner()
-const { mutate: deleteTournament, isPending: isDeletingTournament } = useDeleteTournament()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 const bannerPreviewUrl = computed(() => selectedBannerUrl.value || tournament.value?.banner || '')
 const bannerPositionKey = computed(() => `image-position:banner:tournament:${id}`)
@@ -227,23 +223,9 @@ const setActiveSection = (section: Sections) => {
   currentSection.value = section
 }
 
-const handleDeleteTournament = () => {
-  if (!window.confirm('Delete this tournament? This action cannot be undone.')) {
-    return
-  }
-
-  deleteTournament(
-    { id },
-    {
-      onSuccess: () => {
-        showNotification('Tournament deleted successfully.', 'success')
-        router.push('/tournaments')
-      },
-      onError: () => {
-        showNotification('Failed to delete tournament.', 'error')
-      },
-    },
-  )
+const onTournamentDeleted = () => {
+  showNotification('Tournament deleted successfully.', 'success')
+  router.push('/tournaments')
 }
 
 const closeBannerModal = () => {
