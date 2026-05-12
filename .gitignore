@@ -9,7 +9,7 @@
 *.sqlite3-journal
 backend/db.sqlite3
 backend/db.sqlite3-journal
-backend/media/certificate_templates/
+backend/media/*
 
 .gemini
 .codex
