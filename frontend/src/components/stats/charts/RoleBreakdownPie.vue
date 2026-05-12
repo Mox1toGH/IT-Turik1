@@ -3,9 +3,19 @@
     <svg viewBox="0 0 260 170" width="100%" height="100%">
       <g transform="translate(85,85)">
         <template v-for="(slice, idx) in slices" :key="slice.role">
-          <path :d="slice.path" :fill="colors[idx % colors.length]" />
+          <path
+            :d="slice.path"
+            :fill="colors[idx % colors.length]"
+            style="cursor: pointer; transition: opacity .2s ease"
+            :opacity="hovered && hovered !== slice.role ? 0.6 : 1"
+            @mouseenter="hovered = slice.role"
+            @mouseleave="hovered = null"
+            @click="$emit('select', slice.role)"
+          />
         </template>
         <circle r="26" fill="var(--stats-card)" />
+        <text x="0" y="-2" text-anchor="middle" class="axis-text">{{ centerRole }}</text>
+        <text x="0" y="12" text-anchor="middle" class="axis-text">{{ centerCount }}</text>
       </g>
       <g transform="translate(150,45)">
         <text
@@ -15,6 +25,10 @@
           :y="idx * 18"
           class="axis-text"
           :fill="colors[idx % colors.length]"
+          style="cursor: pointer"
+          @mouseenter="hovered = slice.role"
+          @mouseleave="hovered = null"
+          @click="$emit('select', slice.role)"
         >
           {{ slice.role }}: {{ slice.count }}
         </text>
@@ -24,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface Item {
   role: string
@@ -33,8 +47,12 @@ interface Item {
 interface Props {
   items: Item[]
 }
+defineEmits<{
+  (e: 'select', role: string): void
+}>()
 
 const props = defineProps<Props>()
+const hovered = ref<string | null>(null)
 const colors = ['var(--stats-accent)', 'var(--stats-secondary)', '#6a6a6a', '#8a8a8a']
 
 const total = computed(() => Math.max(props.items.reduce((sum, item) => sum + item.count, 0), 1))
@@ -58,5 +76,11 @@ const slices = computed(() => {
     start = end
     return result
   })
+})
+
+const centerRole = computed(() => hovered.value?.toUpperCase() ?? 'ROLES')
+const centerCount = computed(() => {
+  const matched = props.items.find((item) => item.role === hovered.value)
+  return matched ? String(matched.count) : String(total.value)
 })
 </script>

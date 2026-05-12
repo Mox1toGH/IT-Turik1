@@ -2,12 +2,17 @@
   <div class="stats-grid">
     <div class="stats-card anim-stagger-1">
       <h3>Team Members Evaluation</h3>
-      <MembersBarChart :items="memberSeries" />
+      <MembersBarChart :items="memberSeries" @select="goTeam" />
     </div>
 
     <div class="stats-card anim-stagger-2">
       <h3>Team Win Rate</h3>
       <WinRateRadial :rate="stats.win_rate" />
+    </div>
+
+    <div class="stats-card">
+      <h3>Team Readiness</h3>
+      <SegmentedProgressChart :items="readinessItems" @select="goTeam" />
     </div>
 
     <StatCard class="anim-stagger-3" label="Active Members" :value="stats.active_members_count" />
@@ -27,9 +32,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import StatCard from './StatCard.vue'
 import MembersBarChart from './charts/MembersBarChart.vue'
 import WinRateRadial from './charts/WinRateRadial.vue'
+import SegmentedProgressChart from './charts/SegmentedProgressChart.vue'
 
 interface TeamStats {
   win_rate: number
@@ -45,6 +52,9 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const router = useRouter()
+const goTeam = () => router.push('/teams')
+
 const memberSeries = computed(() => {
   const top = props.stats.top_player
   const seed = top ? top.average_evaluation_score : 0
@@ -57,4 +67,16 @@ const memberSeries = computed(() => {
     }
   })
 })
+
+const readinessItems = computed(() => [
+  { label: 'Win rate', percent: Math.min(Math.max(props.stats.win_rate, 0), 100) },
+  {
+    label: 'Members',
+    percent: Math.min(Math.max((props.stats.active_members_count / 6) * 100, 0), 100),
+  },
+  {
+    label: 'Top score',
+    percent: Math.min(Math.max(((props.stats.top_player?.average_evaluation_score ?? 0) / 10) * 100, 0), 100),
+  },
+])
 </script>

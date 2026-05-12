@@ -1,5 +1,5 @@
 <template>
-  <ScoreAreaChart :points="points" />
+  <ScoreAreaChart :points="points" @select="$emit('select', $event)" />
 </template>
 
 <script setup lang="ts">
@@ -13,4 +13,7 @@ interface Props {
   points: Point[]
 }
 defineProps<Props>()
+defineEmits<{
+  (e: 'select', label: string): void
+}>()
 </script>
