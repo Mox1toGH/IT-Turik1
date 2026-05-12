@@ -9,17 +9,40 @@
     <ui-card>
       <template #header>
         <div class="page-controls">
-          <ui-select
-            v-model="selectedRounds"
-            :options="roundOptions"
-            multiple
-            min-width="220px"
-            placeholder="Filter by round"
-            align-to="left"
-            :is-loading="isLoading"
-            :is-error="isError"
-            error="Failed to fetch rounds"
-          />
+          <div class="filters-wrap">
+            <ui-select
+              v-model="selectedRounds"
+              :options="roundOptions"
+              multiple
+              min-width="220px"
+              placeholder="Filter by round"
+              align-to="left"
+              :is-loading="isLoading"
+              :is-error="isError"
+              error="Failed to fetch rounds"
+            />
+            <ui-select
+              v-model="selectedTournamentIds"
+              :options="tournamentOptions"
+              multiple
+              min-width="220px"
+              placeholder="Filter by tournament"
+              align-to="left"
+              :is-loading="isLoading || isTournamentsLoading"
+              :is-error="isError || isTournamentsError"
+              error="Failed to fetch tournaments"
+            />
+            <ui-select
+              v-model="evaluationStatus"
+              :options="evaluationStatusOptions"
+              min-width="220px"
+              placeholder="Filter by evaluation"
+              align-to="left"
+              :is-loading="isLoading"
+              :is-error="isError"
+              error="Failed to fetch assignments"
+            />
+          </div>
 
           <div class="progress-wrap">
             <p class="progress-text">{{ evaluatedCount }} / {{ totalCount }} evaluated</p>
@@ -64,6 +87,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAssignments } from '@/api/queries/evaluation'
+import { useTournaments } from '@/api/queries/tournaments'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
@@ -71,8 +95,24 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
 
 const selectedRounds = ref<string[]>([])
+const selectedTournamentIds = ref<string[]>([])
+const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
 
 const { data: assignments, isLoading, isError, refetch } = useAssignments()
+const {
+  data: tournamentsResponse,
+  isLoading: isTournamentsLoading,
+  isError: isTournamentsError,
+} = useTournaments({
+  page: 1,
+  pageSize: 200,
+})
+
+const evaluationStatusOptions = [
+  { value: 'all', label: 'All evaluations' },
+  { value: 'evaluated', label: 'Evaluated' },
+  { value: 'not_evaluated', label: 'Not evaluated' },
+]
 
 const roundOptions = computed(() => {
   const unique = new Map<string, string>()
@@ -83,12 +123,43 @@ const roundOptions = computed(() => {
   return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
 })
 
-const filteredAssignments = computed(() => {
-  if (!selectedRounds.value.length) return assignments.value ?? []
+const tournamentOptions = computed(() => {
+  const byId = new Map<string, string>()
 
-  return (assignments.value ?? []).filter((assignment) =>
-    selectedRounds.value.includes(String(assignment.round_details.id)),
-  )
+  ;(tournamentsResponse.value?.data ?? []).forEach((tournament) => {
+    byId.set(String(tournament.id), tournament.name)
+  })
+
+  ;(assignments.value ?? []).forEach((assignment) => {
+    const id = assignment.round_details.tournament
+    if (id == null) return
+    const key = String(id)
+    if (!byId.has(key)) byId.set(key, `Tournament #${key}`)
+  })
+
+  return Array.from(byId.entries()).map(([value, label]) => ({ value, label }))
+})
+
+const filteredAssignments = computed(() => {
+  let list = assignments.value ?? []
+
+  if (selectedRounds.value.length) {
+    list = list.filter((assignment) => selectedRounds.value.includes(String(assignment.round_details.id)))
+  }
+
+  if (selectedTournamentIds.value.length) {
+    list = list.filter((assignment) =>
+      selectedTournamentIds.value.includes(String(assignment.round_details.tournament)),
+    )
+  }
+
+  if (evaluationStatus.value === 'evaluated') {
+    list = list.filter((assignment) => assignment.is_evaluated)
+  } else if (evaluationStatus.value === 'not_evaluated') {
+    list = list.filter((assignment) => !assignment.is_evaluated)
+  }
+
+  return list
 })
 
 const totalCount = computed(() => filteredAssignments.value.length)
@@ -135,6 +206,12 @@ const progressPercent = computed(() =>
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+}
+
+.filters-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
 .progress-wrap {
@@ -195,6 +272,10 @@ const progressPercent = computed(() =>
 @media (max-width: 768px) {
   .page-controls {
     flex-direction: column;
+  }
+
+  .filters-wrap {
+    width: 100%;
   }
 
   .progress-wrap {
