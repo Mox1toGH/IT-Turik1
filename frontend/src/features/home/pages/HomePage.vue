@@ -18,6 +18,8 @@
       </div>
     </ui-card>
 
+    <StatsSection :user="user" />
+
     <div class="grid">
       <ui-card v-if="isTeamRole" class="info-card">
         <template #header>
@@ -159,6 +161,7 @@ import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import StatsSection from '@/components/stats/StatsSection.vue'
 import { useProfile } from '@/api/queries/accounts'
 import { parseApiError } from '@/api/errors'
 import { useCurrentRound, useTeamSubmissions, useTournaments } from '@/api/queries/tournaments'

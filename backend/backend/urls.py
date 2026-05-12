@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/tournaments/', include('tournaments.urls')),
     path("api/evaluation/", include("evaluation.urls")),
     path('api/notifications/', include('notifications.urls')),
+    path('api/stats/', include('stats.urls')),
 ]
 
 if settings.DEBUG:
