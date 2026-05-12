@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'certificates',
     'notifications',
+    'stats',
     'news',
 ]
 

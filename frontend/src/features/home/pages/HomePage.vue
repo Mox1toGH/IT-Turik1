@@ -18,7 +18,60 @@
       </div>
     </ui-card>
 
+    <StatsPreview :user="user" />
+
     <div class="grid">
+      <ui-card v-if="isTeamRole" class="info-card">
+        <template #header>
+          <h2>Швидкий доступ</h2>
+        </template>
+
+        <ui-skeleton-loader :loading="isQuickBlockLoading" min-height="120px">
+          <template #skeleton>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <ui-skeleton variant="rect" width="50%" />
+              <ui-skeleton variant="rect" width="60%" />
+              <ui-skeleton variant="rect" width="45%" />
+            </div>
+          </template>
+
+          <ul class="account-data">
+            <li>
+              Ваш турнір:
+              <RouterLink
+                v-if="activeTournament"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}`"
+              >
+                {{ activeTournament.name }}
+              </RouterLink>
+              <span v-else>-</span>
+            </li>
+            <li>
+              Ваше завдання:
+              <RouterLink
+                v-if="activeTournament && currentRound?.name"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}?section=rounds`"
+              >
+                {{ currentRound.name }}
+              </RouterLink>
+              <span v-else>{{ currentRound?.name ?? '-' }}</span>
+            </li>
+            <li>
+              Ваш сабміт:
+              <RouterLink
+                v-if="activeTournament && lastSubmission?.round_details?.name"
+                class="quick-link"
+                :to="`/tournaments/${activeTournament.id}?section=submissions`"
+              >
+                {{ lastSubmission.round_details.name }}
+              </RouterLink>
+              <span v-else>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
+            </li>
+          </ul>       </ui-skeleton-loader>
+      </ui-card>
+
       <ui-card class="info-card" :is-error="isLoadingError">
         <template #error>
           <div
@@ -108,8 +161,11 @@ import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useProfile } from '@/api/queries/accounts'
 import { parseApiError } from '@/api/errors'
+import { useCurrentRound, useTeamSubmissions, useTournaments } from '@/api/queries/tournaments'
+import { useTeams } from '@/api/queries/teams'
 
 const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
 const error = computed(() => parseApiError(profileError.value))
@@ -117,6 +173,61 @@ const error = computed(() => parseApiError(profileError.value))
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 const profileReady = computed(() => Boolean(user.value?.full_name && user.value?.city))
 const teamNames = computed(() => (user.value?.teams || []).map((team) => team.name).join(', '))
+const isTeamRole = computed(() => user.value?.role === 'team')
+const { data: teams } = useTeams()
+const myTeamIds = computed(() => new Set((user.value?.teams ?? []).map((team) => team.id)))
+const myTeams = computed(() => (teams.value ?? []).filter((team) => myTeamIds.value.has(team.id)))
+
+const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useTournaments(
+  {
+    page: 1,
+    pageSize: 100,
+    status: ['registration', 'running'],
+  },
+  {
+    enabled: computed(() => Boolean(isTeamRole.value)),
+  },
+)
+const activeTournament = computed(() =>
+  (tournamentsResponse.value?.data ?? []).find((tournament) =>
+    myTeamIds.value.has(tournament.registered_team?.id ?? -1),
+  ),
+)
+const activeTournamentId = computed(() => activeTournament.value?.id ?? 0)
+const shouldFetchCurrentRound = computed(
+  () => Boolean(isTeamRole.value && activeTournamentId.value) && activeTournament.value?.status === 'running',
+)
+
+const { data: currentRound, isLoading: isLoadingCurrentRound } = useCurrentRound(
+  { id: activeTournamentId },
+  {
+    enabled: shouldFetchCurrentRound,
+    retry: false,
+  },
+)
+
+const { data: submissions, isLoading: isLoadingSubmissions } = useTeamSubmissions(
+  { tournamentId: activeTournamentId },
+  {
+    enabled: computed(() => Boolean(isTeamRole.value && activeTournamentId.value)),
+  },
+)
+
+const lastSubmission = computed(() => {
+  const list = submissions.value ?? []
+  if (list.length === 0) return null
+  return list.reduce((latest, current) =>
+    new Date(current.created_at).getTime() > new Date(latest.created_at).getTime() ? current : latest,
+  )
+})
+
+const isQuickBlockLoading = computed(
+  () =>
+    isLoading.value ||
+    isLoadingActiveTournament.value ||
+    isLoadingCurrentRound.value ||
+    isLoadingSubmissions.value,
+)
 </script>
 
 <style scoped>
@@ -198,6 +309,15 @@ li {
 
 li span {
   font-weight: 700;
+}
+.quick-link {
+  font-weight: 700;
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.quick-link:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 760px) {

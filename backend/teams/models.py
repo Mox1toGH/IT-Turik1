@@ -13,6 +13,7 @@ class Team(models.Model):
     organization = models.CharField(max_length=255, blank=True)
     contact_telegram = models.CharField(max_length=100, blank=True)
     contact_discord = models.CharField(max_length=100, blank=True)
+    banner = models.ImageField(upload_to='team_banners/', blank=True, null=True)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, through='TeamMember', related_name='teams')
 
     class Meta:

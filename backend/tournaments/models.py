@@ -24,6 +24,7 @@ class Tournament(models.Model):
     end_date = models.DateTimeField()
     max_teams = models.PositiveIntegerField(blank=True, null=True)
     min_team_members = models.PositiveIntegerField(blank=True, null=True)
+    banner = models.ImageField(upload_to='tournament_banners/', blank=True, null=True)
     status = models.CharField(max_length=24, choices=STATUS_CHOICES, default=STATUS_DRAFT)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

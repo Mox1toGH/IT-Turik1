@@ -10,6 +10,7 @@ import type {
   RegisterResponse,
   ResetPasswordResponse,
   UpdateProfileResponse,
+  UpdateAvatarArgs,
   UpdateProfileArgs,
   ForgotPasswordArgs,
   ResetPasswordArgs,
@@ -44,6 +45,18 @@ export const accountsService = {
 
   async updateProfile(args: UpdateProfileArgs) {
     const { data } = await apiClient.patch<UpdateProfileResponse>(`${prefix}/profile/`, args.body)
+    return data
+  },
+
+  async updateAvatar(args: UpdateAvatarArgs) {
+    const formData = new FormData()
+    formData.append('avatar', args.file)
+    const { data } = await apiClient.patch<GetProfileResponse>(`${prefix}/profile/avatar/`, formData)
+    return data
+  },
+
+  async removeAvatar() {
+    const { data } = await apiClient.delete(`${prefix}/profile/avatar/`)
     return data
   },
 

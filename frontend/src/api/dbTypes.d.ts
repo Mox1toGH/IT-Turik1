@@ -10,6 +10,7 @@ export interface User {
   full_name?: string
   phone: string
   city?: string
+  avatar?: string | null
   created_at: Date
   needs_onboarding: boolean
   teams: Pick<Team, 'id' | 'name' | 'contact_telegram' | 'contact_discord'>[]
@@ -36,13 +37,14 @@ export interface Team {
   id: TeamId
   name: string
   email: string
-  members: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>[]
+  members: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role' | 'avatar'>[]
   invitations: Invitation[]
   join_requests: JoinRequest[]
   is_public: boolean
   organization: string
   contact_telegram: string
   contact_discord: string
+  banner?: string | null
 }
 
 // ── Invatation ────────────────────────────────────────────────────
@@ -53,8 +55,8 @@ interface Invitation {
   id: InvatationId
   status: InvatationStatus
   team: Pick<Team, 'id' | 'name' | 'is_public'>
-  user: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>
-  invited_by: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>
+  user: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role' | 'avatar'>
+  invited_by: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role' | 'avatar'>
   created_at: Date
   updated_at?: Date
   responded_at?: Date
@@ -68,7 +70,7 @@ interface JoinRequest {
   id: JoinRequestId
   status: JoinRequestStatus
   team: Team
-  user: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>
+  user: Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role' | 'avatar'>
   reviewed_by?: User
   reviewed_at?: Date
   created_at: Date
@@ -101,6 +103,7 @@ interface Tournament {
   max_teams: number
   min_team_members: number
   status: TournamentStatus
+  banner?: string | null
 }
 
 // Round

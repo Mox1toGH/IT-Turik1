@@ -24,10 +24,14 @@ from .views import (
     TournamentTeamRegistrationDetailView,
     TournamentTeamRegistrationDisqualificationView,
     TournamentUpdateView,
+    TournamentBannerView,
     
     TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
     RoundSubmissionsView,
+    TournamentArchiveDetailView,
+    TournamentArchiveListView,
+    TournamentArchiveSubmissionsView,
     MyCalendarView,
 )
 
@@ -36,9 +40,17 @@ router.register(r'events', EventViewSet, basename='event')
 
 urlpatterns = [
     path('', TournamentListView.as_view(), name='tournaments'),
+    path('archive/', TournamentArchiveListView.as_view(), name='tournament_archive_list'),
+    path('archive/<int:pk>/', TournamentArchiveDetailView.as_view(), name='tournament_archive_detail'),
+    path(
+        'archive/<int:pk>/submissions/',
+        TournamentArchiveSubmissionsView.as_view(),
+        name='tournament_archive_submissions',
+    ),
     path('<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
     path('manage/', TournamentCreateView.as_view(), name='tournament_manage_create'),
     path('manage/<int:pk>/', TournamentUpdateView.as_view(), name='tournament_manage_update'),
+    path('manage/<int:pk>/banner/', TournamentBannerView.as_view(), name='tournament_manage_banner'),
     path(
         '<int:pk>/start-registration/',
         TournamentStartRegistrationView.as_view(),

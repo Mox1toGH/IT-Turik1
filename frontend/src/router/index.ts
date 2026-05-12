@@ -10,6 +10,7 @@ import { teamsRoutes } from '@/features/teams/routes'
 import { tournamentsRoutes } from '@/features/tournaments/routes'
 import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
+import { statsRoutes } from '@/features/stats/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
 
 const router = createRouter({
@@ -23,6 +24,7 @@ const router = createRouter({
     ...tournamentsRoutes,
     ...newsRoutes,
     ...evaluationRoutes,
+    ...statsRoutes,
     ...calendarRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],

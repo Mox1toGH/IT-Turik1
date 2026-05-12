@@ -33,6 +33,7 @@ export interface GetTournamentsResponse {
     | 'max_teams'
     | 'min_team_members'
     | 'status'
+    | 'banner'
   > & { rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'> })[]
   total: number
 }
@@ -331,3 +332,47 @@ export interface UpdateRegistrationResponse {
   disqualification_reason: string | null
   action: 'activated' | 'disqualified'
 }
+
+// tournament banner
+export interface UpdateTournamentBannerArgs {
+  tournamentId: TournamentId
+  file: File
+}
+
+// Tournament archive
+export interface GetTournamentArchiveListArgs {}
+
+export type TournamentArchiveStanding = {
+  rank: number
+  team: Pick<Team, 'id' | 'name' | 'is_public'>
+  total_score: number
+  average_score: number
+  criteria_breakdown: Record<string, number>
+  jury_breakdown: Record<string, number> | null
+  rounds_breakdown: unknown[] | null
+  snapshot_at: string
+}
+
+export type TournamentArchiveItem = Pick<
+  Tournament,
+  'id' | 'name' | 'description' | 'start_date' | 'end_date' | 'status' | 'banner'
+> & {
+  teams: Pick<Team, 'id' | 'name' | 'is_public'>[]
+  standings: TournamentArchiveStanding[]
+}
+
+export type GetTournamentArchiveListResponse = TournamentArchiveItem[]
+
+export interface GetTournamentArchiveDetailArgs {
+  id: TournamentId
+}
+
+export type GetTournamentArchiveDetailResponse = TournamentArchiveItem & {
+  rounds: Pick<Round, 'id' | 'name' | 'start_date' | 'end_date' | 'status'>[]
+}
+
+export interface GetTournamentArchiveSubmissionsArgs {
+  id: TournamentId
+}
+
+export type GetTournamentArchiveSubmissionsResponse = GetTeamSubmissionsResponse

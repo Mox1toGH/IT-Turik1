@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client'
+import type { TournamentId } from '@/api/dbTypes'
 import type {
   CloseSubmissionsArgs,
   CloseSubmissionsResponse,
@@ -30,6 +31,11 @@ import type {
   GetRoundSubmissionsResponse,
   GetTeamSubmissionsArgs,
   GetTeamSubmissionsResponse,
+  GetTournamentArchiveDetailArgs,
+  GetTournamentArchiveDetailResponse,
+  GetTournamentArchiveListResponse,
+  GetTournamentArchiveSubmissionsArgs,
+  GetTournamentArchiveSubmissionsResponse,
   GetTournamentInfoArgs,
   GetTournamentInfoResponse,
   GetTournamentsArgs,
@@ -42,6 +48,7 @@ import type {
   SubmitRoundArgs,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
+  UpdateTournamentBannerArgs,
 } from './types'
 import { toValue } from 'vue'
 
@@ -231,8 +238,48 @@ export const tournamentsService = {
     return data
   },
 
+  updateBanner: async (args: UpdateTournamentBannerArgs) => {
+    const formData = new FormData()
+    formData.append('banner', args.file)
+    const { data } = await apiClient.patch<GetTournamentInfoResponse>(
+      `${prefix}/manage/${args.tournamentId}/banner/`,
+      formData,
+    )
+    return data
+  },
+
+  removeBanner: async (args: { tournamentId: TournamentId }) => {
+    const { data } = await apiClient.delete<GetTournamentInfoResponse>(
+      `${prefix}/manage/${args.tournamentId}/banner/`,
+    )
+    return data
+  },
+
+  getArchiveList: async () => {
+    const { data } = await apiClient.get<GetTournamentArchiveListResponse>(`${prefix}/archive/`)
+    return data
+  },
+
+  getArchiveDetail: async (args: GetTournamentArchiveDetailArgs) => {
+    const { data } = await apiClient.get<GetTournamentArchiveDetailResponse>(
+      `${prefix}/archive/${args.id}/`,
+    )
+    return data
+  },
+
+  getArchiveSubmissions: async (args: GetTournamentArchiveSubmissionsArgs) => {
+    const { data } = await apiClient.get<GetTournamentArchiveSubmissionsResponse>(
+      `${prefix}/archive/${args.id}/submissions/`,
+    )
+
+    return data
+  },
+
   getMyCalendar: async () => {
-    const { data } = await apiClient.get<GetMyCalendarResponse>(`${prefix}/my-calendar/`)
+    const { data } = await apiClient.get<GetMyCalendarResponse>(
+      `${prefix}/my-calendar/`,
+    )
+
     return data
   },
 }

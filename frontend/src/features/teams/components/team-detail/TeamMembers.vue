@@ -41,7 +41,15 @@
               v-for="member in filteredMembers"
               :key="`member-${member.id}`"
             >
-              <div>
+              <div class="member-row">
+                <user-avatar
+                  :avatar="member.avatar"
+                  :username="member.username"
+                  :full-name="member.full_name || ''"
+                  :size="42"
+                />
+
+                <div class="member-main">
                 <div style="display: flex; justify-content: space-between">
                   <p class="member-name">
                     <RouterLink :to="`/users/${member.id}`" class="member-link">
@@ -56,6 +64,7 @@
                 </div>
 
                 <p class="text-muted member-email">{{ member.email }}</p>
+                </div>
               </div>
             </ui-card>
 
@@ -76,6 +85,7 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
 
 interface Props {
@@ -98,6 +108,7 @@ const matches = (parts: (string | undefined)[]) => {
 const filteredMembers = computed(() =>
   props.team?.members.filter((m) => matches([m.username, m.email, m.full_name])),
 )
+
 </script>
 
 <style scoped>
@@ -162,6 +173,17 @@ const filteredMembers = computed(() =>
 
 .member-name {
   font-weight: 700;
+}
+
+.member-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.member-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .member-link {

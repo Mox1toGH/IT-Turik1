@@ -2,6 +2,7 @@ from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +24,8 @@ from .permissions import (
     IsPlatformAdminOrTeamMemberPermission,
 )
 from .serializers import (
+    TournamentArchiveDetailSerializer,
+    TournamentArchiveListSerializer,
     ActiveTournamentSerializer,
     CurrentTaskSerializer,
     EventSerializer,
@@ -37,6 +40,7 @@ from .serializers import (
     TournamentTeamRegistrationListSerializer,
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationDisqualificationSerializer,
+    TournamentBannerSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -146,7 +150,11 @@ class TournamentListView(SyncStatusesMixin, APIView):
         offset = (page - 1) * page_size
         page_queryset = queryset[offset:offset + page_size]
 
-        serializer = TournamentPublicSerializer(page_queryset, many=True)
+        serializer = TournamentPublicSerializer(
+            page_queryset,
+            many=True,
+            context={'request': request},
+        )
         return Response({'data': serializer.data, 'total': total})
 
 
@@ -177,7 +185,10 @@ class TournamentCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tournament = serializer.save()
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_201_CREATED)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
@@ -200,12 +211,36 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(tournament, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         tournament = serializer.save()
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_200_OK)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
     def destroy(self, request, *args, **kwargs):
         tournament = self.get_object()
         tournament.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TournamentBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
+    queryset = Tournament.objects.all()
+    permission_classes = [IsAuthenticated, CanEditTournament]
+    serializer_class = TournamentBannerSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        tournament = self.get_object()
+        if tournament.banner:
+            tournament.banner.delete(save=False)
+            tournament.banner = None
+            tournament.save(update_fields=['banner'])
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TournamentStartRegistrationView(APIView):
@@ -214,7 +249,10 @@ class TournamentStartRegistrationView(APIView):
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
         start_registration(tournament)
-        return Response(TournamentPublicSerializer(tournament).data, status=status.HTTP_200_OK)
+        return Response(
+            TournamentPublicSerializer(tournament, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
@@ -609,3 +647,55 @@ class IconListView(generics.ListAPIView):
     queryset = Icon.objects.all()
     serializer_class = IconSerializer
     permission_classes = [AllowAny]
+
+
+class TournamentArchiveListView(SyncStatusesMixin, generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = TournamentArchiveListSerializer
+
+    def get_queryset(self):
+        return (
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+            .prefetch_related(
+                Prefetch('rounds', queryset=Round.objects.order_by('start_date')),
+                'team_registrations__team',
+                'leaderboard_entries__team',
+            )
+            .order_by('-end_date', '-created_at')
+        )
+
+
+class TournamentArchiveDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = TournamentArchiveDetailSerializer
+
+    def get_queryset(self):
+        return (
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+            .prefetch_related(
+                Prefetch('rounds', queryset=Round.objects.order_by('start_date')),
+                'team_registrations__team',
+                'leaderboard_entries__team',
+            )
+        )
+
+
+class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
+    serializer_class = SubmissionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        tournament = get_object_or_404(
+            Tournament.objects.filter(status=Tournament.STATUS_FINISHED),
+            pk=self.kwargs['pk'],
+        )
+        return (
+            Submission.objects.select_related('team', 'round', 'round__tournament')
+            .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
+            .filter(round__tournament=tournament)
+            .exclude(
+                team__tournament_registrations__tournament=tournament,
+                team__tournament_registrations__is_disqualified=True,
+            )
+            .order_by('-updated_at')
+        )

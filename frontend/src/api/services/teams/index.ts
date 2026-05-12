@@ -21,6 +21,7 @@ import type {
   ResendInvitationArgs,
   RespondToInvitationArgs,
   SendJoinRequestArgs,
+  UpdateTeamBannerArgs,
   UpdateTeamInfoBody,
 } from './types'
 
@@ -106,6 +107,21 @@ export const teamsService = {
 
   async updateInfo(args: { teamId: TeamId; body: UpdateTeamInfoBody }) {
     const { data } = await apiClient.patch(`${prefix}/${args.teamId}/`, args.body)
+    return data
+  },
+
+  async updateBanner(args: UpdateTeamBannerArgs) {
+    const formData = new FormData()
+    formData.append('banner', args.file)
+    const { data } = await apiClient.patch<GetTeamInfoResponse>(
+      `${prefix}/${args.teamId}/banner/`,
+      formData,
+    )
+    return data
+  },
+
+  async removeBanner(args: { teamId: TeamId }) {
+    const { data } = await apiClient.delete<GetTeamInfoResponse>(`${prefix}/${args.teamId}/banner/`)
     return data
   },
 

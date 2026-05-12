@@ -21,6 +21,7 @@ from .services import (
     register_team_for_tournament,
 )
 from teams.serializers import TeamMemberSerializer, TeamSummarySerializer
+from evaluation.models import LeaderboardEntry
 
 
 class RoundShortSerializer(serializers.ModelSerializer):
@@ -51,6 +52,7 @@ class TournamentPublicSerializer(serializers.ModelSerializer):
             'end_date',
             'max_teams',
             'min_team_members',
+            'banner',
             'status',
             'rounds',
             'registered_team',  # <-- додати
@@ -87,9 +89,16 @@ class ActiveTournamentSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'status', 'start_date')
 
 
+
+
+class TournamentBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tournament
+        fields = ('banner',)
+
 class TournamentAdminSerializer(TournamentPublicSerializer):
     class Meta(TournamentPublicSerializer.Meta):
-        read_only_fields = ('status',)
+        read_only_fields = ('status', 'banner')
 
     def validate(self, attrs):
         start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
@@ -543,3 +552,97 @@ class EventSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+
+class ArchiveStandingSerializer(serializers.ModelSerializer):
+    team = TeamSummarySerializer(read_only=True)
+
+    class Meta:
+        model = LeaderboardEntry
+        fields = (
+            'rank',
+            'team',
+            'total_score',
+            'average_score',
+            'criteria_breakdown',
+            'jury_breakdown',
+            'rounds_breakdown',
+            'snapshot_at',
+        )
+
+
+class TournamentArchiveListSerializer(serializers.ModelSerializer):
+    teams = serializers.SerializerMethodField()
+    standings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tournament
+        fields = (
+            'id',
+            'name',
+            'description',
+            'start_date',
+            'end_date',
+            'status',
+            'banner',
+            'teams',
+            'standings',
+        )
+
+    def get_teams(self, obj):
+        registrations = (
+            obj.team_registrations
+            .select_related('team')
+            .filter(is_active=True)
+            .order_by('team__name')
+        )
+        return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
+
+    def get_standings(self, obj):
+        standings = (
+            obj.leaderboard_entries
+            .filter(round__isnull=True)
+            .select_related('team')
+            .order_by('rank')
+        )
+        return ArchiveStandingSerializer(standings, many=True, context=self.context).data
+
+
+class TournamentArchiveDetailSerializer(serializers.ModelSerializer):
+    rounds = RoundShortSerializer(many=True, read_only=True)
+    teams = serializers.SerializerMethodField()
+    standings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tournament
+        fields = (
+            'id',
+            'name',
+            'description',
+            'start_date',
+            'end_date',
+            'status',
+            'banner',
+            'rounds',
+            'teams',
+            'standings',
+        )
+
+    def get_teams(self, obj):
+        registrations = (
+            obj.team_registrations
+            .select_related('team')
+            .filter(is_active=True)
+            .order_by('team__name')
+        )
+        return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
+
+    def get_standings(self, obj):
+        standings = (
+            obj.leaderboard_entries
+            .filter(round__isnull=True)
+            .select_related('team')
+            .order_by('rank')
+        )
+        return ArchiveStandingSerializer(standings, many=True, context=self.context).data
+

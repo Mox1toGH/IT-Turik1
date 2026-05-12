@@ -10,6 +10,10 @@ export interface UpdateProfileArgs {
 }
 export type UpdateProfileResponse = UpdateProfileBody & Pick<User, 'role'>
 
+export interface UpdateAvatarArgs {
+  file: File
+}
+
 export interface ForgotPasswordBody {
   email: string
 }

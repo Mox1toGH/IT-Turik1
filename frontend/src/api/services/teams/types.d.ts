@@ -21,6 +21,7 @@ export type GetTeamInfoResponse = Pick<
   | 'organization'
   | 'contact_discord'
   | 'contact_telegram'
+  | 'banner'
   | 'members'
 > & {
   captain_id: UserId
@@ -57,6 +58,7 @@ export type GetTeamsResponse = (Pick<
   | 'organization'
   | 'contact_discord'
   | 'contact_telegram'
+  | 'banner'
   | 'members'
 > & {
   captain_id: UserId
@@ -138,6 +140,12 @@ export interface UpdateTeamInfoBody {
 export interface UpdateTeamInfoArgs {
   teamId: TeamId
   body: UpdateTeamInfoBody
+}
+
+// UpdateTeamBanner
+export interface UpdateTeamBannerArgs {
+  teamId: TeamId
+  file: File
 }
 
 // RemoveMember
