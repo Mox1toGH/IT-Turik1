@@ -5,4 +5,6 @@ djangorestframework-simplejwt
 requests
 google-auth
 python-dotenv
-
+Pillow
+WeasyPrint
+qrcode[pil]

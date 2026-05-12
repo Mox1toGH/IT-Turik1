@@ -21,6 +21,13 @@ export const accountKeys = {
     [...accountKeys.all(), 'role-codes', filter?.role ?? 'all'] as const,
 }
 
+export const certificateKeys = {
+  myCertificates: (page = 1, pageSize = 6) => ['my-certificates', page, pageSize],
+  allCertificates: (page = 1, pageSize = 20) => ['certificates', page, pageSize],
+  templates: () => ['certificate-templates'],
+  verify: (code: string) => ['certificate-verify', code],
+}
+
 export const tournamentsKeys = {
   all: () => ['tournaments'] as const,
   lists: () => [...tournamentsKeys.all(), 'list'] as const,

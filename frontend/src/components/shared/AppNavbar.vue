@@ -195,7 +195,7 @@ const isSectionActive = (section: Section) => {
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
-  if (section === 'admin') return path === '/admin/role-codes'
+  if (section === 'admin') return path.startsWith('/admin/')
 
   return false
 }

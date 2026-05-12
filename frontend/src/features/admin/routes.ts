@@ -4,4 +4,9 @@ export const adminRoutes = [
     component: () => import('./pages/RoleCodesPage.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
+  {
+    path: '/admin/certificates',
+    component: () => import('./pages/AdminCertificatesPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
 ]
