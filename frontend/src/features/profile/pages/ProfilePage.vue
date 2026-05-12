@@ -21,6 +21,7 @@
             :username="user?.username || 'user'"
             :full-name="user?.full_name || ''"
             :size="108"
+            :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
           />
           <avatar-modal :user="user" :disabled="isLoading" />
         </div>

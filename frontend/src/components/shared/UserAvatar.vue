@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { readImagePosition, toObjectPosition } from '@/lib/imagePosition'
 
 const props = withDefaults(
   defineProps<{
@@ -25,6 +26,7 @@ const props = withDefaults(
     username: string
     fullName?: string
     size?: number
+    positionKey?: string
   }>(),
   {
     avatar: null,
@@ -45,6 +47,7 @@ const altText = computed(() => `${props.username} avatar`)
 const avatarStyle = computed(() => ({
   width: `${props.size}px`,
   height: `${props.size}px`,
+  objectPosition: toObjectPosition(readImagePosition(props.positionKey)),
 }))
 </script>
 

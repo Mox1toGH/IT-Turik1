@@ -40,6 +40,7 @@
                 :username="user?.username || 'User'"
                 :full-name="user?.full_name || ''"
                 :size="34"
+                :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
               />
             </router-link>
 
