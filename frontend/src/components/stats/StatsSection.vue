@@ -14,7 +14,7 @@
     <template v-else>
       <AdminStats v-if="isAdmin && adminStats" :stats="adminStats" />
       <div v-else style="display: grid; gap: 0.75rem">
-        <PlayerStats v-if="playerStats" :stats="playerStats" />
+        <PlayerStats v-if="playerStats" :stats="playerStats" :current-team-to="currentTeamTo" />
         <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
       </div>
     </template>
@@ -51,6 +51,7 @@ type TeamStatsResponse = {
   win_rate: number
   active_members_count: number
   top_player: {
+    id: number
     username: string
     average_evaluation_score: number
   } | null
@@ -79,6 +80,14 @@ const adminStats = ref<AdminStatsResponse | null>(null)
 
 const isAdmin = computed(() => Boolean(props.user?.is_staff))
 const isTeamRole = computed(() => props.user?.role === 'team')
+const currentTeamTo = computed(() => {
+  const teamName = playerStats.value?.current_team_name
+  if (!teamName) return undefined
+  const matched = props.user?.teams?.find((team) => team.name === teamName)
+  if (matched) return `/teams/${matched.id}`
+  const fallbackId = props.user?.teams?.[0]?.id
+  return fallbackId ? `/teams/${fallbackId}` : undefined
+})
 
 const loadStats = async () => {
   if (!props.user) return

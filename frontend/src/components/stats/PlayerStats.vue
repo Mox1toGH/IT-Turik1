@@ -13,7 +13,7 @@
     <StatCard class="anim-stagger-3" label="Tournaments" :value="stats.total_tournaments" />
     <StatCard class="anim-stagger-4" label="Win Rate" :value="`${stats.win_rate.toFixed(2)}%`" />
     <StatCard label="Average Score" :value="stats.average_evaluation_score.toFixed(2)" />
-    <StatCard label="Current Team" :value="stats.current_team_name || 'No team'" />
+    <StatCard label="Current Team" :value="stats.current_team_name || 'No team'" :to="currentTeamTo" />
   </div>
 </template>
 
@@ -34,6 +34,7 @@ interface PlayerStats {
 
 interface Props {
   stats: PlayerStats
+  currentTeamTo?: string
 }
 const props = defineProps<Props>()
 

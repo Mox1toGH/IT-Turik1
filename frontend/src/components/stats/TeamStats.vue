@@ -15,6 +15,7 @@
       class="anim-stagger-4"
       label="Top Player"
       :value="stats.top_player?.username || 'No data'"
+      :to="stats.top_player ? `/users/${stats.top_player.id}` : undefined"
       :hint="
         stats.top_player
           ? `Avg score: ${stats.top_player.average_evaluation_score.toFixed(2)}`
@@ -34,6 +35,7 @@ interface TeamStats {
   win_rate: number
   active_members_count: number
   top_player: {
+    id: number
     username: string
     average_evaluation_score: number
   } | null
