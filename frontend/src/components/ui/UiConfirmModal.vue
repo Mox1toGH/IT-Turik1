@@ -16,8 +16,8 @@
 
     <template #footer>
       <div class="confirm-modal-actions">
-        <ui-button size="sm" variant="secondary" @click="cancel">{{ cancelText }}</ui-button>
-        <ui-button size="sm" :variant="confirmVariant" @click="confirm" :disabled="loading">{{
+        <ui-button variant="secondary" @click="cancel">{{ cancelText }}</ui-button>
+        <ui-button :variant="confirmVariant" @click="confirm" :disabled="loading">{{
           confirmText
         }}</ui-button>
       </div>
@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import UiModal from './UiModal.vue'
-import UiButton from './UiButton.vue'
+import UiButton, { type Variant } from './UiButton.vue'
 
 interface Props {
   modelValue: boolean
@@ -35,7 +35,7 @@ interface Props {
   message?: string
   confirmText?: string
   cancelText?: string
-  confirmVariant?: 'default' | 'danger' | 'secondary'
+  confirmVariant?: Variant
   loading?: boolean
   maxWidth?: string
 }

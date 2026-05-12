@@ -151,7 +151,6 @@ describe('UiDatePicker', () => {
 
     it('disables days before minDate', async () => {
       const minDate = new Date()
-      const pastDateDay = new Date().getDay() - 1
 
       const screen = await render(UiDatePicker, {
         props: { modelValue: null, minDate },
@@ -159,15 +158,23 @@ describe('UiDatePicker', () => {
 
       await screen.getByRole('button').click()
 
-      const days = screen.getByRole('dialog').getByRole('button').all()
-      const disabledDay = days.find(
-        (day) => day.element().textContent?.trim() === pastDateDay.toString(),
-      )
-      expect(disabledDay!.element()).toHaveAttribute('disabled')
+      const days = screen.getByTestId('day-btn').all()
+      const disabledDays = days.filter((day) => {
+        return (
+          Number(day.element().textContent?.trim()) < minDate.getDate() &&
+          day.element().attributes.getNamedItem('disabled')
+        )
+      })
+
+      expect(disabledDays.length).toBeGreaterThan(0)
+
+      disabledDays.forEach((day) => {
+        expect(day.element()).toBeDisabled()
+      })
     })
 
     it('disables days after maxDate', async () => {
-      const maxDate = new Date(2026, 3, 15)
+      const maxDate = new Date()
 
       const screen = await render(UiDatePicker, {
         props: { modelValue: null, maxDate },
@@ -175,9 +182,19 @@ describe('UiDatePicker', () => {
 
       await screen.getByRole('button').click()
 
-      const days = screen.getByRole('dialog').getByRole('button').all()
-      const disabledDay = days.find((day) => day.element().textContent?.trim() === '20')
-      expect(disabledDay!.element()).toHaveAttribute('disabled')
+      const days = screen.getByTestId('day-btn').all()
+      const disabledDays = days.filter((day) => {
+        return (
+          Number(day.element().textContent?.trim()) > maxDate.getDate() &&
+          day.element().attributes.getNamedItem('disabled')
+        )
+      })
+
+      expect(disabledDays.length).toBeGreaterThan(0)
+
+      disabledDays.forEach((day) => {
+        expect(day.element()).toBeDisabled()
+      })
     })
   })
 

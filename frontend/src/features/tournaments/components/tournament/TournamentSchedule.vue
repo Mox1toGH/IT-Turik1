@@ -47,13 +47,12 @@
               <div class="event-info">
                 <p>{{ event.title }}</p>
                 <LargeTextModal
-                  v-model="isDescriptionOpen"
                   title="Event description"
                   :text="event.description"
                   max-length="100"
                 >
-                  <template #trigger="{ toggleOpen }">
-                    <p class="event-description" @click="toggleOpen">
+                  <template #trigger>
+                    <p class="event-description">
                       {{ truncateText(event.description, 100) }}
                     </p>
                   </template>
@@ -69,27 +68,31 @@
           </div>
 
           <div class="event-actions" v-if="user?.role === 'admin'">
-            <ui-button size="sm" @click="isEditOpen = true">Edit</ui-button>
-            <EditEventModal
-              v-model="isEditOpen"
-              :event-id="event.id"
-              :tournament-id="props.tournamentId"
-              :title="event.title"
-              :description="event.description"
-              :start-date="event.created_at!"
-            />
-
-            <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
-            <DeleteEventModal
-              v-model="isDeleteOpen"
-              :event-id="event.id"
-              :tournament-id="props.tournamentId"
-              :title="event.title"
-            />
+            <ui-button size="sm" @click="openEditModal(event)">Edit</ui-button>
+            <ui-button size="sm" variant="danger" @click="openDeleteModal(event)">Delete</ui-button>
           </div>
         </ui-card>
       </div>
     </ui-skeleton-loader>
+
+    <template v-if="selectedEvent">
+      <EditEventModal
+        :key="selectedEvent.id"
+        v-model="isEditOpen"
+        :tournament-id="props.tournamentId"
+        :event-id="selectedEvent.id"
+        :event-title="selectedEvent.title"
+        :event-description="selectedEvent.description"
+        :event-start-date="selectedEvent.start_datetime"
+      />
+
+      <DeleteEventModal
+        v-model="isDeleteOpen"
+        :event-id="selectedEvent.id"
+        :tournament-id="props.tournamentId"
+        :event-title="selectedEvent.title"
+      />
+    </template>
   </section>
 </template>
 
@@ -99,6 +102,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
+import type { TournamentEvent } from '@/api/dbTypes'
 import EditEventModal from './modals/EditEventModal.vue'
 import { useProfile } from '@/api/queries/accounts'
 import DeleteEventModal from './modals/DeleteEventModal.vue'
@@ -119,7 +123,18 @@ const { data: user } = useProfile()
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
-const isDescriptionOpen = ref(false)
+
+const selectedEvent = ref<TournamentEvent | null>(null)
+
+const openEditModal = (event: TournamentEvent) => {
+  selectedEvent.value = event
+  isEditOpen.value = true
+}
+
+const openDeleteModal = (event: TournamentEvent) => {
+  selectedEvent.value = event
+  isDeleteOpen.value = true
+}
 
 const {
   data: events,
@@ -187,6 +202,10 @@ const {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.top-actions {
+  margin-bottom: 1rem;
 }
 
 .top-actions,

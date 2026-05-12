@@ -27,11 +27,15 @@
         <editor-modal
           v-model="form.fields.value.description"
           title="Description"
-          addText="Add description"
-          editText="Edit description"
           ariaLabel="Description editor"
           @blur="form.validateField('description')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Edit description' : 'Add description' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.description" class="text-error">{{
           form.errors.value.description
         }}</small>
@@ -42,11 +46,15 @@
         <editor-modal
           v-model="form.fields.value.tech_requirements"
           title="Technical requirements"
-          addText="Add technical requirements"
-          editText="Edit technical requirements"
           ariaLabel="Technical requirements editor"
           @blur="form.validateField('tech_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add tech requirements' : 'Edit tech requirements' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.tech_requirements" class="text-error">{{
           form.errors.value.tech_requirements
         }}</small>
@@ -64,6 +72,18 @@
         }}</small>
       </label>
 
+      <label class="form-item start-time-field">
+        <span class="form-label">Start time</span>
+        <ui-time-picker
+          v-model="form.fields.value.start_time"
+          :isInvalid="!!form.errors.value.start_time"
+          @blur="form.validateField('start_time')"
+        />
+        <small v-if="form.errors.value.start_time" class="text-error">{{
+          form.errors.value.start_time
+        }}</small>
+      </label>
+
       <label class="form-item end-date-field">
         <span class="form-label">End date</span>
         <ui-date-picker
@@ -73,6 +93,18 @@
         />
         <small v-if="form.errors.value.end_date" class="text-error">{{
           form.errors.value.end_date
+        }}</small>
+      </label>
+
+      <label class="form-item end-time-field">
+        <span class="form-label">End time</span>
+        <ui-time-picker
+          v-model="form.fields.value.end_time"
+          :isInvalid="!!form.errors.value.end_time"
+          @blur="form.validateField('end_time')"
+        />
+        <small v-if="form.errors.value.end_time" class="text-error">{{
+          form.errors.value.end_time
         }}</small>
       </label>
 
@@ -92,11 +124,15 @@
         <editor-modal
           v-model="form.fields.value.must_have_requirements"
           title="Must have"
-          addText="Add must have"
-          editText="Edit must have"
           ariaLabel="Must have editor"
           @blur="form.validateField('must_have_requirements')"
-        />
+        >
+          <template #trigger="{ openModal, hasContent }">
+            <ui-button variant="secondary" @click="openModal">
+              {{ hasContent ? 'Add must have' : 'Edit must have' }}
+            </ui-button>
+          </template>
+        </editor-modal>
         <small v-if="form.errors.value.must_have_requirements" class="text-error">{{
           form.errors.value.must_have_requirements
         }}</small>
@@ -128,17 +164,19 @@
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
+import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import { useForm } from '@/composables/useForm'
 import { EditRoundSchema } from '@/schemas/tournaments.schema'
 import { type JSONContent } from '@tiptap/vue-3'
 import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
+import EditorModal from '../../../../../components/shared/EditorModal.vue'
 import { parseApiError } from '@/api/errors'
 import { useEditRound } from '@/api/queries/tournaments'
 import type { Round } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
+import { combineDateAndTime } from '@/lib/date'
 
 interface Props {
   modelValue: boolean
@@ -160,7 +198,9 @@ interface Form {
   must_have_requirements: JSONContent | null
   criteria: RoundCriteriaItem[]
   start_date: Date
+  start_time: string
   end_date: Date
+  end_time: string
 }
 
 const props = defineProps<Props>()
@@ -170,6 +210,13 @@ const emit = defineEmits<{
 
 const { showNotification } = useNotification()
 
+function timeFromDate(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value)
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
 const form = useForm<Form>(EditRoundSchema, {
   name: props.round.name,
   passing_count: props.round.passing_count,
@@ -178,7 +225,9 @@ const form = useForm<Form>(EditRoundSchema, {
   must_have_requirements: props.round.must_have_requirements,
   criteria: props.round.criteria,
   start_date: new Date(props.round.start_date),
+  start_time: timeFromDate(props.round.start_date),
   end_date: new Date(props.round.end_date),
+  end_time: timeFromDate(props.round.end_date),
 })
 
 const { mutate: createRound, isPending } = useEditRound()
@@ -186,11 +235,15 @@ const { mutate: createRound, isPending } = useEditRound()
 function handleSubmit() {
   if (!form.validate()) return
 
+  const { start_date, start_time, end_date, end_time, ...rest } = form.fields.value
+
   createRound(
     {
       id: props.round.id,
       body: {
-        ...form.fields.value,
+        ...rest,
+        start_date: combineDateAndTime(start_date, start_time),
+        end_date: combineDateAndTime(end_date, end_time),
       },
     },
     {
@@ -243,8 +296,8 @@ const toggleClose = () => {
 }
 
 .must-have-field {
-  grid-column: 2;
-  grid-row: 3;
+  grid-column: 1;
+  grid-row: 4;
 }
 
 .start-date-field {
@@ -252,9 +305,19 @@ const toggleClose = () => {
   grid-row: 1;
 }
 
-.end-date-field {
+.start-time-field {
   grid-column: 2;
   grid-row: 2;
+}
+
+.end-date-field {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.end-time-field {
+  grid-column: 2;
+  grid-row: 4;
 }
 
 .passing-count-field {
@@ -293,7 +356,9 @@ const toggleClose = () => {
   }
 
   .start-date-field,
+  .start-time-field,
   .end-date-field,
+  .end-time-field,
   .criteria-field,
   .submit-btn {
     grid-column: 1;

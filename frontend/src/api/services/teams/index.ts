@@ -1,5 +1,6 @@
 import { apiClient } from '@/api/client'
 import type { TeamId } from '@/api/dbTypes'
+import { toValue } from 'vue'
 import type {
   AddMemberArgs,
   ChangeTeamVisibilityArgs,
@@ -23,17 +24,18 @@ import type {
   SendJoinRequestArgs,
   UpdateTeamInfoBody,
 } from './types'
+import type { MaybeRefArgs } from '@/api/queries/types'
 
 const prefix = '/api/teams'
 
 export const teamsService = {
-  async createTeam(args: CreateTeamArgs) {
-    const { data } = await apiClient.post<CreateTeamResponse>(`${prefix}/`, args.body)
+  async createTeam(args: MaybeRefArgs<CreateTeamArgs>) {
+    const { data } = await apiClient.post<CreateTeamResponse>(`${prefix}/`, toValue(args.body))
     return data
   },
 
-  async getTeamInfo(args: GetTeamInfoArgs) {
-    const { data } = await apiClient.get<GetTeamInfoResponse>(`${prefix}/${args.id}`)
+  async getTeamInfo(args: MaybeRefArgs<GetTeamInfoArgs>) {
+    const { data } = await apiClient.get<GetTeamInfoResponse>(`${prefix}/${toValue(args.id)}`)
     return data
   },
 
@@ -42,9 +44,9 @@ export const teamsService = {
     return data
   },
 
-  async getTeamJoinRequests(args: GetTeamJoinRequestsArgs) {
+  async getTeamJoinRequests(args: MaybeRefArgs<GetTeamJoinRequestsArgs>) {
     const { data } = await apiClient.get<GetTeamJoinRequestsResponse>(
-      `${prefix}/${args.teamId}/join-requests-list`,
+      `${prefix}/${toValue(args.teamId)}/join-requests-list`,
     )
     return data
   },
@@ -54,68 +56,75 @@ export const teamsService = {
     return data
   },
 
-  async getTeamInvitations(args: GetTeamInvitationsArgs) {
+  async getTeamInvitations(args: MaybeRefArgs<GetTeamInvitationsArgs>) {
     const { data } = await apiClient.get<GetTeamInvitationsResponse>(
-      `${prefix}/${args.teamId}/invitations`,
+      `${prefix}/${toValue(args.teamId)}/invitations`,
     )
     return data
   },
 
-  async respondToInvitation(args: RespondToInvitationArgs) {
-    const { data } = await apiClient.post(`${prefix}/invitations/${args.id}/${args.action}/`)
+  async respondToInvitation(args: MaybeRefArgs<RespondToInvitationArgs>) {
+    const { data } = await apiClient.post(
+      `${prefix}/invitations/${toValue(args.id)}/${toValue(args.action)}/`,
+    )
     return data
   },
 
-  async sendJoinRequest(args: SendJoinRequestArgs) {
-    const { data } = await apiClient.post(`${prefix}/${args.id}/join-requests/`)
+  async sendJoinRequest(args: MaybeRefArgs<SendJoinRequestArgs>) {
+    const { data } = await apiClient.post(`${prefix}/${toValue(args.id)}/join-requests/`)
     return data
   },
 
-  async deleteTeam(args: DeleteTeamArgs) {
-    const { data } = await apiClient.delete(`${prefix}/${args.id}/`)
+  async deleteTeam(args: MaybeRefArgs<DeleteTeamArgs>) {
+    const { data } = await apiClient.delete(`${prefix}/${toValue(args.id)}/`)
     return data
   },
 
-  async leave(args: LeaveTeamArgs) {
-    const { data } = await apiClient.post(`${prefix}/${args.id}/leave/`)
+  async leave(args: MaybeRefArgs<LeaveTeamArgs>) {
+    const { data } = await apiClient.post(`${prefix}/${toValue(args.id)}/leave/`)
     return data
   },
 
-  async manageJoinRequest(args: ManageJoinRequestArgs) {
+  async manageJoinRequest(args: MaybeRefArgs<ManageJoinRequestArgs>) {
     const { data } = await apiClient.post<ManageJoinRequestResponse>(
-      `${prefix}/${args.teamId}/join-requests/${args.id}/${args.action}/`,
+      `${prefix}/${toValue(args.teamId)}/join-requests/${toValue(args.id)}/${toValue(args.action)}/`,
     )
     return data
   },
 
-  async resendInvitation(args: ResendInvitationArgs) {
+  async resendInvitation(args: MaybeRefArgs<ResendInvitationArgs>) {
     const { data } = await apiClient.post<GetTeamInfoResponse>(
-      `${prefix}/${args.teamId}/members/`,
-      args.body,
+      `${prefix}/${toValue(args.teamId)}/members/`,
+      toValue(args.body),
     )
     return data
   },
 
-  async changeTeamVisibility(args: ChangeTeamVisibilityArgs) {
+  async changeTeamVisibility(args: MaybeRefArgs<ChangeTeamVisibilityArgs>) {
     const { data } = await apiClient.patch<GetTeamInfoResponse>(
-      `${prefix}/${args.teamId}/`,
-      args.body,
+      `${prefix}/${toValue(args.teamId)}/`,
+      toValue(args.body),
     )
     return data
   },
 
-  async updateInfo(args: { teamId: TeamId; body: UpdateTeamInfoBody }) {
-    const { data } = await apiClient.patch(`${prefix}/${args.teamId}/`, args.body)
+  async updateInfo(args: MaybeRefArgs<{ teamId: TeamId; body: UpdateTeamInfoBody }>) {
+    const { data } = await apiClient.patch(`${prefix}/${toValue(args.teamId)}/`, toValue(args.body))
     return data
   },
 
-  async removeMember(args: RemoveMemberArgs) {
-    const { data } = await apiClient.delete(`${prefix}/${args.teamId}/members/${args.memberId}/`)
+  async removeMember(args: MaybeRefArgs<RemoveMemberArgs>) {
+    const { data } = await apiClient.delete(
+      `${prefix}/${toValue(args.teamId)}/members/${toValue(args.memberId)}/`,
+    )
     return data
   },
 
-  async addMember(args: AddMemberArgs) {
-    const { data } = await apiClient.post(`${prefix}/${args.teamId}/members/`, args.body)
+  async addMember(args: MaybeRefArgs<AddMemberArgs>) {
+    const { data } = await apiClient.post(
+      `${prefix}/${toValue(args.teamId)}/members/`,
+      toValue(args.body),
+    )
     return data
   },
 }

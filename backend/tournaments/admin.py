@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
+from .models import Event, Round, Submission, Tournament, TournamentTeamRegistration
 
 
 @admin.register(Tournament)
@@ -29,15 +29,10 @@ class TournamentTeamRegistrationAdmin(admin.ModelAdmin):
     search_fields = ('tournament__name', 'team__name', 'created_by__username')
 
 
-@admin.register(Icon)
-class IconAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'path')
-    search_fields = ('name',)
-
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'tournament', 'type', 'title', 'start_datetime', 'icon')
-    list_filter = ('type',)
+    list_display = ('id', 'tournament', 'title', 'start_datetime')
+    list_filter = ('tournament',)
     search_fields = ('title', 'tournament__name')
 

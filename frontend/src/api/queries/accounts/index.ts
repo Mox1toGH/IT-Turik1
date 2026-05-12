@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import type { AxiosError } from 'axios'
 import { $api } from '@/api/services'
 import { accountKeys } from '../keys'
-import { computed, toValue, type MaybeRef } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type {
   ActivateAccountArgs,
   ChangePasswordArgs,
@@ -25,7 +25,7 @@ import type {
   ValidateResetLinkArgs,
   ValidateResetLinkResponse,
 } from '@/api/services/accounts/types'
-import type { MutationConfig, QueryConfig } from '../types'
+import type { MaybeRefArgs, MutationConfig, QueryConfig } from '../types'
 import type { ApiError } from '@/api/errors'
 
 export const useProfile = (config?: QueryConfig<GetProfileResponse>) => {
@@ -50,7 +50,7 @@ export const useUsers = (config?: QueryConfig<GetUsersResponse>) => {
   })
 }
 
-export const useUserById = (id: MaybeRef<number>) => {
+export const useUserById = (id: MaybeRefOrGetter<number>) => {
   return useQuery<GetProfileResponse, AxiosError<ApiError>>({
     queryKey: computed(() => accountKeys.user(toValue(id))),
     queryFn: () => $api.accounts.getUserById(toValue(id)),
@@ -178,18 +178,19 @@ export const useResetPassword = (
 }
 
 export const useValidateResetLink = (
-  payload: ValidateResetLinkArgs,
+  payload: MaybeRefArgs<ValidateResetLinkArgs>,
   config?: QueryConfig<ValidateResetLinkResponse>,
 ) => {
   return useQuery<ValidateResetLinkResponse, AxiosError<ApiError>>({
-    queryKey: ['reset-link-validation', payload.token],
-    queryFn: () => $api.accounts.validatePassword({ uid: payload.uid, token: payload.token }),
+    queryKey: computed(() => ['reset-link-validation', toValue(payload.token)]),
+    queryFn: () =>
+      $api.accounts.validatePassword({ uid: toValue(payload.uid), token: toValue(payload.token) }),
     ...config,
   })
 }
 
 export const useRoleCodes = (
-  payload: { filter: MaybeRef<GetRoleCodesArgs['filter']> },
+  payload: { filter: MaybeRefOrGetter<GetRoleCodesArgs['filter']> },
   config?: QueryConfig<GetRoleCodesResponse>,
 ) => {
   return useQuery<GetRoleCodesResponse, AxiosError<ApiError>>({

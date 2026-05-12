@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client'
+import { toValue, type MaybeRefOrGetter } from 'vue'
 import type {
   ForgotPasswordResponse,
   CreateRoleCodesResponse,
@@ -23,6 +24,8 @@ import type {
   ValidateResetLinkResponse,
   ActivateAccountArgs,
 } from './types'
+import type { MaybeRefArgs } from '@/api/queries/types'
+import type { UserId } from '@/api/dbTypes'
 
 const prefix = '/api/accounts'
 
@@ -37,56 +40,67 @@ export const accountsService = {
     return data
   },
 
-  async activateAccount(args: ActivateAccountArgs) {
-    const { data } = await apiClient.get(`${prefix}/activate/${args.uid}/${args.token}`)
+  async activateAccount(args: MaybeRefArgs<ActivateAccountArgs>) {
+    const { data } = await apiClient.get(
+      `${prefix}/activate/${toValue(args.uid)}/${toValue(args.token)}`,
+    )
     return data
   },
 
-  async updateProfile(args: UpdateProfileArgs) {
-    const { data } = await apiClient.patch<UpdateProfileResponse>(`${prefix}/profile/`, args.body)
+  async updateProfile(args: MaybeRefArgs<UpdateProfileArgs>) {
+    const { data } = await apiClient.patch<UpdateProfileResponse>(
+      `${prefix}/profile/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  async forgotPassword(args: ForgotPasswordArgs) {
+  async forgotPassword(args: MaybeRefArgs<ForgotPasswordArgs>) {
     const { data } = await apiClient.post<ForgotPasswordResponse>(
       `${prefix}/password-reset/`,
-      args.body,
+      toValue(args.body),
     )
     return data
   },
 
-  async resetPassword(args: ResetPasswordArgs) {
+  async resetPassword(args: MaybeRefArgs<ResetPasswordArgs>) {
     const { data } = await apiClient.post<ResetPasswordResponse>(
-      `${prefix}/password-reset/${args.uid}/${args.token}/`,
-      args.body,
+      `${prefix}/password-reset/${toValue(args.uid)}/${toValue(args.token)}/`,
+      toValue(args.body),
     )
     return data
   },
 
-  async validatePassword(args: ValidateResetLinkArgs) {
+  async validatePassword(args: MaybeRefArgs<ValidateResetLinkArgs>) {
     const { data } = await apiClient.get<ValidateResetLinkResponse>(
-      `${prefix}/password-reset/${args.uid}/${args.token}/`,
+      `${prefix}/password-reset/${toValue(args.uid)}/${toValue(args.token)}/`,
     )
     return data
   },
 
-  async changePassword(args: ChangePasswordArgs) {
-    const { data } = await apiClient.post(`${prefix}/change-password/`, args.body)
+  async changePassword(args: MaybeRefArgs<ChangePasswordArgs>) {
+    const { data } = await apiClient.post(`${prefix}/change-password/`, toValue(args.body))
     return data
   },
 
-  async login(args: LoginArgs) {
-    const { data } = await apiClient.post<LoginResponse>(`${prefix}/login/`, args.body)
+  async login(args: MaybeRefArgs<LoginArgs>) {
+    const { data } = await apiClient.post<LoginResponse>(`${prefix}/login/`, toValue(args.body))
     return data
   },
 
-  async googleLogin(args: GoogleLoginArgs) {
-    const { data } = await apiClient.post<GoogleLoginResponse>(`${prefix}/google-login/`, args.body)
+  async googleLogin(args: MaybeRefArgs<GoogleLoginArgs>) {
+    const { data } = await apiClient.post<GoogleLoginResponse>(
+      `${prefix}/google-login/`,
+      toValue(args.body),
+    )
     return data
   },
 
-  async register(args: RegisterArgs) {
-    const { data } = await apiClient.post<RegisterResponse>(`${prefix}/register/`, args.body)
+  async register(args: MaybeRefArgs<RegisterArgs>) {
+    const { data } = await apiClient.post<RegisterResponse>(
+      `${prefix}/register/`,
+      toValue(args.body),
+    )
     return data
   },
 
@@ -95,24 +109,25 @@ export const accountsService = {
     return data
   },
 
-  async getUserById(id: number) {
-    const { data } = await apiClient.get<GetProfileResponse>(`${prefix}/users/${id}/`)
+  async getUserById(id: MaybeRefOrGetter<UserId>) {
+    const { data } = await apiClient.get<GetProfileResponse>(`${prefix}/users/${toValue(id)}/`)
     return data
   },
 
-  async getRoleCodes(args: GetRoleCodesArgs) {
+  async getRoleCodes(args: MaybeRefArgs<GetRoleCodesArgs>) {
     const params = new URLSearchParams()
-    if (args.filter?.role && args.filter.role !== 'all') {
-      params.append('role', String(args.filter.role))
+    const filter = args.filter ? toValue(args.filter) : undefined
+    if (filter?.role && filter.role !== 'all') {
+      params.append('role', String(filter.role))
     }
     const { data } = await apiClient.get<GetRoleCodesResponse>(`${prefix}/role-codes`, { params })
     return data
   },
 
-  async generateCodes(args: CreateRoleCodesArgs) {
+  async generateCodes(args: MaybeRefArgs<CreateRoleCodesArgs>) {
     const { data } = await apiClient.post<CreateRoleCodesResponse>(
       `${prefix}/role-codes/`,
-      args.body,
+      toValue(args.body),
     )
     return data
   },

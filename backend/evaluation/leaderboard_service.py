@@ -29,10 +29,6 @@ def compute_leaderboard(round_id: int) -> list[dict]:
     evaluations = (
         SubmissionEvaluation.objects.filter(assignment__submission__round_id=round_id)
         .select_related('assignment__submission__team', 'assignment__jury')
-        .annotate(
-            team_total_score=Sum('assignment__submission__jury_assignments__evaluation__total_score'),
-            team_average_score=Avg('assignment__submission__jury_assignments__evaluation__final_score'),
-        )
     )
 
     team_stats = {}
@@ -45,12 +41,17 @@ def compute_leaderboard(round_id: int) -> list[dict]:
             {
                 'team_id': team.id,
                 'team_name': team.name,
-                'total_score': _quantize(evaluation.team_total_score or 0),
-                'average_score': _quantize(evaluation.team_average_score or 0),
+                'total_score': Decimal('0'),
+                'average_score_sum': Decimal('0'),
+                'evaluation_count': 0,
                 'criteria_breakdown_raw': defaultdict(Decimal),
                 'jury_breakdown': {},
             },
         )
+
+        stats['total_score'] += _quantize(evaluation.total_score or 0)
+        stats['average_score_sum'] += _quantize(evaluation.average_score or 0)
+        stats['evaluation_count'] += 1
 
         for score_item in evaluation.scores or []:
             criterion_name = score_item.get('criterion_name') or score_item.get('criterion_id')
@@ -59,22 +60,27 @@ def compute_leaderboard(round_id: int) -> list[dict]:
             stats['criteria_breakdown_raw'][criterion_name] += Decimal(str(score_item.get('score', 0)))
 
         jury_label = evaluation.assignment.jury.full_name or evaluation.assignment.jury.username
-        stats['jury_breakdown'][jury_label] = float(_quantize(evaluation.final_score or 0))
+        stats['jury_breakdown'][jury_label] = float(_quantize(evaluation.average_score or 0))
 
     ranked = sorted(
         team_stats.values(),
-        key=lambda item: (-item['total_score'], -item['average_score'], item['team_name']),
+        key=lambda item: (-item['total_score'], -item['average_score_sum'], item['team_name']),
     )
 
     result = []
     for idx, item in enumerate(ranked, start=1):
+        avg = (
+            _quantize(item['average_score_sum'] / item['evaluation_count'])
+            if item['evaluation_count']
+            else Decimal('0')
+        )
         result.append(
             {
                 'rank': idx,
                 'team_id': item['team_id'],
                 'team_name': item['team_name'],
                 'total_score': float(item['total_score']),
-                'average_score': float(item['average_score']),
+                'average_score': float(avg),
                 'criteria_breakdown': {
                     key: float(_quantize(value))
                     for key, value in item['criteria_breakdown_raw'].items()
@@ -86,9 +92,7 @@ def compute_leaderboard(round_id: int) -> list[dict]:
 
 
 def save_leaderboard_snapshot(tournament_id: int, round_id: int) -> None:
-    if LeaderboardEntry.objects.filter(tournament_id=tournament_id, round_id=round_id).exists():
-        pass
-    else:
+    if not LeaderboardEntry.objects.filter(tournament_id=tournament_id, round_id=round_id).exists():
         rankings = compute_leaderboard(round_id)
         if rankings:
             entries = [
@@ -105,6 +109,13 @@ def save_leaderboard_snapshot(tournament_id: int, round_id: int) -> None:
                 for row in rankings
             ]
             LeaderboardEntry.objects.bulk_create(entries)
+
+    all_rounds_evaluated = not Round.objects.filter(
+        tournament_id=tournament_id,
+    ).exclude(status=Round.STATUS_EVALUATED).exists()
+
+    if not all_rounds_evaluated:
+        return
 
     if LeaderboardEntry.objects.filter(tournament_id=tournament_id, round__isnull=True).exists():
         return

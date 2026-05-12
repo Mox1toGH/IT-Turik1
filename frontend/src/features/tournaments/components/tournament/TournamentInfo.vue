@@ -49,10 +49,9 @@
             :text="tournament?.description ?? ''"
             max-length="190"
           >
-            <template #trigger="{ toggleOpen }">
+            <template #trigger>
               <p
                 :title="tournament?.description"
-                @click="toggleOpen"
                 :class="['tournament-description-text', { large: isDescriptionLarge }]"
               >
                 {{ truncateText(tournament?.description ?? '', 190) }}
@@ -92,14 +91,21 @@
             <ui-skeleton variant="rect" width="100px" />
           </template>
 
-          <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
+          <ui-badge :variant="tournamentStatusBadge(tournament?.status)">{{
+            tournament?.status
+          }}</ui-badge>
         </ui-skeleton-loader>
       </div>
     </div>
 
     <div class="tournament-action">
-      <!-- TODO add link to round info -->
-      <ui-button v-if="currentRound" variant="ghost" class="tournament-action-btn">
+      <ui-button
+        v-if="currentRound"
+        asLink
+        :to="`/tournaments/1?section=rounds`"
+        variant="ghost"
+        class="tournament-action-btn"
+      >
         Current round: {{ currentRound.name }}
       </ui-button>
 
@@ -120,7 +126,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed, ref } from 'vue'
-import { truncateText } from '@/lib/utils'
+import { tournamentStatusBadge, truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { useCurrentRound, useStartRegistration, useTournamentInfo } from '@/api/queries/tournaments'
 import JoinTournamentBtn from './JoinTournamentBtn.vue'
@@ -133,6 +139,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const isDesciptionOpen = ref(false)
+const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
 
 const {
   data: tournament,
@@ -148,18 +155,7 @@ const { data: currentRound } = useCurrentRound(
   },
 )
 
-const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
-const statusBadgeVariant = computed(() => {
-  if (tournament.value?.status === 'draft') return 'gray'
-  if (tournament.value?.status === 'finished') return 'gray'
-  if (tournament.value?.status === 'running') return 'green'
-  if (tournament.value?.status === 'registration') return 'orange'
-
-  return 'gray'
-})
-
 const { mutate: startRegistration, isPending } = useStartRegistration()
-
 const handleStartRegistration = () => {
   startRegistration({
     tournamentId: props.tournamentId,

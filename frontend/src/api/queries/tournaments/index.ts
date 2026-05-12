@@ -47,7 +47,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { $api } from '@/api/services'
 import { tournamentsKeys } from '../keys'
-import { computed, toValue } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import type { ApiError } from '@/api/errors'
 import type { TournamentId } from '@/api/dbTypes'
 
@@ -78,17 +78,17 @@ export const useTournaments = (
 }
 
 export const useRegisteredTeams = (
-  payload: GetRegisteredTeamsArgs,
+  payload: MaybeRefArgs<GetRegisteredTeamsArgs>,
   config?: QueryConfig<GetRegisteredTeamsResponse>,
 ) => {
   return useQuery<GetRegisteredTeamsResponse, AxiosError<ApiError>>({
-    queryKey: [
-      ...tournamentsKeys.registeredTeams(payload.id),
+    queryKey: computed(() => [
+      ...tournamentsKeys.registeredTeams(toValue(payload.id)),
       { includeInactive: !!payload.includeInactive, status: payload.status ?? 'all' },
-    ],
+    ]),
     queryFn: () =>
       $api.tournaments.getRegisteredTeams({
-        id: payload.id,
+        id: toValue(payload.id),
         includeInactive: payload.includeInactive,
         status: payload.status,
       }),
@@ -97,23 +97,23 @@ export const useRegisteredTeams = (
 }
 
 export const useTournamentRounds = (
-  payload: GetRoundsArgs,
+  payload: MaybeRefArgs<GetRoundsArgs>,
   config?: QueryConfig<GetRoundsResponse>,
 ) => {
   return useQuery<GetRoundsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.rounds(payload.id),
-    queryFn: () => $api.tournaments.getRounds({ id: payload.id }),
+    queryKey: computed(() => tournamentsKeys.rounds(toValue(payload.id))),
+    queryFn: () => $api.tournaments.getRounds({ id: toValue(payload.id) }),
     ...config,
   })
 }
 
 export const useActiveTeamTournament = (
-  payload: GetActiveTeamTournamentArgs,
+  payload: MaybeRefArgs<GetActiveTeamTournamentArgs>,
   config?: QueryConfig<GetActiveTeamTournamentResponse>,
 ) => {
   return useQuery<GetActiveTeamTournamentResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.activeTeamTournament(payload.id),
-    queryFn: () => $api.tournaments.getActiveTeamTournament({ id: payload.id }),
+    queryKey: computed(() => tournamentsKeys.activeTeamTournament(toValue(payload.id))),
+    queryFn: () => $api.tournaments.getActiveTeamTournament({ id: toValue(payload.id) }),
     ...config,
   })
 }
@@ -140,23 +140,23 @@ export const useCreateTournament = (
 }
 
 export const useTournamentInfo = (
-  payload: GetTournamentInfoArgs,
+  payload: MaybeRefArgs<GetTournamentInfoArgs>,
   config?: QueryConfig<GetTournamentInfoResponse>,
 ) => {
   return useQuery<GetTournamentInfoResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.touranment(payload.id),
-    queryFn: () => $api.tournaments.getTournamentInfo({ id: payload.id }),
+    queryKey: computed(() => tournamentsKeys.touranment(toValue(payload.id))),
+    queryFn: () => $api.tournaments.getTournamentInfo({ id: toValue(payload.id) }),
     ...config,
   })
 }
 
 export const useEligibleTeams = (
-  payload: GetEligibleTeamsArgs,
+  payload: MaybeRefArgs<GetEligibleTeamsArgs>,
   config?: QueryConfig<GetEligibleTeamsResponse>,
 ) => {
   return useQuery<GetEligibleTeamsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.eligibleTeams(payload.id),
-    queryFn: () => $api.tournaments.getEligibleTeams({ id: payload.id }),
+    queryKey: computed(() => tournamentsKeys.eligibleTeams(toValue(payload.id))),
+    queryFn: () => $api.tournaments.getEligibleTeams({ id: toValue(payload.id) }),
     ...config,
   })
 }
@@ -202,25 +202,25 @@ export const useEditRound = (
 }
 
 export const useDeleteRound = (
-  payload: { id: TournamentId },
+  payload: { id: MaybeRefOrGetter<TournamentId> },
   config?: MutationConfig<unknown, AxiosError<ApiError>, DeleteRoundArgs>,
 ) => {
   const queryClient = useQueryClient()
   return useMutation<unknown, AxiosError<ApiError>, DeleteRoundArgs>({
     mutationFn: $api.tournaments.deleteRound,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(payload.id) })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.rounds(toValue(payload.id)) })
     },
     ...config,
   })
 }
 
 export const useCurrentRound = (
-  payload: GetCurrentRoundArgs,
+  payload: MaybeRefArgs<GetCurrentRoundArgs>,
   config?: QueryConfig<GetCurrentRoundResponse>,
 ) => {
   return useQuery<GetCurrentRoundResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.currentRound(payload.id),
+    queryKey: computed(() => tournamentsKeys.currentRound(toValue(payload.id))),
     queryFn: () => $api.tournaments.getCurrentRound({ id: payload.id }),
     ...config,
   })
@@ -302,11 +302,11 @@ export const useCreateEvent = (
 }
 
 export const useTournamentEvents = (
-  payload: GetEventsArgs,
+  payload: MaybeRefArgs<GetEventsArgs>,
   config?: QueryConfig<GetEventsResponse>,
 ) => {
   return useQuery<GetEventsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.events(payload.tournamentId),
+    queryKey: computed(() => tournamentsKeys.events(toValue(payload.tournamentId))),
     queryFn: () => $api.tournaments.getEvents({ tournamentId: payload.tournamentId }),
     ...config,
   })
@@ -390,11 +390,11 @@ export const useMarkEvaluated = (
 }
 
 export const useTeamSubmissions = (
-  payload: GetTeamSubmissionsArgs,
+  payload: MaybeRefArgs<GetTeamSubmissionsArgs>,
   config?: QueryConfig<GetTeamSubmissionsResponse>,
 ) => {
   return useQuery<GetTeamSubmissionsResponse, AxiosError<ApiError>>({
-    queryKey: tournamentsKeys.submissions(payload.tournamentId),
+    queryKey: computed(() => tournamentsKeys.submissions(toValue(payload.tournamentId))),
     queryFn: () => $api.tournaments.getTeamSubmissions({ tournamentId: payload.tournamentId }),
     ...config,
   })
@@ -410,7 +410,7 @@ export const useEditSubmission = (
 }
 
 export const useRoundSubmissions = (
-  payload: GetRoundSubmissionsArgs,
+  payload: MaybeRefArgs<GetRoundSubmissionsArgs>,
   config?: QueryConfig<GetRoundSubmissionsResponse>,
 ) => {
   return useQuery<GetRoundSubmissionsResponse, AxiosError<ApiError>>({

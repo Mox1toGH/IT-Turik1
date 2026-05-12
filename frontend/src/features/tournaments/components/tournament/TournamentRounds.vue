@@ -47,10 +47,10 @@
         <ui-card v-for="round in rounds" :key="round.id" class="round-card">
           <template #header>
             <div class="round-header">
-              <h4>{{ truncateText(round.name, 70) }}</h4>
+              <h4 :title="round.name" class="round-title">{{ truncateText(round.name, 70) }}</h4>
 
               <div class="header-right">
-                <ui-badge :variant="badgeVariant(round.status)">{{
+                <ui-badge :variant="roundStatusBadge(round.status)">{{
                   badgeStatus(round.status)
                 }}</ui-badge>
                 <round-actions-popover
@@ -125,10 +125,9 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { truncateText } from '@/lib/utils'
+import { roundStatusBadge, truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
-import type { Variants } from '@/components/ui/UiBadge.vue'
 import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
 import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
@@ -198,13 +197,6 @@ watch(isSubmitOpen, (isOpen) => {
   }
 })
 
-function badgeVariant(status: Round['status']): Variants {
-  if (status === 'active') return 'primary'
-  if (status === 'evaluated') return 'green'
-  if (status === 'submission_closed') return 'red'
-  return 'gray'
-}
-
 function badgeStatus(status: Round['status']) {
   if (status === 'draft') return 'Draft'
   if (status === 'active') return 'Active'
@@ -218,6 +210,7 @@ function badgeStatus(status: Round['status']) {
   display: flex;
   justify-content: end;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .rounds-list {
@@ -231,6 +224,10 @@ function badgeStatus(status: Round['status']) {
   justify-content: space-between;
   align-items: center;
   gap: 0.8rem;
+}
+
+.round-title {
+  max-width: 150px;
 }
 
 .header-right {
@@ -254,6 +251,7 @@ function badgeStatus(status: Round['status']) {
 
 .round-card {
   min-width: 0;
+  justify-content: space-between;
 }
 
 .details-grid {

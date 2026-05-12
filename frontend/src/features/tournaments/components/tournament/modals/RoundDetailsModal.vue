@@ -12,24 +12,27 @@
 
     <div>
       <div class="sections">
-        <ui-button
+        <div
           variant="secondary"
           :class="['sections-btn', { active: activeSection === 'description' }]"
           @click="setActiveSection('description')"
-          >Description</ui-button
         >
-        <ui-button
+          Description
+        </div>
+        <div
           variant="secondary"
           :class="['sections-btn', { active: activeSection === 'tech_requirements' }]"
           @click="setActiveSection('tech_requirements')"
-          >Technical Requirements</ui-button
         >
-        <ui-button
+          Technical Requirements
+        </div>
+        <div
           variant="secondary"
           :class="['sections-btn', { active: activeSection === 'must_have' }]"
           @click="setActiveSection('must_have')"
-          >Must Have</ui-button
         >
+          Must Have
+        </div>
       </div>
 
       <div>
@@ -50,12 +53,12 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { ref, watch } from 'vue'
+import Highlight from '@tiptap/extension-highlight'
 
 interface Props {
   modelValue: boolean
@@ -78,7 +81,7 @@ const setActiveSection = (section: Section) => {
 }
 
 const descriptionEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.description,
   editable: false,
   editorProps: {
@@ -90,7 +93,7 @@ const descriptionEditor = useEditor({
 })
 
 const requirementsEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.technicalRequirements,
   editable: false,
   editorProps: {
@@ -102,7 +105,7 @@ const requirementsEditor = useEditor({
 })
 
 const mustHaveEditor = useEditor({
-  extensions: [StarterKit],
+  extensions: [StarterKit, Highlight],
   content: props.mustHave,
   editable: false,
   editorProps: {
@@ -143,19 +146,36 @@ const handleClose = () => {
 <style scoped>
 .sections {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1rem;
 }
 
-.sections-btn.active {
-  background: var(--primary);
-  color: var(--primary-foreground);
+.sections-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.sections-btn:hover {
+  cursor: pointer;
+}
+
+.sections-btn.active,
+.sections-btn:hover {
+  border-bottom: 2px solid var(--primary);
+  color: var(--primary);
 }
 
 .editor-card {
   overflow-y: auto;
-  max-height: 450px;
+  max-height: 550px;
   background: var(--accent);
 }
 </style>

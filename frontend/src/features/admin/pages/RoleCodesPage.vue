@@ -128,10 +128,8 @@
                 </div>
               </ui-card>
 
-              <ui-card class="empty-card">
-                <p v-if="!codes.length" class="text-muted empty-error">
-                  No codes found for current filter.
-                </p>
+              <ui-card class="empty-card" v-if="!codes.length">
+                <p class="text-muted empty-error">No codes found for current filter.</p>
               </ui-card>
             </template>
           </div>
