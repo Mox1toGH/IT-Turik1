@@ -1,5 +1,7 @@
 <template>
-  <slot name="trigger" :openModal="openModal" :hasContent="hasValue" />
+  <ui-button variant="secondary" @click="openModal">
+    {{ hasValue ? editTextComputed : addTextComputed }}
+  </ui-button>
 
   <ui-modal
     v-model="isOpen"
@@ -78,16 +80,6 @@
             size="sm"
             variant="secondary"
             :disabled="!editor"
-            @click="toggleLink"
-            :aria-pressed="editor?.isActive('link') ?? false"
-            :class="{ 'is-active': editor?.isActive('link') }"
-          >
-            <link-icon width="20" height="20" />
-          </ui-button>
-          <ui-button
-            size="sm"
-            variant="secondary"
-            :disabled="!editor"
             @click="toggleBulletList"
             :aria-pressed="editor?.isActive('bulletList') ?? false"
             :class="{ 'is-active': editor?.isActive('bulletList') }"
@@ -131,14 +123,15 @@ import StarterKit from '@tiptap/starter-kit'
 import type { JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import { computed, ref } from 'vue'
-import { tiptapJsonToText } from '@/lib/tiptap'
+import { tiptapJsonToText } from '@/lib/utils'
 import UnderlineIcon from '@/icons/typography/UnderlineIcon.vue'
 import HighlightIcon from '@/icons/typography/HighlightIcon.vue'
 import Highlight from '@tiptap/extension-highlight'
-import LinkIcon from '@/icons/typography/LinkIcon.vue'
 
 interface Props {
   title: string
+  addText?: string
+  editText?: string
   ariaLabel?: string
   maxWidth?: string
 }
@@ -157,21 +150,30 @@ const emit = defineEmits<{
 const modelValue = defineModel<JSONContent | null>({ default: null })
 
 const isOpen = ref(false)
+const draftJson = ref<JSONContent | null>(modelValue.value)
+
+const addTextComputed = computed(() => props.addText || `Add ${props.title.toLowerCase()}`)
+const editTextComputed = computed(() => props.editText || `Edit ${props.title.toLowerCase()}`)
 
 const hasValue = computed(() => tiptapJsonToText(modelValue.value).length > 0)
 
 const editor = useEditor({
   extensions: [StarterKit, Highlight],
+  content: draftJson.value ?? '',
   editorProps: {
     attributes: {
       class: 'prose',
       'aria-label': props.ariaLabel || `${props.title} editor`,
     },
   },
+  onUpdate({ editor }) {
+    draftJson.value = editor.getJSON()
+  },
 })
 
 function openModal() {
-  editor.value?.commands.setContent(modelValue.value ?? '', { emitUpdate: false })
+  draftJson.value = modelValue.value
+  editor.value?.commands.setContent(draftJson.value ?? '', { emitUpdate: false })
   isOpen.value = true
 }
 
@@ -186,7 +188,7 @@ function cancel() {
 }
 
 function save() {
-  modelValue.value = editor.value?.getJSON() ?? {}
+  modelValue.value = draftJson.value
   handleClose()
   emit('blur')
 }
@@ -204,19 +206,7 @@ function toggleUnderline() {
 }
 
 function toggleHighlight() {
-  editor.value?.chain().focus().toggleHighlight().run()
-}
-
-function toggleLink() {
-  if (editor.value?.isActive('link')) {
-    editor.value.chain().focus().unsetLink().run()
-    return
-  }
-
-  const url = window.prompt('URL', 'https://')
-  if (!url) return
-
-  editor.value?.chain().focus().setLink({ href: url }).run()
+  editor.value?.chain().focus().toggleHighlight({ color: '#8ce99a' }).run()
 }
 
 function toggleBulletList() {
@@ -253,7 +243,6 @@ function toggleH2() {
 
 .toolbar button.is-active {
   background: var(--primary);
-  color: var(--primary-foreground);
 }
 
 .editor {
@@ -261,7 +250,7 @@ function toggleH2() {
   border-radius: var(--radius);
   padding: 0.75rem;
   flex: 1 1 auto;
-  background: var(--accent);
+  background: var(--input);
   overflow: auto;
 }
 

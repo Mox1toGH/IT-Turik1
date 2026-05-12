@@ -27,7 +27,7 @@
 
     <div class="metric">
       <div class="metric-head">
-        <p><strong>Average:</strong> {{ evaluation.average_score }}</p>
+        <p><strong>Final:</strong> {{ evaluation.final_score }}</p>
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
@@ -49,7 +49,15 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316']
+const palette = [
+  '#3b82f6',
+  '#22c55e',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#14b8a6',
+  '#f97316',
+]
 
 const minScore = 0
 const maxScore = computed(() =>
@@ -101,7 +109,7 @@ const totalPercent = computed(() => {
 
 const finalPercent = computed(() => {
   if (!maxScore.value) return 0
-  const clamped = Math.max(0, Math.min(Number(props.evaluation.average_score || 0), maxScore.value))
+  const clamped = Math.max(0, Math.min(Number(props.evaluation.final_score || 0), maxScore.value))
   return (clamped / maxScore.value) * 100
 })
 </script>

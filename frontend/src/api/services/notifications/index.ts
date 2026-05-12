@@ -1,23 +1,18 @@
 import { apiClient } from '@/api/client'
-import { toValue } from 'vue'
 import type {
-  GetNotificationsArgs,
-  GetNotificationsResponse,
+  Notification,
   NotificationSettings,
   UnreadCount,
   UpdateEventConfigPayload,
   UpdateGlobalConfigPayload,
+  PaginatedResponse,
 } from './types'
-import type { MaybeRefArgs } from '@/api/queries/types'
 
 const prefix = '/api/notifications'
 
 export const notificationsService = {
-  async getNotifications(args: MaybeRefArgs<GetNotificationsArgs> = {}) {
-    const page = toValue(args.page) ?? 1
-    const pageSize = toValue(args.pageSize) ?? 10
-
-    const { data } = await apiClient.get<GetNotificationsResponse>(
+  async getNotifications(page: number = 1, pageSize: number = 10) {
+    const { data } = await apiClient.get<PaginatedResponse<Notification>>(
       `${prefix}/?page=${page}&page_size=${pageSize}`,
     )
     return data
@@ -33,8 +28,8 @@ export const notificationsService = {
     return data
   },
 
-  async markAsRead(args: MaybeRefArgs<{ id: number }>) {
-    const { data } = await apiClient.post(`${prefix}/${toValue(args.id)}/read/`)
+  async markAsRead(id: number) {
+    const { data } = await apiClient.post(`${prefix}/${id}/read/`)
     return data
   },
 
@@ -43,8 +38,8 @@ export const notificationsService = {
     return data
   },
 
-  async deleteNotification(args: MaybeRefArgs<{ id: number }>) {
-    const { data } = await apiClient.delete(`${prefix}/${toValue(args.id)}/`)
+  async deleteNotification(id: number) {
+    const { data } = await apiClient.delete(`${prefix}/${id}/`)
     return data
   },
 
@@ -53,19 +48,13 @@ export const notificationsService = {
     return data
   },
 
-  async updateEventConfig(payload: MaybeRefArgs<UpdateEventConfigPayload>) {
-    const { data } = await apiClient.post(`${prefix}/settings/config/update/`, {
-      event_type: toValue(payload.event_type),
-      is_system_enabled: toValue(payload.is_system_enabled),
-      is_email_enabled: toValue(payload.is_email_enabled),
-    })
+  async updateEventConfig(payload: UpdateEventConfigPayload) {
+    const { data } = await apiClient.post(`${prefix}/settings/config/update/`, payload)
     return data
   },
 
-  async updateGlobalConfig(payload: MaybeRefArgs<UpdateGlobalConfigPayload>) {
-    const { data } = await apiClient.post(`${prefix}/settings/global/update/`, {
-      emails_disabled_globally: toValue(payload.emails_disabled_globally),
-    })
+  async updateGlobalConfig(payload: UpdateGlobalConfigPayload) {
+    const { data } = await apiClient.post(`${prefix}/settings/global/update/`, payload)
     return data
   },
 }

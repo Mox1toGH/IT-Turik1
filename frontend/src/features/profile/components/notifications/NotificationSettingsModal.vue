@@ -1,5 +1,5 @@
 <template>
-  <ui-modal :modelValue="isOpen" @update:modelValue="$emit('update:isOpen', $event)" scrollable>
+  <ui-modal :modelValue="isOpen" @update:modelValue="$emit('update:isOpen', $event)">
     <template #title>
       <h3>Notification Settings</h3>
     </template>
@@ -10,7 +10,6 @@
     <div v-else-if="error" class="error-state">
       <p>Error loading settings.</p>
     </div>
-
     <div v-else class="settings-content">
       <div class="global-setting">
         <label class="setting-row">

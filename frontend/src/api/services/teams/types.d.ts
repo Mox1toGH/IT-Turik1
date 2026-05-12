@@ -25,8 +25,9 @@ export type GetTeamInfoResponse = Pick<
 > & {
   captain_id: UserId
   is_member: boolean
+  is_captain: boolean
   can_request_to_join: boolean
-  is_in_active_tournament: boolean
+  is_in_active_tournament: true
 }
 
 // CreateTeam

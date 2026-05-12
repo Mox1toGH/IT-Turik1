@@ -5,6 +5,11 @@ export const tournamentsRoutes = [
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
+    path: '/tournaments',
+    component: () => import('./pages/TournamentsListPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/tournaments/:id',
     component: () => import('./pages/TournamentPage.vue'),
     meta: { requiresAuth: true },

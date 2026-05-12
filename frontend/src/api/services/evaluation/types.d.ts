@@ -1,27 +1,28 @@
-import type { Round, RoundId, SubmissionId, TeamId, User, UserId } from '@/api/dbTypes'
+import type { RoundId, SubmissionId, User, UserId } from '@/api/dbTypes'
 import type { TournamentId } from '@/api/dbTypes'
+import type { MaybeRefOrGetter } from 'vue'
 
 // available jury
 export interface GetAvailableJuryArgs {
-  roundId: RoundId
+  roundId: MaybeRefOrGetter<RoundId>
 }
 
 export type GetAvailableJuryResponse = Pick<User, 'id' | 'username' | 'full_name' | 'email'>[]
 
 // leaderboard
 export interface GetRoundLeaderboardArgs {
-  roundId: RoundId
+  roundId: MaybeRefOrGetter<RoundId>
 }
 
 export interface GetTournamentLeaderboardArgs {
-  tournamentId: TournamentId
+  tournamentId: MaybeRefOrGetter<TournamentId>
 }
 
 export type CriteriaBreakdown = Record<string, number>
 
 export interface RoundLeaderboardRanking {
   rank: number
-  team_id: TeamId
+  team_id: number
   team_name: string
   total_score: number
   average_score: number
@@ -30,13 +31,13 @@ export interface RoundLeaderboardRanking {
 }
 
 export interface GetRoundLeaderboardResponse {
-  round_id: RoundId
+  round_id: number
   is_snapshot: boolean
   rankings: RoundLeaderboardRanking[]
 }
 
 export interface TournamentLeaderboardRoundBreakdown {
-  round_id: RoundId
+  round_id: number
   round_name: string
   total_score: number
   average_score: number
@@ -46,14 +47,14 @@ export interface TournamentLeaderboardRoundBreakdown {
 
 export interface TournamentLeaderboardRanking {
   rank: number
-  team_id: TeamId
+  team_id: number
   team_name: string
   total_score: number
   rounds: TournamentLeaderboardRoundBreakdown[]
 }
 
 export interface GetTournamentLeaderboardResponse {
-  tournament_id: TournamentId
+  tournament_id: number
   is_snapshot: boolean
   rankings: TournamentLeaderboardRanking[]
 }
@@ -78,6 +79,13 @@ export interface GetAssignmentDetailArgs {
   id: number
 }
 
+export interface RoundCriterion {
+  id: string
+  name: string
+  description: string
+  max_score: number
+}
+
 export interface ScoreItem {
   criterion_id: string
   criterion_name?: string
@@ -89,7 +97,7 @@ export interface EvaluationData {
   assignment: number
   scores: ScoreItem[]
   total_score: number
-  average_score: number
+  final_score: number
   comment: string
   created_at: string
 }
@@ -100,15 +108,24 @@ export interface JuryAssignmentData {
   submission_details: {
     id: SubmissionId
     round: RoundId
-    round_details: Pick<
-      Round,
-      'id' | 'name' | 'start_date' | 'end_date' | 'status' | 'criteria' | 'tournament'
-    >
+    round_details: {
+      id: RoundId
+      name: string
+      start_date: string
+      end_date: string
+      status: string
+      criteria: RoundCriterion[]
+    }
   }
-  round_details: Pick<
-    Round,
-    'id' | 'name' | 'start_date' | 'end_date' | 'status' | 'criteria' | 'tournament'
-  >
+  round_details: {
+    id: RoundId
+    name: string
+    start_date: string
+    end_date: string
+    status: string
+    criteria: RoundCriterion[]
+    tournament?: number
+  }
   criteria: RoundCriterion[]
   evaluation: EvaluationData | null
   is_evaluated: boolean
@@ -120,7 +137,7 @@ export type GetAssignmentDetailResponse = JuryAssignmentData
 
 // create/update evaluation
 export interface CreateEvaluationBody {
-  tournament_id: TournamentId
+  tournament_id: number
   assignment: number
   scores: ScoreItem[]
   comment?: string
@@ -135,7 +152,7 @@ export type CreateEvaluationResponse = EvaluationData
 export interface UpdateEvaluationArgs {
   id: number
   body: {
-    tournament_id: TournamentId
+    tournament_id: number
     assignment?: number
     scores?: ScoreItem[]
     comment?: string

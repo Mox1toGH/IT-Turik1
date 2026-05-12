@@ -9,7 +9,7 @@
       </template>
 
       <template #footer>
-        <ui-button asLink to="/" variant="secondary" size="sm" class="tournament-link">
+        <ui-button asLink to="/tournaments" variant="secondary" size="sm" class="tournament-link">
           Back to tournaments
         </ui-button>
       </template>
@@ -17,69 +17,63 @@
 
     <ui-card>
       <div class="sections">
-        <button
+        <ui-button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'information' }]"
           @click="setActiveSection('information')"
+          >Information</ui-button
         >
-          Information
-        </button>
-        <button
+        <ui-button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'rounds' }]"
           @click="setActiveSection('rounds')"
+          >Rounds</ui-button
         >
-          Rounds
-        </button>
-        <button
+        <ui-button
           variant="secondary"
           :disabled="user?.role !== 'admin' && user?.role !== 'team'"
           :class="['sections-btn', { active: currentSection === 'submissions' }]"
           @click="setActiveSection('submissions')"
+          >Submissions</ui-button
         >
-          Submissions
-        </button>
-        <button
+        <ui-button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'schedule' }]"
           @click="setActiveSection('schedule')"
+          >Schedule</ui-button
         >
-          Schedule
-        </button>
-        <button
+        <ui-button
           variant="secondary"
           :class="['sections-btn', { active: currentSection === 'leaderboard' }]"
           @click="setActiveSection('leaderboard')"
+          >Leaderboard</ui-button
         >
-          Leaderboard
-        </button>
       </div>
     </ui-card>
 
-    <transition name="fade" mode="out-in">
-      <div :key="currentSection">
-        <div class="tournament-grid" v-if="currentSection === 'information'">
-          <TournamentInfo :tournament-id="id" />
-          <TournamentTeams :tournament-id="id" />
-        </div>
+    <div class="tournament-grid" v-if="currentSection === 'information'">
+      <TournamentInfo :tournament-id="id" />
+      <TournamentTeams :tournament-id="id" />
+    </div>
 
-        <TournamentRounds :tournament-id="id" v-else-if="currentSection === 'rounds'" />
-        <TournamentSchedule :tournament-id="id" v-else-if="currentSection === 'schedule'" />
-        <TournamentLeaderboard :tournament-id="id" v-else-if="currentSection === 'leaderboard'" />
+    <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
+    <TournamentSchedule :tournament-id="id" v-if="currentSection === 'schedule'" />
+    <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
 
-        <div v-else-if="currentSection === 'submissions'">
-          <template v-if="user?.role === 'admin' || user?.role === 'team'">
-            <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
-            <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
-          </template>
-          <template v-else>
-            <ui-card>
-              <p>Submissions are available for team members and admins.</p>
-            </ui-card>
-          </template>
-        </div>
-      </div>
-    </transition>
+    <template
+      v-if="currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')"
+    >
+      <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
+      <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
+    </template>
+
+    <ui-card
+      v-if="
+        currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'
+      "
+    >
+      <p>Submissions are available for team members and admins.</p>
+    </ui-card>
   </section>
 </template>
 
@@ -148,66 +142,19 @@ watch(
 </script>
 
 <style scoped>
-.fade-enter-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-.fade-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
 .tournament-link {
   width: max-content;
 }
 
 .sections {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  border-bottom: 2px solid var(--border);
 }
 
-.sections-btn {
-  background: transparent;
-  border: 0;
-  color: var(--foreground);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 2px solid transparent;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.sections-btn:disabled {
-  color: var(--muted-foreground);
-  cursor: not-allowed !important;
-}
-
-.sections-btn:hover {
-  cursor: pointer;
-}
-
-.sections-btn.active,
-.sections-btn:hover {
-  border-bottom: 2px solid var(--primary);
-  color: var(--primary);
+.sections-btn.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .tournament-grid {

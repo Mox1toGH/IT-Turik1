@@ -23,23 +23,15 @@ withDefaults(defineProps<Props>(), {
 
 <style scoped>
 .skeleton-fade-enter-active {
-  transition:
-    opacity 0.3s ease,
-    filter 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .skeleton-fade-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.1s ease;
 }
 
 .skeleton-fade-enter-from {
   opacity: 0;
-  filter: blur(2px);
-}
-
-.skeleton-fade-enter-to {
-  opacity: 1;
-  filter: blur(0);
 }
 
 .skeleton-fade-leave-to {

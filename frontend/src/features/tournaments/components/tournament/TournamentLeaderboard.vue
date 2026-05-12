@@ -9,7 +9,6 @@
           </div>
 
           <div class="controls">
-            <ui-button v-if="rankings.length !== 0" @click="exportToCsv">Export CSV</ui-button>
             <ui-select
               v-model="selectedLeaderboardMode"
               :options="roundOptions"
@@ -61,10 +60,10 @@
                 </div>
 
                 <div class="entry-meta">
-                  <ui-badge :variant="isSnapshot ? 'green' : 'orange'">
+                  <ui-badge :variant="isSnapshot ? 'green' : 'gray'">
                     {{ isSnapshot ? 'Snapshot' : 'Live' }}
                   </ui-badge>
-                  <p class="entry-score">{{ entry.total_score }}</p>
+                  <p class="entry-score">{{ formatScore(entry.total_score) }}</p>
                 </div>
               </div>
             </template>
@@ -79,18 +78,20 @@
                   >
                     <div class="round-left">
                       <p class="round-name">{{ round.round_name }}</p>
-                      <p class="text-muted">Avg: {{ round.average_score }}</p>
+                      <p class="text-muted">Avg: {{ formatScore(round.average_score) }}</p>
                     </div>
 
                     <div class="round-right">
-                      <p class="round-score">{{ round.total_score }}</p>
+                      <p class="round-score">{{ formatScore(round.total_score) }}</p>
                     </div>
                   </div>
                 </div>
               </template>
 
               <template v-else>
-                <p class="text-muted">Avg: {{ (entry as RoundEntry).average_score }}</p>
+                <p class="text-muted">
+                  Avg: {{ formatScore((entry as RoundEntry).average_score) }}
+                </p>
               </template>
             </div>
           </ui-card>
@@ -114,7 +115,6 @@ import type {
   GetRoundLeaderboardResponse,
   GetTournamentLeaderboardResponse,
 } from '@/api/services/evaluation/types'
-import UiButton from '@/components/ui/UiButton.vue'
 
 interface Props {
   tournamentId: number
@@ -124,7 +124,6 @@ type RoundEntry = GetRoundLeaderboardResponse['rankings'][number]
 type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
-const tournamentId = computed(() => props.tournamentId)
 
 type LeaderboardMode = 'average' | number
 const selectedLeaderboardMode = ref<LeaderboardMode>('average')
@@ -133,18 +132,14 @@ const {
   data: roundsData,
   isLoading: isLoadingRounds,
   isError: isRoundsError,
-} = useTournamentRounds({ id: tournamentId })
+} = useTournamentRounds({ id: props.tournamentId })
 const rounds = computed(() => roundsData.value ?? [])
 
 const roundOptions = computed(() => {
   const options: { label: string; value: string | number }[] = [
     { label: 'Average', value: 'average' },
   ]
-  options.push(
-    ...rounds.value
-      .filter((round) => round.status === 'submission_closed' || round.status === 'evaluated')
-      .map((round) => ({ label: round.name, value: round.id })),
-  )
+  options.push(...rounds.value.map((round) => ({ label: round.name, value: round.id })))
   return options
 })
 
@@ -153,7 +148,10 @@ const selectedRoundId = computed(() =>
   typeof selectedLeaderboardMode.value === 'number' ? selectedLeaderboardMode.value : null,
 )
 
-const tournamentQuery = useTournamentLeaderboard({ tournamentId }, { enabled: isAverageMode })
+const tournamentQuery = useTournamentLeaderboard(
+  { tournamentId: props.tournamentId },
+  { enabled: isAverageMode },
+)
 
 const roundQuery = useRoundLeaderboard(
   { roundId: computed(() => selectedRoundId.value ?? 0) },
@@ -183,75 +181,9 @@ const errorMessage = computed(() => {
   return error.value.message || 'Failed to load leaderboard.'
 })
 
-function exportToCsv() {
-  if (!rankings.value.length) return
-
-  const isTournamentMode = isAverageMode.value
-
-  let headers: string[] = []
-  let rows: (string | number)[][] = []
-
-  if (isTournamentMode) {
-    const tournamentRankings = rankings.value as TournamentEntry[]
-
-    const roundNames = [
-      ...new Set(
-        tournamentRankings.flatMap((team) => team.rounds.map((round) => round.round_name)),
-      ),
-    ]
-
-    headers = [
-      'Rank',
-      'Team Name',
-      'Total Score',
-      ...roundNames.map((r) => `${r} Score`),
-      ...roundNames.map((r) => `${r} Avg`),
-    ]
-    rows = tournamentRankings.map((team) => {
-      const roundMap = Object.fromEntries(team.rounds.map((r) => [r.round_name, r]))
-
-      return [
-        team.rank,
-        `"${team.team_name}"`,
-        team.total_score,
-        ...roundNames.map((name) => roundMap[name]?.total_score ?? ''),
-        ...roundNames.map((name) => roundMap[name]?.average_score ?? ''),
-      ]
-    })
-  } else {
-    const roundRankings = rankings.value as RoundEntry[]
-
-    headers = ['Rank', 'Team Name', 'Total Score', 'Average Score']
-    rows = roundRankings.map((team) => [
-      team.rank,
-      `"${team.team_name}"`,
-      team.total_score,
-      team.average_score,
-    ])
-  }
-
-  const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n')
-
-  const blob = new Blob([csvContent], {
-    type: 'text/csv;charset=utf-8;',
-  })
-
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = url
-
-  const filename = isTournamentMode
-    ? 'tournament-leaderboard.csv'
-    : `round-${selectedRoundId.value}-leaderboard.csv`
-
-  link.setAttribute('download', filename)
-
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-
-  URL.revokeObjectURL(url)
+function formatScore(value: number) {
+  if (Number.isNaN(value)) return '0'
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
 }
 </script>
 

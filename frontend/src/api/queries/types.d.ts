@@ -1,7 +1,6 @@
 import type { ApiError } from '@/api'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/vue-query'
 import type { AxiosError } from 'axios'
-import type { MaybeRefOrGetter } from 'vue'
 
 // queryKey and queryFn are required in UseQueryOptions, but in our hooks they are always
 // defined internally — so we make them optional via Partial<Pick> to avoid
@@ -18,5 +17,5 @@ export type MutationConfig<
 > = Partial<UseMutationOptions<Data, Error, Variables>>
 
 export type MaybeRefArgs<T> = {
-  [K in keyof T]: MaybeRefOrGetter<T[K]>
+  [K in keyof T]: MaybeRef<T[K]>
 }

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from teams.models import Team
-from .models import Event, Round, Submission, Tournament, TournamentTeamRegistration
+from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.permissions import Permission, has_permission as user_has_permission
 
 from .permissions import (
@@ -26,6 +26,7 @@ from .serializers import (
     ActiveTournamentSerializer,
     CurrentTaskSerializer,
     EventSerializer,
+    IconSerializer,
     OwnSubmissionSerializer,
     RoundSerializer,
     SubmissionSerializer,
@@ -564,10 +565,14 @@ class EventViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
-        queryset = Event.objects.select_related('tournament').order_by('start_datetime')
+        queryset = Event.objects.select_related('icon', 'tournament').order_by('start_datetime')
         tournament_id = self.request.query_params.get('tournament')
         if tournament_id:
             queryset = queryset.filter(tournament_id=tournament_id)
         return queryset
 
 
+class IconListView(generics.ListAPIView):
+    queryset = Icon.objects.all()
+    serializer_class = IconSerializer
+    permission_classes = [AllowAny]
