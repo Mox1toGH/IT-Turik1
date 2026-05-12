@@ -46,51 +46,47 @@
         }}</small>
       </label>
 
-      <label class="form-item start-date-field">
-        <span class="form-label">Start date</span>
-        <ui-date-picker
-          v-model="form.fields.value.start_date"
-          :isInvalid="!!form.errors.value.start_date"
-          @blur="form.validateField('start_date')"
-        />
+      <label class="form-item start-datetime-field">
+        <span class="form-label">Start date time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.start_date"
+            :isInvalid="!!form.errors.value.start_date"
+            @blur="form.validateField('start_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.start_time"
+            type="time"
+            :isInvalid="!!form.errors.value.start_time"
+            @blur="form.validateField('start_time')"
+          />
+        </div>
         <small v-if="form.errors.value.start_date" class="text-error">{{
           form.errors.value.start_date
         }}</small>
-      </label>
-
-      <label class="form-item start-time-field">
-        <span class="form-label">Start time</span>
-        <ui-input
-          v-model="form.fields.value.start_time"
-          type="time"
-          :isInvalid="!!form.errors.value.start_time"
-          @blur="form.validateField('start_time')"
-        />
         <small v-if="form.errors.value.start_time" class="text-error">{{
           form.errors.value.start_time
         }}</small>
       </label>
 
-      <label class="form-item end-date-field">
-        <span class="form-label">End date</span>
-        <ui-date-picker
-          v-model="form.fields.value.end_date"
-          :isInvalid="!!form.errors.value.end_date"
-          @blur="form.validateField('end_date')"
-        />
+      <label class="form-item end-datetime-field">
+        <span class="form-label">End date time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.end_date"
+            :isInvalid="!!form.errors.value.end_date"
+            @blur="form.validateField('end_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.end_time"
+            type="time"
+            :isInvalid="!!form.errors.value.end_time"
+            @blur="form.validateField('end_time')"
+          />
+        </div>
         <small v-if="form.errors.value.end_date" class="text-error">{{
           form.errors.value.end_date
         }}</small>
-      </label>
-
-      <label class="form-item end-time-field">
-        <span class="form-label">End time</span>
-        <ui-input
-          v-model="form.fields.value.end_time"
-          type="time"
-          :isInvalid="!!form.errors.value.end_time"
-          @blur="form.validateField('end_time')"
-        />
         <small v-if="form.errors.value.end_time" class="text-error">{{
           form.errors.value.end_time
         }}</small>
@@ -263,24 +259,21 @@ function handleSubmit() {
   grid-row: 5;
 }
 
-.start-date-field {
+.start-datetime-field {
   grid-column: 2;
   grid-row: 1;
 }
 
-.start-time-field {
+.end-datetime-field {
   grid-column: 2;
   grid-row: 2;
 }
 
-.end-date-field {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.end-time-field {
-  grid-column: 2;
-  grid-row: 4;
+.datetime-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 0.6rem;
+  align-items: center;
 }
 
 .passing-count-field {
@@ -318,14 +311,16 @@ function handleSubmit() {
     grid-row: 5;
   }
 
-  .start-date-field,
-  .start-time-field,
-  .end-date-field,
-  .end-time-field,
+  .start-datetime-field,
+  .end-datetime-field,
   .criteria-field,
   .submit-btn {
     grid-column: 1;
     grid-row: auto;
+  }
+
+  .datetime-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>
