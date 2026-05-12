@@ -502,6 +502,12 @@ watch(
   text-transform: uppercase;
 }
 
+.danger-zone-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
 .danger-zone-box {
   margin-top: 0.6rem;
   padding: 1rem;
