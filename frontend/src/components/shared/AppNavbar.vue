@@ -137,6 +137,17 @@
               >Profile</router-link
             >
             <router-link
+              to="/profile/notifications"
+              :class="navItemClass('notifications')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item mobile-notifications-link"
+            >
+              Notifications
+              <span v-if="unreadCount?.unread_count" class="mobile-notification-badge">
+                {{ unreadCount.unread_count > 99 ? '99+' : unreadCount.unread_count }}
+              </span>
+            </router-link>
+            <router-link
               v-if="isAdmin"
               to="/admin/role-codes"
               :class="navItemClass('admin')"
@@ -155,6 +166,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProfile } from '@/api/queries/accounts'
+import { useUnreadCount } from '@/api/queries/notifications'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
@@ -163,6 +175,7 @@ const route = useRoute()
 const mobileMenuOpen = ref(false)
 
 const { data: user } = useProfile()
+const { data: unreadCount } = useUnreadCount()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isJury = computed(() => user.value?.role === 'jury')
@@ -175,6 +188,7 @@ type Section =
   | 'calendar'
   | 'evaluation'
   | 'profile'
+  | 'notifications'
   | 'admin'
   | 'login'
   | 'register'
@@ -196,6 +210,7 @@ const isSectionActive = (section: Section) => {
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
+  if (section === 'notifications') return path === '/profile/notifications'
   if (section === 'admin') return path.startsWith('/admin/')
 
   return false
@@ -376,6 +391,27 @@ const isSectionActive = (section: Section) => {
 
 .mobile-nav-item.nav-cta:hover {
   background: linear-gradient(120deg, var(--brand-600), var(--brand-500));
+}
+
+.mobile-notifications-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  background: var(--destructive);
 }
 
 @media (max-width: 817px) {
