@@ -66,6 +66,13 @@ export const notificationKeys = {
   settings: () => [...notificationKeys.all(), 'settings'] as const,
 }
 
+export const newsKeys = {
+  all: () => ['news'] as const,
+  lists: () => [...newsKeys.all(), 'list'] as const,
+  list: (page: number, pageSize: number) => [...newsKeys.lists(), { page, pageSize }] as const,
+  detail: (id: number) => [...newsKeys.all(), 'detail', id] as const,
+}
+
 export const evaluationKeys = {
   all: () => ['evaluation'] as const,
   availableJury: (roundId: RoundId) => [...evaluationKeys.all(), 'availableJury', roundId] as const,

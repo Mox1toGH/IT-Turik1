@@ -75,6 +75,19 @@ interface JoinRequest {
   updated_at: Date
 }
 
+// News
+export type NewsId = number
+
+export interface NewsArticle {
+  id: NewsId
+  title: string
+  content: JSONContent
+  created_by: UserId | null
+  created_by_name: string
+  created_at: Date
+  updated_at: Date
+}
+
 // Tournament
 type TournamentId = number
 type TournamentStatus = 'draft' | 'registration' | 'running' | 'finished'

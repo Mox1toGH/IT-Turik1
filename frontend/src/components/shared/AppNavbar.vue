@@ -21,9 +21,12 @@
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >
-            <router-link to="/calendar" :class="navItemClass('calendar')"
-              >Calendar</router-link
-            >
+            <router-link to="/news" :class="navItemClass('news')">
+              News
+            </router-link>
+            <router-link to="/calendar" :class="navItemClass('calendar')">
+              Calendar
+            </router-link>
             <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
               >Evaluations</router-link
             >
@@ -95,6 +98,14 @@
               class="mobile-nav-item"
               >Tournaments</router-link
             >
+            
+              to="/news"
+              :class="navItemClass('news')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+            >
+              News
+            </router-link>
             <router-link
               to="/calendar"
               :class="navItemClass('calendar')"
@@ -108,8 +119,9 @@
               :class="navItemClass('evaluation')"
               @click="mobileMenuOpen = false"
               class="mobile-nav-item"
-              >Evaluations</router-link
             >
+              Evaluations
+            </router-link>
             <router-link
               to="/profile"
               :class="navItemClass('profile')"
@@ -162,6 +174,7 @@ type Section =
   | 'home'
   | 'teams'
   | 'tournaments'
+  | 'news'
   | 'calendar'
   | 'evaluation'
   | 'profile'
@@ -190,6 +203,7 @@ const isSectionActive = (section: Section) => {
 
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
+  if (section === 'news') return path === '/news' || path.startsWith('/news/')
   if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
   if (section === 'calendar') return path === '/calendar'
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')

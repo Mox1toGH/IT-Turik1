@@ -9,6 +9,9 @@ class Permission(Enum):
     MANAGE_PARTICIPANTS = 'manage_participants'
     MANAGE_ROUNDS = 'manage_rounds'
     SET_RESULTS = 'set_results'
+    CREATE_NEWS = 'create_news'
+    EDIT_NEWS = 'edit_news'
+    DELETE_NEWS = 'delete_news'
 
 
 TOURNAMENT_MANAGEMENT_PERMISSIONS = {
@@ -34,9 +37,15 @@ TOURNAMENT_PERMISSIONS = (
     | {Permission.SET_RESULTS}
 )
 
+NEWS_MANAGEMENT_PERMISSIONS = {
+    Permission.CREATE_NEWS,
+    Permission.EDIT_NEWS,
+    Permission.DELETE_NEWS,
+}
+
 ROLE_PERMISSIONS = {
-    'admin': TOURNAMENT_PERMISSIONS,
-    'organizer': TOURNAMENT_PERMISSIONS,
+    'admin': TOURNAMENT_PERMISSIONS | NEWS_MANAGEMENT_PERMISSIONS,
+    'organizer': TOURNAMENT_PERMISSIONS | NEWS_MANAGEMENT_PERMISSIONS,
     'jury': JURY_TOURNAMENT_PERMISSIONS,
 }
 
