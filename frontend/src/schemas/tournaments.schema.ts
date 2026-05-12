@@ -42,6 +42,8 @@ export const CreateTournamentSchema = v.pipe(
   ),
 )
 
+export const EditTournamentSchema = CreateTournamentSchema
+
 function tiptapJsonMinLength(min: number, message: string) {
   return v.pipe(
     v.unknown(),

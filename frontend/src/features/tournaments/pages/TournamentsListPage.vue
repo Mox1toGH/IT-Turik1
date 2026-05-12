@@ -128,15 +128,37 @@
                   </div>
 
                   <template #footer>
-                    <ui-button
-                      size="sm"
-                      asLink
-                      :to="`/tournaments/${tournament.id}`"
-                      variant="secondary"
-                      class="tournaments-details-btn"
-                    >
-                      View details
-                    </ui-button>
+                    <div class="card-actions">
+                      <ui-button
+                        size="sm"
+                        asLink
+                        :to="`/tournaments/${tournament.id}`"
+                        variant="secondary"
+                        class="tournaments-details-btn"
+                      >
+                        View details
+                      </ui-button>
+
+                      <ui-button
+                        v-if="user?.role === 'admin'"
+                        size="sm"
+                        asLink
+                        :to="`/tournaments/${tournament.id}/edit`"
+                        variant="secondary"
+                      >
+                        Edit
+                      </ui-button>
+
+                      <ui-button
+                        v-if="user?.role === 'admin'"
+                        size="sm"
+                        variant="danger"
+                        :disabled="isDeletePending"
+                        @click="handleDelete(tournament.id)"
+                      >
+                        Delete
+                      </ui-button>
+                    </div>
                   </template>
                 </ui-card>
               </div>
@@ -192,10 +214,11 @@ import TournamentsListTitleIcon from '@/icons/TournamentsListTitleIcon.vue'
 import { parseApiError } from '@/api/errors'
 import { truncateText } from '@/lib/utils'
 import { useProfile } from '@/api/queries/accounts'
-import { useTournaments } from '@/api/queries/tournaments'
+import { useDeleteTournament, useTournaments } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
 import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
-import type { TournamentStatus } from '@/api/dbTypes'
+import type { TournamentId, TournamentStatus } from '@/api/dbTypes'
+import { useNotification } from '@/composables/useNotification'
 
 const statusOptions = computed(() => {
   const base = [
@@ -216,6 +239,8 @@ const searchQuery = ref('')
 const statusFilter = ref<NonNullable<GetTournamentsArgs['status']>>([])
 
 const { data: user } = useProfile()
+const { showNotification } = useNotification()
+const { mutate: deleteTournament, isPending: isDeletePending } = useDeleteTournament()
 const {
   data,
   isLoading,
@@ -274,6 +299,25 @@ const applySearch = () => {
 
 const onStatusChange = () => {
   currentPage.value = 1
+}
+
+const handleDelete = (id: TournamentId) => {
+  if (!window.confirm('Delete this tournament? This action cannot be undone.')) {
+    return
+  }
+
+  deleteTournament(
+    { id },
+    {
+      onSuccess: () => {
+        showNotification('Tournament deleted successfully.', 'success')
+      },
+      onError: (deleteError) => {
+        const parsed = parseApiError(deleteError)
+        showNotification(parsed?.message || 'Failed to delete tournament.', 'error')
+      },
+    },
+  )
 }
 </script>
 
@@ -387,6 +431,12 @@ const onStatusChange = () => {
 
 .tournaments-details-btn {
   width: 100%;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .pagination {
