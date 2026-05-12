@@ -47,7 +47,7 @@
       </label>
 
       <label class="form-item start-datetime-field">
-        <span class="form-label">Start date time</span>
+        <span class="form-label">Start date/time</span>
         <div class="datetime-row">
           <ui-date-picker
             v-model="form.fields.value.start_date"
@@ -70,7 +70,7 @@
       </label>
 
       <label class="form-item end-datetime-field">
-        <span class="form-label">End date time</span>
+        <span class="form-label">End date/time</span>
         <div class="datetime-row">
           <ui-date-picker
             v-model="form.fields.value.end_date"
