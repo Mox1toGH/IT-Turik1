@@ -98,7 +98,7 @@
               class="mobile-nav-item"
               >Tournaments</router-link
             >
-            
+            <router-link
               to="/news"
               :class="navItemClass('news')"
               @click="mobileMenuOpen = false"
