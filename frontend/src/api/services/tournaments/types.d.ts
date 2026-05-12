@@ -205,7 +205,7 @@ export interface SubmitRoundArgs {
 // create Event
 export type CreateEventBody = Pick<
   TournamentEvent,
-  'title' | 'description' | 'start_datetime' | 'tournament'
+  'title' | 'description' | 'start_datetime' | 'tournament' | 'type' | 'link'
 >
 
 export interface CreateEventArgs {
@@ -220,7 +220,7 @@ export interface GetEventsArgs {
 export type GetEventsResponse = TournamentEvent[]
 
 // Edit event
-export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime' | 'description'>
+export type EditEventBody = Pick<TournamentEvent, 'title' | 'start_datetime' | 'description' | 'type' | 'link'>
 
 export interface EditEventArgs {
   eventId: EventId
@@ -230,6 +230,12 @@ export interface EditEventArgs {
 // delete event
 export interface DeleteEventArgs {
   eventId: EventId
+}
+
+// my calendar
+export interface GetMyCalendarResponse {
+  events: TournamentEvent[]
+  rounds: Round[]
 }
 
 // start registration

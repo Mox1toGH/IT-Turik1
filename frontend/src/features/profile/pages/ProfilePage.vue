@@ -141,6 +141,7 @@
       <div class="actions">
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
+        <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
         <ui-button variant="secondary" :disabled="isLoading || isDeleting" @click="logout">
           Log Out
         </ui-button>
@@ -188,6 +189,10 @@ const goToEditProfile = () => {
 
 const goToNotifications = () => {
   router.push('/profile/notifications')
+}
+
+const goToCertificates = () => {
+  router.push('/profile/certificates')
 }
 
 const formatDate = (date: Date) => {

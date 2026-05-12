@@ -90,6 +90,14 @@
                 >
                   {{ part.text }}
                 </router-link>
+                <router-link
+                  v-else-if="part.type === 'news'"
+                  :to="`/news#news-${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </router-link>
                 <span v-else>{{ part.text }}</span>
               </template>
             </p>
@@ -261,13 +269,20 @@ const getRedirectUrl = (notification: any) => {
     }
     return '/teams'
   }
+  if (type === 'news_published') {
+    const match = notification.message.match(/\[news:(\d+):.+?\]/)
+    if (match) {
+      return `/news#news-${match[1]}`
+    }
+    return '/news'
+  }
   return null
 }
 
 const parseMessage = (message: string) => {
   const parts = []
-  // Matches [user:id:name] or [team:id:name]
-  const regex = /\[(user|team):(\d+):(.+?)\]/g
+  // Matches [user:id:name], [team:id:name], or [news:id:title]
+  const regex = /\[(user|team|news):(\d+):(.+?)\]/g
   let lastIndex = 0
   let match
 

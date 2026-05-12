@@ -21,6 +21,7 @@ import type {
   GetEligibleTeamsResponse,
   GetEventsArgs,
   GetEventsResponse,
+  GetMyCalendarResponse,
   LeaveTeamArgs,
   GetRegisteredTeamsArgs,
   GetRegisteredTeamsResponse,
@@ -270,6 +271,15 @@ export const tournamentsService = {
     const { data } = await apiClient.get<GetTournamentArchiveSubmissionsResponse>(
       `${prefix}/archive/${args.id}/submissions/`,
     )
+
+    return data
+  },
+
+  getMyCalendar: async () => {
+    const { data } = await apiClient.get<GetMyCalendarResponse>(
+      `${prefix}/my-calendar/`,
+    )
+
     return data
   },
 }

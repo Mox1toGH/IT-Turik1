@@ -15,4 +15,8 @@ export const authRoutes = [
     component: () => import('./pages/ResetPasswordPage.vue'),
     meta: { requiresGuest: true },
   },
+  {
+    path: '/certificates/verify/:code?',
+    component: () => import('./pages/CertificateVerifyPage.vue'),
+  },
 ]

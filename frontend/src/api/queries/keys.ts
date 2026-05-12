@@ -21,6 +21,13 @@ export const accountKeys = {
     [...accountKeys.all(), 'role-codes', filter?.role ?? 'all'] as const,
 }
 
+export const certificateKeys = {
+  myCertificates: (page = 1, pageSize = 6) => ['my-certificates', page, pageSize],
+  allCertificates: (page = 1, pageSize = 20) => ['certificates', page, pageSize],
+  templates: () => ['certificate-templates'],
+  verify: (code: string) => ['certificate-verify', code],
+}
+
 export const tournamentsKeys = {
   all: () => ['tournaments'] as const,
   lists: () => [...tournamentsKeys.all(), 'list'] as const,
@@ -51,6 +58,7 @@ export const tournamentsKeys = {
   archiveDetail: (id: TournamentId) => [...tournamentsKeys.all(), 'archive', 'detail', id] as const,
   archiveSubmissions: (id: TournamentId) =>
     [...tournamentsKeys.all(), 'archive', 'submissions', id] as const,
+  calendar: () => [...tournamentsKeys.all(), 'calendar'] as const,
 }
 
 export const notificationKeys = {
@@ -60,6 +68,13 @@ export const notificationKeys = {
     [...notificationKeys.lists(), { page, pageSize }] as const,
   unreadCount: () => [...notificationKeys.all(), 'unread-count'] as const,
   settings: () => [...notificationKeys.all(), 'settings'] as const,
+}
+
+export const newsKeys = {
+  all: () => ['news'] as const,
+  lists: () => [...newsKeys.all(), 'list'] as const,
+  list: (page: number, pageSize: number) => [...newsKeys.lists(), { page, pageSize }] as const,
+  detail: (id: number) => [...newsKeys.all(), 'detail', id] as const,
 }
 
 export const evaluationKeys = {

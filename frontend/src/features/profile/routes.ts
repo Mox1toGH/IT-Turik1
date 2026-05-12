@@ -15,6 +15,11 @@ export const profileRoutes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/profile/certificates',
+    component: () => import('./pages/CertificatesPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/complete-profile',
     component: () => import('./pages/CompleteProfilePage.vue'),
     meta: { requiresAuth: true },
