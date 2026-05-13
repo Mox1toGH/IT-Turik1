@@ -4,13 +4,17 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Q
 from django.utils.http import urlsafe_base64_decode
-from rest_framework import generics, status
+from rest_framework import generics, status, serializers as drf_serializers
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.exceptions import  PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView as _TokenObtainPairView,
+    TokenRefreshView as _TokenRefreshView,
+)
 
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
 
 from backend.openapi import _400, _401, _403, _404
 
@@ -327,3 +331,45 @@ class RoleActivationCodeAdminView(generics.GenericAPIView):
             }).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+@extend_schema(
+    operation_id='login',
+    request=inline_serializer('LoginRequest', fields={
+        'username': drf_serializers.CharField(),
+        'password': drf_serializers.CharField(),
+    }),
+    responses={
+        200: inline_serializer('LoginResponse', fields={
+            'access': drf_serializers.CharField(),
+            'refresh': drf_serializers.CharField(),
+        }),
+        400: _400,
+        401: _401,
+    },
+)
+class LoginView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        return _TokenObtainPairView.as_view()(request._request, *args, **kwargs)
+
+
+@extend_schema(
+    operation_id='refreshToken',
+    request=inline_serializer('TokenRefreshRequest', fields={
+        'refresh': drf_serializers.CharField(),
+    }),
+    responses={
+        200: inline_serializer('TokenRefreshResponse', fields={
+            'access': drf_serializers.CharField(),
+        }),
+        400: _400,
+        401: _401,
+    },
+)
+class TokenRefreshView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        return _TokenRefreshView.as_view()(request._request, *args, **kwargs)

@@ -53,7 +53,6 @@ from .services import (
 )
 
 
-
 def get_tournament_queryset():
     return Tournament.objects.prefetch_related(
         Prefetch('rounds', queryset=Round.objects.order_by('start_date'))
@@ -279,6 +278,7 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
 
 @extend_schema(
     operation_id='startTournamentRegistration',
+    request=None,
     responses={
         200: TournamentPublicSerializer,
         400: _400,
@@ -433,9 +433,14 @@ class TournamentEligibleTeamsView(generics.GenericAPIView):
 @extend_schema(
     operation_id='listTournamentTeams',
     parameters=[
-        OpenApiParameter('status', str, required=False, description='all | disqualified | active (default)'),
+        OpenApiParameter('status', OpenApiTypes.STR, required=False, description='all | disqualified | active (default)'),
     ],
-    responses={...},
+    responses={
+        200: TournamentTeamRegistrationListSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
 )
 class TournamentTeamsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -465,7 +470,7 @@ class TournamentTeamsView(generics.GenericAPIView):
 @extend_schema(
     operation_id='getTeamActiveTournament',
     parameters=[
-        OpenApiParameter('team_id', int, required=True),
+        OpenApiParameter('team_id', OpenApiTypes.INT, required=True),
     ],
     responses={
         200: ActiveTournamentSerializer,
@@ -500,11 +505,16 @@ class TeamActiveTournamentView(generics.GenericAPIView):
         )
 
 
-@extend_schema(methods=['GET'], operation_id='listRounds', 
+@extend_schema(methods=['GET'], operation_id='listRounds',
     parameters=[
-        OpenApiParameter('status', str, required=False, description='Comma-separated statuses'),
+        OpenApiParameter('status', OpenApiTypes.STR, required=False, description='Comma-separated statuses'),
     ],
-    responses={...},
+    responses={
+        200: RoundSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
 )
 @extend_schema(methods=['POST'], operation_id='createRound', responses={
     201: RoundSerializer,
@@ -608,6 +618,7 @@ class RoundDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 @extend_schema(
     operation_id='startRound',
+    request=None,
     responses={
         200: RoundSerializer,
         400: _400,
@@ -629,6 +640,7 @@ class RoundStartView(SyncStatusesMixin, generics.GenericAPIView):
 
 @extend_schema(
     operation_id='markRoundEvaluated',
+    request=None,
     responses={
         200: RoundSerializer,
         400: _400,
@@ -744,6 +756,7 @@ class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
 
 @extend_schema(
     operation_id='closeRoundSubmissions',
+    request=None,
     responses={
         200: RoundSerializer,
         400: _400,
@@ -818,7 +831,7 @@ class SubmissionDetailView(SyncStatusesMixin, generics.RetrieveUpdateAPIView):
 @extend_schema(
     operation_id='getCurrentTask',
     parameters=[
-        OpenApiParameter('tournament_id', int, required=False),
+        OpenApiParameter('tournament_id', OpenApiTypes.INT, required=False),
     ],
     responses={
         200: CurrentTaskSerializer,
@@ -857,11 +870,16 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [CanManageRoundsOrReadOnly]
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
-    @extend_schema(operation_id='listEvents',
+    @extend_schema(
+        operation_id='listEvents',
         parameters=[
-            OpenApiParameter('tournament', int, required=False),
+            OpenApiParameter('tournament', OpenApiTypes.INT, required=False),
         ],
-        responses={...},
+        responses={
+            200: EventSerializer(many=True),
+            401: _401,
+            403: _403,
+        },
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)

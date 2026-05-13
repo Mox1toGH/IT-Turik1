@@ -8,7 +8,8 @@ from rest_framework.exceptions import NotFound, PermissionDenied, ValidationErro
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from rest_framework import serializers as drf_serializers
 
 from backend.permissions import is_platform_admin
 from backend.openapi import _400, _401, _403, _404
@@ -61,10 +62,7 @@ def is_team_member(team, user):
     return any(member.id == user.id for member in team.members.all())
 
 
-@extend_schema(methods=['GET'], operation_id='listTeams', parameters=[
-    OpenApiParameter('search', str, required=False),
-    OpenApiParameter('isPublic', bool, required=False),
-], responses={
+@extend_schema(methods=['GET'], operation_id='listTeams', responses={
     200: TeamSerializer(many=True),
     401: _401,
 })
@@ -179,7 +177,7 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 @extend_schema(
     operation_id='inviteMemberToTeam',
-    request=None,
+    request=inline_serializer("InviteMemberRequest", fields={"user_id": drf_serializers.IntegerField()}),
     responses={
         200: TeamSerializer,
         201: TeamSerializer,
@@ -370,6 +368,7 @@ class TeamInvitationRespondView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='acceptTeamInvitation',
+    request=None,
     responses={
         200: TeamSerializer,
         400: _400,
@@ -383,6 +382,16 @@ class TeamInvitationAcceptView(TeamInvitationRespondView):
 
 @extend_schema(
     operation_id='declineTeamInvitation',
+    responses={
+        200: TeamSerializer,
+        400: _400,
+        401: _401,
+        404: _404,
+    },
+)
+@extend_schema(
+    operation_id='declineTeamInvitation',
+    request=None,
     responses={
         200: TeamSerializer,
         400: _400,

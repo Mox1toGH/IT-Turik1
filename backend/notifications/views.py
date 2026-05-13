@@ -54,6 +54,7 @@ class NotificationListView(generics.ListAPIView):
 
 @extend_schema(
     operation_id='markNotificationRead',
+    request=None,
     responses={
         200: DetailResponseSerializer,
         401: _401,
@@ -79,6 +80,7 @@ class NotificationMarkReadView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='markAllNotificationsRead',
+    request=None,
     responses={
         200: MarkedCountResponseSerializer,
         401: _401,
@@ -95,6 +97,7 @@ class NotificationMarkAllReadView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='getUnreadNotificationCount',
+    request=None,
     responses={
         200: UnreadCountResponseSerializer,
         401: _401,
@@ -111,6 +114,7 @@ class UnreadCountView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='deleteNotification',
+    request=None,
     responses={
         204: OpenApiResponse(description='Notification deleted successfully.'),
         401: _401,
@@ -133,6 +137,7 @@ class NotificationDeleteView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='deleteAllNotifications',
+    request=None,
     responses={
         200: DeletedCountResponseSerializer,
         401: _401,
