@@ -316,6 +316,7 @@ const validate = () => {
   if (
     form.value.product_type === 'digital' &&
     !form.value.avatar_frame_id &&
+    !form.value.avatar_frame_file &&
     !form.value.digital_asset_url?.trim() &&
     pickedFiles.value.length === 0
   ) {

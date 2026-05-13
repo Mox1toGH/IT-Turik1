@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFFACD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DAA520;stop-opacity:1" />
+    </linearGradient>
+    <filter id="goldGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <!-- Main Circular Frame -->
+  <circle cx="100" cy="100" r="90" stroke="url(#goldGradient)" stroke-width="12" filter="url(#goldGlow)" />
+  <!-- Decorative Ornaments -->
+  <circle cx="100" cy="15" r="8" fill="url(#goldGradient)" />
+  <circle cx="100" cy="185" r="8" fill="url(#goldGradient)" />
+  <circle cx="15" cy="100" r="8" fill="url(#goldGradient)" />
+  <circle cx="185" cy="100" r="8" fill="url(#goldGradient)" />
+  <!-- Inner Thin Line -->
+  <circle cx="100" cy="100" r="80" stroke="white" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" />
+</svg>
