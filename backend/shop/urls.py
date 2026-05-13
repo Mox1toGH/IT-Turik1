@@ -9,14 +9,11 @@ from .views import (
     AdminProductDetailView,
     AdminProductListCreateView,
     AvatarFrameListView,
-    EquipDigitalInventoryItemView,
-    MyDigitalInventoryView,
     MyOrderCancelView,
     MyOrderHistoryView,
     ProductDetailView,
     ProductListView,
     PurchaseView,
-    UnequipDigitalInventoryItemView,
 )
 
 urlpatterns = [
