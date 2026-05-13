@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'notifications',
     'stats',
     'news',
+    'points',
 ]
 
 MIDDLEWARE = [
