@@ -18,6 +18,10 @@
 | Admin orders list | GET | `/api/shop/admin/orders/` | Admin |
 | Admin change order status | PATCH | `/api/shop/admin/orders/{order_id}/status/` | Admin |
 | Admin cancel order | POST | `/api/shop/admin/orders/{order_id}/cancel/` | Admin |
+| **My digital inventory** | GET | `/api/shop/inventory/my/` | Auth |
+| **Equip digital item** | POST | `/api/shop/inventory/equip/` | Auth |
+| **Unequip digital item** | POST | `/api/shop/inventory/unequip/` | Auth |
+| **Avatar frames list** | GET | `/api/shop/avatar-frames/` | Auth |
 
 ---
 
@@ -91,3 +95,36 @@ Use `/cancel/` endpoint for cancellation so refund+stock rollback logic is execu
 
 `PointsTransaction` now has optional `order_id`.
 Purchase and refund transactions created by shop always include this reference.
+
+---
+
+### 7. Inventory & Equipping
+
+**GET `/api/shop/inventory/my/`**
+- Returns all digital products owned by the user.
+- Includes `is_equipped` status.
+
+**POST `/api/shop/inventory/equip/`**
+```json
+{ "inventory_id": 15 }
+```
+- Sets `is_equipped=True` for the selected item.
+- Automatically sets `is_equipped=False` for all other items owned by the user (only one item can be equipped at a time).
+- Validates that the item is digital.
+
+**POST `/api/shop/inventory/unequip/`**
+```json
+{ "inventory_id": 15 }
+```
+- Sets `is_equipped=False` for the selected item.
+
+---
+
+### 8. Avatar Frames
+
+**GET `/api/shop/avatar-frames/`**
+- Returns a list of active avatar frames.
+- Supports `search` query param.
+- Used to preview available frames before purchase.
+
+
