@@ -86,7 +86,11 @@ class PurchaseView(APIView):
         except Product.DoesNotExist:
             raise ValidationError({'product_id': 'Active product not found.'})
 
-        data = OrderSerializer(order, context={'request': request}).data
+        if order:
+            data = OrderSerializer(order, context={'request': request}).data
+        else:
+            data = {'message': 'Digital product purchased successfully and added to your inventory.'}
+
         return Response(data, status=status.HTTP_201_CREATED)
 
 
@@ -244,5 +248,37 @@ class AvatarFrameListView(generics.ListAPIView):
             queryset = queryset.filter(name__icontains=search)
 
         return queryset.order_by('name')
+
+
+class AdminAvatarFrameListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AvatarFrameSerializer
+    pagination_class = ShopPagination
+
+    def get_queryset(self):
+        if not is_platform_admin(self.request.user):
+            raise PermissionDenied('Only admins can manage avatar frames.')
+        queryset = AvatarFrame.objects.all()
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        return queryset.order_by('name', 'id')
+
+    def perform_create(self, serializer):
+        if not is_platform_admin(self.request.user):
+            raise PermissionDenied('Only admins can manage avatar frames.')
+        serializer.save()
+
+
+class AdminAvatarFrameDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AvatarFrameSerializer
+
+    def get_queryset(self):
+        if not is_platform_admin(self.request.user):
+            raise PermissionDenied('Only admins can manage avatar frames.')
+        return AvatarFrame.objects.all()
 
 

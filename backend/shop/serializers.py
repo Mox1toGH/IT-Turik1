@@ -39,6 +39,7 @@ class ProductSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    avatar_frame_file = serializers.FileField(write_only=True, required=False)
     images = ProductImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
@@ -61,6 +62,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'product_type',
             'avatar_frame',
             'avatar_frame_id',
+            'avatar_frame_file',
             'digital_asset_url',  # kept for backward compatibility
             'images',
             'uploaded_images',
@@ -78,6 +80,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
+        avatar_frame_file = validated_data.pop('avatar_frame_file', None)
+
+        if avatar_frame_file and validated_data.get('product_type') == Product.TYPE_DIGITAL:
+            name = validated_data.get('name')
+            # Try to find existing frame with this name, or create with suffix if needed
+            frame = AvatarFrame.objects.filter(name=name).first()
+            if not frame:
+                frame = AvatarFrame.objects.create(name=name, svg_file=avatar_frame_file)
+            validated_data['avatar_frame'] = frame
+
         product = super().create(validated_data)
         for image in uploaded_images:
             ProductImage.objects.create(product=product, image=image)
@@ -85,6 +97,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', None)
+        avatar_frame_file = validated_data.pop('avatar_frame_file', None)
+
+        if avatar_frame_file and validated_data.get('product_type', instance.product_type) == Product.TYPE_DIGITAL:
+            name = validated_data.get('name', instance.name)
+            frame = AvatarFrame.objects.filter(name=name).first()
+            if not frame:
+                frame = AvatarFrame.objects.create(name=name, svg_file=avatar_frame_file)
+            else:
+                # Update existing frame file if name matches
+                frame.svg_file = avatar_frame_file
+                frame.save(update_fields=['svg_file', 'updated_at'])
+            validated_data['avatar_frame'] = frame
+
         instance = super().update(instance, validated_data)
         if uploaded_images:
             for image in uploaded_images:

@@ -28,14 +28,15 @@ def create_order_purchase(*, user, product_id, quantity):
     if balance_obj.balance < total_cost:
         raise ValidationError({'balance': 'Insufficient points balance.'})
 
-    order_status = Order.STATUS_COMPLETED if product.product_type == Product.TYPE_DIGITAL else Order.STATUS_PENDING
-    order = Order.objects.create(
-        user=user,
-        product=product,
-        quantity=quantity,
-        total_cost=total_cost,
-        status=order_status,
-    )
+    order = None
+    if product.product_type == Product.TYPE_PHYSICAL:
+        order = Order.objects.create(
+            user=user,
+            product=product,
+            quantity=quantity,
+            total_cost=total_cost,
+            status=Order.STATUS_PENDING,
+        )
 
     balance_obj.balance -= total_cost
     balance_obj.save(update_fields=['balance', 'updated_at'])
@@ -49,7 +50,7 @@ def create_order_purchase(*, user, product_id, quantity):
     PointsTransaction.objects.create(
         user=user,
         amount=-total_cost,
-        reason=f'Purchase order #{order.id}',
+        reason=f'Purchase of {product.name}' if not order else f'Purchase order #{order.id}',
         order=order,
     )
 
