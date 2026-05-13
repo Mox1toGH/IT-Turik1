@@ -161,10 +161,10 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
 
     def get_avatar_frame_url(self, obj):
-        from shop.models import UserDigitalInventory
+        from inventory.models import UserInventory
 
         equipped_item = (
-            UserDigitalInventory.objects.select_related('product', 'product__avatar_frame')
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
             .filter(user=obj, is_equipped=True)
             .first()
         )
@@ -200,10 +200,10 @@ class TeamUserListSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
 
     def get_avatar_frame_url(self, obj):
-        from shop.models import UserDigitalInventory
+        from inventory.models import UserInventory
 
         equipped_item = (
-            UserDigitalInventory.objects.select_related('product', 'product__avatar_frame')
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
             .filter(user=obj, is_equipped=True)
             .first()
         )

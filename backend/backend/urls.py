@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/news/', include('news.urls')),
     path('api/points/', include('points.urls')),
     path('api/shop/', include('shop.urls')),
+    path('api/inventory/', include('inventory.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import AvatarFrame, Category, Order, Product, ProductImage, UserDigitalInventory
+from .models import AvatarFrame, Category, Order, Product, ProductImage
 
 User = get_user_model()
 
@@ -145,14 +145,3 @@ class AdminOrderStatusUpdateSerializer(serializers.Serializer):
         return value
 
 
-class DigitalInventoryItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
-
-    class Meta:
-        model = UserDigitalInventory
-        fields = ('id', 'product', 'is_equipped', 'acquired_at', 'updated_at')
-        read_only_fields = fields
-
-
-class EquipDigitalItemSerializer(serializers.Serializer):
-    inventory_id = serializers.IntegerField(min_value=1)

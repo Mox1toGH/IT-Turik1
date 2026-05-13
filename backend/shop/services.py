@@ -3,7 +3,8 @@ from rest_framework.exceptions import ValidationError
 
 from points.models import PointsTransaction, UserPointsBalance
 
-from .models import Order, Product, UserDigitalInventory
+from inventory.models import UserInventory
+from .models import Order, Product
 
 
 @transaction.atomic
@@ -12,7 +13,7 @@ def create_order_purchase(*, user, product_id, quantity):
     if product.product_type == Product.TYPE_DIGITAL:
         if quantity != 1:
             raise ValidationError({'quantity': 'Digital items can only be purchased in quantity of 1.'})
-        if UserDigitalInventory.objects.filter(user=user, product=product).exists():
+        if UserInventory.objects.filter(user=user, product=product).exists():
             raise ValidationError({'product_id': 'You already own this digital item.'})
     elif product.stock_quantity < quantity:
         raise ValidationError({'quantity': 'Not enough stock available.'})
@@ -43,7 +44,7 @@ def create_order_purchase(*, user, product_id, quantity):
         product.stock_quantity -= quantity
         product.save(update_fields=['stock_quantity', 'updated_at'])
     else:
-        UserDigitalInventory.objects.create(user=user, product=product)
+        UserInventory.objects.create(user=user, product=product)
 
     PointsTransaction.objects.create(
         user=user,
@@ -77,7 +78,7 @@ def cancel_order(*, order, cancelled_by):
         product.stock_quantity += locked_order.quantity
         product.save(update_fields=['stock_quantity', 'updated_at'])
     else:
-        inventory_item = UserDigitalInventory.objects.filter(
+        inventory_item = UserInventory.objects.filter(
             user=locked_order.user,
             product=product,
         ).first()
