@@ -104,3 +104,33 @@ export const pointsKeys = {
     args: { page: number; pageSize: number; ordering: string },
   ) => [...pointsKeys.userTransactionsPrefix(userId), args] as const,
 }
+
+export const shopKeys = {
+  all: () => ['shop'] as const,
+  productsPrefix: () => [...shopKeys.all(), 'products'] as const,
+  products: (args: {
+    page: number
+    pageSize: number
+    search: string
+    category: number | null
+    productType: string
+    ordering: string
+  }) => [...shopKeys.productsPrefix(), args] as const,
+  myOrdersPrefix: () => [...shopKeys.all(), 'my-orders'] as const,
+  myOrders: (args: { page: number; pageSize: number }) =>
+    [...shopKeys.myOrdersPrefix(), args] as const,
+  adminCategoriesPrefix: () => [...shopKeys.all(), 'admin-categories'] as const,
+  adminCategories: (args: { page: number; pageSize: number }) =>
+    [...shopKeys.adminCategoriesPrefix(), args] as const,
+  adminProductsPrefix: () => [...shopKeys.all(), 'admin-products'] as const,
+  adminProducts: (args: {
+    page: number
+    pageSize: number
+    search: string
+    category: number | null
+    productType: string
+  }) => [...shopKeys.adminProductsPrefix(), args] as const,
+  adminOrdersPrefix: () => [...shopKeys.all(), 'admin-orders'] as const,
+  adminOrders: (args: { page: number; pageSize: number; status: string; user: string }) =>
+    [...shopKeys.adminOrdersPrefix(), args] as const,
+}

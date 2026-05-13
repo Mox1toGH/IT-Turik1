@@ -5,6 +5,7 @@ import { evaluationSerice } from './evaluation'
 import { teamsService } from './teams'
 import { tournamentsService } from './tournaments'
 import { pointsService } from './points'
+import { shopService } from './shop'
 
 export const $api = {
   accounts: accountsService,
@@ -14,4 +15,5 @@ export const $api = {
   tournaments: tournamentsService,
   evaluation: evaluationSerice,
   points: pointsService,
+  shop: shopService,
 }

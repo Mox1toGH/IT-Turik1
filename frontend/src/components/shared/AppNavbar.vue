@@ -24,6 +24,7 @@
             <router-link to="/news" :class="navItemClass('news')">
               News
             </router-link>
+            <router-link to="/shop" :class="navItemClass('shop')">Shop</router-link>
             <router-link to="/calendar" :class="navItemClass('calendar')">
               Calendar
             </router-link>
@@ -122,6 +123,13 @@
               >Calendar</router-link
             >
             <router-link
+              to="/shop"
+              :class="navItemClass('shop')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >Shop</router-link
+            >
+            <router-link
               v-if="isJury"
               to="/evaluation"
               :class="navItemClass('evaluation')"
@@ -186,6 +194,7 @@ type Section =
   | 'teams'
   | 'tournaments'
   | 'news'
+  | 'shop'
   | 'calendar'
   | 'evaluation'
   | 'profile'
@@ -206,6 +215,7 @@ const isSectionActive = (section: Section) => {
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
   if (section === 'news') return path === '/news' || path.startsWith('/news/')
+  if (section === 'shop') return path === '/shop' || path.startsWith('/shop/') || path === '/profile/orders'
   if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
   if (section === 'calendar') return path === '/calendar'
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')

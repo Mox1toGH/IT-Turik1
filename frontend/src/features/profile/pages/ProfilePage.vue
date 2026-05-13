@@ -153,6 +153,7 @@
         <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
           Transaction History
         </ui-button>
+        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary">My Shop Orders</ui-button>
       </div>
 
       <div class="actions">

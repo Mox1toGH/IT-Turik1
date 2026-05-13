@@ -7,6 +7,7 @@ export interface PointsBalance {
 export interface PointsTransaction {
   id: number
   user_id: number
+  order_id?: number | null
   amount: number
   reason: string
   created_at: string
