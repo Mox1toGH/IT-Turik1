@@ -257,10 +257,17 @@ const validate = () => {
 
 const handleSubmit = () => {
   if (!validate()) return
-  emit('submit', {
+  const payload: UpsertProductBody = {
     ...form.value,
-    uploaded_images: [...pickedFiles.value],
-  })
+  }
+
+  if (pickedFiles.value.length > 0) {
+    payload.uploaded_images = [...pickedFiles.value]
+  } else {
+    delete payload.uploaded_images
+  }
+
+  emit('submit', payload)
 }
 </script>
 
