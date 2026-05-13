@@ -57,6 +57,22 @@ python -c "from django.core.management.utils import get_random_secret_key; print
   2. `Create Credentials -> OAuth client ID -> Web application`.
   3. Додай `http://localhost:5173` у `Authorized JavaScript origins`.
   4. Скопіюй `Client ID`.
+- `GOOGLE_SHEETS_SERVICE_ACCOUNT_INFO`: JSON сервісного акаунта Google Cloud:
+  1. Відкрий Google Cloud Console.
+  2. Створи або вибери проєкт.
+  3. Перейди `APIs & Services -> Library`.
+  4. Увімкни:
+     - Google Sheets API
+     - Google Drive API
+  5. Перейди `APIs & Services -> Credentials`.
+  6. Натисни `Create Credentials -> Service Account`.
+  7. Створи сервісний акаунт.
+  8. Відкрий вкладку `Keys`.
+  9. Натисни `Add Key -> Create new key -> JSON`.
+  10. Завантажиться JSON-файл із ключем.
+  11. Встав JSON у `.env` в GOOGLE_SHEETS_SERVICE_ACCOUNT_INFO
+
+- `GOOGLE_SHEETS_DEFAULT_SHARE_WITH`: email користувача або організації, з якими автоматично шеритимуться створені Google Sheets.
 
 ### Frontend
 

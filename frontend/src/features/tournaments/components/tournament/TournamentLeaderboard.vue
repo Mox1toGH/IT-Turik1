@@ -10,6 +10,52 @@
 
           <div class="controls">
             <ui-badge variant="green">Snapshot</ui-badge>
+            <ui-popover minWidth="220px" header="Export">
+              <template #trigger="{ toggle }">
+                <ui-button
+                  size="sm"
+                  variant="secondary"
+                  class="export-trigger"
+                  :disabled="isExportDisabled || isCreatingGoogleSheet"
+                  @click="toggle"
+                >
+                  Export
+                </ui-button>
+              </template>
+
+              <template #default="{ close }">
+                <div class="export-actions">
+                  <ui-button
+                    size="sm"
+                    variant="secondary"
+                    class="export-action-btn"
+                    :disabled="isExportDisabled"
+                    @click="
+                      () => {
+                        close()
+                        handleDownloadCsv()
+                      }
+                    "
+                  >
+                    Download CSV
+                  </ui-button>
+
+                  <ui-button
+                    size="sm"
+                    class="export-action-btn"
+                    :disabled="isExportDisabled || isCreatingGoogleSheet"
+                    @click="
+                      () => {
+                        close()
+                        void handleOpenInGoogleSheets()
+                      }
+                    "
+                  >
+                    {{ isCreatingGoogleSheet ? 'Creating...' : 'Open in Google Sheets' }}
+                  </ui-button>
+                </div>
+              </template>
+            </ui-popover>
           </div>
         </div>
       </template>
@@ -85,13 +131,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { $api } from '@/api/services'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiPopover from '@/components/ui/UiPopover.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { parseApiError } from '@/api/errors'
 import { useTournamentRounds } from '@/api/queries/tournaments'
 import { useTournamentLeaderboard } from '@/api/queries/evaluation'
+import { useNotification } from '@/composables/useNotification'
 import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation/types'
 
 interface Props {
@@ -108,6 +158,8 @@ type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
 const tableWrapRef = ref<HTMLElement | null>(null)
+const isCreatingGoogleSheet = ref(false)
+const { showNotification } = useNotification()
 
 const {
   data: roundsData,
@@ -191,6 +243,9 @@ const errorMessage = computed(() => {
   if (error.value.code === 'forbidden') return 'Leaderboard is not available yet.'
   return error.value.message || 'Failed to load leaderboard.'
 })
+const isExportDisabled = computed(
+  () => isLoading.value || isError.value || rankings.value.length === 0,
+)
 
 function getRoundScore(entry: TournamentEntry, roundId: number) {
   const round = getRoundBreakdown(entry, roundId)
@@ -282,6 +337,70 @@ function onTableWheel(event: WheelEvent) {
     container.scrollLeft = nextScrollLeft
   }
 }
+
+function buildLeaderboardTableRows(): string[][] {
+  const header = ['Place', 'Team', ...roundColumns.value.map((round) => round.name), 'Total']
+  const rows = rankings.value.map((entry) => {
+    const roundValues = roundColumns.value.map((round) => {
+      if (!hasRoundParticipation(entry, round.id)) return 'x'
+      return `${formatScore(getRoundScore(entry, round.id) ?? 0)}/${formatScore(getRoundMaxScore(entry, round.id) ?? 0)}`
+    })
+
+    return [
+      String(entry.rank),
+      entry.team_name,
+      ...roundValues,
+      `${formatScore(entry.total_score)}/${formatScore(getEntryMaxScore(entry))}`,
+    ]
+  })
+
+  return [header, ...rows]
+}
+
+function escapeCsvValue(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replaceAll('"', '""')}"`
+  }
+  return value
+}
+
+function handleDownloadCsv() {
+  if (isExportDisabled.value) {
+    showNotification('Leaderboard data is not available yet.', 'error')
+    return
+  }
+
+  const rows = buildLeaderboardTableRows()
+  const csvContent = rows.map((row) => row.map((value) => escapeCsvValue(value)).join(',')).join('\n')
+  const csvBlob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' })
+  const csvUrl = window.URL.createObjectURL(csvBlob)
+  const link = document.createElement('a')
+
+  link.href = csvUrl
+  link.download = `tournament-${props.tournamentId}-leaderboard-${new Date().toISOString().slice(0, 10)}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(csvUrl)
+}
+
+async function handleOpenInGoogleSheets() {
+  if (isExportDisabled.value || isCreatingGoogleSheet.value) return
+
+  isCreatingGoogleSheet.value = true
+  try {
+    const response = await $api.evaluation.exportTournamentLeaderboardToGoogleSheets({
+      tournamentId: props.tournamentId,
+    })
+    showNotification('Google Sheet has been created successfully.')
+    window.open(response.spreadsheet_url, '_blank', 'noopener,noreferrer')
+  } catch (apiError) {
+    const parsedError = parseApiError(apiError as Parameters<typeof parseApiError>[0])
+    showNotification(parsedError?.message || 'Failed to create Google Sheet.', 'error')
+  } finally {
+    isCreatingGoogleSheet.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -307,6 +426,21 @@ function onTableWheel(event: WheelEvent) {
   flex-wrap: wrap;
   align-items: end;
   margin-left: auto;
+  padding-top: 8px;
+}
+
+.export-trigger {
+  min-width: 7rem;
+}
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.export-action-btn {
+  justify-content: flex-start;
 }
 
 .table-skeleton {

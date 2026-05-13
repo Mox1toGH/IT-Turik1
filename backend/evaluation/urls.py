@@ -9,6 +9,7 @@ from .views import (
     RoundLeaderboardView,
     RoundPassingStatusView,
     TournamentLeaderboardView,
+    TournamentLeaderboardGoogleSheetsExportView,
 )
 
 urlpatterns = [
@@ -25,4 +26,9 @@ urlpatterns = [
     path('tournaments/rounds/<int:round_id>/leaderboard/', RoundLeaderboardView.as_view(), name='round_leaderboard'),
     path('rounds/<int:pk>/passing-status/', RoundPassingStatusView.as_view(), name='round_passing_status'),
     path('tournaments/<int:tournament_id>/leaderboard/', TournamentLeaderboardView.as_view(), name='tournament_leaderboard'),
+    path(
+        'tournaments/<int:tournament_id>/leaderboard/export/google-sheets/',
+        TournamentLeaderboardGoogleSheetsExportView.as_view(),
+        name='tournament_leaderboard_google_sheets_export',
+    ),
 ]

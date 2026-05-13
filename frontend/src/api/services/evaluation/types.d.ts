@@ -18,6 +18,16 @@ export interface GetTournamentLeaderboardArgs {
   tournamentId: MaybeRefOrGetter<TournamentId>
 }
 
+export interface ExportTournamentLeaderboardToGoogleSheetsArgs {
+  tournamentId: MaybeRefOrGetter<TournamentId>
+}
+
+export interface ExportTournamentLeaderboardToGoogleSheetsResponse {
+  spreadsheet_id: string
+  spreadsheet_url: string
+  title: string
+}
+
 export type CriteriaBreakdown = Record<string, number>
 
 export interface RoundLeaderboardRanking {

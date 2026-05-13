@@ -1,5 +1,7 @@
 from datetime import timedelta
+from unittest.mock import Mock, patch
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -545,6 +547,42 @@ class LeaderboardTests(APITestCase):
         self.assertEqual(self.round_obj.status, Round.STATUS_EVALUATED)
         self.assertTrue(team1_registration.is_active)
         self.assertFalse(team2_registration.is_active)
+
+    @override_settings(
+        GOOGLE_SHEETS_SERVICE_ACCOUNT_INFO='{"type":"service_account","private_key":"test","client_email":"svc@test.com"}'
+    )
+    @patch('evaluation.google_sheets_service.Credentials.from_service_account_info')
+    @patch('evaluation.google_sheets_service.gspread.authorize')
+    def test_admin_can_export_tournament_leaderboard_to_google_sheets(self, mocked_authorize, mocked_credentials):
+        mocked_credentials.return_value = object()
+
+        mocked_worksheet = Mock()
+        mocked_spreadsheet = Mock(
+            id='spreadsheet-id',
+            url='https://docs.google.com/spreadsheets/d/spreadsheet-id/edit',
+            title='Exported leaderboard',
+        )
+        mocked_spreadsheet.sheet1 = mocked_worksheet
+
+        mocked_client = Mock()
+        mocked_client.create.return_value = mocked_spreadsheet
+        mocked_authorize.return_value = mocked_client
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(
+            reverse('tournament_leaderboard_google_sheets_export', kwargs={'tournament_id': self.tournament.id}),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['spreadsheet_id'], 'spreadsheet-id')
+        self.assertEqual(response.data['spreadsheet_url'], mocked_spreadsheet.url)
+        mocked_worksheet.update_title.assert_called_once_with('Leaderboard')
+        mocked_worksheet.append_rows.assert_called_once()
+
+        exported_rows = mocked_worksheet.append_rows.call_args.args[0]
+        self.assertEqual(exported_rows[0][0], 'Place')
+        self.assertEqual(exported_rows[0][1], 'Team')
 
 
 class PassingCountTests(APITestCase):

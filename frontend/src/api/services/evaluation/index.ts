@@ -4,6 +4,8 @@ import type {
   CreateEvaluationArgs,
   CreateEvaluationResponse,
   DeleteEvaluationArgs,
+  ExportTournamentLeaderboardToGoogleSheetsArgs,
+  ExportTournamentLeaderboardToGoogleSheetsResponse,
   GetAssignmentDetailArgs,
   GetAssignmentDetailResponse,
   GetAssignmentsArgs,
@@ -56,6 +58,13 @@ export const evaluationService = {
   getTournamentLeaderboard: async (args: GetTournamentLeaderboardArgs) => {
     const { data } = await apiClient.get<GetTournamentLeaderboardResponse>(
       `${prefix}/tournaments/${toValue(args.tournamentId)}/leaderboard/`,
+    )
+    return data
+  },
+
+  exportTournamentLeaderboardToGoogleSheets: async (args: ExportTournamentLeaderboardToGoogleSheetsArgs) => {
+    const { data } = await apiClient.post<ExportTournamentLeaderboardToGoogleSheetsResponse>(
+      `${prefix}/tournaments/${toValue(args.tournamentId)}/leaderboard/export/google-sheets/`,
     )
     return data
   },

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from tournaments.permissions import CanManageAssignments, CanSetResults
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
+from .google_sheets_service import export_tournament_leaderboard_to_google_sheets
 from .leaderboard_service import compute_leaderboard, get_leaderboard, get_tournament_leaderboard
 
 from .models import JuryAssignment, SubmissionEvaluation
@@ -144,6 +145,28 @@ class TournamentLeaderboardView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class TournamentLeaderboardGoogleSheetsExportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, tournament_id):
+        tournament = Tournament.objects.filter(id=tournament_id).first()
+        if not tournament:
+            raise NotFound('Tournament not found.')
+
+        has_rounds = Round.objects.filter(tournament_id=tournament_id).exists()
+        if not has_rounds:
+            raise NotFound('No rounds found for this tournament.')
+
+        rankings = get_tournament_leaderboard(tournament_id=tournament_id, requesting_user=request.user)
+        export_data = export_tournament_leaderboard_to_google_sheets(
+            tournament_name=tournament.name,
+            tournament_id=tournament_id,
+            rankings=rankings,
+            requester_email=request.user.email,
+        )
+        return Response(export_data, status=status.HTTP_201_CREATED)
 
 
 class RoundPassingStatusView(APIView):

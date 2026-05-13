@@ -4,6 +4,7 @@ django-cors-headers
 djangorestframework-simplejwt
 requests
 google-auth
+gspread
 python-dotenv
 Pillow
 WeasyPrint
