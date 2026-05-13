@@ -10,6 +10,21 @@
 
           <div class="controls">
             <ui-badge variant="green">Snapshot</ui-badge>
+            <ui-button
+              v-if="canSendCertificates"
+              size="sm"
+              variant="secondary"
+              :disabled="!isTournamentFinished || isSendingCertificates"
+              @click="isSendCertificatesModalOpen = true"
+            >
+              {{
+                isSendingCertificates
+                  ? 'Sending...'
+                  : isTournamentFinished
+                    ? 'Send certificates'
+                    : 'Send after finish'
+              }}
+            </ui-button>
             <ui-popover minWidth="220px" header="Export">
               <template #trigger="{ toggle }">
                 <ui-button
@@ -99,11 +114,15 @@
                 <tr v-for="entry in rankings" :key="entry.team_id">
                   <td class="rank-col sticky-left">{{ entry.rank }}</td>
                   <td class="team-col sticky-left">
-                    <RouterLink :to="`/teams/${entry.team_id}`" class="team-link">
-                      {{ entry.team_name }}
-                    </RouterLink>
+                    <RouterLink :to="`/teams/${entry.team_id}`" class="team-link">{{
+                      entry.team_name
+                    }}</RouterLink>
                   </td>
-                  <td v-for="round in roundColumns" :key="`${entry.team_id}-${round.id}`" class="round-cell">
+                  <td
+                    v-for="round in roundColumns"
+                    :key="`${entry.team_id}-${round.id}`"
+                    class="round-cell"
+                  >
                     <template v-if="hasRoundParticipation(entry, round.id)">
                       {{ formatScore(getRoundScore(entry, round.id) ?? 0) }}/{{
                         formatScore(getRoundMaxScore(entry, round.id) ?? 0)
@@ -125,6 +144,75 @@
         </template>
       </ui-skeleton-loader>
     </ui-card>
+
+    <ui-modal v-model="isSendCertificatesModalOpen" max-width="760px">
+      <template #title><h3>Send Certificates</h3></template>
+
+      <div class="templates-modal-content">
+        <p class="text-muted">
+          Select a certificate template. 4 templates are visible, scroll down for more.
+        </p>
+
+        <div v-if="isTemplatesLoading" class="templates-loading">
+          <ui-skeleton variant="rect" height="180px" />
+          <ui-skeleton variant="rect" height="180px" />
+        </div>
+        <p v-else-if="templateOptions.length === 0" class="text-muted">No templates available.</p>
+        <div v-else class="templates-scroll-wrap">
+          <div class="templates-grid">
+            <button
+              v-for="template in templateOptions"
+              :key="template.id"
+              type="button"
+              class="template-card"
+              :class="{ selected: selectedTemplateId === template.id }"
+              @click="selectedTemplateId = template.id"
+            >
+              <img
+                v-if="template.image_url"
+                :src="template.image_url"
+                :alt="template.name"
+                class="template-image"
+              />
+              <div v-else class="template-image-fallback">No image</div>
+              <div class="template-name-row">
+                <span class="template-name">{{ template.name }}</span>
+                <ui-badge v-if="template.is_default" variant="primary">Default</ui-badge>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <ui-button variant="secondary" @click="isSendCertificatesModalOpen = false"
+          >Cancel</ui-button
+        >
+        <ui-button
+          :disabled="!selectedTemplateId || isSendingCertificates || templateOptions.length === 0"
+          @click="handleSendCertificates"
+        >
+          {{ isSendingCertificates ? 'Sending...' : 'Send' }}
+        </ui-button>
+      </template>
+    </ui-modal>
+
+    <ui-modal v-model="isDeliveryModeModalOpen" max-width="520px">
+      <template #title><h3>Certificates Already Exist</h3></template>
+      <p class="text-muted">{{ existingCertificatesMessage }}</p>
+      <template #footer>
+        <ui-button variant="secondary" @click="isDeliveryModeModalOpen = false">Cancel</ui-button>
+        <ui-button
+          variant="secondary"
+          :disabled="isSendingCertificates"
+          @click="submitCertificates('missing')"
+          >Send Missing</ui-button
+        >
+        <ui-button :disabled="isSendingCertificates" @click="submitCertificates('resend')"
+          >Send Again</ui-button
+        >
+      </template>
+    </ui-modal>
   </section>
 </template>
 
@@ -138,8 +226,16 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiModal from '@/components/ui/UiModal.vue'
 import { parseApiError } from '@/api/errors'
-import { useTournamentRounds } from '@/api/queries/tournaments'
+import { useCertificateTemplates } from '@/api/queries/certificates'
+import { useProfile } from '@/api/queries/accounts'
+import {
+  useSendTournamentCertificates,
+  useTournamentCertificateDeliveryStatus,
+  useTournamentInfo,
+  useTournamentRounds,
+} from '@/api/queries/tournaments'
 import { useTournamentLeaderboard } from '@/api/queries/evaluation'
 import { useNotification } from '@/composables/useNotification'
 import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation/types'
@@ -147,23 +243,41 @@ import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation
 interface Props {
   tournamentId: number
 }
-
 interface RoundColumn {
   id: number
   name: string
   maxScore: number
 }
-
 type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
 
 const props = defineProps<Props>()
 const tableWrapRef = ref<HTMLElement | null>(null)
 const isCreatingGoogleSheet = ref(false)
+const isSendCertificatesModalOpen = ref(false)
+const isDeliveryModeModalOpen = ref(false)
+const selectedTemplateId = ref<number | null>(null)
+const existingCertificatesMessage = ref('')
 const { showNotification } = useNotification()
+const { data: profile } = useProfile()
+const { data: tournament } = useTournamentInfo({ id: props.tournamentId })
+const canSendCertificates = computed(
+  () => profile.value?.role === 'admin' || profile.value?.role === 'organizer',
+)
+const isTournamentFinished = computed(() => tournament.value?.status === 'finished')
 
-const {
-  data: roundsData,
-} = useTournamentRounds({ id: props.tournamentId })
+const { data: templatesData, isLoading: isTemplatesLoading } = useCertificateTemplates({
+  nopage: true,
+})
+const templateOptions = computed(() => templatesData.value?.results ?? [])
+
+const { mutate: sendCertificates, isPending: isSendingCertificates } =
+  useSendTournamentCertificates()
+const { refetch: refetchDeliveryStatus } = useTournamentCertificateDeliveryStatus(
+  { tournamentId: props.tournamentId },
+  { enabled: false },
+)
+
+const { data: roundsData } = useTournamentRounds({ id: props.tournamentId })
 const rounds = computed(() => roundsData.value ?? [])
 
 const tournamentQuery = useTournamentLeaderboard({ tournamentId: props.tournamentId })
@@ -174,50 +288,38 @@ const rankings = computed<TournamentEntry[]>(() => tournamentQuery.data.value?.r
 
 const leaderboardRoundIds = computed(() => {
   const ids = new Set<number>()
-  for (const entry of rankings.value) {
-    for (const round of entry.rounds ?? []) {
-      ids.add(round.round_id)
-    }
-  }
-
+  for (const entry of rankings.value)
+    for (const round of entry.rounds ?? []) ids.add(round.round_id)
   return ids
 })
 
 const roundMaxScoreMap = computed(() => {
   const scoreMap = new Map<number, number>()
-
   for (const round of rounds.value) {
     const criteria = Array.isArray(round.criteria) ? round.criteria : []
     const maxScore = criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
     scoreMap.set(round.id, maxScore)
   }
-
   return scoreMap
 })
 
 const roundColumns = computed<RoundColumn[]>(() => {
   const idsFromLeaderboard = leaderboardRoundIds.value
   const shouldFilterByLeaderboard = idsFromLeaderboard.size > 0
-
   const baseRounds = shouldFilterByLeaderboard
     ? rounds.value.filter((round) => idsFromLeaderboard.has(round.id))
     : rounds.value
-
   const columnsFromRounds: RoundColumn[] = baseRounds.map((round) => ({
     id: round.id,
     name: round.name,
     maxScore: roundMaxScoreMap.value.get(round.id) ?? 0,
   }))
-
   if (!shouldFilterByLeaderboard) return columnsFromRounds
-
   const existingIds = new Set(columnsFromRounds.map((round) => round.id))
   const fallbackColumns: RoundColumn[] = []
-
   for (const entry of rankings.value) {
     for (const round of entry.rounds ?? []) {
       if (existingIds.has(round.round_id)) continue
-
       fallbackColumns.push({
         id: round.round_id,
         name: round.round_name,
@@ -226,23 +328,22 @@ const roundColumns = computed<RoundColumn[]>(() => {
       existingIds.add(round.round_id)
     }
   }
-
   return [...columnsFromRounds, ...fallbackColumns]
 })
 
 const hasRoundOverflow = computed(() => roundColumns.value.length > 3)
 const visibleRoundCols = computed(() => Math.min(roundColumns.value.length, 3))
-
 const tableVars = computed(() => ({
   '--round-cols': String(Math.max(roundColumns.value.length, 1)),
   '--visible-round-cols': String(Math.max(visibleRoundCols.value, 1)),
 }))
-
-const errorMessage = computed(() => {
-  if (!error.value) return 'Failed to load leaderboard.'
-  if (error.value.code === 'forbidden') return 'Leaderboard is not available yet.'
-  return error.value.message || 'Failed to load leaderboard.'
-})
+const errorMessage = computed(() =>
+  !error.value
+    ? 'Failed to load leaderboard.'
+    : error.value.code === 'forbidden'
+      ? 'Leaderboard is not available yet.'
+      : error.value.message || 'Failed to load leaderboard.',
+)
 const isExportDisabled = computed(
   () => isLoading.value || isError.value || rankings.value.length === 0,
 )
@@ -251,15 +352,12 @@ function getRoundScore(entry: TournamentEntry, roundId: number) {
   const round = getRoundBreakdown(entry, roundId)
   return round ? round.total_score : null
 }
-
 function hasRoundParticipation(entry: TournamentEntry, roundId: number) {
   return !!getRoundBreakdown(entry, roundId)
 }
-
 function getRoundMaxScore(entry: TournamentEntry, roundId: number) {
   const round = getRoundBreakdown(entry, roundId)
   if (!round) return null
-
   const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
   const juryCount = getJuryCount(
     round.jury_breakdown,
@@ -269,7 +367,6 @@ function getRoundMaxScore(entry: TournamentEntry, roundId: number) {
   )
   return roundMaxScore * juryCount
 }
-
 function getEntryMaxScore(entry: TournamentEntry) {
   return (entry.rounds ?? []).reduce((sum, round) => {
     const roundMaxScore = roundMaxScoreMap.value.get(round.round_id) ?? 0
@@ -282,11 +379,9 @@ function getEntryMaxScore(entry: TournamentEntry) {
     return sum + roundMaxScore * juryCount
   }, 0)
 }
-
 function getRoundBreakdown(entry: TournamentEntry, roundId: number) {
   return entry.rounds?.find((item) => item.round_id === roundId) ?? null
 }
-
 function getJuryCount(
   juryBreakdown: unknown,
   totalScore?: number,
@@ -298,54 +393,45 @@ function getJuryCount(
     const count = Object.keys(juryBreakdown as Record<string, unknown>).length
     return count || 1
   }
-
-  // Fallback for hidden jury breakdown (team role): infer from aggregate values per round.
-  if (roundMaxScore && roundMaxScore > 0 && averageScore && averageScore > 0 && totalScore !== undefined) {
+  if (
+    roundMaxScore &&
+    roundMaxScore > 0 &&
+    averageScore &&
+    averageScore > 0 &&
+    totalScore !== undefined
+  ) {
     const estimated = totalScore / (roundMaxScore * averageScore)
     if (Number.isFinite(estimated) && estimated > 0) return Math.max(1, Math.round(estimated))
   }
-
   return 1
 }
-
 function formatScore(value: number) {
   if (Number.isNaN(value)) return '0'
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
 }
-
 function onTableWheel(event: WheelEvent) {
   const container = tableWrapRef.value
   if (!container || !hasRoundOverflow.value) return
-
   const maxScrollLeft = container.scrollWidth - container.clientWidth
   if (maxScrollLeft <= 0) return
-
   const dominantDelta =
     Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
   if (!dominantDelta) return
-
-  const scrollSpeedFactor = 0.4
-  const slowedDelta = dominantDelta * scrollSpeedFactor
-
-  const nextScrollLeft = Math.min(
-    maxScrollLeft,
-    Math.max(0, container.scrollLeft + slowedDelta),
-  )
-
+  const slowedDelta = dominantDelta * 0.4
+  const nextScrollLeft = Math.min(maxScrollLeft, Math.max(0, container.scrollLeft + slowedDelta))
   if (nextScrollLeft !== container.scrollLeft) {
     event.preventDefault()
     container.scrollLeft = nextScrollLeft
   }
 }
-
 function buildLeaderboardTableRows(): string[][] {
   const header = ['Place', 'Team', ...roundColumns.value.map((round) => round.name), 'Total']
   const rows = rankings.value.map((entry) => {
-    const roundValues = roundColumns.value.map((round) => {
-      if (!hasRoundParticipation(entry, round.id)) return 'x'
-      return `${formatScore(getRoundScore(entry, round.id) ?? 0)}/${formatScore(getRoundMaxScore(entry, round.id) ?? 0)}`
-    })
-
+    const roundValues = roundColumns.value.map((round) =>
+      !hasRoundParticipation(entry, round.id)
+        ? 'x'
+        : `${formatScore(getRoundScore(entry, round.id) ?? 0)}/${formatScore(getRoundMaxScore(entry, round.id) ?? 0)}`,
+    )
     return [
       String(entry.rank),
       entry.team_name,
@@ -353,29 +439,23 @@ function buildLeaderboardTableRows(): string[][] {
       `${formatScore(entry.total_score)}/${formatScore(getEntryMaxScore(entry))}`,
     ]
   })
-
   return [header, ...rows]
 }
-
 function escapeCsvValue(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replaceAll('"', '""')}"`
-  }
-  return value
+  return /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
 }
-
 function handleDownloadCsv() {
   if (isExportDisabled.value) {
     showNotification('Leaderboard data is not available yet.', 'error')
     return
   }
-
   const rows = buildLeaderboardTableRows()
-  const csvContent = rows.map((row) => row.map((value) => escapeCsvValue(value)).join(',')).join('\n')
+  const csvContent = rows
+    .map((row) => row.map((value) => escapeCsvValue(value)).join(','))
+    .join('\n')
   const csvBlob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' })
   const csvUrl = window.URL.createObjectURL(csvBlob)
   const link = document.createElement('a')
-
   link.href = csvUrl
   link.download = `tournament-${props.tournamentId}-leaderboard-${new Date().toISOString().slice(0, 10)}.csv`
   document.body.appendChild(link)
@@ -384,9 +464,53 @@ function handleDownloadCsv() {
   window.URL.revokeObjectURL(csvUrl)
 }
 
+function handleSendCertificates() {
+  if (!selectedTemplateId.value) {
+    showNotification('Please select a template first.', 'error')
+    return
+  }
+  void decideDeliveryModeAndSend()
+}
+
+async function decideDeliveryModeAndSend() {
+  try {
+    const deliveryStatus = await refetchDeliveryStatus()
+    const stats = deliveryStatus.data
+    if (stats && stats.existing_count > 0) {
+      existingCertificatesMessage.value = `Already created: ${stats.existing_count}. Missing: ${stats.missing_count}. Choose action.`
+      isDeliveryModeModalOpen.value = true
+      return
+    }
+    submitCertificates('missing')
+  } catch (apiError) {
+    const parsedError = parseApiError(apiError as Parameters<typeof parseApiError>[0])
+    showNotification(parsedError?.message || 'Failed to check certificate status.', 'error')
+  }
+}
+
+function submitCertificates(mode: 'missing' | 'resend') {
+  if (!selectedTemplateId.value) return
+  sendCertificates(
+    { tournamentId: props.tournamentId, template_id: selectedTemplateId.value, mode },
+    {
+      onSuccess: (result) => {
+        showNotification(
+          `Certificates sent. Created: ${result.created_count}, skipped: ${result.skipped_count}.`,
+          'success',
+        )
+        isSendCertificatesModalOpen.value = false
+        isDeliveryModeModalOpen.value = false
+      },
+      onError: (apiError) => {
+        const parsedError = parseApiError(apiError)
+        showNotification(parsedError?.message || 'Failed to send certificates.', 'error')
+      },
+    },
+  )
+}
+
 async function handleOpenInGoogleSheets() {
   if (isExportDisabled.value || isCreatingGoogleSheet.value) return
-
   isCreatingGoogleSheet.value = true
   try {
     const response = await $api.evaluation.exportTournamentLeaderboardToGoogleSheets({
@@ -427,6 +551,80 @@ async function handleOpenInGoogleSheets() {
   align-items: end;
   margin-left: auto;
   padding-top: 8px;
+}
+
+.templates-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.templates-loading {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.templates-scroll-wrap {
+  max-height: 430px;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.template-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem;
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.template-card.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.template-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.template-image-fallback {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.template-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.template-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .export-trigger {
@@ -628,6 +826,11 @@ async function handleOpenInGoogleSheets() {
   .total-col {
     width: 9rem;
     min-width: 9rem;
+  }
+
+  .templates-grid,
+  .templates-loading {
+    grid-template-columns: 1fr;
   }
 }
 </style>

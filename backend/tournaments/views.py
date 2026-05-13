@@ -45,7 +45,9 @@ from .serializers import (
 from .services import (
     close_submissions_on_round,
     delete_round,
+    get_tournament_certificate_delivery_status,
     mark_round_evaluated,
+    send_tournament_certificates,
     start_registration,
     start_round,
     sync_time_based_statuses,
@@ -253,6 +255,30 @@ class TournamentStartRegistrationView(APIView):
             TournamentPublicSerializer(tournament, context={'request': request}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class TournamentSendCertificatesView(APIView):
+    permission_classes = [IsAuthenticated, CanEditTournament]
+
+    def post(self, request, pk):
+        tournament = get_object_or_404(Tournament, pk=pk)
+        template_id = request.data.get('template_id')
+        mode = request.data.get('mode', 'missing')
+        if template_id is None:
+            raise ValidationError({'template_id': 'This field is required.'})
+
+        stats = send_tournament_certificates(
+            tournament=tournament,
+            template_id=template_id,
+            mode=mode,
+            async_notifications=True,
+        )
+        return Response(stats, status=status.HTTP_200_OK)
+
+    def get(self, request, pk):
+        tournament = get_object_or_404(Tournament, pk=pk)
+        stats = get_tournament_certificate_delivery_status(tournament=tournament)
+        return Response(stats, status=status.HTTP_200_OK)
 
 
 class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):

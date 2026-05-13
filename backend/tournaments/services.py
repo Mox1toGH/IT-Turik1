@@ -1,10 +1,235 @@
-from django.db import transaction
+import logging
+import threading
+
+from django.db import close_old_connections, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from teams.models import TeamMember
 
-from .models import Round, Tournament, TournamentTeamRegistration
+from .models import Round, Submission, Tournament, TournamentTeamRegistration
+
+
+logger = logging.getLogger(__name__)
+
+
+def _get_tournament_team_ranks(*, tournament):
+    from evaluation.models import LeaderboardEntry
+
+    leaderboard_entries = LeaderboardEntry.objects.filter(
+        tournament=tournament,
+        round__isnull=True,
+    ).only('team_id', 'rank')
+    return {
+        entry.team_id: str(entry.rank)
+        for entry in leaderboard_entries
+        if entry.team_id and entry.rank is not None
+    }
+
+
+def _get_tournament_participant_team_map(*, tournament):
+    submitted_team_ids = set(
+        Submission.objects.filter(round__tournament=tournament).values_list('team_id', flat=True)
+    )
+
+    registrations = (
+        TournamentTeamRegistration.objects.filter(
+            tournament=tournament,
+            is_disqualified=False,
+        )
+        .select_related('team')
+        .order_by('id')
+    )
+
+    participant_team_map = {}
+    for registration in registrations:
+        team = registration.team
+        if team is None:
+            continue
+
+        is_participant = registration.is_active or team.id in submitted_team_ids
+        if not is_participant:
+            continue
+
+        for participant_id in get_team_participant_ids(team=team):
+            # One certificate per user per tournament.
+            participant_team_map.setdefault(participant_id, team.id)
+
+    return participant_team_map
+
+
+def _issue_tournament_certificates_and_notify(*, tournament):
+    from accounts.models import User
+    from certificates.models import Certificate
+    from certificates.serializers import CertificateSerializer
+    from notifications.services import NotificationService
+
+    try:
+        participant_team_map = _get_tournament_participant_team_map(tournament=tournament)
+        if not participant_team_map:
+            return
+
+        participant_ids = list(participant_team_map.keys())
+        existing_user_ids = set(
+            Certificate.objects.filter(
+                tournament=tournament,
+                user_id__in=participant_ids,
+            ).values_list('user_id', flat=True)
+        )
+        team_ranks = _get_tournament_team_ranks(tournament=tournament)
+
+        created_user_ids = []
+        for user_id, team_id in participant_team_map.items():
+            if user_id in existing_user_ids:
+                continue
+
+            serializer = CertificateSerializer(
+                data={
+                    'user': user_id,
+                    'team': team_id,
+                    'tournament': tournament.id,
+                    'placement': team_ranks.get(team_id, 'Participant'),
+                }
+            )
+            if not serializer.is_valid():
+                logger.warning(
+                    'Failed to auto-create certificate for tournament_id=%s user_id=%s: %s',
+                    tournament.id,
+                    user_id,
+                    serializer.errors,
+                )
+                continue
+
+            serializer.save()
+            created_user_ids.append(user_id)
+
+        if not created_user_ids:
+            return
+
+        recipients = list(User.objects.filter(id__in=created_user_ids))
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_certificate_issued',
+            context={
+                'tournament_name': tournament.name,
+            },
+        )
+    except Exception:
+        logger.exception(
+            'Failed to auto-issue certificates for tournament_id=%s',
+            tournament.id,
+        )
+
+
+def _send_notifications_in_background(*, recipients, event_type, context):
+    from notifications.services import NotificationService
+
+    def _runner():
+        close_old_connections()
+        try:
+            NotificationService.notify(
+                recipients=recipients,
+                event_type=event_type,
+                context=context,
+            )
+        except Exception:
+            logger.exception('Background notification dispatch failed for event_type=%s', event_type)
+        finally:
+            close_old_connections()
+
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+
+
+@transaction.atomic
+def send_tournament_certificates(*, tournament, template_id, mode='missing', async_notifications=False):
+    from accounts.models import User
+    from certificates.models import Certificate, CertificateTemplate
+    from certificates.serializers import CertificateSerializer
+    from notifications.services import NotificationService
+
+    template = CertificateTemplate.objects.filter(id=template_id).first()
+    if template is None:
+        raise ValidationError({'template_id': 'Certificate template not found.'})
+
+    participant_team_map = _get_tournament_participant_team_map(tournament=tournament)
+    if not participant_team_map:
+        return {
+            'created_count': 0,
+            'skipped_count': 0,
+            'notification_count': 0,
+        }
+
+    participant_ids = list(participant_team_map.keys())
+    existing_qs = Certificate.objects.filter(
+        tournament=tournament,
+        user_id__in=participant_ids,
+    )
+    existing_user_ids = set(existing_qs.values_list('user_id', flat=True))
+    if mode not in {'missing', 'resend'}:
+        raise ValidationError({'mode': 'Mode must be either "missing" or "resend".'})
+    team_ranks = _get_tournament_team_ranks(tournament=tournament)
+
+    created_user_ids = []
+    skipped_count = 0
+    for user_id, team_id in participant_team_map.items():
+        if mode == 'missing' and user_id in existing_user_ids:
+            skipped_count += 1
+            continue
+
+        serializer = CertificateSerializer(
+            data={
+                'user': user_id,
+                'team': team_id,
+                'tournament': tournament.id,
+                'placement': team_ranks.get(team_id, 'Participant'),
+                'template': template.id,
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        created_user_ids.append(user_id)
+
+    notification_count = 0
+    if created_user_ids:
+        recipients = list(User.objects.filter(id__in=created_user_ids))
+        if async_notifications:
+            _send_notifications_in_background(
+                recipients=recipients,
+                event_type='tournament_certificate_issued',
+                context={'tournament_name': tournament.name},
+            )
+        else:
+            NotificationService.notify(
+                recipients=recipients,
+                event_type='tournament_certificate_issued',
+                context={'tournament_name': tournament.name},
+            )
+        notification_count = len(recipients)
+
+    return {
+        'created_count': len(created_user_ids),
+        'skipped_count': skipped_count,
+        'notification_count': notification_count,
+    }
+
+
+def get_tournament_certificate_delivery_status(*, tournament):
+    from certificates.models import Certificate
+
+    participant_team_map = _get_tournament_participant_team_map(tournament=tournament)
+    participant_ids = list(participant_team_map.keys())
+    existing_count = 0
+    if participant_ids:
+        existing_count = Certificate.objects.filter(
+            tournament=tournament,
+            user_id__in=participant_ids,
+        ).count()
+    return {
+        'participants_count': len(participant_ids),
+        'existing_count': existing_count,
+        'missing_count': max(len(participant_ids) - existing_count, 0),
+    }
 
 
 def _set_tournament_finished_if_all_rounds_evaluated(*, tournament):

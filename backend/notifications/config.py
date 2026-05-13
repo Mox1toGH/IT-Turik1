@@ -97,4 +97,11 @@ EVENTS = {
         message='A new post was published: [news:{news_id}:{news_title}].',
         email_subject='New announcement: {news_title}',
     ),
+    'tournament_certificate_issued': NotificationEvent(
+        key='tournament_certificate_issued',
+        channels=['system', 'email'],
+        title='Certificate Issued',
+        message='Your certificate for tournament "{tournament_name}" is ready.',
+        email_subject='Your tournament certificate is ready',
+    ),
 }

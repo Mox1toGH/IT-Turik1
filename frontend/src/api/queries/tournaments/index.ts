@@ -47,6 +47,10 @@ import type {
   StartRoundArgs,
   StartRoundResponse,
   SubmitRoundArgs,
+  SendTournamentCertificatesArgs,
+  SendTournamentCertificatesResponse,
+  TournamentCertificateDeliveryStatusArgs,
+  TournamentCertificateDeliveryStatusResponse,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
   UpdateTournamentBannerArgs,
@@ -479,6 +483,30 @@ export const useRemoveTournamentBanner = (
     onSuccess: (_, { tournamentId }) => {
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(tournamentId) })
     },
+    ...config,
+  })
+}
+
+export const useSendTournamentCertificates = (
+  config?: MutationConfig<
+    SendTournamentCertificatesResponse,
+    AxiosError<ApiError>,
+    SendTournamentCertificatesArgs
+  >,
+) => {
+  return useMutation<SendTournamentCertificatesResponse, AxiosError<ApiError>, SendTournamentCertificatesArgs>({
+    mutationFn: $api.tournaments.sendCertificates,
+    ...config,
+  })
+}
+
+export const useTournamentCertificateDeliveryStatus = (
+  payload: MaybeRefArgs<TournamentCertificateDeliveryStatusArgs>,
+  config?: QueryConfig<TournamentCertificateDeliveryStatusResponse>,
+) => {
+  return useQuery<TournamentCertificateDeliveryStatusResponse, AxiosError<ApiError>>({
+    queryKey: computed(() => ['tournament-certificate-delivery-status', toValue(payload.tournamentId)]),
+    queryFn: () => $api.tournaments.getCertificateDeliveryStatus({ tournamentId: toValue(payload.tournamentId) }),
     ...config,
   })
 }

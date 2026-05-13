@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import Mock, patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -8,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
+from certificates.models import Certificate, CertificateTemplate
 from evaluation.models import JuryAssignment
 from evaluation.leaderboard_service import (
     compute_leaderboard,
@@ -16,9 +18,10 @@ from evaluation.leaderboard_service import (
 )
 from evaluation.models import LeaderboardEntry, SubmissionEvaluation
 from evaluation.services import try_auto_evaluate_round
-from teams.models import Team
+from notifications.models import Notification
+from teams.models import Team, TeamMember
 from tournaments.models import Round, Submission, Tournament, TournamentTeamRegistration
-from tournaments.services import mark_round_evaluated
+from tournaments.services import mark_round_evaluated, send_tournament_certificates, sync_time_based_statuses
 
 
 class ManualJuryAssignmentApiTests(APITestCase):
@@ -322,6 +325,11 @@ class LeaderboardTests(APITestCase):
         self.assign22 = JuryAssignment.objects.create(submission=self.sub2, jury=self.jury2)
         self.assign31 = JuryAssignment.objects.create(submission=self.sub1_r2, jury=self.jury1)
         self.assign32 = JuryAssignment.objects.create(submission=self.sub1_r2, jury=self.jury2)
+        self.certificate_template = CertificateTemplate.objects.create(
+            name='Leaderboard Test Template',
+            image=SimpleUploadedFile('template.png', b'fake-png-content', content_type='image/png'),
+            is_default=True,
+        )
 
         SubmissionEvaluation.objects.create(
             assignment=self.assign11,
@@ -468,6 +476,85 @@ class LeaderboardTests(APITestCase):
             LeaderboardEntry.objects.filter(tournament=self.tournament, round__isnull=True).count(),
             2,
         )
+
+    def test_manual_send_certificates_after_tournament_finish(self):
+        team1_member = User.objects.create_user(
+            username='team_lb_member',
+            email='team_lb_member@example.com',
+            password='TestPass123!',
+            role='team',
+        )
+        TeamMember.objects.create(team=self.team1, user=team1_member)
+
+        self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj2.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj.save(update_fields=['status', 'updated_at'])
+        self.round_obj2.save(update_fields=['status', 'updated_at'])
+
+        mark_round_evaluated(self.round_obj)
+        mark_round_evaluated(self.round_obj2)
+        self.tournament.refresh_from_db()
+        self.assertEqual(self.tournament.status, Tournament.STATUS_FINISHED)
+        self.assertEqual(Certificate.objects.filter(tournament=self.tournament).count(), 0)
+
+        result = send_tournament_certificates(
+            tournament=self.tournament,
+            template_id=self.certificate_template.id,
+        )
+        self.assertEqual(result['created_count'], 3)
+        self.assertEqual(result['skipped_count'], 0)
+        self.assertEqual(result['notification_count'], 3)
+
+        certificates = Certificate.objects.filter(tournament=self.tournament)
+        self.assertEqual(certificates.count(), 3)
+        self.assertTrue(certificates.filter(user=self.team_user, placement='1').exists())
+        self.assertTrue(certificates.filter(user=team1_member, placement='1').exists())
+        self.assertTrue(certificates.filter(user=self.team_user2, placement='2').exists())
+
+        notifications = Notification.objects.filter(event_type='tournament_certificate_issued')
+        self.assertEqual(notifications.count(), 3)
+        self.assertSetEqual(
+            set(notifications.values_list('recipient_id', flat=True)),
+            {self.team_user.id, team1_member.id, self.team_user2.id},
+        )
+
+        # No duplicates after repeated manual send and status sync.
+        result_repeat = send_tournament_certificates(
+            tournament=self.tournament,
+            template_id=self.certificate_template.id,
+        )
+        self.assertEqual(result_repeat['created_count'], 0)
+        self.assertEqual(result_repeat['skipped_count'], 3)
+        self.assertEqual(result_repeat['notification_count'], 0)
+        sync_time_based_statuses()
+        self.assertEqual(Certificate.objects.filter(tournament=self.tournament).count(), 3)
+        self.assertEqual(Notification.objects.filter(event_type='tournament_certificate_issued').count(), 3)
+
+    def test_manual_send_certificates_resend_recreates_all(self):
+        self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj2.status = Round.STATUS_SUBMISSION_CLOSED
+        self.round_obj.save(update_fields=['status', 'updated_at'])
+        self.round_obj2.save(update_fields=['status', 'updated_at'])
+        mark_round_evaluated(self.round_obj)
+        mark_round_evaluated(self.round_obj2)
+
+        first_result = send_tournament_certificates(
+            tournament=self.tournament,
+            template_id=self.certificate_template.id,
+            mode='missing',
+        )
+        self.assertEqual(first_result['created_count'], 2)
+        first_codes = set(Certificate.objects.filter(tournament=self.tournament).values_list('unique_code', flat=True))
+
+        second_result = send_tournament_certificates(
+            tournament=self.tournament,
+            template_id=self.certificate_template.id,
+            mode='resend',
+        )
+        self.assertEqual(second_result['created_count'], 2)
+        self.assertEqual(Certificate.objects.filter(tournament=self.tournament).count(), 4)
+        second_codes = set(Certificate.objects.filter(tournament=self.tournament).values_list('unique_code', flat=True))
+        self.assertTrue(first_codes.issubset(second_codes))
 
     def test_tournament_snapshot_idempotent(self):
         self.round_obj.status = Round.STATUS_SUBMISSION_CLOSED

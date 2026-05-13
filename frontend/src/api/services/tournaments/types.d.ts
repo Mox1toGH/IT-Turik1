@@ -339,6 +339,28 @@ export interface UpdateTournamentBannerArgs {
   file: File
 }
 
+export interface SendTournamentCertificatesArgs {
+  tournamentId: TournamentId
+  template_id: number
+  mode?: 'missing' | 'resend'
+}
+
+export interface SendTournamentCertificatesResponse {
+  created_count: number
+  skipped_count: number
+  notification_count: number
+}
+
+export interface TournamentCertificateDeliveryStatusArgs {
+  tournamentId: TournamentId
+}
+
+export interface TournamentCertificateDeliveryStatusResponse {
+  participants_count: number
+  existing_count: number
+  missing_count: number
+}
+
 // Tournament archive
 export interface GetTournamentArchiveListArgs {}
 

@@ -249,6 +249,9 @@ const getRedirectUrl = (notification: any) => {
     }
     return '/news'
   }
+  if (type === 'tournament_certificate_issued') {
+    return '/profile/certificates'
+  }
   return null
 }
 

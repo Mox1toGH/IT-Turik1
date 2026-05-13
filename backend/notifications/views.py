@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
+from django.db import OperationalError
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -27,8 +28,16 @@ class NotificationListView(generics.ListAPIView):
 
     def get_queryset(self):
         cutoff_date = timezone.now() - timedelta(days=30)
-        # Auto-delete notifications older than 30 days for this user
-        Notification.objects.filter(recipient=self.request.user, created_at__lt=cutoff_date).delete()
+        # Best-effort cleanup:
+        # on SQLite concurrent writes may raise "database is locked".
+        # In that case we skip cleanup and still return notifications.
+        try:
+            Notification.objects.filter(
+                recipient=self.request.user,
+                created_at__lt=cutoff_date,
+            ).delete()
+        except OperationalError:
+            pass
 
         return Notification.objects.filter(recipient=self.request.user)
 

@@ -48,6 +48,10 @@ import type {
   SubmitRoundArgs,
   UpdateRegistrationArgs,
   UpdateRegistrationResponse,
+  SendTournamentCertificatesArgs,
+  SendTournamentCertificatesResponse,
+  TournamentCertificateDeliveryStatusArgs,
+  TournamentCertificateDeliveryStatusResponse,
   UpdateTournamentBannerArgs,
 } from './types'
 import { toValue } from 'vue'
@@ -251,6 +255,21 @@ export const tournamentsService = {
   removeBanner: async (args: { tournamentId: TournamentId }) => {
     const { data } = await apiClient.delete<GetTournamentInfoResponse>(
       `${prefix}/manage/${args.tournamentId}/banner/`,
+    )
+    return data
+  },
+
+  sendCertificates: async (args: SendTournamentCertificatesArgs) => {
+    const { data } = await apiClient.post<SendTournamentCertificatesResponse>(
+      `${prefix}/${args.tournamentId}/send-certificates/`,
+      { template_id: args.template_id, mode: args.mode ?? 'missing' },
+    )
+    return data
+  },
+
+  getCertificateDeliveryStatus: async (args: TournamentCertificateDeliveryStatusArgs) => {
+    const { data } = await apiClient.get<TournamentCertificateDeliveryStatusResponse>(
+      `${prefix}/${args.tournamentId}/send-certificates/`,
     )
     return data
   },
