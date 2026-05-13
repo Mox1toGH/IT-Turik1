@@ -96,7 +96,7 @@ Purchase and refund transactions created by shop always include this reference.
 ---
 
 
-### 8. Avatar Frames
+### 7. Avatar Frames
 
 **GET `/api/shop/avatar-frames/`**
 - Returns a list of active avatar frames.
