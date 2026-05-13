@@ -269,3 +269,27 @@ class EquipDigitalInventoryItemView(APIView):
             DigitalInventoryItemSerializer(inventory_item, context={'request': request}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class UnequipDigitalInventoryItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = EquipDigitalItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        inventory_item = get_object_or_404(
+            UserDigitalInventory.objects.select_related('product').filter(user=request.user),
+            pk=serializer.validated_data['inventory_id'],
+        )
+
+        if not inventory_item.is_equipped:
+            raise ValidationError({'inventory_id': 'Item is not equipped.'})
+
+        inventory_item.is_equipped = False
+        inventory_item.save(update_fields=['is_equipped', 'updated_at'])
+
+        return Response(
+            DigitalInventoryItemSerializer(inventory_item, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )

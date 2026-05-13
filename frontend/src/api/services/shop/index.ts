@@ -84,6 +84,13 @@ export const shopService = {
     return data
   },
 
+  async unequipInventoryItem(inventoryId: number) {
+    const { data } = await apiClient.post<DigitalInventoryItem>(`${prefix}/inventory/unequip/`, {
+      inventory_id: inventoryId,
+    })
+    return data
+  },
+
   async getAdminCategories(args: { page?: number; pageSize?: number } = {}) {
     const { data } = await apiClient.get<ShopPaginated<ShopCategory>>(
       `${prefix}/admin/categories/`,

@@ -120,6 +120,18 @@ export const useEquipDigitalInventoryItem = () => {
   })
 }
 
+export const useUnequipDigitalInventoryItem = () => {
+  const queryClient = useQueryClient()
+  return useMutation<DigitalInventoryItem, AxiosError<ApiError>, { inventoryId: number }>({
+    mutationFn: ({ inventoryId }) => $api.shop.unequipInventoryItem(inventoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: shopKeys.myInventoryPrefix() })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'profile'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'users'] })
+    },
+  })
+}
+
 export const useAdminShopCategories = (
   args: { page?: MaybeRefOrGetter<number>; pageSize?: MaybeRefOrGetter<number> } = {},
   config?: QueryConfig<ShopPaginated<ShopCategory>>,

@@ -40,13 +40,23 @@
             <p class="desc">{{ item.product.description || 'No description' }}</p>
             <p class="meta">Acquired: {{ formatDate(item.acquired_at) }}</p>
 
-            <ui-button
-              size="sm"
-              :disabled="item.is_equipped || isEquipping"
-              @click="equip(item.id)"
-            >
-              Equip
-            </ui-button>
+            <div class="button-group">
+              <ui-button
+                size="sm"
+                :disabled="item.is_equipped || isEquipping || isUnequipping"
+                @click="equip(item.id)"
+              >
+                Equip
+              </ui-button>
+              <ui-button
+                size="sm"
+                variant="secondary"
+                :disabled="!item.is_equipped || isUnequipping || isEquipping"
+                @click="unequip(item.id)"
+              >
+                Remove
+              </ui-button>
+            </div>
           </ui-card>
         </div>
       </ui-skeleton-loader>
@@ -61,13 +71,14 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { useEquipDigitalInventoryItem, useMyDigitalInventory } from '@/api/queries/shop'
+import { useEquipDigitalInventoryItem, useMyDigitalInventory, useUnequipDigitalInventoryItem } from '@/api/queries/shop'
 import { useNotification } from '@/composables/useNotification'
 import { parseApiError } from '@/api/errors'
 
 const { showNotification } = useNotification()
 const { data, isLoading, isLoadingError } = useMyDigitalInventory()
 const { mutate: equipItem, isPending: isEquipping } = useEquipDigitalInventoryItem()
+const { mutate: unequipItem, isPending: isUnequipping } = useUnequipDigitalInventoryItem()
 
 const items = computed(() => data.value?.results ?? [])
 
@@ -76,6 +87,16 @@ const equip = (inventoryId: number) => {
     { inventoryId },
     {
       onSuccess: () => showNotification('Avatar frame equipped.', 'success'),
+      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+    },
+  )
+}
+
+const unequip = (inventoryId: number) => {
+  unequipItem(
+    { inventoryId },
+    {
+      onSuccess: () => showNotification('Avatar frame removed.', 'success'),
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
     },
   )
@@ -92,5 +113,6 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 .asset-preview { width: 100%; height: 180px; object-fit: contain; border-radius: 10px; background: var(--background); }
 .desc { margin: 8px 0 4px; }
 .meta { margin: 0 0 10px; color: var(--muted-foreground); font-size: 0.85rem; }
+.button-group { display: flex; gap: 8px; }
 @media (max-width: 760px) { .head { flex-direction: column; align-items: flex-start; } }
 </style>

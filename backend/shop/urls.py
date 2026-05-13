@@ -15,6 +15,7 @@ from .views import (
     ProductDetailView,
     ProductListView,
     PurchaseView,
+    UnequipDigitalInventoryItemView,
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
     path('orders/my/<int:order_id>/cancel/', MyOrderCancelView.as_view(), name='shop-my-order-cancel'),
     path('inventory/my/', MyDigitalInventoryView.as_view(), name='shop-my-inventory'),
     path('inventory/equip/', EquipDigitalInventoryItemView.as_view(), name='shop-inventory-equip'),
+    path('inventory/unequip/', UnequipDigitalInventoryItemView.as_view(), name='shop-inventory-unequip'),
 
     path('admin/categories/', AdminCategoryListCreateView.as_view(), name='shop-admin-categories-list-create'),
     path('admin/categories/<int:pk>/', AdminCategoryDetailView.as_view(), name='shop-admin-categories-detail'),
