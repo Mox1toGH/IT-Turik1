@@ -90,6 +90,7 @@ export interface UpsertProductBody {
   category_id: number
   product_type: ShopProductType
   avatar_frame_id?: number
+  avatar_frame_file?: File
   digital_asset_url?: string // kept for backward compatibility
   is_active: boolean
   uploaded_images?: File[]

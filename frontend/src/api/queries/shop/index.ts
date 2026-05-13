@@ -276,3 +276,63 @@ export const useAdminCancelOrder = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: shopKeys.adminOrdersPrefix() }),
   })
 }
+
+export const useAdminAvatarFrames = (
+  args: {
+    page?: MaybeRefOrGetter<number>
+    pageSize?: MaybeRefOrGetter<number>
+    search?: MaybeRefOrGetter<string>
+  } = {},
+  config?: QueryConfig<ShopPaginated<ShopAvatarFrame>>,
+) => {
+  return useQuery<ShopPaginated<ShopAvatarFrame>, AxiosError<ApiError>>({
+    queryKey: computed(() =>
+      shopKeys.adminAvatarFrames({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 100,
+        search: toValue(args.search) ?? '',
+      }),
+    ),
+    queryFn: () =>
+      $api.shop.getAdminAvatarFrames({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 100,
+        search: toValue(args.search) ?? '',
+      }),
+    ...config,
+  })
+}
+
+export const useAdminCreateAvatarFrame = () => {
+  const queryClient = useQueryClient()
+  return useMutation<ShopAvatarFrame, AxiosError<ApiError>, { name: string; svg_file: File }>({
+    mutationFn: (body) => $api.shop.createAdminAvatarFrame(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: shopKeys.adminAvatarFramesPrefix() }),
+  })
+}
+
+export const useAdminUpdateAvatarFrame = () => {
+  const queryClient = useQueryClient()
+  return useMutation<
+    ShopAvatarFrame,
+    AxiosError<ApiError>,
+    { id: number; body: { name?: string; svg_file?: File; is_active?: boolean } }
+  >({
+    mutationFn: ({ id, body }) => $api.shop.updateAdminAvatarFrame(id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: shopKeys.adminAvatarFramesPrefix() })
+      queryClient.invalidateQueries({ queryKey: shopKeys.avatarFramesPrefix() })
+    },
+  })
+}
+
+export const useAdminDeleteAvatarFrame = () => {
+  const queryClient = useQueryClient()
+  return useMutation<void, AxiosError<ApiError>, { id: number }>({
+    mutationFn: ({ id }) => $api.shop.deleteAdminAvatarFrame(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: shopKeys.adminAvatarFramesPrefix() })
+      queryClient.invalidateQueries({ queryKey: shopKeys.avatarFramesPrefix() })
+    },
+  })
+}

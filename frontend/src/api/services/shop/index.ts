@@ -19,7 +19,8 @@ const prefix = '/api/shop'
 export const shopService = {
   buildProductPayload(body: UpsertProductBody | Partial<UpsertProductBody>) {
     const hasImages = Array.isArray(body.uploaded_images) && body.uploaded_images.length > 0
-    if (!hasImages) return body
+    const hasFrameFile = body.avatar_frame_file instanceof File
+    if (!hasImages && !hasFrameFile) return body
 
     const formData = new FormData()
     if (body.name !== undefined) formData.append('name', String(body.name))
@@ -30,6 +31,7 @@ export const shopService = {
     if (body.category_id !== undefined) formData.append('category_id', String(body.category_id))
     if (body.product_type !== undefined) formData.append('product_type', String(body.product_type))
     if (body.avatar_frame_id !== undefined) formData.append('avatar_frame_id', String(body.avatar_frame_id))
+    if (body.avatar_frame_file !== undefined) formData.append('avatar_frame_file', body.avatar_frame_file)
     if (body.digital_asset_url !== undefined) formData.append('digital_asset_url', String(body.digital_asset_url))
     if (body.is_active !== undefined) formData.append('is_active', String(body.is_active))
     for (const image of body.uploaded_images || []) {
@@ -164,5 +166,37 @@ export const shopService = {
       },
     })
     return data
+  },
+
+  async getAdminAvatarFrames(args: GetAvatarFramesArgs = {}) {
+    const { data } = await apiClient.get<ShopPaginated<ShopAvatarFrame>>(`${prefix}/admin/avatar-frames/`, {
+      params: {
+        page: args.page ?? 1,
+        page_size: args.pageSize ?? 100,
+        search: args.search || undefined,
+      },
+    })
+    return data
+  },
+
+  async createAdminAvatarFrame(body: { name: string; svg_file: File }) {
+    const formData = new FormData()
+    formData.append('name', body.name)
+    formData.append('svg_file', body.svg_file)
+    const { data } = await apiClient.post<ShopAvatarFrame>(`${prefix}/admin/avatar-frames/`, formData)
+    return data
+  },
+
+  async updateAdminAvatarFrame(id: number, body: { name?: string; svg_file?: File; is_active?: boolean }) {
+    const formData = new FormData()
+    if (body.name !== undefined) formData.append('name', body.name)
+    if (body.svg_file !== undefined) formData.append('svg_file', body.svg_file)
+    if (body.is_active !== undefined) formData.append('is_active', String(body.is_active))
+    const { data } = await apiClient.patch<ShopAvatarFrame>(`${prefix}/admin/avatar-frames/${id}/`, formData)
+    return data
+  },
+
+  async deleteAdminAvatarFrame(id: number) {
+    await apiClient.delete(`${prefix}/admin/avatar-frames/${id}/`)
   },
 }

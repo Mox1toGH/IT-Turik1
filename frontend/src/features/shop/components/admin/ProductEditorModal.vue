@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <ui-modal
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
@@ -76,16 +76,29 @@
           </label>
         </div>
 
-        <label v-if="form.product_type === 'digital'" class="field">
-          <span class="label">Рамка аватара</span>
-          <select v-model.number="form.avatar_frame_id" class="native-select">
-            <option :value="undefined">Не вибрано</option>
-            <option v-for="frame in avatarFrames" :key="frame.id" :value="frame.id">
-              {{ frame.name }}
-            </option>
-          </select>
-          <small v-if="errors.avatar_frame_id" class="error">{{ errors.avatar_frame_id }}</small>
-        </label>
+        <div v-if="form.product_type === 'digital'" class="row two">
+          <label class="field">
+            <span class="label">Рамка аватара (існуюча)</span>
+            <select v-model.number="form.avatar_frame_id" class="native-select">
+              <option :value="undefined">Не вибрано</option>
+              <option v-for="frame in avatarFrames" :key="frame.id" :value="frame.id">
+                {{ frame.name }}
+              </option>
+            </select>
+            <small v-if="errors.avatar_frame_id" class="error">{{ errors.avatar_frame_id }}</small>
+          </label>
+
+          <label class="field">
+            <span class="label">Або завантажити нову (.svg)</span>
+            <input
+              class="native-file"
+              type="file"
+              accept=".svg"
+              @change="onPickFrameFile"
+            />
+            <small v-if="frameFileName" class="file-name">{{ frameFileName }}</small>
+          </label>
+        </div>
 
         <label class="switcher">
           <input v-model="form.is_active" type="checkbox" />
@@ -207,10 +220,13 @@ const form = ref<UpsertProductBody>({
   category_id: 0,
   product_type: 'physical',
   avatar_frame_id: undefined,
+  avatar_frame_file: undefined,
   digital_asset_url: '', // kept for backward compatibility
   is_active: true,
   uploaded_images: [],
 })
+
+const frameFileName = ref('')
 
 const errors = ref<Record<string, string>>({})
 
@@ -224,10 +240,12 @@ const resetForm = () => {
     category_id: p?.category?.id || props.categories[0]?.id || 0,
     product_type: p?.product_type || 'physical',
     avatar_frame_id: p?.avatar_frame?.id,
+    avatar_frame_file: undefined,
     digital_asset_url: p?.digital_asset_url || '', // kept for backward compatibility
     is_active: p?.is_active ?? true,
     uploaded_images: [],
   }
+  frameFileName.value = ''
   errors.value = {}
   clearPicked()
 }
@@ -259,6 +277,18 @@ const removePicked = (index: number) => {
   const removed = newPreviews.value.splice(index, 1)
   if (removed[0]) URL.revokeObjectURL(removed[0])
   pickedFiles.value.splice(index, 1)
+}
+
+const onPickFrameFile = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    form.value.avatar_frame_file = file
+    frameFileName.value = file.name
+  } else {
+    form.value.avatar_frame_file = undefined
+    frameFileName.value = ''
+  }
 }
 
 const openImagePreview = (url: string) => {
@@ -299,6 +329,12 @@ const handleSubmit = () => {
   if (!validate()) return
   const payload: UpsertProductBody = {
     ...form.value,
+  }
+
+  if (form.value.avatar_frame_file) {
+    payload.avatar_frame_file = form.value.avatar_frame_file
+  } else {
+    delete payload.avatar_frame_file
   }
 
   if (pickedFiles.value.length > 0) {
@@ -471,6 +507,12 @@ const handleSubmit = () => {
 .error {
   color: var(--destructive);
   font-size: 0.8rem;
+}
+
+.file-name {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
 }
 
 .footer-actions {

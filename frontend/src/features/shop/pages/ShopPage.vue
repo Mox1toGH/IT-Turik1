@@ -355,8 +355,12 @@ const handlePurchase = () => {
   purchase(
     { productId: activeProduct.value.id, quantity: Number(purchaseQty.value || 1) },
     {
-      onSuccess: (order) => {
-        purchaseResult.value = `Success: order #${order.id} created, status ${order.status}.`
+      onSuccess: (res: any) => {
+        if (res.id) {
+          purchaseResult.value = `Success: order #${res.id} created, status ${res.status}.`
+        } else {
+          purchaseResult.value = res.message || 'Purchase successful.'
+        }
         showNotification('Purchase successful.', 'success')
       },
       onError: (e) => {
