@@ -9,18 +9,38 @@
 
       <template #header>
         <div class="submissions-header">
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="150px" />
-            </template>
+          <div class="submissions-header-main">
+            <ui-skeleton-loader :loading="isLoading">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="150px" />
+              </template>
 
-            <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
-          </ui-skeleton-loader>
-          <ui-button
-            @click="handleAssignJury"
-            class="assign-btn"
-            :disabled="isLoading || noClosedRound"
-          >
+              <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
+            </ui-skeleton-loader>
+
+            <div class="bulk-assign">
+              <ui-select
+                multiple
+                v-model="assignJuryToAll"
+                :options="juryOptions"
+                placeholder="Assign jury to all"
+                class="jury-select jury-select-all"
+                :is-error="isFailedToFetchJury"
+                :error="parsedJuryError?.message"
+                :is-loading="isFetchingJury"
+                :disabled="isLoading || !submissions?.length"
+              />
+              <ui-button
+                variant="secondary"
+                :disabled="isLoading || noClosedRound || !submissions?.length"
+                @click="applyJuryToAll"
+              >
+                Apply to all
+              </ui-button>
+            </div>
+          </div>
+
+          <ui-button @click="handleAssignJury" class="assign-btn" :disabled="isLoading || noClosedRound">
             <loading-icon v-if="isPending" />Assign
           </ui-button>
         </div>
@@ -111,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSelect, { type SelectOption } from '@/components/ui/UiSelect.vue'
 import { formatDate } from '@/lib/date'
@@ -204,6 +224,7 @@ const juryOptions = computed<SelectOption[]>(
 )
 
 const assignedJury = reactive<Record<number, number[]>>({})
+const assignJuryToAll = ref<number[]>([])
 watch(
   submissions,
   (value) => {
@@ -218,6 +239,13 @@ watch(
   },
   { immediate: true },
 )
+
+const applyJuryToAll = () => {
+  if (!submissions.value?.length) return
+  submissions.value.forEach((submission) => {
+    assignedJury[submission.id] = [...assignJuryToAll.value]
+  })
+}
 
 const { mutate: assign, isPending } = useAssignJury()
 const handleAssignJury = () => {
@@ -262,9 +290,28 @@ const teamAbbr = (teamName: string) =>
 .submissions-header {
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+}
+
+.submissions-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.bulk-assign {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.jury-select-all {
+  min-width: 260px;
 }
 
 .jury-assign-shell {
@@ -374,6 +421,11 @@ const teamAbbr = (teamName: string) =>
 }
 
 @media (max-width: 820px) {
+  .submissions-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .table-head {
     display: none;
   }
