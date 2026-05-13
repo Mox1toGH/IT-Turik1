@@ -344,6 +344,29 @@ class ShopApiTests(APITestCase):
         delete_product = self.client.delete(product_detail_url)
         self.assertEqual(delete_product.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_admin_can_create_digital_product_with_asset_url(self):
+        self.client.force_authenticate(user=self.admin)
+        digital_category = Category.objects.create(name='Digital Goods')
+
+        products_url = reverse('shop-admin-products-list-create')
+        response = self.client.post(
+            products_url,
+            {
+                'name': 'Animated Avatar Frame',
+                'description': 'Animated profile frame asset',
+                'price': 120,
+                'stock_quantity': 1,
+                'category_id': digital_category.id,
+                'product_type': Product.TYPE_DIGITAL,
+                'digital_asset_url': '/avatar-frames/aurora-pulse.svg',
+                'is_active': True,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['digital_asset_url'], '/avatar-frames/aurora-pulse.svg')
+        self.assertEqual(response.data['product_type'], Product.TYPE_DIGITAL)
+
     def test_non_admin_cannot_access_admin_shop_endpoints(self):
         self.client.force_authenticate(user=self.user)
 

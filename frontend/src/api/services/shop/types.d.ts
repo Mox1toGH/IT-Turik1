@@ -88,6 +88,7 @@ export interface UpsertProductBody {
   stock_quantity: number
   category_id: number
   product_type: ShopProductType
+  digital_asset_url?: string
   is_active: boolean
   uploaded_images?: File[]
 }

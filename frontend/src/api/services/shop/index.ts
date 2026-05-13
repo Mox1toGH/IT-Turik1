@@ -27,6 +27,7 @@ export const shopService = {
       formData.append('stock_quantity', String(body.stock_quantity))
     if (body.category_id !== undefined) formData.append('category_id', String(body.category_id))
     if (body.product_type !== undefined) formData.append('product_type', String(body.product_type))
+    if (body.digital_asset_url !== undefined) formData.append('digital_asset_url', String(body.digital_asset_url))
     if (body.is_active !== undefined) formData.append('is_active', String(body.is_active))
     for (const image of body.uploaded_images || []) {
       formData.append('uploaded_images', image)
