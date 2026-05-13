@@ -37,6 +37,10 @@
 | **Редагувати подію** | PATCH | `/api/tournaments/events/{id}/` | Admin |
 | **Видалити подію** | DELETE | `/api/tournaments/events/{id}/` | Admin |
 | **Список іконок** | GET | `/api/tournaments/icons/` | Всі |
+| **Архів турнірів** | GET | `/api/tournaments/archive/` | Всі |
+| **Деталі архівного турніру** | GET | `/api/tournaments/archive/{id}/` | Всі |
+| **Роботи архівного турніру** | GET | `/api/tournaments/archive/{id}/submissions/` | Auth |
+| **Мій календар** | GET | `/api/tournaments/my-calendar/` | Auth |
 
 > **`GET /api/tournaments/current-task/`**
 > - Повертає перший активний раунд (`status=active`) серед турнірів зі статусом `running`, відсортований за `end_date`, `id`.
