@@ -156,24 +156,71 @@
 
     <ui-modal v-model="isCategoryModalOpen" maxWidth="700px">
       <template #title>Categories</template>
-      <div class="category-list">
-        <ui-card v-for="category in adminCategories" :key="category.id" class="category-row">
-          <div>
-            <strong>{{ category.name }}</strong>
-          </div>
-          <div class="row-actions">
-            <ui-button size="sm" @click="startEditCategory(category)">Edit</ui-button>
-            <ui-button size="sm" variant="danger" @click="deleteCategory(category.id)"
-              >Delete</ui-button
-            >
-          </div>
-        </ui-card>
+      <div class="categories-manager">
+        <div class="categories-toolbar">
+          <div class="categories-count">Total: {{ adminCategories.length }}</div>
+          <input
+            v-model.trim="categorySearch"
+            class="category-search-input"
+            placeholder="Search categories"
+          />
+        </div>
 
-        <form class="modal-form" @submit.prevent="submitCategoryForm">
-          <ui-input v-model="categoryForm.name" placeholder="Category name" required />
-          <ui-button type="submit">{{
-            editingCategoryId ? 'Save category' : 'Add category'
-          }}</ui-button>
+        <div class="categories-list">
+          <article v-if="!filteredCategories.length" class="categories-empty">
+            <p>No categories found.</p>
+          </article>
+
+          <article
+            v-for="category in filteredCategories"
+            :key="category.id"
+            class="category-item"
+            :class="{ editing: editingCategoryId === category.id }"
+          >
+            <div class="category-main">
+              <template v-if="editingCategoryId === category.id">
+                <input
+                  v-model.trim="categoryForm.name"
+                  class="category-inline-input"
+                  placeholder="Category name"
+                />
+              </template>
+              <template v-else>
+                <p class="category-name">{{ category.name }}</p>
+                <span class="category-id">#{{ category.id }}</span>
+              </template>
+            </div>
+
+            <div class="row-actions">
+              <template v-if="editingCategoryId === category.id">
+                <button class="action-btn save" @click="submitCategoryForm">Save</button>
+                <button class="action-btn cancel" @click="cancelCategoryEdit">Cancel</button>
+              </template>
+              <template v-else>
+                <button class="action-btn edit" @click="startEditCategory(category)">Edit</button>
+                <button class="action-btn delete" @click="deleteCategory(category.id)">Delete</button>
+              </template>
+            </div>
+          </article>
+        </div>
+
+        <form class="category-create-form" @submit.prevent="submitCategoryForm">
+          <label class="category-create-label" for="new-category-name">Create new category</label>
+          <div class="category-create-row">
+            <input
+              id="new-category-name"
+              v-model.trim="categoryForm.name"
+              class="category-create-input"
+              placeholder="Category name"
+              required
+            />
+            <button class="create-btn" type="submit">
+              {{ editingCategoryId ? 'Save changes' : 'Add category' }}
+            </button>
+          </div>
+          <p v-if="editingCategoryId" class="edit-hint">
+            Editing category #{{ editingCategoryId }}. Click “Cancel” in row to discard.
+          </p>
         </form>
       </div>
     </ui-modal>
@@ -361,6 +408,12 @@ const confirmProductDelete = () => {
 const isCategoryModalOpen = ref(false)
 const categoryForm = ref({ name: '' })
 const editingCategoryId = ref<number | null>(null)
+const categorySearch = ref('')
+const filteredCategories = computed(() => {
+  const query = categorySearch.value.trim().toLowerCase()
+  if (!query) return adminCategories.value
+  return adminCategories.value.filter((category) => category.name.toLowerCase().includes(query))
+})
 
 const openCategoryCreate = () => {
   isCategoryModalOpen.value = true
@@ -371,6 +424,11 @@ const openCategoryCreate = () => {
 const startEditCategory = (category: ShopCategory) => {
   editingCategoryId.value = category.id
   categoryForm.value = { name: category.name }
+}
+
+const cancelCategoryEdit = () => {
+  editingCategoryId.value = null
+  categoryForm.value = { name: '' }
 }
 
 const { mutate: createCategory } = useAdminCreateCategory()
@@ -528,6 +586,130 @@ const deleteCategory = (id: number) => {
   display: flex;
   gap: 6px;
 }
+.categories-manager {
+  display: grid;
+  gap: 12px;
+}
+.categories-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.categories-count {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+.category-search-input,
+.category-inline-input,
+.category-create-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--foreground);
+  padding: 10px 12px;
+  font: inherit;
+}
+.category-search-input {
+  max-width: 260px;
+}
+.categories-list {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 14px;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+.categories-empty {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  color: var(--muted-foreground);
+}
+.category-item {
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--muted) 80%, transparent);
+}
+.category-item.editing {
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+.category-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.category-name {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.category-id {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+.action-btn {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 6px 10px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+}
+.action-btn.edit {
+  color: #00998a;
+  border-color: color-mix(in srgb, #00998a 55%, transparent);
+}
+.action-btn.delete {
+  color: var(--destructive);
+  border-color: color-mix(in srgb, var(--destructive) 55%, transparent);
+}
+.action-btn.save {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.action-btn.cancel {
+  color: var(--muted-foreground);
+  border-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+}
+.category-create-form {
+  display: grid;
+  gap: 8px;
+}
+.category-create-label {
+  font-size: 0.84rem;
+  color: var(--muted-foreground);
+  font-weight: 700;
+}
+.category-create-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.create-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 800;
+  cursor: pointer;
+}
+.edit-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
 
 @media (max-width: 900px) {
   .toolbar {
@@ -536,6 +718,23 @@ const deleteCategory = (id: number) => {
   .head {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .categories-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .category-search-input {
+    max-width: none;
+  }
+  .category-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .row-actions {
+    justify-content: flex-end;
+  }
+  .category-create-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>
