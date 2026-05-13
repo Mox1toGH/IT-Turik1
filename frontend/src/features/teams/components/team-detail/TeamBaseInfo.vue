@@ -138,15 +138,15 @@ import UiCard from '@/components/ui/UiCard.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import { useLeaveTeam, useSendJoinRequest } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { truncateText } from '@/lib/utils'
-import { useProfile } from '@/api/queries/accounts'
+import type { Team } from '@/api/.ts.schemas'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
   loading: boolean
   loadingError?: boolean
   isCaptain: boolean
@@ -154,7 +154,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification, hideNotification } = useNotification()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const emit = defineEmits<{
   (e: 'deleted'): void
@@ -169,23 +169,20 @@ const captainName = computed(() => {
 const canLeaveTeam = computed(() => props.team?.is_member && !props.isCaptain)
 
 // ── Join Request ────────────────────────────────────────────────────
-const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useSendJoinRequest()
+const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useCreateTeamJoinRequest()
 const sendJoinRequest = () => {
   if (!props.team) return
   hideNotification()
 
   sendJoinRequestMutate(
-    { id: props.team?.id },
+    { id: props.team?.id, data: { detail: '' } },
     {
       onSuccess: () => {
         emit('deleted')
         showNotification('Join request sent.', 'success')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to send join request.' : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -198,16 +195,13 @@ const leaveTeam = () => {
   hideNotification()
 
   leaveTeamMutate(
-    { id: props.team.id },
+    { id: props.team.id, data: { detail: '' } },
     {
       onSuccess: () => {
         emit('leave')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to leave team.' : 'Unable to connect to server.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )

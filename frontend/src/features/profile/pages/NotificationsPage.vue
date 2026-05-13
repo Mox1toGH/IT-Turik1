@@ -17,10 +17,10 @@
             >
               Mark all read
             </ui-button>
-            <ui-button 
-              variant="danger" 
-              size="sm" 
-              @click="handleDeleteAll" 
+            <ui-button
+              variant="danger"
+              size="sm"
+              @click="handleDeleteAll"
               :disabled="!hasNotifications || isDeletingAll"
             >
               Delete all
@@ -57,13 +57,13 @@
               <button
                 v-if="getRedirectUrl(notification)"
                 class="redirect-btn"
-                @click.stop="handleNotificationClick(notification, $event)"
+                @click.stop="handleNotificationClick(notification)"
                 title="Go to page"
               >
                 <external-link-icon class="icon" />
               </button>
-              <button 
-                class="delete-btn" 
+              <button
+                class="delete-btn"
                 @click.stop="handleDelete(notification.id)"
                 title="Delete notification"
               >
@@ -131,22 +131,27 @@ import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal.vue'
-import { 
-  useNotifications, 
-  useMarkAsRead, 
-  useMarkAllAsRead,
-  useDeleteNotification,
-  useDeleteAllNotifications
-} from '@/api/queries/notifications'
 import { useNotification } from '@/composables/useNotification'
+import {
+  useDeleteAllNotifications,
+  useDeleteNotification,
+  useListNotifications,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+} from '@/api/notifications/notifications'
+import type { Notification } from '@/api/.ts.schemas'
 
 const isSettingsModalOpen = ref(false)
 const page = ref(1)
 const router = useRouter()
 
-const { data: notificationsData, isLoading, error } = useNotifications({ page })
-const { mutate: markAsRead } = useMarkAsRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
+const {
+  data: notificationsData,
+  isLoading,
+  error,
+} = useListNotifications(computed(() => ({ page: page.value })))
+const { mutate: markAsRead } = useMarkNotificationRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 const { showNotification } = useNotification()
@@ -157,7 +162,7 @@ const confirmModalConfig = ref({
   title: '',
   message: '',
   onConfirm: () => {},
-  confirmVariant: 'danger' as const
+  confirmVariant: 'danger' as const,
 })
 
 const hasUnread = computed(() => {
@@ -182,14 +187,17 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead({ id })
+  markAsRead({ id, data: { detail: '' } })
 }
 
 const handleMarkAllRead = () => {
-  markAllAsRead(undefined, {
-    onSuccess: () => showNotification('All notifications marked as read', 'success'),
-    onError: () => showNotification('Failed to mark notifications as read', 'error'),
-  })
+  markAllAsRead(
+    { data: { marked: 0 } },
+    {
+      onSuccess: () => showNotification('All notifications marked as read', 'success'),
+      onError: () => showNotification('Failed to mark notifications as read', 'error'),
+    },
+  )
 }
 
 const handleDelete = (id: number) => {
@@ -198,17 +206,20 @@ const handleDelete = (id: number) => {
     message: 'Are you sure you want to delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification({ id }, {
-        onSuccess: () => {
-          showNotification('Notification deleted', 'success')
-          isConfirmModalOpen.value = false
+      deleteNotification(
+        { id },
+        {
+          onSuccess: () => {
+            showNotification('Notification deleted', 'success')
+            isConfirmModalOpen.value = false
+          },
+          onError: (err) => {
+            console.error('Failed to delete notification:', err)
+            showNotification('Failed to delete notification', 'error')
+          },
         },
-        onError: (err) => {
-          console.error('Failed to delete notification:', err)
-          showNotification('Failed to delete notification', 'error')
-        }
-      })
-    }
+      )
+    },
   }
   isConfirmModalOpen.value = true
 }
@@ -227,14 +238,14 @@ const handleDeleteAll = () => {
         onError: (err) => {
           console.error('Failed to delete all notifications:', err)
           showNotification('Failed to delete notifications', 'error')
-        }
+        },
       })
-    }
+    },
   }
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: any, event: Event) => {
+const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
     handleMarkRead(notification.id)
   }
@@ -245,9 +256,9 @@ const handleNotificationClick = (notification: any, event: Event) => {
   }
 }
 
-const getRedirectUrl = (notification: any) => {
+const getRedirectUrl = (notification: Notification) => {
   const type = notification.event_type
-  
+
   // Only invitations go to /teams — recipient hasn't joined yet
   if (type === 'team_invitation_received') {
     return '/teams'

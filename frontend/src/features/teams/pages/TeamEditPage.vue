@@ -45,19 +45,19 @@ import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
-import { useTeamInfo } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeam } from '@/api/teams/teams'
 
 const route = useRoute()
 const router = useRouter()
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const teamId = computed(() => Number(route.params.id))
-const { data: team, isLoading: isLoadingTeamInfo, isError } = useTeamInfo({ id: teamId.value })
+const { data: team, isLoading: isLoadingTeamInfo, isError } = useGetTeam(teamId.value)
 
 watchEffect(() => {
   if (user.value && team.value) {

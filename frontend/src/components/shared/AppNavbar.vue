@@ -124,16 +124,16 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiButton from '../ui/UiButton.vue'
 import { useUserStore } from '@/stores/user'
-import { useProfile } from '@/api/queries/accounts'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
 const route = useRoute()
 const router = useRouter()
 const store = useUserStore()
 const mobileMenuOpen = ref(false)
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isJury = computed(() => user.value?.role === 'jury')

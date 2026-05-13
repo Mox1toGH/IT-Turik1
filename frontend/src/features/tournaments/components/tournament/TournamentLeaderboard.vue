@@ -107,21 +107,21 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { parseApiError } from '@/api/errors'
-import { useTournamentRounds } from '@/api/queries/tournaments'
-import { useRoundLeaderboard, useTournamentLeaderboard } from '@/api/queries/evaluation'
-import type {
-  GetRoundLeaderboardResponse,
-  GetTournamentLeaderboardResponse,
-} from '@/api/services/evaluation/types'
 import UiButton from '@/components/ui/UiButton.vue'
+import { useListRounds } from '@/api/tournaments/tournaments'
+import {
+  useGetRoundLeaderboard,
+  useGetTournamentLeaderboard,
+  type GetRoundLeaderboardQueryResult,
+  type GetTournamentLeaderboardQueryResult,
+} from '@/api/evaluation/evaluation'
 
 interface Props {
   tournamentId: number
 }
 
-type RoundEntry = GetRoundLeaderboardResponse['rankings'][number]
-type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
+type RoundEntry = GetRoundLeaderboardQueryResult['rankings'][number]
+type TournamentEntry = GetTournamentLeaderboardQueryResult['rankings'][number]
 
 const props = defineProps<Props>()
 const tournamentId = computed(() => props.tournamentId)
@@ -133,7 +133,7 @@ const {
   data: roundsData,
   isLoading: isLoadingRounds,
   isError: isRoundsError,
-} = useTournamentRounds({ id: tournamentId })
+} = useListRounds(tournamentId)
 const rounds = computed(() => roundsData.value ?? [])
 
 const roundOptions = computed(() => {
@@ -143,7 +143,7 @@ const roundOptions = computed(() => {
   options.push(
     ...rounds.value
       .filter((round) => round.status === 'submission_closed' || round.status === 'evaluated')
-      .map((round) => ({ label: round.name, value: round.id })),
+      .map((round) => ({ label: round.name as string, value: round.id as number })),
   )
   return options
 })
@@ -153,18 +153,20 @@ const selectedRoundId = computed(() =>
   typeof selectedLeaderboardMode.value === 'number' ? selectedLeaderboardMode.value : null,
 )
 
-const tournamentQuery = useTournamentLeaderboard({ tournamentId }, { enabled: isAverageMode })
+const tournamentQuery = useGetTournamentLeaderboard(tournamentId, {
+  query: { enabled: isAverageMode },
+})
 
-const roundQuery = useRoundLeaderboard(
-  { roundId: computed(() => selectedRoundId.value ?? 0) },
-  { enabled: computed(() => !isAverageMode.value && !!selectedRoundId.value) },
+const roundQuery = useGetRoundLeaderboard(
+  computed(() => selectedRoundId.value ?? 0),
+  { query: { enabled: computed(() => !isAverageMode.value && !!selectedRoundId.value) } },
 )
 
 const activeQuery = computed(() => (isAverageMode.value ? tournamentQuery : roundQuery))
 
 const isLoading = computed(() => activeQuery.value.isLoading.value)
 const isError = computed(() => activeQuery.value.isError.value)
-const error = computed(() => parseApiError(activeQuery.value.error.value))
+const error = computed(() => activeQuery.value.error.value)
 
 const isSnapshot = computed(() =>
   isAverageMode.value
@@ -172,7 +174,7 @@ const isSnapshot = computed(() =>
     : !!roundQuery.data.value?.is_snapshot,
 )
 
-const rankings = computed<(RoundEntry | TournamentEntry)[]>(() => {
+const rankings = computed(() => {
   if (isAverageMode.value) return (tournamentQuery.data.value?.rankings ?? []) as TournamentEntry[]
   return (roundQuery.data.value?.rankings ?? []) as RoundEntry[]
 })

@@ -78,15 +78,14 @@
 </template>
 
 <script setup lang="ts">
-import type { RoundId, RoundStatus, TournamentId } from '@/api/dbTypes'
-import { parseApiError } from '@/api/errors'
-import { useProfile } from '@/api/queries/accounts'
+import type { StatusE43Enum } from '@/api/.ts.schemas'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 import {
-  useCloseSubmissions,
+  useCloseRoundSubmissions,
   useDeleteRound,
-  useMarkEvaluated,
+  useMarkRoundEvaluated,
   useStartRound,
-} from '@/api/queries/tournaments'
+} from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
@@ -95,9 +94,9 @@ import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
 import { ref } from 'vue'
 
 interface Props {
-  roundId: RoundId
-  tournamentId: TournamentId
-  status: RoundStatus
+  roundId: number
+  tournamentId: number
+  status: StatusE43Enum
 }
 
 const props = defineProps<Props>()
@@ -105,11 +104,11 @@ const { showNotification } = useNotification()
 
 const showDeleteModal = ref(false)
 
-const { data: profile } = useProfile()
-const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
+const { data: profile } = useGetUserProfile()
+const { mutate: deleteRound } = useDeleteRound()
 const { mutate: startRound } = useStartRound()
-const { mutate: closeSubmissions } = useCloseSubmissions()
-const { mutate: markEvaluated } = useMarkEvaluated()
+const { mutate: closeSubmissions } = useCloseRoundSubmissions()
+const { mutate: markEvaluated } = useMarkRoundEvaluated()
 
 function handleDeleteRound() {
   deleteRound(
@@ -118,8 +117,7 @@ function handleDeleteRound() {
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -128,12 +126,11 @@ function handleDeleteRound() {
 function handleStartRound() {
   startRound(
     {
-      roundId: props.roundId,
+      id: props.roundId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -142,12 +139,11 @@ function handleStartRound() {
 function handleCloseSubmissions() {
   closeSubmissions(
     {
-      roundId: props.roundId,
+      id: props.roundId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -156,12 +152,11 @@ function handleCloseSubmissions() {
 function handleMarkEvaluated() {
   markEvaluated(
     {
-      roundId: props.roundId,
+      id: props.roundId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )

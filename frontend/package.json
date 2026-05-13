@@ -14,7 +14,8 @@
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "generate-api": "orval"
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.96.2",
@@ -43,6 +44,7 @@
     "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
     "npm-run-all2": "^8.0.4",
+    "orval": "^7.4.0",
     "oxlint": "~1.51.0",
     "prettier": "3.8.1",
     "typescript": "~5.9.3",

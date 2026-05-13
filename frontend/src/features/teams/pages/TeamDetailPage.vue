@@ -164,31 +164,31 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useTeamInfo } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { truncateText } from '@/lib/utils'
-import { useActiveTeamTournament } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeam } from '@/api/teams/teams'
+import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 
 const router = useRouter()
 const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
-const { data: user, isLoading: isProfileLoading } = useProfile()
+const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
 const {
   data: team,
   isLoading: isInfoLoading,
   isLoadingError: isInfoLoadingError,
-} = useTeamInfo({ id: teamId })
+} = useGetTeam(teamId)
 
-const { data: activeTournament } = useActiveTeamTournament(
-  { id: teamId },
+const { data: activeTournament } = useGetTeamActiveTournament(
+  { team_id: teamId },
   {
-    enabled: team.value?.is_in_active_tournament,
+    query: { enabled: team.value?.is_in_active_tournament },
   },
 )
 

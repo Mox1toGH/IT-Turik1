@@ -67,7 +67,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -75,15 +74,11 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useUserStore } from '@/stores/user'
-import { useLogin } from '@/api/queries/accounts'
-import { useQueryClient } from '@tanstack/vue-query'
-import { accountKeys } from '@/api/queries/keys'
-import type { LoginResponse } from '@/api/services/accounts/types'
-import { parseApiError } from '@/api/errors'
+import { useLogin } from '@/api/accounts/accounts'
 import { useForm } from '@/composables/useForm'
 import { LoginSchema } from '@/schemas/auth.schema'
+import type { LoginResponse } from '@/api/.ts.schemas'
 
-const queryClient = useQueryClient()
 const store = useUserStore()
 
 const form = useForm(LoginSchema, { username: '', password: '' })
@@ -94,26 +89,20 @@ const saveAndRedirect = (data: LoginResponse) => {
   router.push('/')
 }
 
-const { mutate: login, isPending, error: loginError } = useLogin()
-const error = computed(() => parseApiError(loginError.value))
+const { mutate: login, isPending, error } = useLogin()
 
 const handleLogin = async () => {
   if (!form.validate()) return
 
   login(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
       onSuccess: (data) => {
         saveAndRedirect(data)
-        queryClient.invalidateQueries({ queryKey: accountKeys.profile() })
       },
     },
   )
 }
-// We do this to reset AppNavbar state
-// Like if we get 401 error and redirected to login
-// We need to refetch profile to show Login and Register buttons
-onMounted(() => queryClient.resetQueries({ queryKey: accountKeys.profile() }))
 </script>
 
 <style scoped>

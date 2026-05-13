@@ -1,4 +1,4 @@
-import type { RoundStatus, TournamentStatus } from '@/api/dbTypes'
+import type { StatusD67Enum, StatusE43Enum } from '@/api/.ts.schemas'
 import type { Variants } from '@/components/ui/UiBadge.vue'
 
 export function truncateText(text: string, maxLength: number) {
@@ -7,7 +7,7 @@ export function truncateText(text: string, maxLength: number) {
   return text
 }
 
-export const tournamentStatusBadge = (status?: TournamentStatus): Variants => {
+export const tournamentStatusBadge = (status?: StatusD67Enum): Variants => {
   if (status === 'draft') return 'gray'
   if (status === 'finished') return 'red'
   if (status === 'running') return 'green'
@@ -16,7 +16,7 @@ export const tournamentStatusBadge = (status?: TournamentStatus): Variants => {
   return 'gray'
 }
 
-export const roundStatusBadge = (status?: RoundStatus): Variants => {
+export const roundStatusBadge = (status?: StatusE43Enum): Variants => {
   if (status === 'active') return 'primary'
   if (status === 'evaluated') return 'red'
   if (status === 'submission_closed') return 'orange'

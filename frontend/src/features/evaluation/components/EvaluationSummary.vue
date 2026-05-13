@@ -38,13 +38,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EvaluationData, RoundCriterion } from '@/api/services/evaluation/types'
 import UiProgressBar from '@/components/ui/UiProgressBar.vue'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
+import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
 
 interface Props {
-  evaluation: EvaluationData
-  criteria: RoundCriterion[]
+  evaluation: JuryAssignment['evaluation']
+  criteria: Criterion[]
 }
 
 const props = defineProps<Props>()

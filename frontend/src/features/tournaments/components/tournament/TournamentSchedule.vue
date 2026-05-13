@@ -48,12 +48,12 @@
                 <p>{{ event.title }}</p>
                 <LargeTextModal
                   title="Event description"
-                  :text="event.description"
+                  :text="event.description ?? '-'"
                   max-length="100"
                 >
                   <template #trigger>
                     <p class="event-description">
-                      {{ truncateText(event.description, 100) }}
+                      {{ truncateText(event.description ?? '-', 100) }}
                     </p>
                   </template>
                 </LargeTextModal>
@@ -82,7 +82,7 @@
         :tournament-id="props.tournamentId"
         :event-id="selectedEvent.id"
         :event-title="selectedEvent.title"
-        :event-description="selectedEvent.description"
+        :event-description="selectedEvent.description ?? '-'"
         :event-start-date="selectedEvent.start_datetime"
       />
 
@@ -102,36 +102,36 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
-import type { TournamentEvent } from '@/api/dbTypes'
 import EditEventModal from './modals/EditEventModal.vue'
-import { useProfile } from '@/api/queries/accounts'
 import DeleteEventModal from './modals/DeleteEventModal.vue'
 import AddEventModal from './modals/AddEventModal.vue'
-import { useTournamentEvents } from '@/api/queries/tournaments'
 import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { Event } from '@/api/.ts.schemas'
+import { useListEvents } from '@/api/tournaments/tournaments'
 
 interface Props {
   tournamentId: number
 }
 
 const props = defineProps<Props>()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
 
-const selectedEvent = ref<TournamentEvent | null>(null)
+const selectedEvent = ref<Event | null>(null)
 
-const openEditModal = (event: TournamentEvent) => {
+const openEditModal = (event: Event) => {
   selectedEvent.value = event
   isEditOpen.value = true
 }
 
-const openDeleteModal = (event: TournamentEvent) => {
+const openDeleteModal = (event: Event) => {
   selectedEvent.value = event
   isDeleteOpen.value = true
 }
@@ -140,7 +140,7 @@ const {
   data: events,
   isLoading: isEventsLoading,
   isError: isEventsError,
-} = useTournamentEvents({ tournamentId: props.tournamentId })
+} = useListEvents({ tournament: props.tournamentId })
 </script>
 
 <style scoped>

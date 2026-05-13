@@ -2,7 +2,7 @@
   <ui-card :is-error="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ error?.code }})</p>
+        <p>Error while fetching invitations (code: {{ invitationsError?.code }})</p>
       </div>
     </template>
 
@@ -89,14 +89,16 @@
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useInvitations, useRespondToInvitation } from '@/api/queries/teams'
-import type { InvitationId } from '@/api/dbTypes'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { parseApiError } from '@/api/errors'
+import {
+  useAcceptTeamInvitation,
+  useDeclineTeamInvitation,
+  useListTeamInvitations,
+} from '@/api/teams/teams'
 
 const { showNotification } = useNotification()
 
@@ -105,30 +107,28 @@ const {
   isLoading: inboxLoading,
   isLoadingError,
   error: invitationsError,
-} = useInvitations()
-const error = computed(() => parseApiError(invitationsError.value))
+} = useListTeamInvitations()
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
 )
 
-const { mutate: respond } = useRespondToInvitation()
+const { mutate: accept } = useAcceptTeamInvitation()
+const { mutate: decline } = useDeclineTeamInvitation()
 
-const loadingIds = ref<Set<InvitationId>>(new Set())
+const loadingIds = ref<Set<number>>(new Set())
 
-const respondToInvitation = (invitationId: InvitationId, action: 'accept' | 'decline') => {
+const respondToInvitation = (invitationId: number, action: 'accept' | 'decline') => {
   loadingIds.value.add(invitationId)
-  respond(
-    { id: invitationId, action },
+  const mutate = action === 'accept' ? accept : decline
+  mutate(
+    { invitationId: invitationId },
     {
       onSuccess: () => {
-        showNotification(
-          action === 'accept' ? 'Invitation accepted.' : 'Invitation declined.',
-          'success',
-        )
+        showNotification('Invitation accepted.', 'success')
       },
-      onError: (err) => {
-        showNotification(parseApiError(err)?.message, 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
       onSettled: () => {
         loadingIds.value.delete(invitationId)

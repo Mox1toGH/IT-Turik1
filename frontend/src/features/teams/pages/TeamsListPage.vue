@@ -42,12 +42,12 @@ import UiCard from '@/components/ui/UiCard.vue'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
-import { useTeams } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import { useListTeams } from '@/api/teams/teams'
 
-const { data: teams, isLoading: isLoadingTeams } = useTeams()
+const { data: teams, isLoading: isLoadingTeams } = useListTeams()
 </script>
 
 <style scoped>

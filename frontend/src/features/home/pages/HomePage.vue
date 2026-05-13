@@ -17,7 +17,7 @@
 
       <template #error>
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching tournaments (code: {{ error?.code }})</p>
+          <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
         </div>
       </template>
 
@@ -173,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -182,13 +182,12 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
-import { parseApiError } from '@/api/errors'
 import { tournamentStatusBadge, truncateText } from '@/lib/utils'
-import { useProfile } from '@/api/queries/accounts'
-import { useTournaments } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
-import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
+import type { ListTournamentsParams, StatusD67Enum } from '@/api/.ts.schemas'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const statusOptions = computed(() => {
   const base = [
@@ -206,22 +205,17 @@ const pageSize = 12
 const currentPage = ref(1)
 const searchInput = ref('')
 const searchQuery = ref('')
-const statusFilter = ref<NonNullable<GetTournamentsArgs['status']>>([])
+const statusFilter = ref<NonNullable<Array<StatusD67Enum>>>([])
 
-const { data: user } = useProfile()
-const {
-  data,
-  isLoading,
-  isFetching,
-  error: tournamentsError,
-  isError,
-} = useTournaments(
-  { page: currentPage, searchQuery, pageSize, status: statusFilter },
-  {
-    staleTime: 1000 * 60 * 5,
-  },
-)
-const error = computed(() => parseApiError(tournamentsError.value))
+const { data: user } = useGetUserProfile()
+const params = computed(() => ({
+  page: currentPage.value,
+  searchQuery: searchQuery.value,
+  pageSize,
+  status: statusFilter.value,
+})) as unknown as Ref<ListTournamentsParams>
+
+const { data, isLoading, isError, isFetching, error: tournamentsError } = useListTournaments(params)
 
 const pageItems = computed(() => data.value?.data ?? [])
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / pageSize))

@@ -94,8 +94,8 @@ import TournamentSchedule from '../components/tournament/TournamentSchedule.vue'
 import TournamentRounds from '../components/tournament/TournamentRounds.vue'
 import JuryAssign from '../components/tournament/tournament-submissions/JuryAssign.vue'
 import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
-import { useProfile } from '@/api/queries/accounts'
 import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
@@ -103,7 +103,7 @@ const route = useRoute()
 const router = useRouter()
 const id = Number(route.params.id) || 1
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const currentSection = ref<Sections>('information')
 

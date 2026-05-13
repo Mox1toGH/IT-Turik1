@@ -53,13 +53,13 @@ import UiModal from '@/components/ui/UiModal.vue'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
-import { useDeleteAccount, useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import { useDeleteUserProfile, useGetUserProfile } from '@/api/accounts/accounts'
 
 const store = useUserStore()
-const { data: user, isLoading } = useProfile()
-const { mutate: deleteAccount, isPending: isDeleting } = useDeleteAccount()
+const { data: user, isLoading } = useGetUserProfile()
+const { mutate: deleteAccount, isPending: isDeleting } = useDeleteUserProfile()
 
 const router = useRouter()
 const { showNotification, hideNotification } = useNotification()
@@ -91,11 +91,8 @@ const handleDeleteAccount = async () => {
       store.logout()
       router.push('/login')
     },
-    onError: (err) => {
-      showNotification(
-        err.response ? 'Unable to delete account.' : 'Server connection error.',
-        'error',
-      )
+    onError: (error) => {
+      showNotification(error.message, 'error')
     },
   })
 }

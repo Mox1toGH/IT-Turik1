@@ -46,14 +46,13 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import { useNotification } from '@/composables/useNotification'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { computed, ref } from 'vue'
-import { useDeleteTeam } from '@/api/queries/teams'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { truncateText } from '@/lib/utils'
-
+import type { Team } from '@/api/.ts.schemas'
+import { useDeleteTeam } from '@/api/teams/teams'
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
   disabled?: boolean
 }
 
@@ -96,8 +95,8 @@ const handleDeleteTeam = async () => {
         closeDeleteModal()
         emit('deleted')
       },
-      onError: (err) => {
-        deleteError.value = err.response ? 'Unable to delete team.' : 'Server connection error.'
+      onError: (error) => {
+        deleteError.value = error.message
       },
     },
   )

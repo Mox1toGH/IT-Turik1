@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ error?.code }})</p>
+          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
         </div>
       </template>
 
@@ -143,21 +143,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
-import { useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { parseApiError } from '@/api/errors'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { formatDate } from '@/lib/date'
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
-const error = computed(() => parseApiError(profileError.value))
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
 
 const router = useRouter()
 const isDeleting = ref(false)
@@ -173,11 +172,6 @@ const goToEditProfile = () => {
 
 const goToNotifications = () => {
   router.push('/profile/notifications')
-}
-
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
 }
 </script>
 

@@ -130,18 +130,17 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUpdateTeamInfo } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
-
+import type { Team } from '@/api/.ts.schemas'
+import { useUpdateTeam } from '@/api/teams/teams'
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
   loading: boolean
   isError?: boolean
 }
@@ -160,22 +159,19 @@ const form = useForm(EditTeamSchema, {
 
 const isSavingChanges = ref(false)
 
-const { mutate: updateTeam } = useUpdateTeamInfo()
+const { mutate: updateTeam } = useUpdateTeam()
 
 const handleSubmit = () => {
   if (!props.team || !form.validate()) return
 
   updateTeam(
-    { teamId: props.team.id, body: form.fields.value },
+    { id: props.team.id, data: form.fields.value },
     {
       onSuccess: () => {
         router.push(`/teams/${props.team?.id}`)
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to update team.' : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )

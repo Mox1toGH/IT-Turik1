@@ -100,7 +100,7 @@
               v-if="isLoadingError"
               style="display: flex; height: 120px; justify-content: center; align-items: center"
             >
-              <p>Error while fetching role codes (code: {{ error?.code }})</p>
+              <p>Error while fetching role codes (code: {{ getRoleCodesError?.code }})</p>
             </div>
 
             <template v-else>
@@ -119,7 +119,7 @@
                   <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
                   <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
                   <template v-if="code.is_used">
-                    <p><strong>Used by:</strong> {{ code.used_by }}</p>
+                    <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
                     <p>
                       <strong>Used at:</strong>
                       {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
@@ -141,17 +141,20 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { RoleCodesUserRole } from '@/api/services/accounts/types'
-import { parseApiError } from '@/api/errors'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useGenerateCodes, useRoleCodes } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useNotification } from '@/composables/useNotification'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import type { RoleB96Enum } from '@/api/.ts.schemas'
+import {
+  useGenerateRoleActivationCodes,
+  useListRoleActivationCodes,
+  type GenerateRoleActivationCodesMutationBody,
+} from '@/api/accounts/accounts'
 
 interface Errors {
   role: string[]
@@ -159,11 +162,9 @@ interface Errors {
 }
 
 const forbidden = ref(false)
-const statusMessage = ref('')
-const statusType = ref('success')
 const errors = ref<Errors | null>(null)
 const restrictedRoles = ['jury', 'organizer', 'admin'] as const
-const selectedRoleFilter = ref<RoleCodesUserRole | 'all'>('all')
+const selectedRoleFilter = ref<RoleB96Enum | 'all'>('all')
 const generateForm = ref({
   role: 'jury',
   quantity: '1',
@@ -176,53 +177,41 @@ const {
   isLoading,
   isLoadingError,
   error: getRoleCodesError,
-} = useRoleCodes({
-  filter: computed(() => ({ role: selectedRoleFilter.value })),
-})
-const error = computed(() => parseApiError(getRoleCodesError.value))
+} = useListRoleActivationCodes(computed(() => ({ role: selectedRoleFilter.value })))
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)
 
 watch(getRoleCodesError, (err) => {
   if (err) {
-    if (err.response?.status === 403) {
+    if (err._axiosError?.status === 403) {
       forbidden.value = true
       return
     }
-
-    statusType.value = 'error'
-    statusMessage.value = err.response
-      ? 'Unable to load activation codes.'
-      : 'Server connection error.'
   }
 })
 
-const { mutate: generateCodes, isPending: submitting } = useGenerateCodes()
+const { mutate: generateCodes, isPending: submitting } = useGenerateRoleActivationCodes()
 
 const handleGenerate = () => {
   generateCodes(
     {
-      body: {
+      data: {
         ...generateForm.value,
         quantity: parseInt(generateForm.value.quantity, 10),
-      },
+      } as GenerateRoleActivationCodesMutationBody,
     },
     {
       onSuccess: (data) => {
         showNotification(`Generated ${data.created?.length || 0} code(s) successfully.`, 'success')
       },
-      onError: (err) => {
-        if (err.response?.status === 403) {
+      onError: (error) => {
+        if (error._axiosError?.status === 403) {
           forbidden.value = true
           return
         }
 
-        if (err.response) {
-          showNotification(err.response.data.message as string, 'error')
-        } else {
-          showNotification('Unable to generate codes.', 'error')
-        }
+        showNotification(error.message, 'error')
       },
     },
   )

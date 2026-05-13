@@ -134,8 +134,10 @@
 </template>
 
 <script setup lang="ts">
-import { parseApiError } from '@/api/errors'
-import type { CreateTournamentBody } from '@/api/services/tournaments/types'
+import {
+  useCreateTournament,
+  type CreateTournamentMutationBody,
+} from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
@@ -144,7 +146,6 @@ import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
-import { useCreateTournament } from '@/api/queries/tournaments'
 import { CreateTournamentSchema } from '@/schemas/tournaments.schema'
 import { unref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -179,14 +180,14 @@ const apiToFormFieldMap: Record<string, keyof Form> = {
   end_date: 'endDate',
 }
 
-function toPayload(values: Form): CreateTournamentBody {
+function toPayload(values: Form): CreateTournamentMutationBody {
   return {
     name: values.name,
     description: values.description,
     max_teams: values.max_teams,
     min_team_members: values.min_team_members,
-    start_date: combineDateAndTime(values.startDate, values.startTime),
-    end_date: combineDateAndTime(values.endDate, values.endTime),
+    start_date: combineDateAndTime(values.startDate, values.startTime).toISOString(),
+    end_date: combineDateAndTime(values.endDate, values.endTime).toISOString(),
   }
 }
 
@@ -197,7 +198,7 @@ const handleSubmit = () => {
 
   createTournament(
     {
-      body: toPayload(values),
+      data: toPayload(values),
     },
     {
       onSuccess() {
@@ -205,9 +206,7 @@ const handleSubmit = () => {
       },
 
       onError: (error) => {
-        const parsedError = parseApiError(error)
-
-        for (const [apiField, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [apiField, errors] of Object.entries(error?.details || {})) {
           const formField = apiToFormFieldMap[apiField] ?? apiField
           form.setError(formField as keyof Form, errors?.[0] ?? 'Invalid value')
         }

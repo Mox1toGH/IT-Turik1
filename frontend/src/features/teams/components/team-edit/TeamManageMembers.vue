@@ -154,18 +154,19 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import type { User, UserId } from '@/api/dbTypes'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { computed, ref } from 'vue'
-import { useAddMember, useRemoveMember, useTeamInvitations } from '@/api/queries/teams'
-import { useUsers } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-
-export type Member = Pick<User, 'id' | 'username' | 'email' | 'full_name' | 'role'>
+import type { Team, TeamMember } from '@/api/.ts.schemas'
+import {
+  useInviteMemberToTeam,
+  useListTeamInvitationsByTeam,
+  useRemoveMemberFromTeam,
+} from '@/api/teams/teams'
+import { useListUsers } from '@/api/accounts/accounts'
 
 interface Props {
-  team: GetTeamInfoResponse
+  team: Team
   loading: boolean
   isError?: boolean
 }
@@ -173,14 +174,14 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: users, isLoading: isLoadingUsers } = useUsers()
-const { data: invitations, isLoading: isLoadingInvitations } = useTeamInvitations({
-  teamId: props.team.id,
-})
+const { data: users, isLoading: isLoadingUsers } = useListUsers()
+const { data: invitations, isLoading: isLoadingInvitations } = useListTeamInvitationsByTeam(
+  props.team.id,
+)
 
 const memberSearch = ref('')
 const addMemberSelection = ref<number | null>(null)
-const kickLoadingIds = ref<Set<UserId>>(new Set())
+const kickLoadingIds = ref<Set<number>>(new Set())
 
 const availableUsers = computed(() => {
   const currentIds = new Set(props.team?.members.map((member) => member.id))
@@ -206,24 +207,21 @@ const userOptions = computed(() => [
 ])
 
 // ── Remove member ─────────────────────────────────────────────
-const { mutate: removeMemberMutate } = useRemoveMember()
+const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
-const removeMember = (member: Member) => {
+const removeMember = (member: TeamMember) => {
   if (!props.team) return
   if (member.id === props.team.captain_id) return
   kickLoadingIds.value.add(member.id)
 
   removeMemberMutate(
-    { teamId: props.team.id, memberId: member.id },
+    { id: props.team.id, userId: member.id },
     {
       onSuccess: () => {
         showNotification('Member removed.', 'success')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to delete team member.' : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
       onSettled: () => {
         kickLoadingIds.value.delete(member.id)
@@ -233,7 +231,7 @@ const removeMember = (member: Member) => {
 }
 
 // ── Add member ────────────────────────────────────────────────
-const { mutate: addMemberMutate, isPending: addMemberLoading } = useAddMember()
+const { mutate: addMemberMutate, isPending: addMemberLoading } = useInviteMemberToTeam()
 
 const addMember = () => {
   if (!props.team) return
@@ -244,17 +242,14 @@ const addMember = () => {
   }
 
   addMemberMutate(
-    { teamId: props.team.id, body: { user_id: Number(addMemberSelection.value) } },
+    { id: props.team.id, data: { user_id: Number(addMemberSelection.value) } },
     {
       onSuccess: () => {
         addMemberSelection.value = null
         showNotification('Invitation sent.', 'success')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to add member.' : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )

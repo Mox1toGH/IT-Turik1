@@ -151,31 +151,27 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
-import type { RegisterResponse } from '@/api/services/accounts/types'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useRegister } from '@/api/queries/accounts'
-import type { UserRole } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
 import { useUserStore } from '@/stores/user'
-import { parseApiError } from '@/api/errors'
 import { useForm } from '@/composables/useForm'
 import { RegisterSchema } from '@/schemas/auth.schema'
-
-const router = useRouter()
+import type { RoleB96Enum } from '@/api/.ts.schemas'
+import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
+import { useRouter } from 'vue-router'
 
 interface Form {
   username: string
   full_name: string
   email: string
   password: string
-  role: UserRole
+  role: RoleB96Enum
   redeem_code: string
   phone: string
   city: string
@@ -193,13 +189,14 @@ const form = useForm<Form>(RegisterSchema, {
 })
 const { showNotification } = useNotification()
 const storage = useUserStore()
+const router = useRouter()
 
-const { mutate: register, isPending: isLoading, isSuccess } = useRegister()
+const { mutate: register, isPending: isLoading, isSuccess } = useRegisterUser()
 
 const restrictedRoles = ['jury', 'organizer', 'admin']
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
 
-const saveTokensAndRedirect = (data: RegisterResponse) => {
+const saveTokensAndRedirect = (data: GoogleAuthMutationResult) => {
   storage.setTokens(data)
   router.push('/')
 }
@@ -208,15 +205,14 @@ const handleRegister = () => {
   if (!form.validate()) return
 
   register(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
-      onError: (err) => {
-        const parsedError = parseApiError(err)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+      onError: (error) => {
+        for (const [field, errors] of Object.entries(error.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        showNotification(parsedError?.message, 'error')
+        showNotification(error.message, 'error')
       },
     },
   )

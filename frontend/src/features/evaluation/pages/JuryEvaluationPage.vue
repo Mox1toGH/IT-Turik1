@@ -63,21 +63,22 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAssignments } from '@/api/queries/evaluation'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
+import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 
 const selectedRounds = ref<string[]>([])
 
-const { data: assignments, isLoading, isError, refetch } = useAssignments()
+const { data: assignments, isLoading, isError, refetch } = useListJuryAssignments()
 
 const roundOptions = computed(() => {
   const unique = new Map<string, string>()
-  ;(assignments.value ?? []).forEach((assignment) => {
-    unique.set(String(assignment.round_details.id), assignment.round_details.name)
+
+  assignments.value?.forEach((assignment) => {
+    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? '')
   })
 
   return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
