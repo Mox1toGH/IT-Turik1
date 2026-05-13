@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from points.models import PointsTransaction, UserPointsBalance
-from shop.models import Category, Order, Product
+from shop.models import Category, Order, Product, UserDigitalInventory
 
 
 class ShopApiTests(APITestCase):
@@ -154,7 +154,7 @@ class ShopApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Order.objects.count(), 0)
 
-    def test_purchase_rejects_digital_product_for_now(self):
+    def test_purchase_digital_product_creates_inventory_item(self):
         digital = Product.objects.create(
             name='Digital Badge',
             description='Digital',
@@ -162,6 +162,7 @@ class ShopApiTests(APITestCase):
             stock_quantity=10,
             category=self.category,
             product_type=Product.TYPE_DIGITAL,
+            digital_asset_url='/avatar-frames/fire-tongues.svg',
             is_active=True,
         )
         UserPointsBalance.objects.create(user=self.user, balance=500)
@@ -173,8 +174,56 @@ class ShopApiTests(APITestCase):
             format='json',
         )
 
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(UserDigitalInventory.objects.filter(user=self.user, product=digital).exists())
+
+    def test_purchase_digital_product_rejects_duplicate_ownership(self):
+        digital = Product.objects.create(
+            name='Digital Border',
+            description='Digital',
+            price=8,
+            stock_quantity=10,
+            category=self.category,
+            product_type=Product.TYPE_DIGITAL,
+            digital_asset_url='/avatar-frames/fire-tongues.svg',
+            is_active=True,
+        )
+        UserPointsBalance.objects.create(user=self.user, balance=500)
+        UserDigitalInventory.objects.create(user=self.user, product=digital)
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.purchase_url,
+            {'product_id': digital.id, 'quantity': 1},
+            format='json',
+        )
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(Order.objects.count(), 0)
+
+    def test_my_inventory_and_equip(self):
+        digital = Product.objects.create(
+            name='Digital Flame',
+            description='Digital',
+            price=8,
+            stock_quantity=10,
+            category=self.category,
+            product_type=Product.TYPE_DIGITAL,
+            digital_asset_url='/avatar-frames/fire-tongues.svg',
+            is_active=True,
+        )
+        inventory = UserDigitalInventory.objects.create(user=self.user, product=digital)
+        self.client.force_authenticate(user=self.user)
+
+        inventory_url = reverse('shop-my-inventory')
+        equip_url = reverse('shop-inventory-equip')
+        list_response = self.client.get(inventory_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(list_response.data['count'], 1)
+
+        equip_response = self.client.post(equip_url, {'inventory_id': inventory.id}, format='json')
+        self.assertEqual(equip_response.status_code, status.HTTP_200_OK)
+        inventory.refresh_from_db()
+        self.assertTrue(inventory.is_equipped)
 
     def test_user_can_cancel_only_own_order_and_get_refund_and_stock_return(self):
         UserPointsBalance.objects.create(user=self.user, balance=300)

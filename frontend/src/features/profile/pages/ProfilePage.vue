@@ -19,6 +19,7 @@
           <div class="avatar-box">
             <user-avatar
               :avatar="user?.avatar"
+              :avatar-frame-url="user?.avatar_frame_url"
               :username="user?.username || 'user'"
               :full-name="user?.full_name || ''"
               :size="108"
@@ -154,6 +155,7 @@
           Transaction History
         </ui-button>
         <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary">My Shop Orders</ui-button>
+        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary">Digital Inventory</ui-button>
       </div>
 
       <div class="actions">

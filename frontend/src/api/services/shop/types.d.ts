@@ -28,10 +28,19 @@ export interface ShopProduct {
   stock_quantity: number
   category: ShopCategory
   product_type: ShopProductType
+  digital_asset_url?: string
   images: ShopProductImage[]
   is_active: boolean
   is_available: boolean
   created_at: string
+  updated_at: string
+}
+
+export interface DigitalInventoryItem {
+  id: number
+  product: ShopProduct
+  is_equipped: boolean
+  acquired_at: string
   updated_at: string
 }
 

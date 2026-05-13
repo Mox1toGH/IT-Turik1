@@ -26,6 +26,7 @@ class Product(models.Model):
     stock_quantity = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products')
     product_type = models.CharField(max_length=16, choices=TYPE_CHOICES, default=TYPE_PHYSICAL)
+    digital_asset_url = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -78,3 +79,29 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Order {self.id} by {self.user_id}'
+
+
+class UserDigitalInventory(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='digital_inventory',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='owned_by_users',
+        limit_choices_to={'product_type': Product.TYPE_DIGITAL},
+    )
+    is_equipped = models.BooleanField(default=False)
+    acquired_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-acquired_at', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'product'], name='shop_inventory_user_product_unique'),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} owns {self.product_id}'

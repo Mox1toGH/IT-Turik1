@@ -119,6 +119,8 @@ export const shopKeys = {
   myOrdersPrefix: () => [...shopKeys.all(), 'my-orders'] as const,
   myOrders: (args: { page: number; pageSize: number }) =>
     [...shopKeys.myOrdersPrefix(), args] as const,
+  myInventoryPrefix: () => [...shopKeys.all(), 'my-inventory'] as const,
+  myInventory: () => [...shopKeys.myInventoryPrefix(), 'list'] as const,
   adminCategoriesPrefix: () => [...shopKeys.all(), 'admin-categories'] as const,
   adminCategories: (args: { page: number; pageSize: number }) =>
     [...shopKeys.adminCategoriesPrefix(), args] as const,

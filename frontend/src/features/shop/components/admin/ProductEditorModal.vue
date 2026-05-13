@@ -254,7 +254,9 @@ const selectedCategoryName = computed(() => {
   return props.categories.find((c) => c.id === Number(form.value.category_id))?.name || 'Category'
 })
 
-const existingCover = computed(() => props.product?.images?.[0]?.image || '')
+const existingCover = computed(
+  () => props.product?.images?.[0]?.image || props.product?.digital_asset_url || '',
+)
 const cover = computed(() => newPreviews.value[0] || existingCover.value)
 const isAvailable = computed(() => Number(form.value.stock_quantity || 0) > 0)
 

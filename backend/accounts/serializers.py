@@ -140,6 +140,7 @@ class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
     avatar = serializers.ImageField(read_only=True)
+    avatar_frame_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -152,11 +153,24 @@ class UserSerializer(serializers.ModelSerializer):
             'phone',
             'city',
             'avatar',
+            'avatar_frame_url',
             'created_at',
             'needs_onboarding',
             'teams',
         )
         read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
+
+    def get_avatar_frame_url(self, obj):
+        from shop.models import UserDigitalInventory
+
+        equipped_item = (
+            UserDigitalInventory.objects.select_related('product')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+        return equipped_item.product.digital_asset_url or None
 
     def get_teams(self, obj):
         return [
@@ -171,9 +185,23 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TeamUserListSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj):
+        from shop.models import UserDigitalInventory
+
+        equipped_item = (
+            UserDigitalInventory.objects.select_related('product')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+        return equipped_item.product.digital_asset_url or None
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

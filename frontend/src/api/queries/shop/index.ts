@@ -9,6 +9,7 @@ import type { ApiError } from '@/api/errors'
 import type {
   ShopCategory,
   ShopOrder,
+  DigitalInventoryItem,
   ShopPaginated,
   ShopProduct,
   UpdateOrderStatusBody,
@@ -93,6 +94,28 @@ export const useCancelMyShopOrder = () => {
       queryClient.invalidateQueries({ queryKey: shopKeys.myOrdersPrefix() })
       queryClient.invalidateQueries({ queryKey: ['points', 'my-balance'] })
       queryClient.invalidateQueries({ queryKey: ['points', 'my-transactions'] })
+    },
+  })
+}
+
+export const useMyDigitalInventory = (
+  config?: QueryConfig<ShopPaginated<DigitalInventoryItem>>,
+) => {
+  return useQuery<ShopPaginated<DigitalInventoryItem>, AxiosError<ApiError>>({
+    queryKey: shopKeys.myInventory(),
+    queryFn: () => $api.shop.getMyInventory(),
+    ...config,
+  })
+}
+
+export const useEquipDigitalInventoryItem = () => {
+  const queryClient = useQueryClient()
+  return useMutation<DigitalInventoryItem, AxiosError<ApiError>, { inventoryId: number }>({
+    mutationFn: ({ inventoryId }) => $api.shop.equipInventoryItem(inventoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: shopKeys.myInventoryPrefix() })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'profile'] })
+      queryClient.invalidateQueries({ queryKey: ['accounts', 'users'] })
     },
   })
 }

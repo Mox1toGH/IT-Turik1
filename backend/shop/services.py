@@ -3,17 +3,18 @@ from rest_framework.exceptions import ValidationError
 
 from points.models import PointsTransaction, UserPointsBalance
 
-from .models import Order, Product
+from .models import Order, Product, UserDigitalInventory
 
 
 @transaction.atomic
 def create_order_purchase(*, user, product_id, quantity):
     product = Product.objects.select_for_update().select_related('category').get(pk=product_id, is_active=True)
-
-    if product.product_type != Product.TYPE_PHYSICAL:
-        raise ValidationError({'product_type': 'Only physical products can be purchased at the moment.'})
-
-    if product.stock_quantity < quantity:
+    if product.product_type == Product.TYPE_DIGITAL:
+        if quantity != 1:
+            raise ValidationError({'quantity': 'Digital items can only be purchased in quantity of 1.'})
+        if UserDigitalInventory.objects.filter(user=user, product=product).exists():
+            raise ValidationError({'product_id': 'You already own this digital item.'})
+    elif product.stock_quantity < quantity:
         raise ValidationError({'quantity': 'Not enough stock available.'})
 
     total_cost = product.price * quantity
@@ -26,19 +27,23 @@ def create_order_purchase(*, user, product_id, quantity):
     if balance_obj.balance < total_cost:
         raise ValidationError({'balance': 'Insufficient points balance.'})
 
+    order_status = Order.STATUS_COMPLETED if product.product_type == Product.TYPE_DIGITAL else Order.STATUS_PENDING
     order = Order.objects.create(
         user=user,
         product=product,
         quantity=quantity,
         total_cost=total_cost,
-        status=Order.STATUS_PENDING,
+        status=order_status,
     )
 
     balance_obj.balance -= total_cost
     balance_obj.save(update_fields=['balance', 'updated_at'])
 
-    product.stock_quantity -= quantity
-    product.save(update_fields=['stock_quantity', 'updated_at'])
+    if product.product_type == Product.TYPE_PHYSICAL:
+        product.stock_quantity -= quantity
+        product.save(update_fields=['stock_quantity', 'updated_at'])
+    else:
+        UserDigitalInventory.objects.create(user=user, product=product)
 
     PointsTransaction.objects.create(
         user=user,
@@ -68,8 +73,16 @@ def cancel_order(*, order, cancelled_by):
     locked_order.status = Order.STATUS_CANCELLED
     locked_order.save(update_fields=['status', 'updated_at'])
 
-    product.stock_quantity += locked_order.quantity
-    product.save(update_fields=['stock_quantity', 'updated_at'])
+    if product.product_type == Product.TYPE_PHYSICAL:
+        product.stock_quantity += locked_order.quantity
+        product.save(update_fields=['stock_quantity', 'updated_at'])
+    else:
+        inventory_item = UserDigitalInventory.objects.filter(
+            user=locked_order.user,
+            product=product,
+        ).first()
+        if inventory_item is not None:
+            inventory_item.delete()
 
     balance_obj.balance += locked_order.total_cost
     balance_obj.save(update_fields=['balance', 'updated_at'])

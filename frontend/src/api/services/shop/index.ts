@@ -2,6 +2,7 @@ import { apiClient } from '@/api/client'
 import type {
   GetProductsArgs,
   PurchaseBody,
+  DigitalInventoryItem,
   ShopCategory,
   ShopOrder,
   ShopPaginated,
@@ -66,6 +67,20 @@ export const shopService = {
 
   async cancelMyOrder(orderId: number) {
     const { data } = await apiClient.post<ShopOrder>(`${prefix}/orders/my/${orderId}/cancel/`)
+    return data
+  },
+
+  async getMyInventory() {
+    const { data } = await apiClient.get<ShopPaginated<DigitalInventoryItem>>(`${prefix}/inventory/my/`, {
+      params: { page_size: 100 },
+    })
+    return data
+  },
+
+  async equipInventoryItem(inventoryId: number) {
+    const { data } = await apiClient.post<DigitalInventoryItem>(`${prefix}/inventory/equip/`, {
+      inventory_id: inventoryId,
+    })
     return data
   },
 

@@ -86,9 +86,23 @@ def get_user_join_request_status(*, team, user):
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj):
+        from shop.models import UserDigitalInventory
+
+        equipped_item = (
+            UserDigitalInventory.objects.select_related('product')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+        return equipped_item.product.digital_asset_url or None
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):

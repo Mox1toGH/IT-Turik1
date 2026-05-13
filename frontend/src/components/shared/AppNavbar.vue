@@ -38,6 +38,7 @@
             >
               <user-avatar
                 :avatar="user?.avatar"
+                :avatar-frame-url="user?.avatar_frame_url"
                 :username="user?.username || 'User'"
                 :full-name="user?.full_name || ''"
                 :size="34"

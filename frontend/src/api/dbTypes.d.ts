@@ -11,6 +11,7 @@ export interface User {
   phone: string
   city?: string
   avatar?: string | null
+  avatar_frame_url?: string | null
   created_at: Date
   needs_onboarding: boolean
   teams: Pick<Team, 'id' | 'name' | 'contact_telegram' | 'contact_discord'>[]

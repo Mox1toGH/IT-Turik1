@@ -57,11 +57,11 @@
             </template>
 
             <img
-              v-if="product.images[0]?.image"
-              :src="product.images[0].image"
+              v-if="product.images[0]?.image || product.digital_asset_url"
+              :src="product.images[0]?.image || product.digital_asset_url"
               class="thumb"
               alt="Product image"
-              @click="openImagePreview(product.images[0].image)"
+              @click="openImagePreview(product.images[0]?.image || product.digital_asset_url || '')"
             />
             <p class="price">{{ product.price }} pts</p>
             <p class="meta">{{ product.category.name }} | {{ product.product_type }}</p>
@@ -109,6 +109,14 @@
             class="detail-image"
             alt="Product image"
             @click="openImagePreview(image.image)"
+          />
+        </div>
+        <div class="image-row" v-else-if="activeProduct.digital_asset_url">
+          <img
+            :src="activeProduct.digital_asset_url"
+            class="detail-image"
+            alt="Product image"
+            @click="openImagePreview(activeProduct.digital_asset_url)"
           />
         </div>
         <p>{{ activeProduct.description || 'No description' }}</p>

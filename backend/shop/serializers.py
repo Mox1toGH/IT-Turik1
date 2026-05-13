@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Category, Order, Product, ProductImage
+from .models import Category, Order, Product, ProductImage, UserDigitalInventory
 
 User = get_user_model()
 
@@ -44,6 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'category',
             'category_id',
             'product_type',
+            'digital_asset_url',
             'images',
             'uploaded_images',
             'is_active',
@@ -54,6 +55,8 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at', 'is_available')
 
     def get_is_available(self, obj):
+        if obj.product_type == Product.TYPE_DIGITAL:
+            return bool(obj.is_active)
         return bool(obj.is_active and obj.stock_quantity > 0)
 
     def create(self, validated_data):
@@ -117,3 +120,16 @@ class AdminOrderStatusUpdateSerializer(serializers.Serializer):
         if value == Order.STATUS_CANCELLED:
             raise serializers.ValidationError('Use the cancel endpoint to cancel orders.')
         return value
+
+
+class DigitalInventoryItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = UserDigitalInventory
+        fields = ('id', 'product', 'is_equipped', 'acquired_at', 'updated_at')
+        read_only_fields = fields
+
+
+class EquipDigitalItemSerializer(serializers.Serializer):
+    inventory_id = serializers.IntegerField(min_value=1)
