@@ -76,8 +76,8 @@
           </label>
         </div>
 
-        <div v-if="form.product_type === 'digital'" class="row two">
-          <label class="field">
+        <div v-if="form.product_type === 'digital'" class="row" :class="{ two: mode === 'edit' }">
+          <label v-if="mode === 'edit'" class="field">
             <span class="label">Рамка аватара (існуюча)</span>
             <select v-model.number="form.avatar_frame_id" class="native-select">
               <option :value="undefined">Не вибрано</option>
@@ -89,7 +89,7 @@
           </label>
 
           <label class="field">
-            <span class="label">Або завантажити нову (.svg)</span>
+            <span class="label">{{ mode === 'create' ? 'Завантажити файл рамки (.svg)' : 'Або завантажити нову (.svg)' }}</span>
             <input
               class="native-file"
               type="file"
