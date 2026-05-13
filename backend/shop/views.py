@@ -9,9 +9,10 @@ from rest_framework.views import APIView
 
 from backend.permissions import is_platform_admin
 
-from .models import Category, Order, Product, UserDigitalInventory
+from .models import AvatarFrame, Category, Order, Product, UserDigitalInventory
 from .serializers import (
     AdminOrderStatusUpdateSerializer,
+    AvatarFrameSerializer,
     CategorySerializer,
     DigitalInventoryItemSerializer,
     EquipDigitalItemSerializer,
@@ -293,3 +294,18 @@ class UnequipDigitalInventoryItemView(APIView):
             DigitalInventoryItemSerializer(inventory_item, context={'request': request}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class AvatarFrameListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AvatarFrameSerializer
+    pagination_class = ShopPagination
+
+    def get_queryset(self):
+        queryset = AvatarFrame.objects.filter(is_active=True)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        return queryset.order_by('name')

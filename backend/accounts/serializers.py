@@ -164,13 +164,21 @@ class UserSerializer(serializers.ModelSerializer):
         from shop.models import UserDigitalInventory
 
         equipped_item = (
-            UserDigitalInventory.objects.select_related('product')
+            UserDigitalInventory.objects.select_related('product', 'product__avatar_frame')
             .filter(user=obj, is_equipped=True)
             .first()
         )
         if equipped_item is None:
             return None
-        return equipped_item.product.digital_asset_url or None
+
+        url = equipped_item.product.effective_digital_asset_url
+        if not url:
+            return None
+
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
 
     def get_teams(self, obj):
         return [
@@ -195,13 +203,13 @@ class TeamUserListSerializer(serializers.ModelSerializer):
         from shop.models import UserDigitalInventory
 
         equipped_item = (
-            UserDigitalInventory.objects.select_related('product')
+            UserDigitalInventory.objects.select_related('product', 'product__avatar_frame')
             .filter(user=obj, is_equipped=True)
             .first()
         )
         if equipped_item is None:
             return None
-        return equipped_item.product.digital_asset_url or None
+        return equipped_item.product.effective_digital_asset_url or None
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

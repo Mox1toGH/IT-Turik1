@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Category, Order, Product, ProductImage, UserDigitalInventory
+from .models import AvatarFrame, Category, Order, Product, ProductImage, UserDigitalInventory
 
 User = get_user_model()
 
@@ -11,6 +11,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = ProductImage
         fields = ('id', 'image', 'created_at')
         read_only_fields = ('id', 'created_at')
+
+
+class AvatarFrameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AvatarFrame
+        fields = ('id', 'name', 'svg_file', 'is_active', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at')
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,6 +30,14 @@ class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), source='category', write_only=True
+    )
+    avatar_frame = AvatarFrameSerializer(read_only=True)
+    avatar_frame_id = serializers.PrimaryKeyRelatedField(
+        queryset=AvatarFrame.objects.filter(is_active=True),
+        source='avatar_frame',
+        write_only=True,
+        required=False,
+        allow_null=True
     )
     images = ProductImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
@@ -44,7 +59,9 @@ class ProductSerializer(serializers.ModelSerializer):
             'category',
             'category_id',
             'product_type',
-            'digital_asset_url',
+            'avatar_frame',
+            'avatar_frame_id',
+            'digital_asset_url',  # kept for backward compatibility
             'images',
             'uploaded_images',
             'is_active',
@@ -73,6 +90,12 @@ class ProductSerializer(serializers.ModelSerializer):
             for image in uploaded_images:
                 ProductImage.objects.create(product=instance, image=image)
         return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.avatar_frame and instance.avatar_frame.svg_file:
+            data['digital_asset_url'] = instance.avatar_frame.svg_file.url
+        return data
 
 
 class PurchaseSerializer(serializers.Serializer):

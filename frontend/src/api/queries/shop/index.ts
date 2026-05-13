@@ -12,6 +12,7 @@ import type {
   DigitalInventoryItem,
   ShopPaginated,
   ShopProduct,
+  ShopAvatarFrame,
   UpdateOrderStatusBody,
   UpsertCategoryBody,
   UpsertProductBody,
@@ -95,6 +96,32 @@ export const useCancelMyShopOrder = () => {
       queryClient.invalidateQueries({ queryKey: ['points', 'my-balance'] })
       queryClient.invalidateQueries({ queryKey: ['points', 'my-transactions'] })
     },
+  })
+}
+
+export const useAvatarFrames = (
+  args: {
+    page?: MaybeRefOrGetter<number>
+    pageSize?: MaybeRefOrGetter<number>
+    search?: MaybeRefOrGetter<string>
+  } = {},
+  config?: QueryConfig<ShopPaginated<ShopAvatarFrame>>,
+) => {
+  return useQuery<ShopPaginated<ShopAvatarFrame>, AxiosError<ApiError>>({
+    queryKey: computed(() =>
+      shopKeys.avatarFrames({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 100,
+        search: toValue(args.search) ?? '',
+      }),
+    ),
+    queryFn: () =>
+      $api.shop.getAvatarFrames({
+        page: toValue(args.page) ?? 1,
+        pageSize: toValue(args.pageSize) ?? 100,
+        search: toValue(args.search) ?? '',
+      }),
+    ...config,
   })
 }
 

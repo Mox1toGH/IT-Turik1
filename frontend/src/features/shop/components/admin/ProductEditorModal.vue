@@ -77,14 +77,14 @@
         </div>
 
         <label v-if="form.product_type === 'digital'" class="field">
-          <span class="label">Digital asset URL</span>
-          <input
-            v-model.trim="form.digital_asset_url"
-            class="native-input"
-            type="url"
-            placeholder="/avatar-frames/aurora-pulse.svg"
-          />
-          <small v-if="errors.digital_asset_url" class="error">{{ errors.digital_asset_url }}</small>
+          <span class="label">Рамка аватара</span>
+          <select v-model.number="form.avatar_frame_id" class="native-select">
+            <option :value="undefined">Не вибрано</option>
+            <option v-for="frame in avatarFrames" :key="frame.id" :value="frame.id">
+              {{ frame.name }}
+            </option>
+          </select>
+          <small v-if="errors.avatar_frame_id" class="error">{{ errors.avatar_frame_id }}</small>
         </label>
 
         <label class="switcher">
@@ -172,13 +172,14 @@
 import { computed, ref, watch } from 'vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import type { ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
+import type { ShopAvatarFrame, ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
 
 interface Props {
   modelValue: boolean
   mode: 'create' | 'edit'
   product?: ShopProduct | null
   categories: ShopCategory[]
+  avatarFrames: ShopAvatarFrame[]
   submitting?: boolean
 }
 
@@ -205,7 +206,8 @@ const form = ref<UpsertProductBody>({
   stock_quantity: 0,
   category_id: 0,
   product_type: 'physical',
-  digital_asset_url: '',
+  avatar_frame_id: undefined,
+  digital_asset_url: '', // kept for backward compatibility
   is_active: true,
   uploaded_images: [],
 })
@@ -221,7 +223,8 @@ const resetForm = () => {
     stock_quantity: p?.stock_quantity || 0,
     category_id: p?.category?.id || props.categories[0]?.id || 0,
     product_type: p?.product_type || 'physical',
-    digital_asset_url: p?.digital_asset_url || '',
+    avatar_frame_id: p?.avatar_frame?.id,
+    digital_asset_url: p?.digital_asset_url || '', // kept for backward compatibility
     is_active: p?.is_active ?? true,
     uploaded_images: [],
   }
@@ -282,10 +285,11 @@ const validate = () => {
   if (!Number(form.value.category_id)) next.category_id = 'Оберіть категорію.'
   if (
     form.value.product_type === 'digital' &&
+    !form.value.avatar_frame_id &&
     !form.value.digital_asset_url?.trim() &&
     pickedFiles.value.length === 0
   ) {
-    next.digital_asset_url = 'Вкажіть URL цифрового активу або додайте зображення.'
+    next.avatar_frame_id = 'Оберіть рамку аватара або вкажіть URL цифрового активу, або додайте зображення.'
   }
   errors.value = next
   return Object.keys(next).length === 0

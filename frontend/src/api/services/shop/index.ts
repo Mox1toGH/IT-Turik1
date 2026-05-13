@@ -1,8 +1,10 @@
 import { apiClient } from '@/api/client'
 import type {
   GetProductsArgs,
+  GetAvatarFramesArgs,
   PurchaseBody,
   DigitalInventoryItem,
+  ShopAvatarFrame,
   ShopCategory,
   ShopOrder,
   ShopPaginated,
@@ -27,6 +29,7 @@ export const shopService = {
       formData.append('stock_quantity', String(body.stock_quantity))
     if (body.category_id !== undefined) formData.append('category_id', String(body.category_id))
     if (body.product_type !== undefined) formData.append('product_type', String(body.product_type))
+    if (body.avatar_frame_id !== undefined) formData.append('avatar_frame_id', String(body.avatar_frame_id))
     if (body.digital_asset_url !== undefined) formData.append('digital_asset_url', String(body.digital_asset_url))
     if (body.is_active !== undefined) formData.append('is_active', String(body.is_active))
     for (const image of body.uploaded_images || []) {
@@ -169,6 +172,17 @@ export const shopService = {
 
   async cancelAdminOrder(orderId: number) {
     const { data } = await apiClient.post<ShopOrder>(`${prefix}/admin/orders/${orderId}/cancel/`)
+    return data
+  },
+
+  async getAvatarFrames(args: GetAvatarFramesArgs = {}) {
+    const { data } = await apiClient.get<ShopPaginated<ShopAvatarFrame>>(`${prefix}/avatar-frames/`, {
+      params: {
+        page: args.page ?? 1,
+        page_size: args.pageSize ?? 100,
+        search: args.search || undefined,
+      },
+    })
     return data
   },
 }

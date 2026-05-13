@@ -20,6 +20,15 @@ export interface ShopProductImage {
   created_at: string
 }
 
+export interface ShopAvatarFrame {
+  id: number
+  name: string
+  svg_file: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface ShopProduct {
   id: number
   name: string
@@ -28,6 +37,8 @@ export interface ShopProduct {
   stock_quantity: number
   category: ShopCategory
   product_type: ShopProductType
+  avatar_frame?: ShopAvatarFrame
+  avatar_frame_id?: number
   digital_asset_url?: string
   images: ShopProductImage[]
   is_active: boolean
@@ -63,13 +74,10 @@ export interface ShopOrder {
   updated_at: string
 }
 
-export interface GetProductsArgs {
+export interface GetAvatarFramesArgs {
   page?: number
   pageSize?: number
   search?: string
-  category?: number | null
-  productType?: ShopProductType | 'all'
-  ordering?: ShopProductOrdering
 }
 
 export interface PurchaseBody {
@@ -88,7 +96,8 @@ export interface UpsertProductBody {
   stock_quantity: number
   category_id: number
   product_type: ShopProductType
-  digital_asset_url?: string
+  avatar_frame_id?: number
+  digital_asset_url?: string // kept for backward compatibility
   is_active: boolean
   uploaded_images?: File[]
 }

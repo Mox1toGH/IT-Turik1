@@ -5,11 +5,13 @@
       :src="avatar"
       :alt="altText"
       class="user-avatar"
+      :class="{ 'has-frame': avatarFrameUrl }"
       :style="avatarImageStyle"
     />
     <div
       v-else
       class="user-avatar user-avatar-fallback"
+      :class="{ 'has-frame': avatarFrameUrl }"
       :style="avatarImageStyle"
       :aria-label="altText"
     >
@@ -77,6 +79,11 @@ const avatarImageStyle = computed(() => ({
   object-fit: cover;
   border: 1px solid var(--line-soft);
   display: block;
+  transition: border-color 0.2s ease;
+}
+
+.user-avatar.has-frame {
+  border-color: transparent;
 }
 
 .user-avatar-fallback {
@@ -90,10 +97,14 @@ const avatarImageStyle = computed(() => ({
 
 .user-avatar-frame {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1.18);
   width: 100%;
   height: 100%;
   pointer-events: none;
   object-fit: contain;
+  z-index: 2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 </style>

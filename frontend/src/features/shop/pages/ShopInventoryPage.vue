@@ -31,8 +31,8 @@
             </template>
 
             <img
-              v-if="item.product.digital_asset_url"
-              :src="item.product.digital_asset_url"
+              v-if="item.product.avatar_frame?.svg_file || item.product.digital_asset_url"
+              :src="item.product.avatar_frame?.svg_file || item.product.digital_asset_url"
               class="asset-preview"
               alt="Digital asset"
             />

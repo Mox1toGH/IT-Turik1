@@ -12,6 +12,20 @@ class Category(models.Model):
         return self.name
 
 
+class AvatarFrame(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    svg_file = models.FileField(upload_to='avatar-frames/')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     TYPE_PHYSICAL = 'physical'
     TYPE_DIGITAL = 'digital'
@@ -26,7 +40,15 @@ class Product(models.Model):
     stock_quantity = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products')
     product_type = models.CharField(max_length=16, choices=TYPE_CHOICES, default=TYPE_PHYSICAL)
-    digital_asset_url = models.TextField(blank=True)
+    avatar_frame = models.ForeignKey(
+        AvatarFrame,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products',
+        limit_choices_to={'is_active': True}
+    )
+    digital_asset_url = models.TextField(blank=True)  # deprecated, kept for backward compatibility
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -36,6 +58,13 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def effective_digital_asset_url(self):
+        """Get the digital asset URL, preferring avatar_frame.svg_file over digital_asset_url"""
+        if self.avatar_frame and self.avatar_frame.svg_file:
+            return self.avatar_frame.svg_file.url
+        return self.digital_asset_url
 
 
 class ProductImage(models.Model):

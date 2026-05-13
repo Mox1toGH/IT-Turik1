@@ -8,6 +8,7 @@ from .views import (
     AdminOrderStatusUpdateView,
     AdminProductDetailView,
     AdminProductListCreateView,
+    AvatarFrameListView,
     EquipDigitalInventoryItemView,
     MyDigitalInventoryView,
     MyOrderCancelView,
@@ -21,6 +22,7 @@ from .views import (
 urlpatterns = [
     path('products/', ProductListView.as_view(), name='shop-products-list'),
     path('products/<int:pk>/', ProductDetailView.as_view(), name='shop-products-detail'),
+    path('avatar-frames/', AvatarFrameListView.as_view(), name='shop-avatar-frames-list'),
     path('purchase/', PurchaseView.as_view(), name='shop-purchase'),
     path('orders/my/', MyOrderHistoryView.as_view(), name='shop-my-orders'),
     path('orders/my/<int:order_id>/cancel/', MyOrderCancelView.as_view(), name='shop-my-order-cancel'),

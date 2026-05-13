@@ -57,11 +57,11 @@
             </template>
 
             <img
-              v-if="product.images[0]?.image || product.digital_asset_url"
-              :src="product.images[0]?.image || product.digital_asset_url"
+              v-if="product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url"
+              :src="product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url"
               class="thumb"
               alt="Product image"
-              @click="openImagePreview(product.images[0]?.image || product.digital_asset_url || '')"
+              @click="openImagePreview(product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url || '')"
             />
             <p class="price">{{ product.price }} pts</p>
             <p class="meta">{{ product.category.name }} | {{ product.product_type }}</p>
@@ -111,12 +111,12 @@
             @click="openImagePreview(image.image)"
           />
         </div>
-        <div class="image-row" v-else-if="activeProduct.digital_asset_url">
+        <div class="image-row" v-else-if="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url">
           <img
-            :src="activeProduct.digital_asset_url"
+            :src="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url"
             class="detail-image"
             alt="Product image"
-            @click="openImagePreview(activeProduct.digital_asset_url)"
+            @click="openImagePreview(activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url)"
           />
         </div>
         <p>{{ activeProduct.description || 'No description' }}</p>
@@ -150,6 +150,7 @@
       :mode="editingProduct ? 'edit' : 'create'"
       :product="editingProduct"
       :categories="adminCategories"
+      :avatar-frames="avatarFrames"
       :submitting="isSavingProduct"
       @submit="submitProductForm"
     />
@@ -267,6 +268,7 @@ import {
   useAdminShopCategories,
   useAdminUpdateCategory,
   useAdminUpdateProduct,
+  useAvatarFrames,
   useShopProducts,
   useShopPurchase,
 } from '@/api/queries/shop'
@@ -297,6 +299,9 @@ const { data, isLoading, isLoadingError, error } = useShopProducts({
 const parsedError = computed(() => parseApiError(error.value))
 const products = computed(() => data.value?.results ?? [])
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / pageSize.value)))
+
+const { data: avatarFramesData } = useAvatarFrames()
+const avatarFrames = computed(() => avatarFramesData.value?.results ?? [])
 
 watch([search, selectedCategory, selectedType, selectedOrdering], () => {
   currentPage.value = 1

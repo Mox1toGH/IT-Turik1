@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from points.models import PointsTransaction, UserPointsBalance
-from shop.models import Category, Order, Product, UserDigitalInventory
+from shop.models import AvatarFrame, Category, Order, Product, UserDigitalInventory
 
 
 class ShopApiTests(APITestCase):
@@ -31,6 +31,11 @@ class ShopApiTests(APITestCase):
         )
 
         self.category = Category.objects.create(name='Hardware')
+        self.avatar_frame = AvatarFrame.objects.create(
+            name='Test Frame',
+            svg_file='avatar-frames/test.svg',
+            is_active=True,
+        )
         self.product = Product.objects.create(
             name='Keyboard',
             description='Mechanical keyboard',
@@ -68,7 +73,7 @@ class ShopApiTests(APITestCase):
             price=10,
             stock_quantity=0,
             category=second_category,
-            product_type=Product.TYPE_DIGITAL,
+            product_type=Product.TYPE_PHYSICAL,
             is_active=True,
         )
 
@@ -162,7 +167,7 @@ class ShopApiTests(APITestCase):
             stock_quantity=10,
             category=self.category,
             product_type=Product.TYPE_DIGITAL,
-            digital_asset_url='/avatar-frames/fire-tongues.svg',
+            avatar_frame=self.avatar_frame,
             is_active=True,
         )
         UserPointsBalance.objects.create(user=self.user, balance=500)
@@ -185,7 +190,7 @@ class ShopApiTests(APITestCase):
             stock_quantity=10,
             category=self.category,
             product_type=Product.TYPE_DIGITAL,
-            digital_asset_url='/avatar-frames/fire-tongues.svg',
+            avatar_frame=self.avatar_frame,
             is_active=True,
         )
         UserPointsBalance.objects.create(user=self.user, balance=500)
@@ -346,7 +351,7 @@ class ShopApiTests(APITestCase):
 
     def test_admin_can_create_digital_product_with_asset_url(self):
         self.client.force_authenticate(user=self.admin)
-        digital_category = Category.objects.create(name='Digital Goods')
+        digital_category, _ = Category.objects.get_or_create(name='Digital Goods')
 
         products_url = reverse('shop-admin-products-list-create')
         response = self.client.post(
@@ -358,13 +363,13 @@ class ShopApiTests(APITestCase):
                 'stock_quantity': 1,
                 'category_id': digital_category.id,
                 'product_type': Product.TYPE_DIGITAL,
-                'digital_asset_url': '/avatar-frames/aurora-pulse.svg',
+                'avatar_frame_id': self.avatar_frame.id,
                 'is_active': True,
             },
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['digital_asset_url'], '/avatar-frames/aurora-pulse.svg')
+        self.assertEqual(response.data['avatar_frame']['id'], self.avatar_frame.id)
         self.assertEqual(response.data['product_type'], Product.TYPE_DIGITAL)
 
     def test_non_admin_cannot_access_admin_shop_endpoints(self):

@@ -135,4 +135,6 @@ export const shopKeys = {
   adminOrdersPrefix: () => [...shopKeys.all(), 'admin-orders'] as const,
   adminOrders: (args: { page: number; pageSize: number; status: string; user: string }) =>
     [...shopKeys.adminOrdersPrefix(), args] as const,
+  avatarFrames: (args: { page: number; pageSize: number; search: string }) =>
+    [...shopKeys.all(), 'avatar-frames', args] as const,
 }
