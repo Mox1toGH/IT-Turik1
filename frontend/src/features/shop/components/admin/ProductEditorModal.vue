@@ -98,7 +98,7 @@
 
         <div v-if="newPreviews.length" class="preview-grid">
           <article v-for="(url, i) in newPreviews" :key="url" class="preview-tile">
-            <img :src="url" alt="Нове зображення" />
+            <img :src="url" alt="Нове зображення" @click="openImagePreview(url)" />
             <button type="button" class="remove-btn" @click="removePicked(i)">
               Remove
             </button>
@@ -109,7 +109,7 @@
       <section class="panel preview-panel">
         <p class="preview-title">Live Preview</p>
         <article class="mock-card" :class="{ inactive: !form.is_active || !isAvailable }">
-          <img v-if="cover" :src="cover" alt="cover" class="cover" />
+          <img v-if="cover" :src="cover" alt="cover" class="cover" @click="openImagePreview(cover)" />
           <div v-else class="cover cover-empty">No image</div>
           <div class="mock-content">
             <strong>{{ form.name || 'Product name' }}</strong>
@@ -148,6 +148,13 @@
       </div>
     </template>
   </ui-modal>
+
+  <ui-modal :model-value="isImagePreviewOpen" @update:model-value="isImagePreviewOpen = $event" maxWidth="min(96vw, 1200px)">
+    <template #title>Image Preview</template>
+    <div class="image-preview-wrap">
+      <img v-if="previewImageUrl" :src="previewImageUrl" class="image-preview-full" alt="Preview" />
+    </div>
+  </ui-modal>
 </template>
 
 <script setup lang="ts">
@@ -177,6 +184,8 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null)
 const pickedFiles = ref<File[]>([])
 const newPreviews = ref<string[]>([])
+const isImagePreviewOpen = ref(false)
+const previewImageUrl = ref('')
 
 const form = ref<UpsertProductBody>({
   name: '',
@@ -234,6 +243,11 @@ const removePicked = (index: number) => {
   const removed = newPreviews.value.splice(index, 1)
   if (removed[0]) URL.revokeObjectURL(removed[0])
   pickedFiles.value.splice(index, 1)
+}
+
+const openImagePreview = (url: string) => {
+  previewImageUrl.value = url
+  isImagePreviewOpen.value = true
 }
 
 const selectedCategoryName = computed(() => {
@@ -354,6 +368,7 @@ const handleSubmit = () => {
   height: 86px;
   border-radius: 9px;
   object-fit: cover;
+  cursor: zoom-in;
 }
 
 .remove-btn {
@@ -389,6 +404,7 @@ const handleSubmit = () => {
   height: 180px;
   object-fit: cover;
   display: block;
+  cursor: zoom-in;
 }
 
 .cover-empty {
@@ -435,6 +451,19 @@ const handleSubmit = () => {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+.image-preview-wrap {
+  display: grid;
+  place-items: center;
+  min-height: min(70vh, 720px);
+}
+.image-preview-full {
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
 }
 
 @media (max-width: 920px) {

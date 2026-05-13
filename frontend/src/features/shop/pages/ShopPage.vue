@@ -61,6 +61,7 @@
               :src="product.images[0].image"
               class="thumb"
               alt="Product image"
+              @click="openImagePreview(product.images[0].image)"
             />
             <p class="price">{{ product.price }} pts</p>
             <p class="meta">{{ product.category.name }} | {{ product.product_type }}</p>
@@ -107,6 +108,7 @@
             :src="image.image"
             class="detail-image"
             alt="Product image"
+            @click="openImagePreview(image.image)"
           />
         </div>
         <p>{{ activeProduct.description || 'No description' }}</p>
@@ -224,6 +226,13 @@
         </form>
       </div>
     </ui-modal>
+
+    <ui-modal v-model="isImagePreviewOpen" maxWidth="min(96vw, 1200px)">
+      <template #title>Image Preview</template>
+      <div class="image-preview-wrap">
+        <img v-if="previewImageUrl" :src="previewImageUrl" class="image-preview-full" alt="Preview" />
+      </div>
+    </ui-modal>
   </section>
 </template>
 
@@ -311,6 +320,8 @@ const isDetailOpen = ref(false)
 const activeProduct = ref<ShopProduct | null>(null)
 const purchaseQty = ref(1)
 const purchaseResult = ref('')
+const isImagePreviewOpen = ref(false)
+const previewImageUrl = ref('')
 const { data: pointsBalance } = useMyPointsBalance()
 const { mutate: purchase, isPending: isPurchasePending } = useShopPurchase()
 
@@ -319,6 +330,11 @@ const openProductDetail = (product: ShopProduct) => {
   purchaseQty.value = 1
   purchaseResult.value = ''
   isDetailOpen.value = true
+}
+
+const openImagePreview = (url: string) => {
+  previewImageUrl.value = url
+  isImagePreviewOpen.value = true
 }
 
 const handlePurchase = () => {
@@ -516,6 +532,7 @@ const deleteCategory = (id: number) => {
   height: 140px;
   object-fit: cover;
   border-radius: 8px;
+  cursor: zoom-in;
 }
 .price {
   margin: 6px 0 0;
@@ -557,6 +574,20 @@ const deleteCategory = (id: number) => {
   height: 120px;
   object-fit: cover;
   border-radius: 8px;
+  cursor: zoom-in;
+}
+.image-preview-wrap {
+  display: grid;
+  place-items: center;
+  min-height: min(70vh, 720px);
+}
+.image-preview-full {
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
 }
 .purchase-box {
   display: grid;
