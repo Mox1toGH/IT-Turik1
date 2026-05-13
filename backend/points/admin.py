@@ -12,7 +12,7 @@ class UserPointsBalanceAdmin(admin.ModelAdmin):
 
 @admin.register(PointsTransaction)
 class PointsTransactionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'amount', 'reason', 'created_at')
+    list_display = ('id', 'user', 'order', 'amount', 'reason', 'created_at')
     search_fields = ('user__username', 'user__email', 'reason')
     list_filter = ('created_at',)
-    list_select_related = ('user',)
+    list_select_related = ('user', 'order')

@@ -13,6 +13,7 @@ class UserPointsBalanceSerializer(serializers.Serializer):
 class PointsTransactionSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     user_id = serializers.IntegerField()
+    order_id = serializers.IntegerField(allow_null=True, required=False)
     amount = serializers.IntegerField()
     reason = serializers.CharField()
     created_at = serializers.DateTimeField()

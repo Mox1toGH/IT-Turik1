@@ -112,3 +112,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class AdminOrderStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Order.STATUS_CHOICES)
+
+    def validate_status(self, value):
+        if value == Order.STATUS_CANCELLED:
+            raise serializers.ValidationError('Use the cancel endpoint to cancel orders.')
+        return value

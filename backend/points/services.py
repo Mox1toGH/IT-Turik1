@@ -4,7 +4,7 @@ from .models import PointsTransaction, UserPointsBalance
 
 
 @transaction.atomic
-def apply_points_modification(*, user, operation, reason, amount=None):
+def apply_points_modification(*, user, operation, reason, amount=None, order=None):
     balance_obj, _ = UserPointsBalance.objects.select_for_update().get_or_create(
         user=user,
         defaults={'balance': 0},
@@ -32,6 +32,7 @@ def apply_points_modification(*, user, operation, reason, amount=None):
 
     transaction_obj = PointsTransaction.objects.create(
         user=user,
+        order=order,
         amount=delta,
         reason=reason,
     )

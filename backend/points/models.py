@@ -21,6 +21,13 @@ class PointsTransaction(models.Model):
         on_delete=models.CASCADE,
         related_name='points_transactions',
     )
+    order = models.ForeignKey(
+        'shop.Order',
+        on_delete=models.SET_NULL,
+        related_name='points_transactions',
+        null=True,
+        blank=True,
+    )
     amount = models.IntegerField()
     reason = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
