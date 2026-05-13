@@ -187,17 +187,14 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead({ id, data: { detail: '' } })
+  markAsRead({ id })
 }
 
 const handleMarkAllRead = () => {
-  markAllAsRead(
-    { data: { marked: 0 } },
-    {
-      onSuccess: () => showNotification('All notifications marked as read', 'success'),
-      onError: () => showNotification('Failed to mark notifications as read', 'error'),
-    },
-  )
+  markAllAsRead(void 0, {
+    onSuccess: () => showNotification('All notifications marked as read', 'success'),
+    onError: () => showNotification('Failed to mark notifications as read', 'error'),
+  })
 }
 
 const handleDelete = (id: number) => {
