@@ -13,7 +13,7 @@
       <div v-if="tournament?.banner" class="hero-banner" :style="heroBannerStyle" />
       <div v-if="tournament?.banner" class="hero-overlay" />
       <template #header>
-        <div class="hero-content">
+        <div class="hero-title-content">
           <p class="section-eyebrow">Tournaments</p>
           <h1>{{ tournament?.name ?? `Tournament ${id}` }}</h1>
         </div>
@@ -281,6 +281,23 @@ watch(
 .hero-content {
   position: relative;
   z-index: 2;
+}
+
+.hero-title-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-card--with-banner .hero-title-content h1 {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
 }
 
 .hero-card--with-banner :deep(.ui-card-body),

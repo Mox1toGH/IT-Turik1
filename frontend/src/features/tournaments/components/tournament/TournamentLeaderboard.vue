@@ -9,7 +9,6 @@
           </div>
 
           <div class="controls">
-            <ui-badge variant="green">Snapshot</ui-badge>
             <ui-button
               v-if="canSendCertificates"
               size="sm"
