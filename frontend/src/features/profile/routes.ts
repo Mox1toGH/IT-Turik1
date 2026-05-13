@@ -11,7 +11,7 @@ export const profileRoutes = [
   },
   {
     path: '/users/:id/points',
-    component: () => import('@/features/profile/pages/PointsHistoryPage.vue'),
+    component: () => import('@/features/profile/pages/TransactionHistoryPage.vue'),
     meta: { requiresAuth: true },
   },
   {
@@ -41,7 +41,7 @@ export const profileRoutes = [
   },
   {
     path: '/profile/points',
-    component: () => import('./pages/PointsHistoryPage.vue'),
+    component: () => import('./pages/TransactionHistoryPage.vue'),
     meta: { requiresAuth: true },
   },
 ]
