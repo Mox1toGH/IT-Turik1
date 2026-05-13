@@ -47,13 +47,6 @@ export interface ShopProduct {
   updated_at: string
 }
 
-export interface DigitalInventoryItem {
-  id: number
-  product: ShopProduct
-  is_equipped: boolean
-  acquired_at: string
-  updated_at: string
-}
 
 export interface ShopUserRef {
   id: number

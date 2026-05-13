@@ -74,26 +74,6 @@ export const shopService = {
     return data
   },
 
-  async getMyInventory() {
-    const { data } = await apiClient.get<ShopPaginated<DigitalInventoryItem>>(`${prefix}/inventory/my/`, {
-      params: { page_size: 100 },
-    })
-    return data
-  },
-
-  async equipInventoryItem(inventoryId: number) {
-    const { data } = await apiClient.post<DigitalInventoryItem>(`${prefix}/inventory/equip/`, {
-      inventory_id: inventoryId,
-    })
-    return data
-  },
-
-  async unequipInventoryItem(inventoryId: number) {
-    const { data } = await apiClient.post<DigitalInventoryItem>(`${prefix}/inventory/unequip/`, {
-      inventory_id: inventoryId,
-    })
-    return data
-  },
 
   async getAdminCategories(args: { page?: number; pageSize?: number } = {}) {
     const { data } = await apiClient.get<ShopPaginated<ShopCategory>>(

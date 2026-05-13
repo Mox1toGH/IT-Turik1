@@ -71,14 +71,14 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { useEquipDigitalInventoryItem, useMyDigitalInventory, useUnequipDigitalInventoryItem } from '@/api/queries/shop'
+import { useEquipInventoryItem, useMyInventory, useUnequipInventoryItem } from '@/api/queries/inventory'
 import { useNotification } from '@/composables/useNotification'
 import { parseApiError } from '@/api/errors'
 
 const { showNotification } = useNotification()
-const { data, isLoading, isLoadingError } = useMyDigitalInventory()
-const { mutate: equipItem, isPending: isEquipping } = useEquipDigitalInventoryItem()
-const { mutate: unequipItem, isPending: isUnequipping } = useUnequipDigitalInventoryItem()
+const { data, isLoading, isLoadingError } = useMyInventory()
+const { mutate: equipItem, isPending: isEquipping } = useEquipInventoryItem()
+const { mutate: unequipItem, isPending: isUnequipping } = useUnequipInventoryItem()
 
 const items = computed(() => data.value?.results ?? [])
 
