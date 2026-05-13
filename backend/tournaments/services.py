@@ -1,7 +1,6 @@
 import logging
-import threading
 
-from django.db import close_old_connections, transaction
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -121,28 +120,8 @@ def _issue_tournament_certificates_and_notify(*, tournament):
         )
 
 
-def _send_notifications_in_background(*, recipients, event_type, context):
-    from notifications.services import NotificationService
-
-    def _runner():
-        close_old_connections()
-        try:
-            NotificationService.notify(
-                recipients=recipients,
-                event_type=event_type,
-                context=context,
-            )
-        except Exception:
-            logger.exception('Background notification dispatch failed for event_type=%s', event_type)
-        finally:
-            close_old_connections()
-
-    thread = threading.Thread(target=_runner, daemon=True)
-    thread.start()
-
-
 @transaction.atomic
-def send_tournament_certificates(*, tournament, template_id, mode='missing', async_notifications=False):
+def send_tournament_certificates(*, tournament, template_id, mode='missing'):
     from accounts.models import User
     from certificates.models import Certificate, CertificateTemplate
     from certificates.serializers import CertificateSerializer
@@ -193,18 +172,11 @@ def send_tournament_certificates(*, tournament, template_id, mode='missing', asy
     notification_count = 0
     if created_user_ids:
         recipients = list(User.objects.filter(id__in=created_user_ids))
-        if async_notifications:
-            _send_notifications_in_background(
-                recipients=recipients,
-                event_type='tournament_certificate_issued',
-                context={'tournament_name': tournament.name},
-            )
-        else:
-            NotificationService.notify(
-                recipients=recipients,
-                event_type='tournament_certificate_issued',
-                context={'tournament_name': tournament.name},
-            )
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_certificate_issued',
+            context={'tournament_name': tournament.name},
+        )
         notification_count = len(recipients)
 
     return {

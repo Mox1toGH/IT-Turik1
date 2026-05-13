@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import sys
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -132,3 +133,6 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+RUNNING_TESTS = 'test' in sys.argv
+NOTIFICATIONS_ASYNC = env_bool('NOTIFICATIONS_ASYNC', not RUNNING_TESTS)

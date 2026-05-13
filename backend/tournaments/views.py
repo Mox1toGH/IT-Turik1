@@ -271,7 +271,6 @@ class TournamentSendCertificatesView(APIView):
             tournament=tournament,
             template_id=template_id,
             mode=mode,
-            async_notifications=True,
         )
         return Response(stats, status=status.HTTP_200_OK)
 
