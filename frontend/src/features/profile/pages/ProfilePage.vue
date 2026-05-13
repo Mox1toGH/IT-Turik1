@@ -107,6 +107,18 @@
         </ui-card>
         <ui-card class="field-card">
           <template #header>
+            <span class="card-text-title">Points balance</span>
+          </template>
+          <ui-skeleton-loader :loading="isPointsLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" />
+            </template>
+
+            <strong class="item-value value-wrap">{{ pointsBalance?.balance ?? 0 }}</strong>
+          </ui-skeleton-loader>
+        </ui-card>
+        <ui-card class="field-card">
+          <template #header>
             <span class="card-text-title">Teams</span>
           </template>
 
@@ -137,6 +149,9 @@
 
       <div class="stats-link-row">
         <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary">My Statistics</ui-button>
+        <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
+          Points History
+        </ui-button>
       </div>
 
       <div class="actions">
@@ -171,10 +186,12 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { parseApiError } from '@/api/errors'
+import { useMyPointsBalance } from '@/api/queries/points'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
 const error = computed(() => parseApiError(profileError.value))
+const { data: pointsBalance, isLoading: isPointsLoading } = useMyPointsBalance()
 
 const router = useRouter()
 const isDeleting = ref(false)
@@ -295,6 +312,9 @@ const formatDate = (date: Date) => {
 
 .stats-link-row {
   margin-top: 0.9rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
 
 .danger-zone {

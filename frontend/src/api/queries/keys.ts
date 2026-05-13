@@ -89,3 +89,18 @@ export const evaluationKeys = {
   tournamentLeaderboard: (tournamentId: TournamentId) =>
     [...evaluationKeys.all(), 'tournamentLeaderboard', tournamentId] as const,
 }
+
+export const pointsKeys = {
+  all: () => ['points'] as const,
+  myBalance: () => [...pointsKeys.all(), 'my-balance'] as const,
+  myTransactionsPrefix: () => [...pointsKeys.all(), 'my-transactions'] as const,
+  myTransactions: (args: { page: number; pageSize: number; ordering: string }) =>
+    [...pointsKeys.myTransactionsPrefix(), args] as const,
+  userBalance: (userId: UserId) => [...pointsKeys.all(), 'user-balance', userId] as const,
+  userTransactionsPrefix: (userId: UserId) =>
+    [...pointsKeys.all(), 'user-transactions', userId] as const,
+  userTransactions: (
+    userId: UserId,
+    args: { page: number; pageSize: number; ordering: string },
+  ) => [...pointsKeys.userTransactionsPrefix(userId), args] as const,
+}
