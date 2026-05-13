@@ -180,7 +180,7 @@
       </ui-card>
 
       <div class="actions">
-        <ui-button v-if="isAdmin" :disabled="isLoading" @click="goToTransactions">Points History</ui-button>
+        <ui-button v-if="isAdmin" :disabled="isLoading" @click="goToTransactions">Transaction History</ui-button>
         <ui-button :disabled="isLoading" @click="goBack">Back</ui-button>
       </div>
     </ui-card>

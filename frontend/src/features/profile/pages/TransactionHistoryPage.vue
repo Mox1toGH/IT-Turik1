@@ -4,8 +4,10 @@
       <template #header>
         <div class="head">
           <div>
-            <p class="section-eyebrow">Points</p>
-            <h1 class="section-title">{{ isAdminUserView ? `User #${targetUserId} transactions` : 'My transactions' }}</h1>
+            <p class="section-eyebrow">Transactions</p>
+            <h1 class="section-title">
+              {{ isAdminUserView ? `User #${targetUserId} transaction history` : 'My transaction history' }}
+            </h1>
           </div>
           <div class="head-actions">
             <ui-button variant="secondary" @click="goBack">Back</ui-button>
