@@ -14,6 +14,25 @@ import type {
 const prefix = '/api/shop'
 
 export const shopService = {
+  buildProductPayload(body: UpsertProductBody | Partial<UpsertProductBody>) {
+    const hasImages = Array.isArray(body.uploaded_images) && body.uploaded_images.length > 0
+    if (!hasImages) return body
+
+    const formData = new FormData()
+    if (body.name !== undefined) formData.append('name', String(body.name))
+    if (body.description !== undefined) formData.append('description', String(body.description))
+    if (body.price !== undefined) formData.append('price', String(body.price))
+    if (body.stock_quantity !== undefined)
+      formData.append('stock_quantity', String(body.stock_quantity))
+    if (body.category_id !== undefined) formData.append('category_id', String(body.category_id))
+    if (body.product_type !== undefined) formData.append('product_type', String(body.product_type))
+    if (body.is_active !== undefined) formData.append('is_active', String(body.is_active))
+    for (const image of body.uploaded_images || []) {
+      formData.append('uploaded_images', image)
+    }
+    return formData
+  },
+
   async getProducts(args: GetProductsArgs = {}) {
     const { data } = await apiClient.get<ShopPaginated<ShopProduct>>(`${prefix}/products/`, {
       params: {
@@ -51,9 +70,12 @@ export const shopService = {
   },
 
   async getAdminCategories(args: { page?: number; pageSize?: number } = {}) {
-    const { data } = await apiClient.get<ShopPaginated<ShopCategory>>(`${prefix}/admin/categories/`, {
-      params: { page: args.page ?? 1, page_size: args.pageSize ?? 100 },
-    })
+    const { data } = await apiClient.get<ShopPaginated<ShopCategory>>(
+      `${prefix}/admin/categories/`,
+      {
+        params: { page: args.page ?? 1, page_size: args.pageSize ?? 100 },
+      },
+    )
     return data
   },
 
@@ -85,12 +107,14 @@ export const shopService = {
   },
 
   async createAdminProduct(body: UpsertProductBody) {
-    const { data } = await apiClient.post<ShopProduct>(`${prefix}/admin/products/`, body)
+    const payload = this.buildProductPayload(body)
+    const { data } = await apiClient.post<ShopProduct>(`${prefix}/admin/products/`, payload)
     return data
   },
 
   async updateAdminProduct(id: number, body: Partial<UpsertProductBody>) {
-    const { data } = await apiClient.patch<ShopProduct>(`${prefix}/admin/products/${id}/`, body)
+    const payload = this.buildProductPayload(body)
+    const { data } = await apiClient.patch<ShopProduct>(`${prefix}/admin/products/${id}/`, payload)
     return data
   },
 
@@ -98,7 +122,9 @@ export const shopService = {
     await apiClient.delete(`${prefix}/admin/products/${id}/`)
   },
 
-  async getAdminOrders(args: { page?: number; pageSize?: number; status?: string; user?: string } = {}) {
+  async getAdminOrders(
+    args: { page?: number; pageSize?: number; status?: string; user?: string } = {},
+  ) {
     const { data } = await apiClient.get<ShopPaginated<ShopOrder>>(`${prefix}/admin/orders/`, {
       params: {
         page: args.page ?? 1,
@@ -111,7 +137,10 @@ export const shopService = {
   },
 
   async updateAdminOrderStatus(orderId: number, body: UpdateOrderStatusBody) {
-    const { data } = await apiClient.patch<ShopOrder>(`${prefix}/admin/orders/${orderId}/status/`, body)
+    const { data } = await apiClient.patch<ShopOrder>(
+      `${prefix}/admin/orders/${orderId}/status/`,
+      body,
+    )
     return data
   },
 

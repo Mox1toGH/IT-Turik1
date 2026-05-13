@@ -81,6 +81,7 @@ export interface UpsertProductBody {
   category_id: number
   product_type: ShopProductType
   is_active: boolean
+  uploaded_images?: File[]
 }
 
 export interface UpsertCategoryBody {
