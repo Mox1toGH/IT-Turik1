@@ -12,7 +12,6 @@ export interface ShopPaginated<T> {
 export interface ShopCategory {
   id: number
   name: string
-  description: string
 }
 
 export interface ShopProductImage {
@@ -86,5 +85,4 @@ export interface UpsertProductBody {
 
 export interface UpsertCategoryBody {
   name: string
-  description: string
 }

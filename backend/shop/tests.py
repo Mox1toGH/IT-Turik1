@@ -30,7 +30,7 @@ class ShopApiTests(APITestCase):
             is_superuser=True,
         )
 
-        self.category = Category.objects.create(name='Hardware', description='Physical goods')
+        self.category = Category.objects.create(name='Hardware')
         self.product = Product.objects.create(
             name='Keyboard',
             description='Mechanical keyboard',
@@ -52,7 +52,7 @@ class ShopApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_product_list_supports_filters_sort_and_marks_out_of_stock_as_unavailable(self):
-        second_category = Category.objects.create(name='Digital', description='Digital goods')
+        second_category = Category.objects.create(name='Digital')
         Product.objects.create(
             name='Mouse',
             description='Gaming mouse',
@@ -257,7 +257,7 @@ class ShopApiTests(APITestCase):
         categories_url = reverse('shop-admin-categories-list-create')
         create_category = self.client.post(
             categories_url,
-            {'name': 'Accessories', 'description': 'Category from API'},
+            {'name': 'Accessories'},
             format='json',
         )
         self.assertEqual(create_category.status_code, status.HTTP_201_CREATED)
@@ -266,7 +266,7 @@ class ShopApiTests(APITestCase):
         category_detail_url = reverse('shop-admin-categories-detail', kwargs={'pk': new_category_id})
         patch_category = self.client.patch(
             category_detail_url,
-            {'description': 'Updated description'},
+            {'name': 'Accessories Updated'},
             format='json',
         )
         self.assertEqual(patch_category.status_code, status.HTTP_200_OK)

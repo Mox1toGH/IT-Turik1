@@ -160,7 +160,6 @@
         <ui-card v-for="category in adminCategories" :key="category.id" class="category-row">
           <div>
             <strong>{{ category.name }}</strong>
-            <p class="text-muted">{{ category.description || '-' }}</p>
           </div>
           <div class="row-actions">
             <ui-button size="sm" @click="startEditCategory(category)">Edit</ui-button>
@@ -172,7 +171,6 @@
 
         <form class="modal-form" @submit.prevent="submitCategoryForm">
           <ui-input v-model="categoryForm.name" placeholder="Category name" required />
-          <ui-input v-model="categoryForm.description" placeholder="Description" />
           <ui-button type="submit">{{
             editingCategoryId ? 'Save category' : 'Add category'
           }}</ui-button>
@@ -361,18 +359,18 @@ const confirmProductDelete = () => {
 }
 
 const isCategoryModalOpen = ref(false)
-const categoryForm = ref({ name: '', description: '' })
+const categoryForm = ref({ name: '' })
 const editingCategoryId = ref<number | null>(null)
 
 const openCategoryCreate = () => {
   isCategoryModalOpen.value = true
-  categoryForm.value = { name: '', description: '' }
+  categoryForm.value = { name: '' }
   editingCategoryId.value = null
 }
 
 const startEditCategory = (category: ShopCategory) => {
   editingCategoryId.value = category.id
-  categoryForm.value = { name: category.name, description: category.description }
+  categoryForm.value = { name: category.name }
 }
 
 const { mutate: createCategory } = useAdminCreateCategory()
@@ -383,7 +381,7 @@ const submitCategoryForm = () => {
   if (!editingCategoryId.value) {
     createCategory(categoryForm.value, {
       onSuccess: () => {
-        categoryForm.value = { name: '', description: '' }
+        categoryForm.value = { name: '' }
         showNotification('Category created.', 'success')
       },
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
@@ -396,7 +394,7 @@ const submitCategoryForm = () => {
     {
       onSuccess: () => {
         editingCategoryId.value = null
-        categoryForm.value = { name: '', description: '' }
+        categoryForm.value = { name: '' }
         showNotification('Category updated.', 'success')
       },
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
