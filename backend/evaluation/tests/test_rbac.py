@@ -13,7 +13,15 @@ class EvaluationRBACTests(APITestCase):
         self.user = User.objects.create_user('user_rbac', 'u@e.com', 'pass', role='team')
         
         self.team = Team.objects.create(name='RBAC Team', email='rbac@e.com', captain=self.user)
-        self.tournament = Tournament.objects.create(name='RBAC Tourney', created_by=self.admin)
+        from django.utils import timezone
+        import datetime
+        now = timezone.now()
+        self.tournament = Tournament.objects.create(
+            name='RBAC Tourney', 
+            start_date=now - datetime.timedelta(days=1),
+            end_date=now + datetime.timedelta(days=1),
+            created_by=self.admin
+        )
         self.round = Round.objects.create(tournament=self.tournament, name='R1')
         self.submission = Submission.objects.create(team=self.team, round=self.round, created_by=self.user)
         
