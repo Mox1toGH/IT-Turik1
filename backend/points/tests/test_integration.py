@@ -10,9 +10,14 @@ class TournamentPointsIntegrationTests(TestCase):
         self.user1 = User.objects.create_user('user1_int', 'u1@e.com', 'pass')
         self.team = Team.objects.create(name='Int Team', email='int@e.com', captain=self.user1)
         
+        from django.utils import timezone
+        import datetime
+        now = timezone.now()
         self.tournament = Tournament.objects.create(
             name='Int Tournament', 
             status=Tournament.STATUS_RUNNING, 
+            start_date=now - datetime.timedelta(days=1),
+            end_date=now + datetime.timedelta(days=1),
             created_by=self.admin
         )
         TournamentTeamRegistration.objects.create(
