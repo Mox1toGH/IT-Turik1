@@ -6,7 +6,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from backend.openapi import _400, _401, _403, _404
 
 from backend.permissions import is_platform_admin
 
@@ -27,7 +28,11 @@ class ShopPagination(PageNumberPagination):
     max_page_size = 100
 
 
-@extend_schema(operation_id='listProducts')
+@extend_schema(operation_id='listProducts', responses={
+    200: ProductSerializer(many=True),
+    400: _400,
+    401: _401,
+})
 class ProductListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
@@ -63,7 +68,11 @@ class ProductListView(generics.ListAPIView):
         return queryset.order_by('available_sort', ordering, 'id')
 
 
-@extend_schema(operation_id='getProduct')
+@extend_schema(operation_id='getProduct', responses={
+    200: ProductSerializer,
+    401: _401,
+    404: _404,
+})
 class ProductDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
@@ -75,7 +84,11 @@ class ProductDetailView(generics.RetrieveAPIView):
 class PurchaseView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='purchaseProduct')
+    @extend_schema(operation_id='purchaseProduct', responses={
+        201: OrderSerializer,
+        400: _400,
+        401: _401,
+    })
     def post(self, request):
         serializer = PurchaseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -98,7 +111,10 @@ class PurchaseView(APIView):
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(operation_id='listMyOrders')
+@extend_schema(operation_id='listMyOrders', responses={
+    200: OrderSerializer(many=True),
+    401: _401,
+})
 class MyOrderHistoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
@@ -113,7 +129,13 @@ class MyOrderHistoryView(generics.ListAPIView):
 class MyOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelMyOrder')
+    @extend_schema(operation_id='cancelMyOrder', responses={
+        200: OrderSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
     def post(self, request, order_id):
         order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
         if order.user_id != request.user.id:
@@ -123,8 +145,17 @@ class MyOrderCancelView(APIView):
         return Response(OrderSerializer(cancelled, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
-@extend_schema(methods=['GET'], operation_id='listAdminCategories')
-@extend_schema(methods=['POST'], operation_id='createAdminCategory')
+@extend_schema(methods=['GET'], operation_id='listAdminCategories', responses={
+    200: CategorySerializer(many=True),
+    401: _401,
+    403: _403,
+})
+@extend_schema(methods=['POST'], operation_id='createAdminCategory', responses={
+    201: CategorySerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
 class AdminCategoryListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CategorySerializer
@@ -142,10 +173,32 @@ class AdminCategoryListCreateView(generics.ListCreateAPIView):
         serializer.save()
 
 
-@extend_schema(methods=['GET'], operation_id='getAdminCategory')
-@extend_schema(methods=['PUT'], operation_id='replaceAdminCategory')
-@extend_schema(methods=['PATCH'], operation_id='updateAdminCategory')
-@extend_schema(methods=['DELETE'], operation_id='deleteAdminCategory')
+@extend_schema(methods=['GET'], operation_id='getAdminCategory', responses={
+    200: CategorySerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceAdminCategory', responses={
+    200: CategorySerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateAdminCategory', responses={
+    200: CategorySerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteAdminCategory', responses={
+    204: OpenApiResponse(description='Category deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class AdminCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CategorySerializer
@@ -157,8 +210,17 @@ class AdminCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().get_object()
 
 
-@extend_schema(methods=['GET'], operation_id='listAdminProducts')
-@extend_schema(methods=['POST'], operation_id='createAdminProduct')
+@extend_schema(methods=['GET'], operation_id='listAdminProducts', responses={
+    200: ProductSerializer(many=True),
+    401: _401,
+    403: _403,
+})
+@extend_schema(methods=['POST'], operation_id='createAdminProduct', responses={
+    201: ProductSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
 class AdminProductListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
@@ -189,10 +251,32 @@ class AdminProductListCreateView(generics.ListCreateAPIView):
         serializer.save()
 
 
-@extend_schema(methods=['GET'], operation_id='getAdminProduct')
-@extend_schema(methods=['PUT'], operation_id='replaceAdminProduct')
-@extend_schema(methods=['PATCH'], operation_id='updateAdminProduct')
-@extend_schema(methods=['DELETE'], operation_id='deleteAdminProduct')
+@extend_schema(methods=['GET'], operation_id='getAdminProduct', responses={
+    200: ProductSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceAdminProduct', responses={
+    200: ProductSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateAdminProduct', responses={
+    200: ProductSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteAdminProduct', responses={
+    204: OpenApiResponse(description='Product deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
@@ -203,7 +287,11 @@ class AdminProductDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Product.objects.select_related('category').prefetch_related('images')
 
 
-@extend_schema(operation_id='listAdminOrders')
+@extend_schema(operation_id='listAdminOrders', responses={
+    200: OrderSerializer(many=True),
+    401: _401,
+    403: _403,
+})
 class AdminOrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
@@ -229,7 +317,13 @@ class AdminOrderListView(generics.ListAPIView):
 class AdminOrderStatusUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='updateAdminOrderStatus')
+    @extend_schema(operation_id='updateAdminOrderStatus', responses={
+        200: OrderSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
     def patch(self, request, order_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can change order status.')
@@ -246,7 +340,13 @@ class AdminOrderStatusUpdateView(APIView):
 class AdminOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelAdminOrder')
+    @extend_schema(operation_id='cancelAdminOrder', responses={
+        200: OrderSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
     def post(self, request, order_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can cancel orders.')
@@ -256,7 +356,10 @@ class AdminOrderCancelView(APIView):
         return Response(OrderSerializer(cancelled, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
-@extend_schema(operation_id='listAvatarFrames')
+@extend_schema(operation_id='listAvatarFrames', responses={
+    200: AvatarFrameSerializer(many=True),
+    401: _401,
+})
 class AvatarFrameListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AvatarFrameSerializer
@@ -272,8 +375,17 @@ class AvatarFrameListView(generics.ListAPIView):
         return queryset.order_by('name')
 
 
-@extend_schema(methods=['GET'], operation_id='listAdminAvatarFrames')
-@extend_schema(methods=['POST'], operation_id='createAdminAvatarFrame')
+@extend_schema(methods=['GET'], operation_id='listAdminAvatarFrames', responses={
+    200: AvatarFrameSerializer(many=True),
+    401: _401,
+    403: _403,
+})
+@extend_schema(methods=['POST'], operation_id='createAdminAvatarFrame', responses={
+    201: AvatarFrameSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
 class AdminAvatarFrameListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AvatarFrameSerializer
@@ -296,10 +408,32 @@ class AdminAvatarFrameListCreateView(generics.ListCreateAPIView):
         serializer.save()
 
 
-@extend_schema(methods=['GET'], operation_id='getAdminAvatarFrame')
-@extend_schema(methods=['PUT'], operation_id='replaceAdminAvatarFrame')
-@extend_schema(methods=['PATCH'], operation_id='updateAdminAvatarFrame')
-@extend_schema(methods=['DELETE'], operation_id='deleteAdminAvatarFrame')
+@extend_schema(methods=['GET'], operation_id='getAdminAvatarFrame', responses={
+    200: AvatarFrameSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceAdminAvatarFrame', responses={
+    200: AvatarFrameSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateAdminAvatarFrame', responses={
+    200: AvatarFrameSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteAdminAvatarFrame', responses={
+    204: OpenApiResponse(description='Avatar frame deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class AdminAvatarFrameDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AvatarFrameSerializer

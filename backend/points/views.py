@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
+from backend.openapi import _400, _401, _403, _404
 
 from backend.permissions import is_platform_admin
 
@@ -43,7 +44,10 @@ class _PointsHistoryBaseView(generics.ListAPIView):
 class MyPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='getMyPointsBalance')
+    @extend_schema(operation_id='getMyPointsBalance', responses={
+        200: UserPointsBalanceSerializer,
+        401: _401,
+    })
     def get(self, request):
         balance_obj, _ = UserPointsBalance.objects.get_or_create(
             user=request.user,
@@ -57,7 +61,11 @@ class MyPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
-@extend_schema(operation_id='listMyPointsTransactions')
+@extend_schema(operation_id='listMyPointsTransactions', responses={
+    200: PointsTransactionSerializer(many=True),
+    400: _400,
+    401: _401,
+})
 class MyPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
@@ -69,7 +77,12 @@ class MyPointsTransactionHistoryView(_PointsHistoryBaseView):
 class AdminUserPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='getAdminUserPointsBalance')
+    @extend_schema(operation_id='getAdminUserPointsBalance', responses={
+        200: UserPointsBalanceSerializer,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
     def get(self, request, user_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can view user points balance.')
@@ -87,7 +100,13 @@ class AdminUserPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
-@extend_schema(operation_id='listAdminUserPointsTransactions')
+@extend_schema(operation_id='listAdminUserPointsTransactions', responses={
+    200: PointsTransactionSerializer(many=True),
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
@@ -103,7 +122,17 @@ class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
 class AdminModifyUserPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='modifyUserPointsBalance')
+    @extend_schema(operation_id='modifyUserPointsBalance', responses={
+        200: inline_serializer("AdminModifyPointsResponse", fields={
+            "user": UserLookupSerializer(),
+            "balance": UserPointsBalanceSerializer(),
+            "transaction": PointsTransactionSerializer()
+        }),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
     def post(self, request, user_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can modify user points balance.')
