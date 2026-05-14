@@ -44,6 +44,7 @@
               <div class="member-row">
                 <user-avatar
                   :avatar="member.avatar"
+                  :avatar-frame-url="member.avatar_frame_url"
                   :username="member.username"
                   :full-name="member.full_name || ''"
                   :size="42"

@@ -67,6 +67,9 @@ INSTALLED_APPS = [
     'notifications',
     'stats',
     'news',
+    'points',
+    'shop',
+    'inventory',
     'drf_spectacular',
 ]
 
