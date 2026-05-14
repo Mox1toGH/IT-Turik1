@@ -286,16 +286,16 @@ const selectedCategory = ref('all')
 const selectedType = ref<'physical' | 'digital' | 'all'>('all')
 const selectedOrdering = ref<'name' | '-name' | 'price' | '-price'>('name')
 
-const { data, isLoading, isLoadingError, error } = useShopProducts({
-  page: currentPage,
-  pageSize,
-  search,
-  category: computed(() =>
-    selectedCategory.value === 'all' ? null : Number(selectedCategory.value),
-  ),
-  productType: selectedType,
-  ordering: selectedOrdering,
-})
+const { data, isLoading, isLoadingError, error } = useShopProducts(
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    search: search.value,
+    category: selectedCategory.value === 'all' ? undefined : Number(selectedCategory.value),
+    product_type: selectedType.value === 'all' ? undefined : selectedType.value,
+    ordering: selectedOrdering.value,
+  })),
+)
 const parsedError = computed(() => parseApiError(error.value))
 const products = computed(() => data.value?.results ?? [])
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / pageSize.value)))

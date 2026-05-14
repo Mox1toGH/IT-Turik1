@@ -185,7 +185,21 @@
 import { computed, ref, watch } from 'vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import type { ShopAvatarFrame, ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
+import type { ShopAvatarFrame, ShopCategory, ShopProduct } from '@/api/queries/shop'
+
+export interface UpsertProductBody {
+  name: string
+  description?: string
+  price: number
+  stock_quantity: number
+  category_id: number
+  product_type: 'physical' | 'digital'
+  avatar_frame_id?: number
+  avatar_frame_file?: File
+  digital_asset_url?: string
+  is_active: boolean
+  uploaded_images?: File[]
+}
 
 interface Props {
   modelValue: boolean
