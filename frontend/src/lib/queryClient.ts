@@ -62,6 +62,22 @@ import {
   getListMyDigitalInventoryQueryKey,
 } from '@/api/inventory/inventory'
 
+import {
+  getListNewsQueryKey,
+  getGetNewsQueryKey,
+} from '@/api/news/news'
+
+import {
+  getGetUserProfileQueryKey,
+} from '@/api/accounts/accounts'
+
+import {
+  getGetPlayerStatsQueryKey,
+  getGetTeamStatsQueryKey,
+  getGetTournamentStatsQueryKey,
+  getGetAdminStatsQueryKey,
+} from '@/api/stats/stats'
+
 type Ctx = {
   vars: Record<string, unknown>
   data: Record<string, unknown>
@@ -79,6 +95,14 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
   ],
   updateTeam: [
+    v(() => getListTeamsQueryKey()),
+    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+  ],
+  updateTeamBanner: [
+    v(() => getListTeamsQueryKey()),
+    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+  ],
+  deleteTeamBanner: [
     v(() => getListTeamsQueryKey()),
     v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
   ],
@@ -141,6 +165,16 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
     v(({ vars }) => getGetTournamentForUpdateQueryKey(vars.id as number)),
   ],
+  updateTournamentBanner: [
+    v(() => getListTournamentsQueryKey()),
+    v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTournamentForUpdateQueryKey(vars.id as number)),
+  ],
+  deleteTournamentBanner: [
+    v(() => getListTournamentsQueryKey()),
+    v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTournamentForUpdateQueryKey(vars.id as number)),
+  ],
   deleteTournament: [v(() => getListTournamentsQueryKey())],
   startTournamentRegistration: [
     v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
@@ -187,6 +221,9 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetRoundPassingStatusQueryKey(vars.id as number)),
     v(({ vars }) => getGetRoundLeaderboardQueryKey(vars.id as number)),
     v(({ data }) => getGetTournamentLeaderboardQueryKey(data.tournament as number)),
+    v(() => getGetPlayerStatsQueryKey()),
+    v(({ data }) => getGetTournamentStatsQueryKey(data.tournament as number)),
+    v(() => getGetAdminStatsQueryKey()),
   ],
 
   // Submissions
@@ -212,6 +249,26 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetEventQueryKey(vars.id as number)),
   ],
   deleteEvent: [v(() => getListEventsQueryKey())],
+
+  // Accounts
+  updateUserAvatar: [
+    v(() => getGetUserProfileQueryKey()),
+  ],
+  deleteUserAvatar: [
+    v(() => getGetUserProfileQueryKey()),
+  ],
+
+  // News
+  createNews: [v(() => getListNewsQueryKey())],
+  replaceNews: [
+    v(() => getListNewsQueryKey()),
+    v(({ vars }) => getGetNewsQueryKey(vars.id as number)),
+  ],
+  updateNews: [
+    v(() => getListNewsQueryKey()),
+    v(({ vars }) => getGetNewsQueryKey(vars.id as number)),
+  ],
+  deleteNews: [v(() => getListNewsQueryKey())],
 
   // Points
   modifyUserPointsBalance: [

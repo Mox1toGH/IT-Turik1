@@ -28,9 +28,15 @@ import type {
 } from 'vue';
 
 import type {
+  AdminModifyPointsResponse,
+  ErrorResponseNotAuthenticated,
+  ErrorResponseNotFound,
+  ErrorResponsePermissionDenied,
+  ErrorResponseValidationError,
   ListAdminUserPointsTransactionsParams,
   ListMyPointsTransactionsParams,
-  PaginatedPointsTransactionList
+  PaginatedPointsTransactionList,
+  UserPointsBalance
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -47,7 +53,7 @@ export const getAdminUserPointsBalance = (
 ) => {
       userId = unref(userId);
       
-      return customInstance<void>(
+      return customInstance<UserPointsBalance>(
       {url: `http://localhost:8000/api/points/admin/users/${userId}/balance/`, method: 'GET', signal
     },
       options);
@@ -63,7 +69,7 @@ export const getGetAdminUserPointsBalanceQueryKey = (userId?: MaybeRef<number>,)
     }
 
     
-export const getGetAdminUserPointsBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError = ErrorType<unknown>>(userId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetAdminUserPointsBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(userId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -82,11 +88,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAdminUserPointsBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminUserPointsBalance>>>
-export type GetAdminUserPointsBalanceQueryError = ErrorType<unknown>
+export type GetAdminUserPointsBalanceQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
 
 
-export function useGetAdminUserPointsBalance<TData = Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError = ErrorType<unknown>>(
+export function useGetAdminUserPointsBalance<TData = Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
  userId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminUserPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -109,7 +115,7 @@ export const modifyUserPointsBalance = (
 ) => {
       userId = unref(userId);
       
-      return customInstance<void>(
+      return customInstance<AdminModifyPointsResponse>(
       {url: `http://localhost:8000/api/points/admin/users/${userId}/modify/`, method: 'POST', signal
     },
       options);
@@ -117,7 +123,7 @@ export const modifyUserPointsBalance = (
   
 
 
-export const getModifyUserPointsBalanceMutationOptions = <TError = ErrorType<unknown>,
+export const getModifyUserPointsBalanceMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number}, TContext> => {
 
@@ -144,9 +150,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ModifyUserPointsBalanceMutationResult = NonNullable<Awaited<ReturnType<typeof modifyUserPointsBalance>>>
     
-    export type ModifyUserPointsBalanceMutationError = ErrorType<unknown>
+    export type ModifyUserPointsBalanceMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useModifyUserPointsBalance = <TError = ErrorType<unknown>,
+    export const useModifyUserPointsBalance = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof modifyUserPointsBalance>>,
@@ -185,7 +191,7 @@ export const getListAdminUserPointsTransactionsQueryKey = (userId?: MaybeRef<num
     }
 
     
-export const getListAdminUserPointsTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError = ErrorType<unknown>>(userId: MaybeRef<number>,
+export const getListAdminUserPointsTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(userId: MaybeRef<number>,
     params?: MaybeRef<ListAdminUserPointsTransactionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -205,11 +211,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAdminUserPointsTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminUserPointsTransactions>>>
-export type ListAdminUserPointsTransactionsQueryError = ErrorType<unknown>
+export type ListAdminUserPointsTransactionsQueryError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
 
 
-export function useListAdminUserPointsTransactions<TData = Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError = ErrorType<unknown>>(
+export function useListAdminUserPointsTransactions<TData = Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
  userId: MaybeRef<number>,
     params?: MaybeRef<ListAdminUserPointsTransactionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminUserPointsTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
@@ -233,7 +239,7 @@ export const getMyPointsBalance = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<UserPointsBalance>(
       {url: `http://localhost:8000/api/points/balance/`, method: 'GET', signal
     },
       options);
@@ -249,7 +255,7 @@ export const getGetMyPointsBalanceQueryKey = () => {
     }
 
     
-export const getGetMyPointsBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getMyPointsBalance>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetMyPointsBalanceQueryOptions = <TData = Awaited<ReturnType<typeof getMyPointsBalance>>, TError = ErrorType<ErrorResponseNotAuthenticated>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -268,11 +274,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMyPointsBalanceQueryResult = NonNullable<Awaited<ReturnType<typeof getMyPointsBalance>>>
-export type GetMyPointsBalanceQueryError = ErrorType<unknown>
+export type GetMyPointsBalanceQueryError = ErrorType<ErrorResponseNotAuthenticated>
 
 
 
-export function useGetMyPointsBalance<TData = Awaited<ReturnType<typeof getMyPointsBalance>>, TError = ErrorType<unknown>>(
+export function useGetMyPointsBalance<TData = Awaited<ReturnType<typeof getMyPointsBalance>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyPointsBalance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -312,7 +318,7 @@ export const getListMyPointsTransactionsQueryKey = (params?: MaybeRef<ListMyPoin
     }
 
     
-export const getListMyPointsTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listMyPointsTransactions>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListMyPointsTransactionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyPointsTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListMyPointsTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof listMyPointsTransactions>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>>(params?: MaybeRef<ListMyPointsTransactionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyPointsTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -331,11 +337,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListMyPointsTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyPointsTransactions>>>
-export type ListMyPointsTransactionsQueryError = ErrorType<unknown>
+export type ListMyPointsTransactionsQueryError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
 
 
-export function useListMyPointsTransactions<TData = Awaited<ReturnType<typeof listMyPointsTransactions>>, TError = ErrorType<unknown>>(
+export function useListMyPointsTransactions<TData = Awaited<ReturnType<typeof listMyPointsTransactions>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>>(
  params?: MaybeRef<ListMyPointsTransactionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyPointsTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

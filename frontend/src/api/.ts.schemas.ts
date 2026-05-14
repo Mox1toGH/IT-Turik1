@@ -35,6 +35,12 @@ export interface ActiveTournament {
   start_date: string;
 }
 
+export interface AdminModifyPointsResponse {
+  user: UserLookup;
+  balance: UserPointsBalance;
+  transaction: PointsTransaction;
+}
+
 export interface AdminStats {
   total_users: number;
   total_teams: number;
@@ -907,18 +913,18 @@ export interface RoleActivationCodeGenerateResponse {
 }
 
 /**
- * * `admin` - admin
+ * * `jury` - jury
 * `organizer` - organizer
-* `jury` - jury
+* `admin` - admin
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
-  admin: 'admin',
-  organizer: 'organizer',
   jury: 'jury',
+  organizer: 'organizer',
+  admin: 'admin',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -996,11 +1002,18 @@ export interface RoundShort {
   tournament: number;
 }
 
+/**
+ * @nullable
+ */
+export type RoundSummaryJuryBreakdown = unknown | null;
+
 export interface RoundSummary {
   round_id: number;
   round_name: string;
   total_score: number;
   average_score: number;
+  /** @nullable */
+  jury_breakdown?: RoundSummaryJuryBreakdown;
 }
 
 export interface ScoreItem {
@@ -1095,6 +1108,7 @@ export interface SubmissionEvaluation {
   readonly id: number;
   readonly scores: readonly ScoreItem[];
   readonly total_score: number;
+  readonly final_score: number;
   comment?: string;
   readonly created_at: string;
 }
@@ -1448,6 +1462,24 @@ export interface User {
 export interface UserAvatarUpdate {
   /** @nullable */
   avatar?: string | null;
+}
+
+export interface UserLookup {
+  readonly id: number;
+  /**
+   * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @maxLength 150
+   * @pattern ^[\w.@+-]+$
+   */
+  username: string;
+  /** @maxLength 254 */
+  email: string;
+}
+
+export interface UserPointsBalance {
+  user_id: number;
+  balance: number;
+  updated_at: string;
 }
 
 export interface UserShort {

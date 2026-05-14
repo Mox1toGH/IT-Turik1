@@ -174,7 +174,7 @@ const sendJoinRequest = () => {
   hideNotification()
 
   sendJoinRequestMutate(
-    { id: props.team?.id },
+    { id: props.team?.id, data: { detail: '' } },
     {
       onSuccess: () => {
         emit('deleted')

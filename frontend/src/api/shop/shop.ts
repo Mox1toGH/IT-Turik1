@@ -30,6 +30,10 @@ import type {
 import type {
   AvatarFrame,
   Category,
+  ErrorResponseNotAuthenticated,
+  ErrorResponseNotFound,
+  ErrorResponsePermissionDenied,
+  ErrorResponseValidationError,
   ListAdminAvatarFramesParams,
   ListAdminCategoriesParams,
   ListAdminOrdersParams,
@@ -37,6 +41,7 @@ import type {
   ListAvatarFramesParams,
   ListMyOrdersParams,
   ListProductsParams,
+  Order,
   PaginatedAvatarFrameList,
   PaginatedCategoryList,
   PaginatedOrderList,
@@ -105,7 +110,7 @@ export const getListAdminAvatarFramesQueryKey = (params?: MaybeRef<ListAdminAvat
     }
 
     
-export const getListAdminAvatarFramesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListAdminAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAdminAvatarFramesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(params?: MaybeRef<ListAdminAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -124,11 +129,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAdminAvatarFramesQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminAvatarFrames>>>
-export type ListAdminAvatarFramesQueryError = ErrorType<unknown>
+export type ListAdminAvatarFramesQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
 
 
-export function useListAdminAvatarFrames<TData = Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError = ErrorType<unknown>>(
+export function useListAdminAvatarFrames<TData = Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(
  params?: MaybeRef<ListAdminAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -161,7 +166,7 @@ export const createAdminAvatarFrame = (
   
 
 
-export const getCreateAdminAvatarFrameMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateAdminAvatarFrameMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAvatarFrame>>, TError,{data: BodyType<NonReadonly<AvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createAdminAvatarFrame>>, TError,{data: BodyType<NonReadonly<AvatarFrame>>}, TContext> => {
 
@@ -188,9 +193,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateAdminAvatarFrameMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminAvatarFrame>>>
     export type CreateAdminAvatarFrameMutationBody = BodyType<NonReadonly<AvatarFrame>>
-    export type CreateAdminAvatarFrameMutationError = ErrorType<unknown>
+    export type CreateAdminAvatarFrameMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
-    export const useCreateAdminAvatarFrame = <TError = ErrorType<unknown>,
+    export const useCreateAdminAvatarFrame = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminAvatarFrame>>, TError,{data: BodyType<NonReadonly<AvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createAdminAvatarFrame>>,
@@ -225,7 +230,7 @@ export const getGetAdminAvatarFrameQueryKey = (id?: MaybeRef<number>,) => {
     }
 
     
-export const getGetAdminAvatarFrameQueryOptions = <TData = Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError = ErrorType<unknown>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetAdminAvatarFrameQueryOptions = <TData = Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -244,11 +249,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAdminAvatarFrameQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminAvatarFrame>>>
-export type GetAdminAvatarFrameQueryError = ErrorType<unknown>
+export type GetAdminAvatarFrameQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
 
 
-export function useGetAdminAvatarFrame<TData = Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError = ErrorType<unknown>>(
+export function useGetAdminAvatarFrame<TData = Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
  id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminAvatarFrame>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -282,7 +287,7 @@ avatarFrame = unref(avatarFrame);
   
 
 
-export const getReplaceAdminAvatarFrameMutationOptions = <TError = ErrorType<unknown>,
+export const getReplaceAdminAvatarFrameMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<AvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<AvatarFrame>>}, TContext> => {
 
@@ -309,9 +314,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ReplaceAdminAvatarFrameMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>>
     export type ReplaceAdminAvatarFrameMutationBody = BodyType<NonReadonly<AvatarFrame>>
-    export type ReplaceAdminAvatarFrameMutationError = ErrorType<unknown>
+    export type ReplaceAdminAvatarFrameMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useReplaceAdminAvatarFrame = <TError = ErrorType<unknown>,
+    export const useReplaceAdminAvatarFrame = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<AvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceAdminAvatarFrame>>,
@@ -341,7 +346,7 @@ patchedAvatarFrame = unref(patchedAvatarFrame);
   
 
 
-export const getUpdateAdminAvatarFrameMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateAdminAvatarFrameMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<PatchedAvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<PatchedAvatarFrame>>}, TContext> => {
 
@@ -368,9 +373,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateAdminAvatarFrameMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminAvatarFrame>>>
     export type UpdateAdminAvatarFrameMutationBody = BodyType<NonReadonly<PatchedAvatarFrame>>
-    export type UpdateAdminAvatarFrameMutationError = ErrorType<unknown>
+    export type UpdateAdminAvatarFrameMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateAdminAvatarFrame = <TError = ErrorType<unknown>,
+    export const useUpdateAdminAvatarFrame = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminAvatarFrame>>, TError,{id: number;data: BodyType<NonReadonly<PatchedAvatarFrame>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateAdminAvatarFrame>>,
@@ -396,7 +401,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   
 
 
-export const getDeleteAdminAvatarFrameMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteAdminAvatarFrameMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAvatarFrame>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAvatarFrame>>, TError,{id: number}, TContext> => {
 
@@ -423,9 +428,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteAdminAvatarFrameMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminAvatarFrame>>>
     
-    export type DeleteAdminAvatarFrameMutationError = ErrorType<unknown>
+    export type DeleteAdminAvatarFrameMutationError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useDeleteAdminAvatarFrame = <TError = ErrorType<unknown>,
+    export const useDeleteAdminAvatarFrame = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminAvatarFrame>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof deleteAdminAvatarFrame>>,
@@ -461,7 +466,7 @@ export const getListAdminCategoriesQueryKey = (params?: MaybeRef<ListAdminCatego
     }
 
     
-export const getListAdminCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminCategories>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListAdminCategoriesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAdminCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listAdminCategories>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(params?: MaybeRef<ListAdminCategoriesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -480,11 +485,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAdminCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminCategories>>>
-export type ListAdminCategoriesQueryError = ErrorType<unknown>
+export type ListAdminCategoriesQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
 
 
-export function useListAdminCategories<TData = Awaited<ReturnType<typeof listAdminCategories>>, TError = ErrorType<unknown>>(
+export function useListAdminCategories<TData = Awaited<ReturnType<typeof listAdminCategories>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(
  params?: MaybeRef<ListAdminCategoriesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCategories>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -517,7 +522,7 @@ export const createAdminCategory = (
   
 
 
-export const getCreateAdminCategoryMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateAdminCategoryMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminCategory>>, TError,{data: BodyType<NonReadonly<Category>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createAdminCategory>>, TError,{data: BodyType<NonReadonly<Category>>}, TContext> => {
 
@@ -544,9 +549,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateAdminCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminCategory>>>
     export type CreateAdminCategoryMutationBody = BodyType<NonReadonly<Category>>
-    export type CreateAdminCategoryMutationError = ErrorType<unknown>
+    export type CreateAdminCategoryMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
-    export const useCreateAdminCategory = <TError = ErrorType<unknown>,
+    export const useCreateAdminCategory = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminCategory>>, TError,{data: BodyType<NonReadonly<Category>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createAdminCategory>>,
@@ -581,7 +586,7 @@ export const getGetAdminCategoryQueryKey = (id?: MaybeRef<number>,) => {
     }
 
     
-export const getGetAdminCategoryQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCategory>>, TError = ErrorType<unknown>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCategory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetAdminCategoryQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCategory>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCategory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -600,11 +605,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAdminCategoryQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminCategory>>>
-export type GetAdminCategoryQueryError = ErrorType<unknown>
+export type GetAdminCategoryQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
 
 
-export function useGetAdminCategory<TData = Awaited<ReturnType<typeof getAdminCategory>>, TError = ErrorType<unknown>>(
+export function useGetAdminCategory<TData = Awaited<ReturnType<typeof getAdminCategory>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
  id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCategory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -638,7 +643,7 @@ category = unref(category);
   
 
 
-export const getReplaceAdminCategoryMutationOptions = <TError = ErrorType<unknown>,
+export const getReplaceAdminCategoryMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<Category>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<Category>>}, TContext> => {
 
@@ -665,9 +670,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ReplaceAdminCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminCategory>>>
     export type ReplaceAdminCategoryMutationBody = BodyType<NonReadonly<Category>>
-    export type ReplaceAdminCategoryMutationError = ErrorType<unknown>
+    export type ReplaceAdminCategoryMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useReplaceAdminCategory = <TError = ErrorType<unknown>,
+    export const useReplaceAdminCategory = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<Category>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceAdminCategory>>,
@@ -697,7 +702,7 @@ patchedCategory = unref(patchedCategory);
   
 
 
-export const getUpdateAdminCategoryMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateAdminCategoryMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<PatchedCategory>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<PatchedCategory>>}, TContext> => {
 
@@ -724,9 +729,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateAdminCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminCategory>>>
     export type UpdateAdminCategoryMutationBody = BodyType<NonReadonly<PatchedCategory>>
-    export type UpdateAdminCategoryMutationError = ErrorType<unknown>
+    export type UpdateAdminCategoryMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateAdminCategory = <TError = ErrorType<unknown>,
+    export const useUpdateAdminCategory = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminCategory>>, TError,{id: number;data: BodyType<NonReadonly<PatchedCategory>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateAdminCategory>>,
@@ -752,7 +757,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   
 
 
-export const getDeleteAdminCategoryMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteAdminCategoryMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCategory>>, TError,{id: number}, TContext> => {
 
@@ -779,9 +784,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteAdminCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminCategory>>>
     
-    export type DeleteAdminCategoryMutationError = ErrorType<unknown>
+    export type DeleteAdminCategoryMutationError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useDeleteAdminCategory = <TError = ErrorType<unknown>,
+    export const useDeleteAdminCategory = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminCategory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof deleteAdminCategory>>,
@@ -817,7 +822,7 @@ export const getListAdminOrdersQueryKey = (params?: MaybeRef<ListAdminOrdersPara
     }
 
     
-export const getListAdminOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListAdminOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAdminOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(params?: MaybeRef<ListAdminOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -836,11 +841,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAdminOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminOrders>>>
-export type ListAdminOrdersQueryError = ErrorType<unknown>
+export type ListAdminOrdersQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
 
 
-export function useListAdminOrders<TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<unknown>>(
+export function useListAdminOrders<TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(
  params?: MaybeRef<ListAdminOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -863,7 +868,7 @@ export const cancelAdminOrder = (
 ) => {
       orderId = unref(orderId);
       
-      return customInstance<void>(
+      return customInstance<Order>(
       {url: `http://localhost:8000/api/shop/admin/orders/${orderId}/cancel/`, method: 'POST', signal
     },
       options);
@@ -871,7 +876,7 @@ export const cancelAdminOrder = (
   
 
 
-export const getCancelAdminOrderMutationOptions = <TError = ErrorType<unknown>,
+export const getCancelAdminOrderMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelAdminOrder>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof cancelAdminOrder>>, TError,{orderId: number}, TContext> => {
 
@@ -898,9 +903,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CancelAdminOrderMutationResult = NonNullable<Awaited<ReturnType<typeof cancelAdminOrder>>>
     
-    export type CancelAdminOrderMutationError = ErrorType<unknown>
+    export type CancelAdminOrderMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useCancelAdminOrder = <TError = ErrorType<unknown>,
+    export const useCancelAdminOrder = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelAdminOrder>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof cancelAdminOrder>>,
@@ -918,7 +923,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  options?: SecondParameter<typeof customInstance>,) => {
       orderId = unref(orderId);
       
-      return customInstance<void>(
+      return customInstance<Order>(
       {url: `http://localhost:8000/api/shop/admin/orders/${orderId}/status/`, method: 'PATCH'
     },
       options);
@@ -926,7 +931,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   
 
 
-export const getUpdateAdminOrderStatusMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateAdminOrderStatusMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext> => {
 
@@ -953,9 +958,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateAdminOrderStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminOrderStatus>>>
     
-    export type UpdateAdminOrderStatusMutationError = ErrorType<unknown>
+    export type UpdateAdminOrderStatusMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateAdminOrderStatus = <TError = ErrorType<unknown>,
+    export const useUpdateAdminOrderStatus = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateAdminOrderStatus>>,
@@ -991,7 +996,7 @@ export const getListAdminProductsQueryKey = (params?: MaybeRef<ListAdminProducts
     }
 
     
-export const getListAdminProductsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminProducts>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListAdminProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAdminProductsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminProducts>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(params?: MaybeRef<ListAdminProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1010,11 +1015,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAdminProductsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminProducts>>>
-export type ListAdminProductsQueryError = ErrorType<unknown>
+export type ListAdminProductsQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
 
 
-export function useListAdminProducts<TData = Awaited<ReturnType<typeof listAdminProducts>>, TError = ErrorType<unknown>>(
+export function useListAdminProducts<TData = Awaited<ReturnType<typeof listAdminProducts>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(
  params?: MaybeRef<ListAdminProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1047,7 +1052,7 @@ export const createAdminProduct = (
   
 
 
-export const getCreateAdminProductMutationOptions = <TError = ErrorType<unknown>,
+export const getCreateAdminProductMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminProduct>>, TError,{data: BodyType<NonReadonly<Product>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createAdminProduct>>, TError,{data: BodyType<NonReadonly<Product>>}, TContext> => {
 
@@ -1074,9 +1079,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminProduct>>>
     export type CreateAdminProductMutationBody = BodyType<NonReadonly<Product>>
-    export type CreateAdminProductMutationError = ErrorType<unknown>
+    export type CreateAdminProductMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
-    export const useCreateAdminProduct = <TError = ErrorType<unknown>,
+    export const useCreateAdminProduct = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminProduct>>, TError,{data: BodyType<NonReadonly<Product>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createAdminProduct>>,
@@ -1111,7 +1116,7 @@ export const getGetAdminProductQueryKey = (id?: MaybeRef<number>,) => {
     }
 
     
-export const getGetAdminProductQueryOptions = <TData = Awaited<ReturnType<typeof getAdminProduct>>, TError = ErrorType<unknown>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetAdminProductQueryOptions = <TData = Awaited<ReturnType<typeof getAdminProduct>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1130,11 +1135,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAdminProductQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminProduct>>>
-export type GetAdminProductQueryError = ErrorType<unknown>
+export type GetAdminProductQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
 
 
-export function useGetAdminProduct<TData = Awaited<ReturnType<typeof getAdminProduct>>, TError = ErrorType<unknown>>(
+export function useGetAdminProduct<TData = Awaited<ReturnType<typeof getAdminProduct>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
  id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1168,7 +1173,7 @@ product = unref(product);
   
 
 
-export const getReplaceAdminProductMutationOptions = <TError = ErrorType<unknown>,
+export const getReplaceAdminProductMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<Product>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<Product>>}, TContext> => {
 
@@ -1195,9 +1200,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ReplaceAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminProduct>>>
     export type ReplaceAdminProductMutationBody = BodyType<NonReadonly<Product>>
-    export type ReplaceAdminProductMutationError = ErrorType<unknown>
+    export type ReplaceAdminProductMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useReplaceAdminProduct = <TError = ErrorType<unknown>,
+    export const useReplaceAdminProduct = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<Product>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceAdminProduct>>,
@@ -1227,7 +1232,7 @@ patchedProduct = unref(patchedProduct);
   
 
 
-export const getUpdateAdminProductMutationOptions = <TError = ErrorType<unknown>,
+export const getUpdateAdminProductMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<PatchedProduct>>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<PatchedProduct>>}, TContext> => {
 
@@ -1254,9 +1259,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminProduct>>>
     export type UpdateAdminProductMutationBody = BodyType<NonReadonly<PatchedProduct>>
-    export type UpdateAdminProductMutationError = ErrorType<unknown>
+    export type UpdateAdminProductMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateAdminProduct = <TError = ErrorType<unknown>,
+    export const useUpdateAdminProduct = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminProduct>>, TError,{id: number;data: BodyType<NonReadonly<PatchedProduct>>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateAdminProduct>>,
@@ -1282,7 +1287,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   
 
 
-export const getDeleteAdminProductMutationOptions = <TError = ErrorType<unknown>,
+export const getDeleteAdminProductMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,{id: number}, TContext> => {
 
@@ -1309,9 +1314,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminProduct>>>
     
-    export type DeleteAdminProductMutationError = ErrorType<unknown>
+    export type DeleteAdminProductMutationError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useDeleteAdminProduct = <TError = ErrorType<unknown>,
+    export const useDeleteAdminProduct = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminProduct>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof deleteAdminProduct>>,
@@ -1347,7 +1352,7 @@ export const getListAvatarFramesQueryKey = (params?: MaybeRef<ListAvatarFramesPa
     }
 
     
-export const getListAvatarFramesQueryOptions = <TData = Awaited<ReturnType<typeof listAvatarFrames>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAvatarFramesQueryOptions = <TData = Awaited<ReturnType<typeof listAvatarFrames>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(params?: MaybeRef<ListAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1366,11 +1371,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListAvatarFramesQueryResult = NonNullable<Awaited<ReturnType<typeof listAvatarFrames>>>
-export type ListAvatarFramesQueryError = ErrorType<unknown>
+export type ListAvatarFramesQueryError = ErrorType<ErrorResponseNotAuthenticated>
 
 
 
-export function useListAvatarFrames<TData = Awaited<ReturnType<typeof listAvatarFrames>>, TError = ErrorType<unknown>>(
+export function useListAvatarFrames<TData = Awaited<ReturnType<typeof listAvatarFrames>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(
  params?: MaybeRef<ListAvatarFramesParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvatarFrames>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1410,7 +1415,7 @@ export const getListMyOrdersQueryKey = (params?: MaybeRef<ListMyOrdersParams>,) 
     }
 
     
-export const getListMyOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listMyOrders>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListMyOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListMyOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listMyOrders>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(params?: MaybeRef<ListMyOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1429,11 +1434,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListMyOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof listMyOrders>>>
-export type ListMyOrdersQueryError = ErrorType<unknown>
+export type ListMyOrdersQueryError = ErrorType<ErrorResponseNotAuthenticated>
 
 
 
-export function useListMyOrders<TData = Awaited<ReturnType<typeof listMyOrders>>, TError = ErrorType<unknown>>(
+export function useListMyOrders<TData = Awaited<ReturnType<typeof listMyOrders>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(
  params?: MaybeRef<ListMyOrdersParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOrders>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1456,7 +1461,7 @@ export const cancelMyOrder = (
 ) => {
       orderId = unref(orderId);
       
-      return customInstance<void>(
+      return customInstance<Order>(
       {url: `http://localhost:8000/api/shop/orders/my/${orderId}/cancel/`, method: 'POST', signal
     },
       options);
@@ -1464,7 +1469,7 @@ export const cancelMyOrder = (
   
 
 
-export const getCancelMyOrderMutationOptions = <TError = ErrorType<unknown>,
+export const getCancelMyOrderMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMyOrder>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof cancelMyOrder>>, TError,{orderId: number}, TContext> => {
 
@@ -1491,9 +1496,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CancelMyOrderMutationResult = NonNullable<Awaited<ReturnType<typeof cancelMyOrder>>>
     
-    export type CancelMyOrderMutationError = ErrorType<unknown>
+    export type CancelMyOrderMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useCancelMyOrder = <TError = ErrorType<unknown>,
+    export const useCancelMyOrder = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelMyOrder>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof cancelMyOrder>>,
@@ -1529,7 +1534,7 @@ export const getListProductsQueryKey = (params?: MaybeRef<ListProductsParams>,) 
     }
 
     
-export const getListProductsQueryOptions = <TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<unknown>>(params?: MaybeRef<ListProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListProductsQueryOptions = <TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>>(params?: MaybeRef<ListProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1548,11 +1553,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListProductsQueryResult = NonNullable<Awaited<ReturnType<typeof listProducts>>>
-export type ListProductsQueryError = ErrorType<unknown>
+export type ListProductsQueryError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
 
 
-export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<unknown>>(
+export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>>(
  params?: MaybeRef<ListProductsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1591,7 +1596,7 @@ export const getGetProductQueryKey = (id?: MaybeRef<number>,) => {
     }
 
     
-export const getGetProductQueryOptions = <TData = Awaited<ReturnType<typeof getProduct>>, TError = ErrorType<unknown>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetProductQueryOptions = <TData = Awaited<ReturnType<typeof getProduct>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1610,11 +1615,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetProductQueryResult = NonNullable<Awaited<ReturnType<typeof getProduct>>>
-export type GetProductQueryError = ErrorType<unknown>
+export type GetProductQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>
 
 
 
-export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = ErrorType<unknown>>(
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(
  id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1637,7 +1642,7 @@ export const purchaseProduct = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<Order>(
       {url: `http://localhost:8000/api/shop/purchase/`, method: 'POST', signal
     },
       options);
@@ -1645,7 +1650,7 @@ export const purchaseProduct = (
   
 
 
-export const getPurchaseProductMutationOptions = <TError = ErrorType<unknown>,
+export const getPurchaseProductMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext> => {
 
@@ -1672,9 +1677,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PurchaseProductMutationResult = NonNullable<Awaited<ReturnType<typeof purchaseProduct>>>
     
-    export type PurchaseProductMutationError = ErrorType<unknown>
+    export type PurchaseProductMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
-    export const usePurchaseProduct = <TError = ErrorType<unknown>,
+    export const usePurchaseProduct = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof purchaseProduct>>,
