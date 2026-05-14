@@ -91,8 +91,8 @@
 
 <script setup lang="ts">
 import {
-  useAcceptTeamInvitation,
-  useDeclineTeamInvitation,
+  useAcceptTeamJoinRequest,
+  useDeclineTeamJoinRequest,
   useListTeamJoinRequestsByTeam,
 } from '@/api/teams/teams'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -126,8 +126,8 @@ const filteredPendingJoinRequests = computed(() =>
 )
 
 const loadingJoinRequestIds = ref<Set<number>>(new Set())
-const { mutate: accept } = useAcceptTeamInvitation()
-const { mutate: decline } = useDeclineTeamInvitation()
+const { mutate: accept } = useAcceptTeamJoinRequest()
+const { mutate: decline } = useDeclineTeamJoinRequest()
 
 const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   loadingJoinRequestIds.value.add(id)
@@ -135,7 +135,7 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   const mutate = action === 'accept' ? accept : decline
 
   mutate(
-    { invitationId: id },
+    { requestId: id, id: props.teamId },
     {
       onSuccess: () => {
         const pastTense = { accept: 'accepted', decline: 'declined' }

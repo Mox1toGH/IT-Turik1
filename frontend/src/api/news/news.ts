@@ -34,39 +34,13 @@ import type {
   ErrorResponseValidationError,
   ListNewsParams,
   NewsArticle,
+  NewsArticleRequest,
   PaginatedNewsArticleList,
-  PatchedNewsArticle
+  PatchedNewsArticleRequest
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
 import type { ErrorType , BodyType } from '../../lib/apiClient';
-
-// https://stackoverflow.com/questions/49579094/typescript-conditional-types-filter-out-readonly-properties-pick-only-requir/49579497#49579497
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <
-T,
->() => T extends Y ? 1 : 2
-? A
-: B;
-
-type WritableKeys<T> = {
-[P in keyof T]-?: IfEquals<
-  { [Q in P]: T[P] },
-  { -readonly [Q in P]: T[P] },
-  P
->;
-}[keyof T];
-
-type UnionToIntersection<U> =
-  (U extends any ? (k: U)=>void : never) extends ((k: infer I)=>void) ? I : never;
-type DistributeReadOnlyOverUnions<T> = T extends any ? NonReadonly<T> : never;
-
-type Writable<T> = Pick<T, WritableKeys<T>>;
-type NonReadonly<T> = [T] extends [UnionToIntersection<T>] ? {
-  [P in keyof Writable<T>]: T[P] extends object
-    ? NonReadonly<NonNullable<T[P]>>
-    : T[P];
-} : DistributeReadOnlyOverUnions<T>;
-
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -137,15 +111,15 @@ export function useListNews<TData = Awaited<ReturnType<typeof listNews>>, TError
 
 
 export const createNews = (
-    newsArticle: MaybeRef<NonReadonly<NewsArticle>>,
+    newsArticleRequest: MaybeRef<NewsArticleRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      newsArticle = unref(newsArticle);
+      newsArticleRequest = unref(newsArticleRequest);
       
       return customInstance<NewsArticle>(
       {url: `http://localhost:8000/api/news/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: newsArticle, signal
+      data: newsArticleRequest, signal
     },
       options);
     }
@@ -153,8 +127,8 @@ export const createNews = (
 
 
 export const getCreateNewsMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NonReadonly<NewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NonReadonly<NewsArticle>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NewsArticleRequest>}, TContext> => {
 
 const mutationKey = ['createNews'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -166,7 +140,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createNews>>, {data: BodyType<NonReadonly<NewsArticle>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createNews>>, {data: BodyType<NewsArticleRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createNews(data,requestOptions)
@@ -178,15 +152,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateNewsMutationResult = NonNullable<Awaited<ReturnType<typeof createNews>>>
-    export type CreateNewsMutationBody = BodyType<NonReadonly<NewsArticle>>
+    export type CreateNewsMutationBody = BodyType<NewsArticleRequest>
     export type CreateNewsMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateNews = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NonReadonly<NewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createNews>>, TError,{data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createNews>>,
         TError,
-        {data: BodyType<NonReadonly<NewsArticle>>},
+        {data: BodyType<NewsArticleRequest>},
         TContext
       > => {
 
@@ -258,15 +232,15 @@ export function useGetNews<TData = Awaited<ReturnType<typeof getNews>>, TError =
 
 export const replaceNews = (
     id: MaybeRef<number>,
-    newsArticle: MaybeRef<NonReadonly<NewsArticle>>,
+    newsArticleRequest: MaybeRef<NewsArticleRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-newsArticle = unref(newsArticle);
+newsArticleRequest = unref(newsArticleRequest);
       
       return customInstance<NewsArticle>(
       {url: `http://localhost:8000/api/news/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: newsArticle
+      data: newsArticleRequest
     },
       options);
     }
@@ -274,8 +248,8 @@ newsArticle = unref(newsArticle);
 
 
 export const getReplaceNewsMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NonReadonly<NewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NonReadonly<NewsArticle>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NewsArticleRequest>}, TContext> => {
 
 const mutationKey = ['replaceNews'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -287,7 +261,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceNews>>, {id: number;data: BodyType<NonReadonly<NewsArticle>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceNews>>, {id: number;data: BodyType<NewsArticleRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceNews(id,data,requestOptions)
@@ -299,15 +273,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceNewsMutationResult = NonNullable<Awaited<ReturnType<typeof replaceNews>>>
-    export type ReplaceNewsMutationBody = BodyType<NonReadonly<NewsArticle>>
+    export type ReplaceNewsMutationBody = BodyType<NewsArticleRequest>
     export type ReplaceNewsMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceNews = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NonReadonly<NewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{id: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceNews>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<NewsArticle>>},
+        {id: number;data: BodyType<NewsArticleRequest>},
         TContext
       > => {
 
@@ -317,15 +291,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateNews = (
     id: MaybeRef<number>,
-    patchedNewsArticle: MaybeRef<NonReadonly<PatchedNewsArticle>>,
+    patchedNewsArticleRequest: MaybeRef<PatchedNewsArticleRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedNewsArticle = unref(patchedNewsArticle);
+patchedNewsArticleRequest = unref(patchedNewsArticleRequest);
       
       return customInstance<NewsArticle>(
       {url: `http://localhost:8000/api/news/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedNewsArticle
+      data: patchedNewsArticleRequest
     },
       options);
     }
@@ -333,8 +307,8 @@ patchedNewsArticle = unref(patchedNewsArticle);
 
 
 export const getUpdateNewsMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<NonReadonly<PatchedNewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<NonReadonly<PatchedNewsArticle>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<PatchedNewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<PatchedNewsArticleRequest>}, TContext> => {
 
 const mutationKey = ['updateNews'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -346,7 +320,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNews>>, {id: number;data: BodyType<NonReadonly<PatchedNewsArticle>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNews>>, {id: number;data: BodyType<PatchedNewsArticleRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateNews(id,data,requestOptions)
@@ -358,15 +332,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateNewsMutationResult = NonNullable<Awaited<ReturnType<typeof updateNews>>>
-    export type UpdateNewsMutationBody = BodyType<NonReadonly<PatchedNewsArticle>>
+    export type UpdateNewsMutationBody = BodyType<PatchedNewsArticleRequest>
     export type UpdateNewsMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateNews = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<NonReadonly<PatchedNewsArticle>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{id: number;data: BodyType<PatchedNewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateNews>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<PatchedNewsArticle>>},
+        {id: number;data: BodyType<PatchedNewsArticleRequest>},
         TContext
       > => {
 

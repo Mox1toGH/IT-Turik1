@@ -137,17 +137,7 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return self.request.user
 
-@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateUserAvatar',request={
-    'multipart/form-data': {
-        'type': 'object',
-        'properties': {
-            'avatar': {
-                'type': 'string',
-                'format': 'binary',
-            }
-        }
-    }
-}, responses={
+@extend_schema(methods=['PATCH'], operation_id='updateUserAvatar', responses={
     200: UserAvatarUpdateSerializer,
     400: _400,
     401: _401,

@@ -4,12 +4,8 @@
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
     </ui-button>
-    <ui-button
-      v-if="props.registeredTeamId"
-      :disabled="isPending"
-      variant="danger"
-      @click="handleLeave"
-    >
+
+    <ui-button v-else :disabled="isPending" variant="danger" @click="handleLeave">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Leave Tournament</span>
     </ui-button>

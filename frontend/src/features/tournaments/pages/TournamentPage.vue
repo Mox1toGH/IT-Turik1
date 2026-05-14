@@ -15,7 +15,7 @@
       <template #header>
         <div class="hero-content">
           <p class="section-eyebrow">Tournaments</p>
-          <h1>{{ tournament?.name ?? `Tournament ${id}` }}</h1>
+          <h1 class="section-title">{{ tournament?.name ?? `Tournament ${id}` }}</h1>
         </div>
       </template>
 
@@ -64,67 +64,87 @@
       </div>
     </ui-card>
 
-    <div class="tournament-grid" v-if="currentSection === 'information'">
-      <TournamentInfo :tournament-id="id" />
-      <TournamentTeams :tournament-id="id" />
-    </div>
-
-    <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
-    <TournamentSchedule :tournament-id="id" v-if="currentSection === 'schedule'" />
-    <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
-
-    <template
-      v-if="currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')"
-    >
-      <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
-      <JuryAssign :tournament-id="id" v-if="user?.role === 'admin'" />
-    </template>
-
-    <ui-card
-      v-if="
-        currentSection === 'submissions' && user && user.role !== 'team' && user.role !== 'admin'
-      "
-    >
-      <p>Submissions are available for team members and admins.</p>
-    </ui-card>
-
-    <ui-card v-if="user?.role === 'admin'" class="manage-zone">
-      <div>
-        <div class="manage-row">
-          <div>
-            <h3>Edit tournament</h3>
-            <p class="text-muted">Update tournament details in edit workspace.</p>
-          </div>
-          <ui-button asLink variant="secondary" size="sm" :to="`/tournaments/${id}/edit`">
-            Edit tournament
-          </ui-button>
+    <transition name="fade" mode="out-in">
+      <div :key="currentSection">
+        <div class="tournament-grid" v-if="currentSection === 'information'">
+          <TournamentInfo :tournament-id="id" />
+          <TournamentTeams :tournament-id="id" />
         </div>
 
-        <div>
-          <div class="danger-zone-header">
-            <danger-icon />
-            <span>Danger Zone</span>
-          </div>
+        <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
+        <TournamentSchedule
+          :tournament-id="id"
+          :tournament-status="tournament?.status ?? 'draft'"
+          v-if="currentSection === 'schedule'"
+        />
+        <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
 
-          <div class="danger-zone-box">
-            <div class="manage-row danger-zone-row">
+        <template
+          v-if="
+            currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')
+          "
+        >
+          <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
+          <JuryAssign
+            :tournament-id="id"
+            :tournament-status="tournament?.status ?? 'draft'"
+            v-if="user?.role === 'admin'"
+          />
+        </template>
+
+        <ui-card
+          v-if="
+            currentSection === 'submissions' &&
+            user &&
+            user.role !== 'team' &&
+            user.role !== 'admin'
+          "
+        >
+          <p>Submissions are available for team members and admins.</p>
+        </ui-card>
+
+        <ui-card
+          v-if="user?.role === 'admin' && currentSection === 'information'"
+          class="manage-zone"
+        >
+          <div>
+            <div class="manage-row">
               <div>
-                <h3>Delete tournament</h3>
-                <p class="text-muted">
-                  This action permanently deletes the tournament and cannot be undone.
-                </p>
+                <h3>Edit tournament</h3>
+                <p class="text-muted">Update tournament details in edit workspace.</p>
+              </div>
+              <ui-button asLink variant="secondary" size="sm" :to="`/tournaments/${id}/edit`">
+                Edit tournament
+              </ui-button>
+            </div>
+
+            <div>
+              <div class="danger-zone-header">
+                <danger-icon />
+                <span>Danger Zone</span>
               </div>
 
-              <DeleteTournamentModal
-                :tournament-id="id"
-                :tournament-name="tournament?.name ?? `Tournament ${id}`"
-                @deleted="onTournamentDeleted"
-              />
+              <div class="danger-zone-box">
+                <div class="manage-row danger-zone-row">
+                  <div>
+                    <h3>Delete tournament</h3>
+                    <p class="text-muted">
+                      This action permanently deletes the tournament and cannot be undone.
+                    </p>
+                  </div>
+
+                  <DeleteTournamentModal
+                    :tournament-id="id"
+                    :tournament-name="tournament?.name ?? `Tournament ${id}`"
+                    @deleted="onTournamentDeleted"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </ui-card>
       </div>
-    </ui-card>
+    </transition>
 
     <ui-modal v-model="isBannerModalOpen" @close="resetBannerState">
       <template #title>
@@ -288,8 +308,8 @@ const saveBanner = () => {
         showNotification('Banner updated.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to update banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -304,8 +324,8 @@ const removeBanner = () => {
         showNotification('Banner removed.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to remove banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -387,6 +407,28 @@ watch(
 </script>
 
 <style scoped>
+.fade-enter-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.fade-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .hero-card {
   position: relative;
   overflow: hidden;
@@ -395,6 +437,10 @@ watch(
 .hero-content {
   position: relative;
   z-index: 2;
+}
+
+.section-title {
+  color: white;
 }
 
 .hero-card--with-banner :deep(.ui-card-body),
@@ -431,7 +477,7 @@ watch(
   height: 2.1rem;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
-  background: #ffffff;
+  background: var(--secondary);
   color: var(--color-gray-700);
   display: inline-flex;
   align-items: center;

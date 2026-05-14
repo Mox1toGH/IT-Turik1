@@ -37,6 +37,7 @@ import type {
   ErrorResponsePermissionDenied,
   ErrorResponseValidationError,
   Event,
+  EventRequest,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
   Icon,
@@ -46,55 +47,32 @@ import type {
   ListTournamentsParams,
   MyCalendarResponse,
   OwnSubmission,
-  PatchedEvent,
-  PatchedRound,
-  PatchedSubmission,
-  PatchedTournamentAdmin,
-  PatchedTournamentTeamRegistrationDisqualification,
+  PatchedEventRequest,
+  PatchedRoundRequest,
+  PatchedSubmissionRequest,
+  PatchedTournamentAdminRequest,
+  PatchedTournamentBannerRequest,
+  PatchedTournamentTeamRegistrationDisqualificationRequest,
   Round,
+  RoundRequest,
   Submission,
+  SubmissionRequest,
   TournamentAdmin,
+  TournamentAdminRequest,
   TournamentArchiveDetail,
   TournamentArchiveList,
   TournamentBanner,
+  TournamentBannerRequest,
   TournamentListResponse,
   TournamentPublic,
-  TournamentTeamLeave,
+  TournamentTeamLeaveRequest,
   TournamentTeamRegistration,
-  TournamentTeamRegistrationCreate,
-  TournamentTeamRegistrationList,
-  UpdateTournamentBannerBody
+  TournamentTeamRegistrationCreateRequest,
+  TournamentTeamRegistrationList
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
 import type { ErrorType , BodyType } from '../../lib/apiClient';
-
-// https://stackoverflow.com/questions/49579094/typescript-conditional-types-filter-out-readonly-properties-pick-only-requir/49579497#49579497
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <
-T,
->() => T extends Y ? 1 : 2
-? A
-: B;
-
-type WritableKeys<T> = {
-[P in keyof T]-?: IfEquals<
-  { [Q in P]: T[P] },
-  { -readonly [Q in P]: T[P] },
-  P
->;
-}[keyof T];
-
-type UnionToIntersection<U> =
-  (U extends any ? (k: U)=>void : never) extends ((k: infer I)=>void) ? I : never;
-type DistributeReadOnlyOverUnions<T> = T extends any ? NonReadonly<T> : never;
-
-type Writable<T> = Pick<T, WritableKeys<T>>;
-type NonReadonly<T> = [T] extends [UnionToIntersection<T>] ? {
-  [P in keyof Writable<T>]: T[P] extends object
-    ? NonReadonly<NonNullable<T[P]>>
-    : T[P];
-} : DistributeReadOnlyOverUnions<T>;
-
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -290,16 +268,16 @@ export function useListEligibleTeamsForTournament<TData = Awaited<ReturnType<typ
 
 export const unregisterTeamFromTournament = (
     id: MaybeRef<number>,
-    tournamentTeamLeave: MaybeRef<TournamentTeamLeave>,
+    tournamentTeamLeaveRequest: MaybeRef<TournamentTeamLeaveRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
-tournamentTeamLeave = unref(tournamentTeamLeave);
+tournamentTeamLeaveRequest = unref(tournamentTeamLeaveRequest);
       
       return customInstance<TournamentTeamRegistration>(
       {url: `http://localhost:8000/api/tournaments/${id}/leave-team/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: tournamentTeamLeave, signal
+      data: tournamentTeamLeaveRequest, signal
     },
       options);
     }
@@ -307,8 +285,8 @@ tournamentTeamLeave = unref(tournamentTeamLeave);
 
 
 export const getUnregisterTeamFromTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeave>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeave>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeaveRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeaveRequest>}, TContext> => {
 
 const mutationKey = ['unregisterTeamFromTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -320,7 +298,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, {id: number;data: BodyType<TournamentTeamLeave>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, {id: number;data: BodyType<TournamentTeamLeaveRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  unregisterTeamFromTournament(id,data,requestOptions)
@@ -332,15 +310,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UnregisterTeamFromTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof unregisterTeamFromTournament>>>
-    export type UnregisterTeamFromTournamentMutationBody = BodyType<TournamentTeamLeave>
+    export type UnregisterTeamFromTournamentMutationBody = BodyType<TournamentTeamLeaveRequest>
     export type UnregisterTeamFromTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUnregisterTeamFromTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeave>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unregisterTeamFromTournament>>, TError,{id: number;data: BodyType<TournamentTeamLeaveRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof unregisterTeamFromTournament>>,
         TError,
-        {id: number;data: BodyType<TournamentTeamLeave>},
+        {id: number;data: BodyType<TournamentTeamLeaveRequest>},
         TContext
       > => {
 
@@ -412,16 +390,16 @@ export function useListMyTeamSubmissions<TData = Awaited<ReturnType<typeof listM
 
 export const registerTeamForTournament = (
     id: MaybeRef<number>,
-    tournamentTeamRegistrationCreate: MaybeRef<TournamentTeamRegistrationCreate>,
+    tournamentTeamRegistrationCreateRequest: MaybeRef<TournamentTeamRegistrationCreateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
-tournamentTeamRegistrationCreate = unref(tournamentTeamRegistrationCreate);
+tournamentTeamRegistrationCreateRequest = unref(tournamentTeamRegistrationCreateRequest);
       
       return customInstance<TournamentTeamRegistration>(
       {url: `http://localhost:8000/api/tournaments/${id}/register-team/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: tournamentTeamRegistrationCreate, signal
+      data: tournamentTeamRegistrationCreateRequest, signal
     },
       options);
     }
@@ -429,8 +407,8 @@ tournamentTeamRegistrationCreate = unref(tournamentTeamRegistrationCreate);
 
 
 export const getRegisterTeamForTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreateRequest>}, TContext> => {
 
 const mutationKey = ['registerTeamForTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -442,7 +420,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerTeamForTournament>>, {id: number;data: BodyType<TournamentTeamRegistrationCreate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerTeamForTournament>>, {id: number;data: BodyType<TournamentTeamRegistrationCreateRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  registerTeamForTournament(id,data,requestOptions)
@@ -454,15 +432,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RegisterTeamForTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof registerTeamForTournament>>>
-    export type RegisterTeamForTournamentMutationBody = BodyType<TournamentTeamRegistrationCreate>
+    export type RegisterTeamForTournamentMutationBody = BodyType<TournamentTeamRegistrationCreateRequest>
     export type RegisterTeamForTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useRegisterTeamForTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerTeamForTournament>>, TError,{id: number;data: BodyType<TournamentTeamRegistrationCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof registerTeamForTournament>>,
         TError,
-        {id: number;data: BodyType<TournamentTeamRegistrationCreate>},
+        {id: number;data: BodyType<TournamentTeamRegistrationCreateRequest>},
         TContext
       > => {
 
@@ -540,16 +518,16 @@ export function useGetTournamentTeamRegistration<TData = Awaited<ReturnType<type
 export const disqualifyTeamFromTournament = (
     id: MaybeRef<number>,
     registrationPk: MaybeRef<number>,
-    patchedTournamentTeamRegistrationDisqualification: MaybeRef<PatchedTournamentTeamRegistrationDisqualification>,
+    patchedTournamentTeamRegistrationDisqualificationRequest: MaybeRef<PatchedTournamentTeamRegistrationDisqualificationRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
 registrationPk = unref(registrationPk);
-patchedTournamentTeamRegistrationDisqualification = unref(patchedTournamentTeamRegistrationDisqualification);
+patchedTournamentTeamRegistrationDisqualificationRequest = unref(patchedTournamentTeamRegistrationDisqualificationRequest);
       
       return customInstance<DisqualificationResponse>(
       {url: `http://localhost:8000/api/tournaments/${id}/registrations/${registrationPk}/disqualification/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedTournamentTeamRegistrationDisqualification
+      data: patchedTournamentTeamRegistrationDisqualificationRequest
     },
       options);
     }
@@ -557,8 +535,8 @@ patchedTournamentTeamRegistrationDisqualification = unref(patchedTournamentTeamR
 
 
 export const getDisqualifyTeamFromTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualification>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualification>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>}, TContext> => {
 
 const mutationKey = ['disqualifyTeamFromTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -570,7 +548,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, {id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualification>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, {id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>}> = (props) => {
           const {id,registrationPk,data} = props ?? {};
 
           return  disqualifyTeamFromTournament(id,registrationPk,data,requestOptions)
@@ -582,15 +560,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type DisqualifyTeamFromTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>>
-    export type DisqualifyTeamFromTournamentMutationBody = BodyType<PatchedTournamentTeamRegistrationDisqualification>
+    export type DisqualifyTeamFromTournamentMutationBody = BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>
     export type DisqualifyTeamFromTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useDisqualifyTeamFromTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualification>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disqualifyTeamFromTournament>>, TError,{id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof disqualifyTeamFromTournament>>,
         TError,
-        {id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualification>},
+        {id: number;registrationPk: number;data: BodyType<PatchedTournamentTeamRegistrationDisqualificationRequest>},
         TContext
       > => {
 
@@ -854,16 +832,16 @@ export function useListRounds<TData = Awaited<ReturnType<typeof listRounds>>, TE
 
 export const createRound = (
     tournamentPk: MaybeRef<number>,
-    round: MaybeRef<NonReadonly<Round>>,
+    roundRequest: MaybeRef<RoundRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       tournamentPk = unref(tournamentPk);
-round = unref(round);
+roundRequest = unref(roundRequest);
       
       return customInstance<Round>(
       {url: `http://localhost:8000/api/tournaments/${tournamentPk}/rounds/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: round, signal
+      data: roundRequest, signal
     },
       options);
     }
@@ -871,8 +849,8 @@ round = unref(round);
 
 
 export const getCreateRoundMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<NonReadonly<Round>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<NonReadonly<Round>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<RoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<RoundRequest>}, TContext> => {
 
 const mutationKey = ['createRound'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -884,7 +862,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRound>>, {tournamentPk: number;data: BodyType<NonReadonly<Round>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRound>>, {tournamentPk: number;data: BodyType<RoundRequest>}> = (props) => {
           const {tournamentPk,data} = props ?? {};
 
           return  createRound(tournamentPk,data,requestOptions)
@@ -896,15 +874,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateRoundMutationResult = NonNullable<Awaited<ReturnType<typeof createRound>>>
-    export type CreateRoundMutationBody = BodyType<NonReadonly<Round>>
+    export type CreateRoundMutationBody = BodyType<RoundRequest>
     export type CreateRoundMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useCreateRound = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<NonReadonly<Round>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRound>>, TError,{tournamentPk: number;data: BodyType<RoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createRound>>,
         TError,
-        {tournamentPk: number;data: BodyType<NonReadonly<Round>>},
+        {tournamentPk: number;data: BodyType<RoundRequest>},
         TContext
       > => {
 
@@ -1288,15 +1266,15 @@ export function useListEvents<TData = Awaited<ReturnType<typeof listEvents>>, TE
 
 
 export const createEvent = (
-    event: MaybeRef<NonReadonly<Event>>,
+    eventRequest: MaybeRef<EventRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      event = unref(event);
+      eventRequest = unref(eventRequest);
       
       return customInstance<Event>(
       {url: `http://localhost:8000/api/tournaments/events/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: event, signal
+      data: eventRequest, signal
     },
       options);
     }
@@ -1304,8 +1282,8 @@ export const createEvent = (
 
 
 export const getCreateEventMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<NonReadonly<Event>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<NonReadonly<Event>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<EventRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<EventRequest>}, TContext> => {
 
 const mutationKey = ['createEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1317,7 +1295,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEvent>>, {data: BodyType<NonReadonly<Event>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEvent>>, {data: BodyType<EventRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createEvent(data,requestOptions)
@@ -1329,15 +1307,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateEventMutationResult = NonNullable<Awaited<ReturnType<typeof createEvent>>>
-    export type CreateEventMutationBody = BodyType<NonReadonly<Event>>
+    export type CreateEventMutationBody = BodyType<EventRequest>
     export type CreateEventMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateEvent = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<NonReadonly<Event>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEvent>>, TError,{data: BodyType<EventRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createEvent>>,
         TError,
-        {data: BodyType<NonReadonly<Event>>},
+        {data: BodyType<EventRequest>},
         TContext
       > => {
 
@@ -1409,15 +1387,15 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
 
 export const updateEvent = (
     id: MaybeRef<number>,
-    patchedEvent: MaybeRef<NonReadonly<PatchedEvent>>,
+    patchedEventRequest: MaybeRef<PatchedEventRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedEvent = unref(patchedEvent);
+patchedEventRequest = unref(patchedEventRequest);
       
       return customInstance<Event>(
       {url: `http://localhost:8000/api/tournaments/events/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedEvent
+      data: patchedEventRequest
     },
       options);
     }
@@ -1425,8 +1403,8 @@ patchedEvent = unref(patchedEvent);
 
 
 export const getUpdateEventMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<NonReadonly<PatchedEvent>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<NonReadonly<PatchedEvent>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<PatchedEventRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<PatchedEventRequest>}, TContext> => {
 
 const mutationKey = ['updateEvent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1438,7 +1416,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEvent>>, {id: number;data: BodyType<NonReadonly<PatchedEvent>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEvent>>, {id: number;data: BodyType<PatchedEventRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateEvent(id,data,requestOptions)
@@ -1450,15 +1428,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateEventMutationResult = NonNullable<Awaited<ReturnType<typeof updateEvent>>>
-    export type UpdateEventMutationBody = BodyType<NonReadonly<PatchedEvent>>
+    export type UpdateEventMutationBody = BodyType<PatchedEventRequest>
     export type UpdateEventMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateEvent = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<NonReadonly<PatchedEvent>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,{id: number;data: BodyType<PatchedEventRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateEvent>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<PatchedEvent>>},
+        {id: number;data: BodyType<PatchedEventRequest>},
         TContext
       > => {
 
@@ -1584,15 +1562,15 @@ export function useListIcons<TData = Awaited<ReturnType<typeof listIcons>>, TErr
 
 
 export const createTournament = (
-    tournamentAdmin: MaybeRef<NonReadonly<TournamentAdmin>>,
+    tournamentAdminRequest: MaybeRef<TournamentAdminRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      tournamentAdmin = unref(tournamentAdmin);
+      tournamentAdminRequest = unref(tournamentAdminRequest);
       
       return customInstance<TournamentPublic>(
       {url: `http://localhost:8000/api/tournaments/manage/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: tournamentAdmin, signal
+      data: tournamentAdminRequest, signal
     },
       options);
     }
@@ -1600,8 +1578,8 @@ export const createTournament = (
 
 
 export const getCreateTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<NonReadonly<TournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<NonReadonly<TournamentAdmin>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<TournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<TournamentAdminRequest>}, TContext> => {
 
 const mutationKey = ['createTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1613,7 +1591,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTournament>>, {data: BodyType<NonReadonly<TournamentAdmin>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTournament>>, {data: BodyType<TournamentAdminRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createTournament(data,requestOptions)
@@ -1625,15 +1603,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof createTournament>>>
-    export type CreateTournamentMutationBody = BodyType<NonReadonly<TournamentAdmin>>
+    export type CreateTournamentMutationBody = BodyType<TournamentAdminRequest>
     export type CreateTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<NonReadonly<TournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTournament>>, TError,{data: BodyType<TournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createTournament>>,
         TError,
-        {data: BodyType<NonReadonly<TournamentAdmin>>},
+        {data: BodyType<TournamentAdminRequest>},
         TContext
       > => {
 
@@ -1705,15 +1683,15 @@ export function useGetTournamentForUpdate<TData = Awaited<ReturnType<typeof getT
 
 export const replaceTournament = (
     id: MaybeRef<number>,
-    tournamentAdmin: MaybeRef<NonReadonly<TournamentAdmin>>,
+    tournamentAdminRequest: MaybeRef<TournamentAdminRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-tournamentAdmin = unref(tournamentAdmin);
+tournamentAdminRequest = unref(tournamentAdminRequest);
       
       return customInstance<TournamentPublic>(
       {url: `http://localhost:8000/api/tournaments/manage/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: tournamentAdmin
+      data: tournamentAdminRequest
     },
       options);
     }
@@ -1721,8 +1699,8 @@ tournamentAdmin = unref(tournamentAdmin);
 
 
 export const getReplaceTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<NonReadonly<TournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<NonReadonly<TournamentAdmin>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentAdminRequest>}, TContext> => {
 
 const mutationKey = ['replaceTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1734,7 +1712,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceTournament>>, {id: number;data: BodyType<NonReadonly<TournamentAdmin>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceTournament>>, {id: number;data: BodyType<TournamentAdminRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceTournament(id,data,requestOptions)
@@ -1746,15 +1724,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof replaceTournament>>>
-    export type ReplaceTournamentMutationBody = BodyType<NonReadonly<TournamentAdmin>>
+    export type ReplaceTournamentMutationBody = BodyType<TournamentAdminRequest>
     export type ReplaceTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<NonReadonly<TournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceTournament>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<TournamentAdmin>>},
+        {id: number;data: BodyType<TournamentAdminRequest>},
         TContext
       > => {
 
@@ -1764,15 +1742,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateTournament = (
     id: MaybeRef<number>,
-    patchedTournamentAdmin: MaybeRef<NonReadonly<PatchedTournamentAdmin>>,
+    patchedTournamentAdminRequest: MaybeRef<PatchedTournamentAdminRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedTournamentAdmin = unref(patchedTournamentAdmin);
+patchedTournamentAdminRequest = unref(patchedTournamentAdminRequest);
       
       return customInstance<TournamentPublic>(
       {url: `http://localhost:8000/api/tournaments/manage/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedTournamentAdmin
+      data: patchedTournamentAdminRequest
     },
       options);
     }
@@ -1780,8 +1758,8 @@ patchedTournamentAdmin = unref(patchedTournamentAdmin);
 
 
 export const getUpdateTournamentMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<NonReadonly<PatchedTournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<NonReadonly<PatchedTournamentAdmin>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<PatchedTournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<PatchedTournamentAdminRequest>}, TContext> => {
 
 const mutationKey = ['updateTournament'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1793,7 +1771,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTournament>>, {id: number;data: BodyType<NonReadonly<PatchedTournamentAdmin>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTournament>>, {id: number;data: BodyType<PatchedTournamentAdminRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateTournament(id,data,requestOptions)
@@ -1805,15 +1783,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof updateTournament>>>
-    export type UpdateTournamentMutationBody = BodyType<NonReadonly<PatchedTournamentAdmin>>
+    export type UpdateTournamentMutationBody = BodyType<PatchedTournamentAdminRequest>
     export type UpdateTournamentMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateTournament = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<NonReadonly<PatchedTournamentAdmin>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournament>>, TError,{id: number;data: BodyType<PatchedTournamentAdminRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateTournament>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<PatchedTournamentAdmin>>},
+        {id: number;data: BodyType<PatchedTournamentAdminRequest>},
         TContext
       > => {
 
@@ -1878,13 +1856,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const tournamentsManageBannerUpdate = (
     id: MaybeRef<number>,
-    tournamentBanner: MaybeRef<TournamentBanner>,
+    tournamentBannerRequest: MaybeRef<TournamentBannerRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-tournamentBanner = unref(tournamentBanner);
+tournamentBannerRequest = unref(tournamentBannerRequest);
       const formData = new FormData();
-if(tournamentBanner.banner !== undefined && tournamentBanner.banner !== null) {
- formData.append(`banner`, tournamentBanner.banner)
+if(tournamentBannerRequest.banner !== undefined && tournamentBannerRequest.banner !== null) {
+ formData.append(`banner`, tournamentBannerRequest.banner)
  }
 
       return customInstance<TournamentBanner>(
@@ -1898,8 +1876,8 @@ if(tournamentBanner.banner !== undefined && tournamentBanner.banner !== null) {
 
 
 export const getTournamentsManageBannerUpdateMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBannerRequest>}, TContext> => {
 
 const mutationKey = ['tournamentsManageBannerUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1911,7 +1889,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, {id: number;data: BodyType<TournamentBanner>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, {id: number;data: BodyType<TournamentBannerRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  tournamentsManageBannerUpdate(id,data,requestOptions)
@@ -1923,15 +1901,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type TournamentsManageBannerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>>
-    export type TournamentsManageBannerUpdateMutationBody = BodyType<TournamentBanner>
+    export type TournamentsManageBannerUpdateMutationBody = BodyType<TournamentBannerRequest>
     export type TournamentsManageBannerUpdateMutationError = ErrorType<unknown>
 
     export const useTournamentsManageBannerUpdate = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>,
         TError,
-        {id: number;data: BodyType<TournamentBanner>},
+        {id: number;data: BodyType<TournamentBannerRequest>},
         TContext
       > => {
 
@@ -1941,13 +1919,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateTournamentBanner = (
     id: MaybeRef<number>,
-    updateTournamentBannerBody: MaybeRef<UpdateTournamentBannerBody>,
+    patchedTournamentBannerRequest: MaybeRef<PatchedTournamentBannerRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-updateTournamentBannerBody = unref(updateTournamentBannerBody);
+patchedTournamentBannerRequest = unref(patchedTournamentBannerRequest);
       const formData = new FormData();
-if(updateTournamentBannerBody.banner !== undefined) {
- formData.append(`banner`, updateTournamentBannerBody.banner)
+if(patchedTournamentBannerRequest.banner !== undefined && patchedTournamentBannerRequest.banner !== null) {
+ formData.append(`banner`, patchedTournamentBannerRequest.banner)
  }
 
       return customInstance<TournamentPublic>(
@@ -1961,8 +1939,8 @@ if(updateTournamentBannerBody.banner !== undefined) {
 
 
 export const getUpdateTournamentBannerMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<PatchedTournamentBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<PatchedTournamentBannerRequest>}, TContext> => {
 
 const mutationKey = ['updateTournamentBanner'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1974,7 +1952,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTournamentBanner>>, {id: number;data: BodyType<UpdateTournamentBannerBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTournamentBanner>>, {id: number;data: BodyType<PatchedTournamentBannerRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateTournamentBanner(id,data,requestOptions)
@@ -1986,15 +1964,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateTournamentBannerMutationResult = NonNullable<Awaited<ReturnType<typeof updateTournamentBanner>>>
-    export type UpdateTournamentBannerMutationBody = BodyType<UpdateTournamentBannerBody>
+    export type UpdateTournamentBannerMutationBody = BodyType<PatchedTournamentBannerRequest>
     export type UpdateTournamentBannerMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateTournamentBanner = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<PatchedTournamentBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateTournamentBanner>>,
         TError,
-        {id: number;data: BodyType<UpdateTournamentBannerBody>},
+        {id: number;data: BodyType<PatchedTournamentBannerRequest>},
         TContext
       > => {
 
@@ -2183,15 +2161,15 @@ export function useGetRound<TData = Awaited<ReturnType<typeof getRound>>, TError
 
 export const replaceRound = (
     id: MaybeRef<number>,
-    round: MaybeRef<NonReadonly<Round>>,
+    roundRequest: MaybeRef<RoundRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-round = unref(round);
+roundRequest = unref(roundRequest);
       
       return customInstance<Round>(
       {url: `http://localhost:8000/api/tournaments/rounds/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: round
+      data: roundRequest
     },
       options);
     }
@@ -2199,8 +2177,8 @@ round = unref(round);
 
 
 export const getReplaceRoundMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<NonReadonly<Round>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<NonReadonly<Round>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundRequest>}, TContext> => {
 
 const mutationKey = ['replaceRound'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2212,7 +2190,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceRound>>, {id: number;data: BodyType<NonReadonly<Round>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceRound>>, {id: number;data: BodyType<RoundRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceRound(id,data,requestOptions)
@@ -2224,15 +2202,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceRoundMutationResult = NonNullable<Awaited<ReturnType<typeof replaceRound>>>
-    export type ReplaceRoundMutationBody = BodyType<NonReadonly<Round>>
+    export type ReplaceRoundMutationBody = BodyType<RoundRequest>
     export type ReplaceRoundMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceRound = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<NonReadonly<Round>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceRound>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<Round>>},
+        {id: number;data: BodyType<RoundRequest>},
         TContext
       > => {
 
@@ -2242,15 +2220,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateRound = (
     id: MaybeRef<number>,
-    patchedRound: MaybeRef<NonReadonly<PatchedRound>>,
+    patchedRoundRequest: MaybeRef<PatchedRoundRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedRound = unref(patchedRound);
+patchedRoundRequest = unref(patchedRoundRequest);
       
       return customInstance<Round>(
       {url: `http://localhost:8000/api/tournaments/rounds/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedRound
+      data: patchedRoundRequest
     },
       options);
     }
@@ -2258,8 +2236,8 @@ patchedRound = unref(patchedRound);
 
 
 export const getUpdateRoundMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<NonReadonly<PatchedRound>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<NonReadonly<PatchedRound>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<PatchedRoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<PatchedRoundRequest>}, TContext> => {
 
 const mutationKey = ['updateRound'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2271,7 +2249,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRound>>, {id: number;data: BodyType<NonReadonly<PatchedRound>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRound>>, {id: number;data: BodyType<PatchedRoundRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateRound(id,data,requestOptions)
@@ -2283,15 +2261,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateRoundMutationResult = NonNullable<Awaited<ReturnType<typeof updateRound>>>
-    export type UpdateRoundMutationBody = BodyType<NonReadonly<PatchedRound>>
+    export type UpdateRoundMutationBody = BodyType<PatchedRoundRequest>
     export type UpdateRoundMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateRound = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<NonReadonly<PatchedRound>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRound>>, TError,{id: number;data: BodyType<PatchedRoundRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateRound>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<PatchedRound>>},
+        {id: number;data: BodyType<PatchedRoundRequest>},
         TContext
       > => {
 
@@ -2647,15 +2625,15 @@ export function useListSubmissions<TData = Awaited<ReturnType<typeof listSubmiss
 
 
 export const createSubmission = (
-    submission: MaybeRef<NonReadonly<Submission>>,
+    submissionRequest: MaybeRef<SubmissionRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      submission = unref(submission);
+      submissionRequest = unref(submissionRequest);
       
       return customInstance<Submission>(
       {url: `http://localhost:8000/api/tournaments/submissions/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: submission, signal
+      data: submissionRequest, signal
     },
       options);
     }
@@ -2663,8 +2641,8 @@ export const createSubmission = (
 
 
 export const getCreateSubmissionMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<NonReadonly<Submission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<NonReadonly<Submission>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<SubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<SubmissionRequest>}, TContext> => {
 
 const mutationKey = ['createSubmission'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2676,7 +2654,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSubmission>>, {data: BodyType<NonReadonly<Submission>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSubmission>>, {data: BodyType<SubmissionRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createSubmission(data,requestOptions)
@@ -2688,15 +2666,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateSubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof createSubmission>>>
-    export type CreateSubmissionMutationBody = BodyType<NonReadonly<Submission>>
+    export type CreateSubmissionMutationBody = BodyType<SubmissionRequest>
     export type CreateSubmissionMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useCreateSubmission = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<NonReadonly<Submission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSubmission>>, TError,{data: BodyType<SubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createSubmission>>,
         TError,
-        {data: BodyType<NonReadonly<Submission>>},
+        {data: BodyType<SubmissionRequest>},
         TContext
       > => {
 
@@ -2768,15 +2746,15 @@ export function useGetSubmission<TData = Awaited<ReturnType<typeof getSubmission
 
 export const replaceSubmission = (
     id: MaybeRef<number>,
-    submission: MaybeRef<NonReadonly<Submission>>,
+    submissionRequest: MaybeRef<SubmissionRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-submission = unref(submission);
+submissionRequest = unref(submissionRequest);
       
       return customInstance<Submission>(
       {url: `http://localhost:8000/api/tournaments/submissions/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: submission
+      data: submissionRequest
     },
       options);
     }
@@ -2784,8 +2762,8 @@ submission = unref(submission);
 
 
 export const getReplaceSubmissionMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<NonReadonly<Submission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<NonReadonly<Submission>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionRequest>}, TContext> => {
 
 const mutationKey = ['replaceSubmission'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2797,7 +2775,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceSubmission>>, {id: number;data: BodyType<NonReadonly<Submission>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceSubmission>>, {id: number;data: BodyType<SubmissionRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceSubmission(id,data,requestOptions)
@@ -2809,15 +2787,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceSubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof replaceSubmission>>>
-    export type ReplaceSubmissionMutationBody = BodyType<NonReadonly<Submission>>
+    export type ReplaceSubmissionMutationBody = BodyType<SubmissionRequest>
     export type ReplaceSubmissionMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceSubmission = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<NonReadonly<Submission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceSubmission>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<Submission>>},
+        {id: number;data: BodyType<SubmissionRequest>},
         TContext
       > => {
 
@@ -2827,15 +2805,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateSubmission = (
     id: MaybeRef<number>,
-    patchedSubmission: MaybeRef<NonReadonly<PatchedSubmission>>,
+    patchedSubmissionRequest: MaybeRef<PatchedSubmissionRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedSubmission = unref(patchedSubmission);
+patchedSubmissionRequest = unref(patchedSubmissionRequest);
       
       return customInstance<Submission>(
       {url: `http://localhost:8000/api/tournaments/submissions/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedSubmission
+      data: patchedSubmissionRequest
     },
       options);
     }
@@ -2843,8 +2821,8 @@ patchedSubmission = unref(patchedSubmission);
 
 
 export const getUpdateSubmissionMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<NonReadonly<PatchedSubmission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<NonReadonly<PatchedSubmission>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<PatchedSubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<PatchedSubmissionRequest>}, TContext> => {
 
 const mutationKey = ['updateSubmission'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -2856,7 +2834,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSubmission>>, {id: number;data: BodyType<NonReadonly<PatchedSubmission>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSubmission>>, {id: number;data: BodyType<PatchedSubmissionRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateSubmission(id,data,requestOptions)
@@ -2868,15 +2846,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateSubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof updateSubmission>>>
-    export type UpdateSubmissionMutationBody = BodyType<NonReadonly<PatchedSubmission>>
+    export type UpdateSubmissionMutationBody = BodyType<PatchedSubmissionRequest>
     export type UpdateSubmissionMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateSubmission = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<NonReadonly<PatchedSubmission>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSubmission>>, TError,{id: number;data: BodyType<PatchedSubmissionRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateSubmission>>,
         TError,
-        {id: number;data: BodyType<NonReadonly<PatchedSubmission>>},
+        {id: number;data: BodyType<PatchedSubmissionRequest>},
         TContext
       > => {
 

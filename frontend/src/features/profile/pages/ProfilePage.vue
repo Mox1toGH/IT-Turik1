@@ -196,11 +196,11 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { formatDate } from '@/lib/date'
-import { useMyPointsBalance } from '@/api/queries/points'
+import { useGetMyPointsBalance } from '@/api/points/points'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
-const { data: pointsBalance, isLoading: isPointsLoading } = useMyPointsBalance()
+const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
 
 const router = useRouter()
 const isDeleting = ref(false)
@@ -243,6 +243,7 @@ const goToCertificates = () => {
 .avatar-row {
   margin-top: 0.8rem;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   gap: 0.9rem;
 }

@@ -98,7 +98,7 @@ const handleGlobalToggle = (val: boolean) => {
       onSuccess: () => {
         showNotification('Global email settings updated', 'success')
       },
-      onError: () => showNotification('Failed to update settings', 'error'),
+      onError: (error) => showNotification(error.message, 'error'),
     },
   )
 }
@@ -115,7 +115,7 @@ const handleEventToggle = (eventType: string, channel: 'system' | 'email', val: 
       onSuccess: () => {
         showNotification(`Settings for ${getEventTitle(eventType)} updated`, 'success')
       },
-      onError: () => showNotification('Failed to update event setting', 'error'),
+      onError: (error) => showNotification(error.message, 'error'),
     },
   )
 }

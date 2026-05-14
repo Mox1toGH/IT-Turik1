@@ -19,7 +19,7 @@
           <ui-button
             @click="handleAssignJury"
             class="assign-btn"
-            :disabled="isLoading || noClosedRound"
+            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
           >
             <loading-icon v-if="isPending" />Assign
           </ui-button>
@@ -128,9 +128,11 @@ import {
   useListAvailableJury,
   type AssignJuryToRoundMutationBody,
 } from '@/api/evaluation/evaluation'
+import type { StatusD67Enum } from '@/api/.ts.schemas'
 
 interface Props {
   tournamentId: number
+  tournamentStatus: StatusD67Enum
 }
 
 const props = defineProps<Props>()

@@ -1,5 +1,5 @@
 <template>
-  <div class="top-actions" v-if="user?.role === 'admin'">
+  <div class="top-actions" v-if="user?.role === 'admin' && props.tournamentStatus !== 'finished'">
     <ui-button @click="isAddOpen = true">Add event</ui-button>
     <AddEventModal v-model="isAddOpen" :tournament-id="props.tournamentId" />
   </div>
@@ -111,9 +111,11 @@ import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 
 import { useListEvents } from '@/api/tournaments/tournaments'
+import type { StatusD67Enum } from '@/api/.ts.schemas'
 
 interface Props {
   tournamentId: number
+  tournamentStatus: StatusD67Enum
 }
 
 const props = defineProps<Props>()
@@ -197,6 +199,7 @@ const {
   display: flex;
   gap: 0.6rem;
   justify-content: end;
+  margin-bottom: 1rem;
 }
 
 .event-actions {

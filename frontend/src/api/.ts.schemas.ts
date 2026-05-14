@@ -41,10 +41,13 @@ export interface AdminModifyPointsResponse {
   transaction: PointsTransaction;
 }
 
-export interface AdminPointsBalanceModify {
+export interface AdminPointsBalanceModifyRequest {
   operation: OperationEnum;
   amount?: number;
-  /** @maxLength 255 */
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   reason: string;
 }
 
@@ -117,9 +120,27 @@ export interface AvatarFrame {
   readonly updated_at: string;
 }
 
+export interface AvatarFrameRequest {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  svg_file: Blob;
+  is_active?: boolean;
+}
+
 export interface Category {
   readonly id: number;
   /** @maxLength 120 */
+  name: string;
+}
+
+export interface CategoryRequest {
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
   name: string;
 }
 
@@ -146,6 +167,24 @@ export interface Certificate {
   readonly created_at: string;
 }
 
+export interface CertificateRequest {
+  /** @nullable */
+  user?: number | null;
+  /** @nullable */
+  team?: number | null;
+  /** @nullable */
+  tournament?: number | null;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  placement: string;
+  /** @maxLength 100 */
+  certificate_number?: string;
+  /** @nullable */
+  template?: number | null;
+}
+
 export interface CertificateTemplate {
   readonly id: number;
   /** @maxLength 255 */
@@ -156,15 +195,38 @@ export interface CertificateTemplate {
   readonly created_at: string;
 }
 
-export interface ChangePassword {
+export interface CertificateTemplateRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  image: Blob;
+  is_default?: boolean;
+}
+
+export interface ChangePasswordRequest {
+  /** @minLength 1 */
   current_password: string;
+  /** @minLength 1 */
   new_password: string;
+  /** @minLength 1 */
   confirm_password: string;
 }
 
 export interface Criterion {
   id: string;
   name: string;
+  description: string;
+  max_score: number;
+}
+
+export interface CriterionRequest {
+  /** @minLength 1 */
+  id: string;
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
   description: string;
   max_score: number;
 }
@@ -212,7 +274,7 @@ export interface EligibleTeam {
   members_count: number;
 }
 
-export interface EquipDigitalItem {
+export interface EquipDigitalItemRequest {
   /** @minimum 1 */
   inventory_id: number;
 }
@@ -294,6 +356,22 @@ export interface Event {
   readonly updated_at: string;
 }
 
+export interface EventRequest {
+  tournament: number;
+  type: TypeEnum;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  title: string;
+  description?: string;
+  /** @maxLength 200 */
+  link?: string;
+  start_datetime: string;
+  /** @nullable */
+  icon?: number | null;
+}
+
 export interface EventType {
   key: string;
   title: string;
@@ -303,11 +381,12 @@ export interface GlobalConfig {
   emails_disabled_globally: boolean;
 }
 
-export interface GlobalConfigUpdate {
+export interface GlobalConfigUpdateRequest {
   emails_disabled_globally: boolean;
 }
 
-export interface GoogleAuth {
+export interface GoogleAuthRequest {
+  /** @minLength 1 */
   id_token: string;
 }
 
@@ -326,7 +405,7 @@ export interface Icon {
   path: string;
 }
 
-export interface InviteMemberRequest {
+export interface InviteMemberRequestRequest {
   user_id: number;
 }
 
@@ -336,17 +415,19 @@ export interface JuryAssignment {
   readonly submission_details: Submission;
   readonly round_details: RoundShort;
   readonly evaluation: SubmissionEvaluation;
-  readonly is_evaluated: string;
+  readonly is_evaluated: boolean;
   readonly created_at: string;
 }
 
-export interface JuryAssignmentItem {
+export interface JuryAssignmentItemRequest {
   submission: number;
   jury: number[];
 }
 
-export interface LoginRequest {
+export interface LoginRequestRequest {
+  /** @minLength 1 */
   username: string;
+  /** @minLength 1 */
   password: string;
 }
 
@@ -378,9 +459,20 @@ export interface NewsArticle {
   /** @nullable */
   readonly created_by: number | null;
   readonly created_by_name: string;
-  send_notification?: boolean;
   readonly created_at: string;
   readonly updated_at: string;
+}
+
+export type NewsArticleRequestContent = {[key: string]: unknown};
+
+export interface NewsArticleRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  title: string;
+  content: NewsArticleRequestContent;
+  send_notification?: boolean;
 }
 
 export interface Notification {
@@ -398,7 +490,8 @@ export interface NotificationConfig {
   is_email_enabled: boolean;
 }
 
-export interface NotificationConfigUpdate {
+export interface NotificationConfigUpdateRequest {
+  /** @minLength 1 */
   event_type: string;
   is_system_enabled?: boolean;
   is_email_enabled?: boolean;
@@ -560,63 +653,75 @@ export interface PassingStatusItem {
   registration_id: number | null;
 }
 
-export interface PasswordResetConfirm {
+export interface PasswordResetConfirmRequest {
+  /** @minLength 1 */
   new_password: string;
+  /** @minLength 1 */
   confirm_password: string;
 }
 
-export interface PasswordResetRequest {
+export interface PasswordResetRequestRequest {
+  /** @minLength 1 */
   email: string;
 }
 
-export interface PatchedAdminOrderStatusUpdate {
+export interface PatchedAdminOrderStatusUpdateRequest {
   status?: Status7deEnum;
 }
 
-export interface PatchedAvatarFrame {
-  readonly id?: number;
-  /** @maxLength 100 */
+export interface PatchedAvatarFrameRequest {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
   name?: string;
-  svg_file?: string;
+  svg_file?: Blob;
   is_active?: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
 }
 
-export interface PatchedCategory {
-  readonly id?: number;
-  /** @maxLength 120 */
+export interface PatchedCategoryRequest {
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
   name?: string;
 }
 
-export interface PatchedCertificate {
-  readonly id?: number;
-  readonly unique_code?: string;
+export interface PatchedCertificateRequest {
   /** @nullable */
   user?: number | null;
-  readonly full_name?: string;
   /** @nullable */
   team?: number | null;
-  readonly team_name?: string;
   /** @nullable */
   tournament?: number | null;
-  readonly tournament_name?: string;
-  /** @maxLength 100 */
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
   placement?: string;
   /** @maxLength 100 */
   certificate_number?: string;
   /** @nullable */
   template?: number | null;
-  readonly template_name?: string;
-  readonly certificate_url?: string;
-  readonly created_at?: string;
 }
 
-export interface PatchedEvent {
-  readonly id?: number;
+export interface PatchedCertificateTemplateRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name?: string;
+  image?: Blob;
+  is_default?: boolean;
+}
+
+export interface PatchedEventRequest {
   tournament?: number;
   type?: TypeEnum;
-  /** @maxLength 255 */
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   title?: string;
   description?: string;
   /** @maxLength 200 */
@@ -624,28 +729,25 @@ export interface PatchedEvent {
   start_datetime?: string;
   /** @nullable */
   icon?: number | null;
-  readonly created_at?: string;
-  readonly updated_at?: string;
 }
 
-export type PatchedNewsArticleContent = {[key: string]: unknown};
+export type PatchedNewsArticleRequestContent = {[key: string]: unknown};
 
-export interface PatchedNewsArticle {
-  readonly id?: number;
-  /** @maxLength 255 */
+export interface PatchedNewsArticleRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   title?: string;
-  content?: PatchedNewsArticleContent;
-  /** @nullable */
-  readonly created_by?: number | null;
-  readonly created_by_name?: string;
+  content?: PatchedNewsArticleRequestContent;
   send_notification?: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
 }
 
-export interface PatchedProduct {
-  readonly id?: number;
-  /** @maxLength 255 */
+export interface PatchedProductRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   name?: string;
   description?: string;
   /**
@@ -659,31 +761,24 @@ export interface PatchedProduct {
    * @maximum 9223372036854776000
    */
   stock_quantity?: number;
-  readonly category?: Category;
   category_id?: number;
   product_type?: ProductTypeEnum;
-  readonly avatar_frame?: AvatarFrame;
   /** @nullable */
   avatar_frame_id?: number | null;
-  avatar_frame_file?: string;
+  avatar_frame_file?: Blob;
   digital_asset_url?: string;
-  readonly images?: readonly ProductImage[];
-  uploaded_images?: string[];
+  uploaded_images?: Blob[];
   is_active?: boolean;
-  readonly is_available?: boolean;
-  readonly created_at?: string;
-  readonly updated_at?: string;
 }
 
-export interface PatchedRound {
-  readonly id?: number;
+export interface PatchedRoundRequest {
   tournament?: number;
   /** @maxLength 255 */
   name?: string;
   description?: unknown;
   tech_requirements?: unknown;
   must_have_requirements?: unknown;
-  criteria?: Criterion[];
+  criteria?: CriterionRequest[];
   start_date?: string;
   end_date?: string;
   /**
@@ -694,47 +789,46 @@ export interface PatchedRound {
   passing_count?: number | null;
   evaluation_criteria?: EvaluationCriteriaEnum;
   materials?: unknown;
-  readonly status?: StatusE43Enum;
 }
 
-export interface PatchedSubmission {
-  readonly id?: number;
-  readonly team?: number;
+export interface PatchedSubmissionEvaluationRequest {
+  tournament_id?: number;
+  assignment?: number;
+  scores?: ScoreItemRequest[];
+  comment?: string;
+}
+
+export interface PatchedSubmissionRequest {
   round?: number;
-  readonly team_details?: TeamSummary;
-  readonly round_details?: RoundShort;
-  /** @maxLength 200 */
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
   github_url?: string;
   /** @maxLength 200 */
   demo_video_url?: string;
-  demo_video_file?: string;
+  demo_video_file?: Blob;
   /** @maxLength 200 */
   live_demo_url?: string;
   description?: string;
-  readonly assignments?: readonly SubmissionAssignment[];
-  readonly created_at?: string;
-  readonly updated_at?: string;
 }
 
-export interface PatchedSubmissionEvaluation {
-  readonly id?: number;
-  tournament_id?: number;
-  assignment?: number;
-  readonly scores?: readonly ScoreItem[];
-  readonly total_score?: number;
-  /** @pattern ^-?\d{0,3}(?:\.\d{0,2})?$ */
-  readonly final_score?: string;
-  comment?: string;
-  readonly created_at?: string;
+export interface PatchedTeamBannerRequest {
+  /** @nullable */
+  banner?: Blob | null;
 }
 
-export interface PatchedTeam {
-  readonly id?: number;
-  /** @maxLength 255 */
+export interface PatchedTeamRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   name?: string;
-  /** @maxLength 254 */
+  /**
+   * @minLength 1
+   * @maxLength 254
+   */
   email?: string;
-  readonly captain_id?: number;
   is_public?: boolean;
   /** @maxLength 255 */
   organization?: string;
@@ -742,19 +836,16 @@ export interface PatchedTeam {
   contact_telegram?: string;
   /** @maxLength 100 */
   contact_discord?: string;
-  /** @nullable */
-  readonly banner?: string | null;
-  readonly members?: readonly TeamMember[];
-  readonly is_member?: boolean;
-  readonly can_request_to_join?: boolean;
-  readonly is_in_active_tournament?: boolean;
   member_ids?: number[];
 }
 
-export interface PatchedTournamentAdmin {
-  readonly id?: number;
-  /** @maxLength 255 */
+export interface PatchedTournamentAdminRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   name?: string;
+  /** @minLength 1 */
   description?: string;
   start_date?: string;
   end_date?: string;
@@ -770,21 +861,27 @@ export interface PatchedTournamentAdmin {
    * @nullable
    */
   min_team_members?: number | null;
-  /** @nullable */
-  readonly banner?: string | null;
-  readonly status?: StatusD67Enum;
-  readonly rounds?: readonly RoundShort[];
-  readonly registered_team?: TeamSummary;
 }
 
-export interface PatchedTournamentTeamRegistrationDisqualification {
+export interface PatchedTournamentBannerRequest {
+  /** @nullable */
+  banner?: Blob | null;
+}
+
+export interface PatchedTournamentTeamRegistrationDisqualificationRequest {
   action?: ActionEnum;
   disqualification_reason?: string;
 }
 
-export interface PatchedUserUpdate {
+export interface PatchedUserAvatarUpdateRequest {
+  /** @nullable */
+  avatar?: Blob | null;
+}
+
+export interface PatchedUserUpdateRequest {
   /**
    * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @minLength 1
    * @maxLength 150
    * @pattern ^[\w.@+-]+$
    */
@@ -796,6 +893,7 @@ export interface PatchedUserUpdate {
   phone?: string;
   /** @maxLength 100 */
   city?: string;
+  /** @minLength 1 */
   password?: string;
   redeem_code?: string;
 }
@@ -837,15 +935,10 @@ export interface Product {
    */
   stock_quantity?: number;
   readonly category: Category;
-  category_id: number;
   product_type?: ProductTypeEnum;
   readonly avatar_frame: AvatarFrame;
-  /** @nullable */
-  avatar_frame_id?: number | null;
-  avatar_frame_file?: string;
   digital_asset_url?: string;
   readonly images: readonly ProductImage[];
-  uploaded_images?: string[];
   is_active?: boolean;
   readonly is_available: boolean;
   readonly created_at: string;
@@ -856,6 +949,38 @@ export interface ProductImage {
   readonly id: number;
   image: string;
   readonly created_at: string;
+}
+
+export interface ProductImageRequest {
+  image: Blob;
+}
+
+export interface ProductRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  description?: string;
+  /**
+   * Price in points
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  price: number;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  stock_quantity?: number;
+  category_id: number;
+  product_type?: ProductTypeEnum;
+  /** @nullable */
+  avatar_frame_id?: number | null;
+  avatar_frame_file?: Blob;
+  digital_asset_url?: string;
+  uploaded_images?: Blob[];
+  is_active?: boolean;
 }
 
 /**
@@ -871,7 +996,7 @@ export const ProductTypeEnum = {
   digital: 'digital',
 } as const;
 
-export interface Purchase {
+export interface PurchaseRequest {
   /** @minimum 1 */
   product_id: number;
   /** @minimum 1 */
@@ -895,6 +1020,29 @@ export interface Register {
   username: string;
   /** @maxLength 254 */
   email: string;
+  role?: RoleB96Enum;
+  /** @maxLength 255 */
+  full_name?: string;
+  /** @maxLength 20 */
+  phone?: string;
+  /** @maxLength 100 */
+  city?: string;
+}
+
+export interface RegisterRequest {
+  /**
+   * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @minLength 1
+   * @maxLength 150
+   * @pattern ^[\w.@+-]+$
+   */
+  username: string;
+  /**
+   * @minLength 1
+   * @maxLength 254
+   */
+  email: string;
+  /** @minLength 1 */
   password: string;
   role?: RoleB96Enum;
   redeem_code?: string;
@@ -919,7 +1067,7 @@ export interface RoleActivationCode {
   readonly used_by_username: string;
 }
 
-export interface RoleActivationCodeGenerate {
+export interface RoleActivationCodeGenerateRequest {
   role: RoleActivationCodeGenerateRoleEnum;
   /**
    * @minimum 1
@@ -934,18 +1082,18 @@ export interface RoleActivationCodeGenerateResponse {
 }
 
 /**
- * * `organizer` - organizer
-* `jury` - jury
+ * * `jury` - jury
 * `admin` - admin
+* `organizer` - organizer
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
-  organizer: 'organizer',
   jury: 'jury',
   admin: 'admin',
+  organizer: 'organizer',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1012,6 +1160,26 @@ export interface RoundPassingStatusResponse {
   results: PassingStatusItem[];
 }
 
+export interface RoundRequest {
+  tournament?: number;
+  /** @maxLength 255 */
+  name?: string;
+  description?: unknown;
+  tech_requirements?: unknown;
+  must_have_requirements?: unknown;
+  criteria: CriterionRequest[];
+  start_date: string;
+  end_date: string;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   * @nullable
+   */
+  passing_count?: number | null;
+  evaluation_criteria?: EvaluationCriteriaEnum;
+  materials?: unknown;
+}
+
 export interface RoundShort {
   readonly id: number;
   /** @maxLength 255 */
@@ -1020,6 +1188,16 @@ export interface RoundShort {
   end_date: string;
   status?: StatusE43Enum;
   criteria: Criterion[];
+  tournament: number;
+}
+
+export interface RoundShortRequest {
+  /** @maxLength 255 */
+  name?: string;
+  start_date: string;
+  end_date: string;
+  status?: StatusE43Enum;
+  criteria: CriterionRequest[];
   tournament: number;
 }
 
@@ -1039,6 +1217,14 @@ export interface RoundSummary {
 
 export interface ScoreItem {
   criterion_id: string;
+  criterion_name: string;
+  score: number;
+}
+
+export interface ScoreItemRequest {
+  /** @minLength 1 */
+  criterion_id: string;
+  /** @minLength 1 */
   criterion_name: string;
   score: number;
 }
@@ -1114,7 +1300,6 @@ export const StatusE43Enum = {
 export interface Submission {
   readonly id: number;
   readonly team: number;
-  round: number;
   readonly team_details: TeamSummary;
   readonly round_details: RoundShort;
   /** @maxLength 200 */
@@ -1144,6 +1329,16 @@ export interface SubmissionAssignmentJury {
   role: string;
 }
 
+export interface SubmissionAssignmentJuryRequest {
+  id: number;
+  /** @minLength 1 */
+  username: string;
+  /** @minLength 1 */
+  full_name: string;
+  /** @minLength 1 */
+  role: string;
+}
+
 export interface SubmissionEvaluation {
   readonly id: number;
   readonly scores: readonly ScoreItem[];
@@ -1151,6 +1346,28 @@ export interface SubmissionEvaluation {
   readonly final_score: number;
   comment?: string;
   readonly created_at: string;
+}
+
+export interface SubmissionEvaluationRequest {
+  tournament_id: number;
+  assignment: number;
+  scores: ScoreItemRequest[];
+  comment?: string;
+}
+
+export interface SubmissionRequest {
+  round: number;
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
+  github_url: string;
+  /** @maxLength 200 */
+  demo_video_url?: string;
+  demo_video_file?: Blob;
+  /** @maxLength 200 */
+  live_demo_url?: string;
+  description?: string;
 }
 
 export interface Team {
@@ -1173,7 +1390,6 @@ export interface Team {
   readonly is_member: boolean;
   readonly can_request_to_join: boolean;
   readonly is_in_active_tournament: boolean;
-  member_ids?: number[];
 }
 
 export interface TeamBanner {
@@ -1181,7 +1397,17 @@ export interface TeamBanner {
   banner?: string | null;
 }
 
+export interface TeamBannerRequest {
+  /** @nullable */
+  banner?: Blob | null;
+}
+
 export interface TeamDetailResponse {
+  detail: string;
+}
+
+export interface TeamDetailResponseRequest {
+  /** @minLength 1 */
   detail: string;
 }
 
@@ -1208,7 +1434,7 @@ export interface TeamInvitationInbox {
 export interface TeamJoinRequest {
   readonly id: number;
   readonly user: TeamMember;
-  status?: TeamJoinRequestStatusEnum;
+  status?: TeamJoinStatusEnum;
   readonly created_at: string;
   /** @nullable */
   reviewed_at?: string | null;
@@ -1220,11 +1446,11 @@ export interface TeamJoinRequest {
 * `accepted` - Accepted
 * `declined` - Declined
  */
-export type TeamJoinRequestStatusEnum = typeof TeamJoinRequestStatusEnum[keyof typeof TeamJoinRequestStatusEnum];
+export type TeamJoinStatusEnum = typeof TeamJoinStatusEnum[keyof typeof TeamJoinStatusEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const TeamJoinRequestStatusEnum = {
+export const TeamJoinStatusEnum = {
   pending: 'pending',
   accepted: 'accepted',
   declined: 'declined',
@@ -1246,6 +1472,47 @@ export interface TeamMember {
   /** @nullable */
   avatar?: string | null;
   readonly avatar_frame_url: string;
+}
+
+export interface TeamMemberRequest {
+  /**
+   * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @minLength 1
+   * @maxLength 150
+   * @pattern ^[\w.@+-]+$
+   */
+  username: string;
+  /**
+   * @minLength 1
+   * @maxLength 254
+   */
+  email: string;
+  /** @maxLength 255 */
+  full_name?: string;
+  role?: RoleB96Enum;
+  /** @nullable */
+  avatar?: Blob | null;
+}
+
+export interface TeamRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 254
+   */
+  email: string;
+  is_public?: boolean;
+  /** @maxLength 255 */
+  organization?: string;
+  /** @maxLength 100 */
+  contact_telegram?: string;
+  /** @maxLength 100 */
+  contact_discord?: string;
+  member_ids?: number[];
 }
 
 /**
@@ -1273,6 +1540,15 @@ export interface TeamSummary {
   is_public?: boolean;
 }
 
+export interface TeamSummaryRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  is_public?: boolean;
+}
+
 export interface TeamUserList {
   readonly id: number;
   /**
@@ -1291,7 +1567,8 @@ export interface TeamUserList {
   readonly avatar_frame_url: string;
 }
 
-export interface TokenRefreshRequest {
+export interface TokenRefreshRequestRequest {
+  /** @minLength 1 */
   refresh: string;
 }
 
@@ -1339,6 +1616,30 @@ export interface TournamentAdmin {
   readonly registered_team: TeamSummary;
 }
 
+export interface TournamentAdminRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /** @minLength 1 */
+  description: string;
+  start_date: string;
+  end_date: string;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   * @nullable
+   */
+  max_teams?: number | null;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   * @nullable
+   */
+  min_team_members?: number | null;
+}
+
 export interface TournamentArchiveDetail {
   readonly id: number;
   /** @maxLength 255 */
@@ -1371,6 +1672,11 @@ export interface TournamentArchiveList {
 export interface TournamentBanner {
   /** @nullable */
   banner?: string | null;
+}
+
+export interface TournamentBannerRequest {
+  /** @nullable */
+  banner?: Blob | null;
 }
 
 export interface TournamentLeaderboardResponse {
@@ -1430,7 +1736,7 @@ export interface TournamentStats {
   top_teams: TopTeam[];
 }
 
-export interface TournamentTeamLeave {
+export interface TournamentTeamLeaveRequest {
   team_id: number;
 }
 
@@ -1446,7 +1752,7 @@ export interface TournamentTeamRegistration {
   readonly created_at: string;
 }
 
-export interface TournamentTeamRegistrationCreate {
+export interface TournamentTeamRegistrationCreateRequest {
   team_id: number;
 }
 
@@ -1511,6 +1817,11 @@ export interface UserAvatarUpdate {
   avatar?: string | null;
 }
 
+export interface UserAvatarUpdateRequest {
+  /** @nullable */
+  avatar?: Blob | null;
+}
+
 export interface UserLookup {
   readonly id: number;
   /**
@@ -1550,9 +1861,10 @@ export interface UserTeam {
   contact_discord: string;
 }
 
-export interface UserUpdate {
+export interface UserUpdateRequest {
   /**
    * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @minLength 1
    * @maxLength 150
    * @pattern ^[\w.@+-]+$
    */
@@ -1564,17 +1876,10 @@ export interface UserUpdate {
   phone?: string;
   /** @maxLength 100 */
   city?: string;
+  /** @minLength 1 */
   password?: string;
   redeem_code?: string;
 }
-
-export type UpdateUserAvatar2Body = {
-  avatar?: Blob;
-};
-
-export type UpdateUserAvatarBody = {
-  avatar?: Blob;
-};
 
 export type ListRoleActivationCodesParams = {
 /**
@@ -1618,24 +1923,6 @@ page?: number;
  * Number of results to return per page.
  */
 page_size?: number;
-};
-
-export type CreateCertificateTemplateBody = {
-  name: string;
-  image: Blob;
-  is_default?: boolean;
-};
-
-export type ReplaceCertificateTemplateBody = {
-  name: string;
-  image: Blob;
-  is_default?: boolean;
-};
-
-export type UpdateCertificateTemplateBody = {
-  name?: string;
-  image?: Blob;
-  is_default?: boolean;
 };
 
 export type ListJuryAssignmentsParams = {
@@ -1797,6 +2084,7 @@ export const SchemaRetrieveLang = {
   hi: 'hi',
   hr: 'hr',
   hsb: 'hsb',
+  ht: 'ht',
   hu: 'hu',
   hy: 'hy',
   ia: 'ia',
@@ -1978,14 +2266,6 @@ export const ListProductsProductType = {
   physical: 'physical',
 } as const;
 
-export type UpdateTeamBanner2Body = {
-  banner?: Blob;
-};
-
-export type UpdateTeamBannerBody = {
-  banner?: Blob;
-};
-
 export type ListTournamentsParams = {
 createdAt?: string;
 endAt?: string;
@@ -2023,9 +2303,5 @@ tournament_id?: number;
 
 export type ListEventsParams = {
 tournament?: number;
-};
-
-export type UpdateTournamentBannerBody = {
-  banner?: Blob;
 };
 

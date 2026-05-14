@@ -115,7 +115,7 @@
     <template #footer>
       <div class="info-actions">
         <ui-button
-          v-if="props.team?.can_request_to_join"
+          v-if="props.team?.can_request_to_join && user?.role === 'team'"
           size="sm"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
@@ -143,6 +143,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
 import type { Team } from '@/api/.ts.schemas'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
 interface Props {
   team?: Team
@@ -158,6 +159,8 @@ const emit = defineEmits<{
   (e: 'deleted'): void
   (e: 'leave'): void
 }>()
+
+const { data: user } = useGetUserProfile()
 
 const captainName = computed(() => {
   const captain = props.team?.members.find((member) => member.id === props.team?.captain_id)

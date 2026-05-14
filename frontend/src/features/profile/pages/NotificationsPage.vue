@@ -201,7 +201,7 @@ const handleMarkRead = (id: number) => {
 const handleMarkAllRead = () => {
   markAllAsRead(void 0, {
     onSuccess: () => showNotification('All notifications marked as read', 'success'),
-    onError: () => showNotification('Failed to mark notifications as read', 'error'),
+    onError: (error) => showNotification(error.message, 'error'),
   })
 }
 
@@ -236,9 +236,8 @@ const handleDeleteAll = () => {
           showNotification('All notifications deleted', 'success')
           isConfirmModalOpen.value = false
         },
-        onError: (err) => {
-          console.error('Failed to delete all notifications:', err)
-          showNotification('Failed to delete notifications', 'error')
+        onError: (error) => {
+          showNotification(error.message, 'error')
         },
       })
     },

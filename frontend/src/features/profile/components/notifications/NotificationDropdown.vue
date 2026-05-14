@@ -119,12 +119,12 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="dropdown-footer">
-      <ui-button size="sm" variant="secondary" style="width: 100%" @click="goToAllNotifications">
-        View all notifications
-      </ui-button>
+      <div class="dropdown-footer">
+        <ui-button size="sm" variant="secondary" style="width: 100%" @click="goToAllNotifications">
+          View all notifications
+        </ui-button>
+      </div>
     </div>
   </div>
 
@@ -156,6 +156,7 @@ import {
   useMarkNotificationRead,
 } from '@/api/notifications/notifications'
 import type { Notification } from '@/api/.ts.schemas'
+import { useNotification } from '@/composables/useNotification'
 
 const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
@@ -176,6 +177,8 @@ const confirmModalConfig = ref({
   onConfirm: () => {},
   confirmVariant: 'danger' as const,
 })
+
+const { showNotification } = useNotification()
 
 const unreadNotifications = computed(() => {
   return notifications.value?.results?.filter((n) => !n.is_read) || []
@@ -227,8 +230,8 @@ const handleDeleteAll = () => {
         onSuccess: () => {
           isConfirmModalOpen.value = false
         },
-        onError: (err) => {
-          console.error('Failed to delete all notifications from dropdown:', err)
+        onError: (error) => {
+          showNotification(error.message, 'error')
         },
       })
     },

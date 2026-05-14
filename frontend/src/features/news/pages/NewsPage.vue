@@ -127,6 +127,7 @@
       v-model="isCreateOpen"
       maxWidth="760px"
       :close-on-backdrop="!isCreating"
+      @close="form.reset()"
     >
       <template #title>Create news</template>
 

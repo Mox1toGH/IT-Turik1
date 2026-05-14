@@ -115,8 +115,8 @@ const removeAvatar = () => {
       showNotification('Avatar removed.', 'success')
       resetState()
     },
-    onError: () => {
-      showNotification('Failed to remove avatar.', 'error')
+    onError: (error) => {
+      showNotification(error.message, 'error')
     },
   })
 }
@@ -136,8 +136,8 @@ const saveAvatar = () => {
         showNotification('Avatar updated.', 'success')
         resetState()
       },
-      onError: () => {
-        showNotification('Failed to update avatar.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -200,7 +200,7 @@ watch(
   height: 2rem;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
-  background: #fff;
+  background: var(--secondary);
   color: var(--color-gray-700);
   display: inline-flex;
   align-items: center;

@@ -130,6 +130,7 @@ import {
 } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import type { TournamentTeamRegistrationList } from '@/api/.ts.schemas'
+import { useNotification } from '@/composables/useNotification'
 
 interface Props {
   tournamentId: number
@@ -171,6 +172,8 @@ const pendingAction = ref<{
 
 const { mutate: updateRegistration, isPending: isUpdating } = useDisqualifyTeamFromTournament()
 
+const { showNotification } = useNotification()
+
 const openDisqualifyModal = (team: TournamentTeamRegistrationList) => {
   pendingAction.value = { team, action: 'disqualified' }
   disqualificationReason.value = ''
@@ -209,9 +212,11 @@ const handleConfirmAction = () => {
         pendingAction.value = null
         disqualificationReason.value = ''
       },
-      onError: () => {
+      onError: (error) => {
         showConfirmModal.value = false
         pendingAction.value = null
+
+        showNotification(error.message, 'error')
       },
     },
   )

@@ -22,6 +22,8 @@ from .serializers import (
 )
 from .services import cancel_order, create_order_purchase
 
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class ShopPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
@@ -223,8 +225,8 @@ class AdminCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     200: ProductSerializer(many=True),
     401: _401,
     403: _403,
-})
-@extend_schema(methods=['POST'], operation_id='createAdminProduct', responses={
+}) 
+@extend_schema(methods=['POST'],  operation_id='createAdminProduct', request={'multipart/form-data': ProductSerializer}, responses={
     201: ProductSerializer,
     400: _400,
     401: _401,
@@ -234,6 +236,7 @@ class AdminProductListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     pagination_class = ShopPagination
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         if not is_platform_admin(self.request.user):

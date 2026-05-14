@@ -164,6 +164,7 @@ import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import type { Criterion, Round } from '@/api/.ts.schemas'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
+import EditorModal from '../../create-round/modals/EditorModal.vue'
 
 interface Props {
   modelValue: boolean
@@ -270,8 +271,8 @@ const toggleClose = () => {
 }
 
 .must-have-field {
-  grid-column: 2;
-  grid-row: 5;
+  grid-column: 1;
+  grid-row: 4;
 }
 
 .start-date-field {
@@ -281,12 +282,12 @@ const toggleClose = () => {
 
 .end-date-field {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
 }
 
 .start-time-field {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
 }
 
 .end-time-field {

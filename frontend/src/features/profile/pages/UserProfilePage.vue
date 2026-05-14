@@ -201,10 +201,9 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUser, useGetUserProfile } from '@/api/accounts/accounts'
-import { useAdminModifyUserPoints, useAdminUserPointsBalance } from '@/api/queries/points'
 import { useNotification } from '@/composables/useNotification'
 import { formatDate } from '@/lib/date'
-import { parseApiError } from '@/api/errors'
+import { useGetAdminUserPointsBalance, useModifyUserPointsBalance } from '@/api/points/points'
 
 const route = useRoute()
 const router = useRouter()
@@ -218,9 +217,9 @@ const {
   data: adminPointsBalance,
   isLoading: isAdminPointsLoading,
   refetch: refetchAdminBalance,
-} = useAdminUserPointsBalance(userId, { query: { enabled: isAdmin } })
+} = useGetAdminUserPointsBalance(userId, { query: { enabled: isAdmin } })
 
-const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useAdminModifyUserPoints()
+const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useModifyUserPointsBalance()
 const operation = ref<'add' | 'subtract' | 'set' | 'reset'>('add')
 const amount = ref<number>(0)
 const reason = ref('')
@@ -256,8 +255,7 @@ const submitPointsUpdate = async () => {
     amount.value = 0
     showNotification('Points balance updated.', 'success')
   } catch (error) {
-    const parsed = parseApiError(error)
-    showNotification(parsed?.message || 'Failed to update points balance.', 'error')
+    showNotification((error as Error)?.message || 'Failed to update points balance.', 'error')
   }
 }
 </script>

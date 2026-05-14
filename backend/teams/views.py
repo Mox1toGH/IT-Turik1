@@ -176,17 +176,7 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             return denied
         return super().destroy(request, *args, **kwargs)
 
-@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', request={
-    'multipart/form-data': {
-        'type': 'object',
-        'properties': {
-            'banner': {
-                'type': 'string',
-                'format': 'binary',
-            }
-        }
-    }
-}, responses={
+@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', responses={
     200: TeamBannerSerializer,
     400: _400,
     401: _401,

@@ -265,9 +265,7 @@ const handleSubmit = () => {
           form.setError(formField as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        if (!Object.keys(error?.details || {}).length) {
-          showNotification(error?.message || 'Failed to update tournament', 'error')
-        }
+        showNotification(error.message, 'error')
       },
     },
   )

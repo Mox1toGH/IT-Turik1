@@ -286,17 +286,7 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
         tournament.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@extend_schema(methods=['PATCH'], operation_id='updateTournamentBanner', request={
-    'multipart/form-data': {
-        'type': 'object',
-        'properties': {
-            'banner': {
-                'type': 'string',
-                'format': 'binary',
-            }
-        }
-    }
-}, responses={
+@extend_schema(methods=['PATCH'], operation_id='updateTournamentBanner', responses={
     200: TournamentPublicSerializer,
     400: _400,
     401: _401,

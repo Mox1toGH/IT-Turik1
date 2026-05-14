@@ -29,8 +29,9 @@ import type {
 
 import type {
   Certificate,
+  CertificateRequest,
   CertificateTemplate,
-  CreateCertificateTemplateBody,
+  CertificateTemplateRequest,
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
@@ -39,40 +40,12 @@ import type {
   ListCertificatesParams,
   PaginatedCertificateList,
   PaginatedCertificateTemplateList,
-  PatchedCertificate,
-  ReplaceCertificateTemplateBody,
-  UpdateCertificateTemplateBody
+  PatchedCertificateRequest,
+  PatchedCertificateTemplateRequest
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
 import type { ErrorType , BodyType } from '../../lib/apiClient';
-
-// https://stackoverflow.com/questions/49579094/typescript-conditional-types-filter-out-readonly-properties-pick-only-requir/49579497#49579497
-type IfEquals<X, Y, A = X, B = never> = (<T>() => T extends X ? 1 : 2) extends <
-T,
->() => T extends Y ? 1 : 2
-? A
-: B;
-
-type WritableKeys<T> = {
-[P in keyof T]-?: IfEquals<
-  { [Q in P]: T[P] },
-  { -readonly [Q in P]: T[P] },
-  P
->;
-}[keyof T];
-
-type UnionToIntersection<U> =
-  (U extends any ? (k: U)=>void : never) extends ((k: infer I)=>void) ? I : never;
-type DistributeReadOnlyOverUnions<T> = T extends any ? NonReadonly<T> : never;
-
-type Writable<T> = Pick<T, WritableKeys<T>>;
-type NonReadonly<T> = [T] extends [UnionToIntersection<T>] ? {
-  [P in keyof Writable<T>]: T[P] extends object
-    ? NonReadonly<NonNullable<T[P]>>
-    : T[P];
-} : DistributeReadOnlyOverUnions<T>;
-
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -143,15 +116,15 @@ export function useListCertificates<TData = Awaited<ReturnType<typeof listCertif
 
 
 export const createCertificate = (
-    certificate: MaybeRef<NonReadonly<Certificate>>,
+    certificateRequest: MaybeRef<CertificateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      certificate = unref(certificate);
+      certificateRequest = unref(certificateRequest);
       
       return customInstance<Certificate>(
       {url: `http://localhost:8000/api/certificates/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: certificate, signal
+      data: certificateRequest, signal
     },
       options);
     }
@@ -159,8 +132,8 @@ export const createCertificate = (
 
 
 export const getCreateCertificateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<NonReadonly<Certificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<NonReadonly<Certificate>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<CertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<CertificateRequest>}, TContext> => {
 
 const mutationKey = ['createCertificate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -172,7 +145,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificate>>, {data: BodyType<NonReadonly<Certificate>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificate>>, {data: BodyType<CertificateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createCertificate(data,requestOptions)
@@ -184,15 +157,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateCertificateMutationResult = NonNullable<Awaited<ReturnType<typeof createCertificate>>>
-    export type CreateCertificateMutationBody = BodyType<NonReadonly<Certificate>>
+    export type CreateCertificateMutationBody = BodyType<CertificateRequest>
     export type CreateCertificateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateCertificate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<NonReadonly<Certificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificate>>, TError,{data: BodyType<CertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createCertificate>>,
         TError,
-        {data: BodyType<NonReadonly<Certificate>>},
+        {data: BodyType<CertificateRequest>},
         TContext
       > => {
 
@@ -264,15 +237,15 @@ export function useGetCertificate<TData = Awaited<ReturnType<typeof getCertifica
 
 export const certificatesUpdate = (
     uniqueCode: MaybeRef<string>,
-    certificate: MaybeRef<NonReadonly<Certificate>>,
+    certificateRequest: MaybeRef<CertificateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       uniqueCode = unref(uniqueCode);
-certificate = unref(certificate);
+certificateRequest = unref(certificateRequest);
       
       return customInstance<Certificate>(
       {url: `http://localhost:8000/api/certificates/${uniqueCode}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: certificate
+      data: certificateRequest
     },
       options);
     }
@@ -280,8 +253,8 @@ certificate = unref(certificate);
 
 
 export const getCertificatesUpdateMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<Certificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<Certificate>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<CertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<CertificateRequest>}, TContext> => {
 
 const mutationKey = ['certificatesUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -293,7 +266,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof certificatesUpdate>>, {uniqueCode: string;data: BodyType<NonReadonly<Certificate>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof certificatesUpdate>>, {uniqueCode: string;data: BodyType<CertificateRequest>}> = (props) => {
           const {uniqueCode,data} = props ?? {};
 
           return  certificatesUpdate(uniqueCode,data,requestOptions)
@@ -305,15 +278,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CertificatesUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof certificatesUpdate>>>
-    export type CertificatesUpdateMutationBody = BodyType<NonReadonly<Certificate>>
+    export type CertificatesUpdateMutationBody = BodyType<CertificateRequest>
     export type CertificatesUpdateMutationError = ErrorType<unknown>
 
     export const useCertificatesUpdate = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<Certificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof certificatesUpdate>>, TError,{uniqueCode: string;data: BodyType<CertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof certificatesUpdate>>,
         TError,
-        {uniqueCode: string;data: BodyType<NonReadonly<Certificate>>},
+        {uniqueCode: string;data: BodyType<CertificateRequest>},
         TContext
       > => {
 
@@ -323,15 +296,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateCertificate = (
     uniqueCode: MaybeRef<string>,
-    patchedCertificate: MaybeRef<NonReadonly<PatchedCertificate>>,
+    patchedCertificateRequest: MaybeRef<PatchedCertificateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       uniqueCode = unref(uniqueCode);
-patchedCertificate = unref(patchedCertificate);
+patchedCertificateRequest = unref(patchedCertificateRequest);
       
       return customInstance<Certificate>(
       {url: `http://localhost:8000/api/certificates/${uniqueCode}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedCertificate
+      data: patchedCertificateRequest
     },
       options);
     }
@@ -339,8 +312,8 @@ patchedCertificate = unref(patchedCertificate);
 
 
 export const getUpdateCertificateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<PatchedCertificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<PatchedCertificate>>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<PatchedCertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<PatchedCertificateRequest>}, TContext> => {
 
 const mutationKey = ['updateCertificate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -352,7 +325,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCertificate>>, {uniqueCode: string;data: BodyType<NonReadonly<PatchedCertificate>>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCertificate>>, {uniqueCode: string;data: BodyType<PatchedCertificateRequest>}> = (props) => {
           const {uniqueCode,data} = props ?? {};
 
           return  updateCertificate(uniqueCode,data,requestOptions)
@@ -364,15 +337,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateCertificateMutationResult = NonNullable<Awaited<ReturnType<typeof updateCertificate>>>
-    export type UpdateCertificateMutationBody = BodyType<NonReadonly<PatchedCertificate>>
+    export type UpdateCertificateMutationBody = BodyType<PatchedCertificateRequest>
     export type UpdateCertificateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateCertificate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<NonReadonly<PatchedCertificate>>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificate>>, TError,{uniqueCode: string;data: BodyType<PatchedCertificateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateCertificate>>,
         TError,
-        {uniqueCode: string;data: BodyType<NonReadonly<PatchedCertificate>>},
+        {uniqueCode: string;data: BodyType<PatchedCertificateRequest>},
         TContext
       > => {
 
@@ -561,15 +534,15 @@ export function useListCertificateTemplates<TData = Awaited<ReturnType<typeof li
 
 
 export const createCertificateTemplate = (
-    createCertificateTemplateBody: MaybeRef<CreateCertificateTemplateBody>,
+    certificateTemplateRequest: MaybeRef<CertificateTemplateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      createCertificateTemplateBody = unref(createCertificateTemplateBody);
+      certificateTemplateRequest = unref(certificateTemplateRequest);
       const formData = new FormData();
-formData.append(`name`, createCertificateTemplateBody.name)
-formData.append(`image`, createCertificateTemplateBody.image)
-if(createCertificateTemplateBody.is_default !== undefined) {
- formData.append(`is_default`, createCertificateTemplateBody.is_default.toString())
+formData.append(`name`, certificateTemplateRequest.name)
+formData.append(`image`, certificateTemplateRequest.image)
+if(certificateTemplateRequest.is_default !== undefined) {
+ formData.append(`is_default`, certificateTemplateRequest.is_default.toString())
  }
 
       return customInstance<CertificateTemplate>(
@@ -583,8 +556,8 @@ if(createCertificateTemplateBody.is_default !== undefined) {
 
 
 export const getCreateCertificateTemplateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CertificateTemplateRequest>}, TContext> => {
 
 const mutationKey = ['createCertificateTemplate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -596,7 +569,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificateTemplate>>, {data: BodyType<CreateCertificateTemplateBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificateTemplate>>, {data: BodyType<CertificateTemplateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createCertificateTemplate(data,requestOptions)
@@ -608,15 +581,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateCertificateTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createCertificateTemplate>>>
-    export type CreateCertificateTemplateMutationBody = BodyType<CreateCertificateTemplateBody>
+    export type CreateCertificateTemplateMutationBody = BodyType<CertificateTemplateRequest>
     export type CreateCertificateTemplateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateCertificateTemplate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createCertificateTemplate>>,
         TError,
-        {data: BodyType<CreateCertificateTemplateBody>},
+        {data: BodyType<CertificateTemplateRequest>},
         TContext
       > => {
 
@@ -688,15 +661,15 @@ export function useGetCertificateTemplate<TData = Awaited<ReturnType<typeof getC
 
 export const replaceCertificateTemplate = (
     id: MaybeRef<number>,
-    replaceCertificateTemplateBody: MaybeRef<ReplaceCertificateTemplateBody>,
+    certificateTemplateRequest: MaybeRef<CertificateTemplateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-replaceCertificateTemplateBody = unref(replaceCertificateTemplateBody);
+certificateTemplateRequest = unref(certificateTemplateRequest);
       const formData = new FormData();
-formData.append(`name`, replaceCertificateTemplateBody.name)
-formData.append(`image`, replaceCertificateTemplateBody.image)
-if(replaceCertificateTemplateBody.is_default !== undefined) {
- formData.append(`is_default`, replaceCertificateTemplateBody.is_default.toString())
+formData.append(`name`, certificateTemplateRequest.name)
+formData.append(`image`, certificateTemplateRequest.image)
+if(certificateTemplateRequest.is_default !== undefined) {
+ formData.append(`is_default`, certificateTemplateRequest.is_default.toString())
  }
 
       return customInstance<CertificateTemplate>(
@@ -710,8 +683,8 @@ if(replaceCertificateTemplateBody.is_default !== undefined) {
 
 
 export const getReplaceCertificateTemplateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<ReplaceCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<ReplaceCertificateTemplateBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<CertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<CertificateTemplateRequest>}, TContext> => {
 
 const mutationKey = ['replaceCertificateTemplate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -723,7 +696,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceCertificateTemplate>>, {id: number;data: BodyType<ReplaceCertificateTemplateBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceCertificateTemplate>>, {id: number;data: BodyType<CertificateTemplateRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceCertificateTemplate(id,data,requestOptions)
@@ -735,15 +708,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceCertificateTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof replaceCertificateTemplate>>>
-    export type ReplaceCertificateTemplateMutationBody = BodyType<ReplaceCertificateTemplateBody>
+    export type ReplaceCertificateTemplateMutationBody = BodyType<CertificateTemplateRequest>
     export type ReplaceCertificateTemplateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceCertificateTemplate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<ReplaceCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{id: number;data: BodyType<CertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceCertificateTemplate>>,
         TError,
-        {id: number;data: BodyType<ReplaceCertificateTemplateBody>},
+        {id: number;data: BodyType<CertificateTemplateRequest>},
         TContext
       > => {
 
@@ -753,19 +726,19 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateCertificateTemplate = (
     id: MaybeRef<number>,
-    updateCertificateTemplateBody: MaybeRef<UpdateCertificateTemplateBody>,
+    patchedCertificateTemplateRequest: MaybeRef<PatchedCertificateTemplateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-updateCertificateTemplateBody = unref(updateCertificateTemplateBody);
+patchedCertificateTemplateRequest = unref(patchedCertificateTemplateRequest);
       const formData = new FormData();
-if(updateCertificateTemplateBody.name !== undefined) {
- formData.append(`name`, updateCertificateTemplateBody.name)
+if(patchedCertificateTemplateRequest.name !== undefined) {
+ formData.append(`name`, patchedCertificateTemplateRequest.name)
  }
-if(updateCertificateTemplateBody.image !== undefined) {
- formData.append(`image`, updateCertificateTemplateBody.image)
+if(patchedCertificateTemplateRequest.image !== undefined) {
+ formData.append(`image`, patchedCertificateTemplateRequest.image)
  }
-if(updateCertificateTemplateBody.is_default !== undefined) {
- formData.append(`is_default`, updateCertificateTemplateBody.is_default.toString())
+if(patchedCertificateTemplateRequest.is_default !== undefined) {
+ formData.append(`is_default`, patchedCertificateTemplateRequest.is_default.toString())
  }
 
       return customInstance<CertificateTemplate>(
@@ -779,8 +752,8 @@ if(updateCertificateTemplateBody.is_default !== undefined) {
 
 
 export const getUpdateCertificateTemplateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<UpdateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<UpdateCertificateTemplateBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<PatchedCertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<PatchedCertificateTemplateRequest>}, TContext> => {
 
 const mutationKey = ['updateCertificateTemplate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -792,7 +765,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCertificateTemplate>>, {id: number;data: BodyType<UpdateCertificateTemplateBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCertificateTemplate>>, {id: number;data: BodyType<PatchedCertificateTemplateRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateCertificateTemplate(id,data,requestOptions)
@@ -804,15 +777,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateCertificateTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateCertificateTemplate>>>
-    export type UpdateCertificateTemplateMutationBody = BodyType<UpdateCertificateTemplateBody>
+    export type UpdateCertificateTemplateMutationBody = BodyType<PatchedCertificateTemplateRequest>
     export type UpdateCertificateTemplateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateCertificateTemplate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<UpdateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCertificateTemplate>>, TError,{id: number;data: BodyType<PatchedCertificateTemplateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateCertificateTemplate>>,
         TError,
-        {id: number;data: BodyType<UpdateCertificateTemplateBody>},
+        {id: number;data: BodyType<PatchedCertificateTemplateRequest>},
         TContext
       > => {
 

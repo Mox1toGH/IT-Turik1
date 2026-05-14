@@ -60,17 +60,6 @@ class CertificateTemplatePagination(PageNumberPagination):
     ),
     create=extend_schema(
         operation_id='createCertificateTemplate',
-        request={
-            'multipart/form-data': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'image': {'type': 'string', 'format': 'binary'},
-                    'is_default': {'type': 'boolean'},
-                },
-                'required': ['name', 'image']
-            }
-        },
         responses={
             201: CertificateTemplateSerializer,
             400: _400,
@@ -80,31 +69,10 @@ class CertificateTemplatePagination(PageNumberPagination):
     ),
     update=extend_schema(
         operation_id='replaceCertificateTemplate',
-        request={
-            'multipart/form-data': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'image': {'type': 'string', 'format': 'binary'},
-                    'is_default': {'type': 'boolean'},
-                },
-                'required': ['name', 'image']
-            }
-        },
         responses={200: CertificateTemplateSerializer, 400: _400, 401: _401, 403: _403, 404: _404},
     ),
     partial_update=extend_schema(
         operation_id='updateCertificateTemplate',
-        request={
-            'multipart/form-data': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'image': {'type': 'string', 'format': 'binary'},
-                    'is_default': {'type': 'boolean'},
-                }
-            }
-        },
         responses={
             200: CertificateTemplateSerializer,
             400: _400,

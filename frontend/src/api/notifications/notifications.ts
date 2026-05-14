@@ -32,10 +32,10 @@ import type {
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponseValidationError,
-  GlobalConfigUpdate,
+  GlobalConfigUpdateRequest,
   ListNotificationsParams,
   MarkedCountResponse,
-  NotificationConfigUpdate,
+  NotificationConfigUpdateRequest,
   NotificationSettingsResponse,
   PaginatedNotificationList,
   UnreadCountResponse
@@ -400,15 +400,15 @@ export function useGetNotificationSettings<TData = Awaited<ReturnType<typeof get
 
 
 export const updateNotificationConfig = (
-    notificationConfigUpdate: MaybeRef<NotificationConfigUpdate>,
+    notificationConfigUpdateRequest: MaybeRef<NotificationConfigUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      notificationConfigUpdate = unref(notificationConfigUpdate);
+      notificationConfigUpdateRequest = unref(notificationConfigUpdateRequest);
       
       return customInstance<DetailResponse>(
       {url: `http://localhost:8000/api/notifications/settings/config/update/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: notificationConfigUpdate, signal
+      data: notificationConfigUpdateRequest, signal
     },
       options);
     }
@@ -416,8 +416,8 @@ export const updateNotificationConfig = (
 
 
 export const getUpdateNotificationConfigMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdateRequest>}, TContext> => {
 
 const mutationKey = ['updateNotificationConfig'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -429,7 +429,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNotificationConfig>>, {data: BodyType<NotificationConfigUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNotificationConfig>>, {data: BodyType<NotificationConfigUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  updateNotificationConfig(data,requestOptions)
@@ -441,15 +441,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateNotificationConfigMutationResult = NonNullable<Awaited<ReturnType<typeof updateNotificationConfig>>>
-    export type UpdateNotificationConfigMutationBody = BodyType<NotificationConfigUpdate>
+    export type UpdateNotificationConfigMutationBody = BodyType<NotificationConfigUpdateRequest>
     export type UpdateNotificationConfigMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>
 
     export const useUpdateNotificationConfig = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationConfig>>, TError,{data: BodyType<NotificationConfigUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateNotificationConfig>>,
         TError,
-        {data: BodyType<NotificationConfigUpdate>},
+        {data: BodyType<NotificationConfigUpdateRequest>},
         TContext
       > => {
 
@@ -458,15 +458,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const updateGlobalNotificationConfig = (
-    globalConfigUpdate: MaybeRef<GlobalConfigUpdate>,
+    globalConfigUpdateRequest: MaybeRef<GlobalConfigUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      globalConfigUpdate = unref(globalConfigUpdate);
+      globalConfigUpdateRequest = unref(globalConfigUpdateRequest);
       
       return customInstance<DetailResponse>(
       {url: `http://localhost:8000/api/notifications/settings/global/update/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: globalConfigUpdate, signal
+      data: globalConfigUpdateRequest, signal
     },
       options);
     }
@@ -474,8 +474,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getUpdateGlobalNotificationConfigMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdateRequest>}, TContext> => {
 
 const mutationKey = ['updateGlobalNotificationConfig'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -487,7 +487,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, {data: BodyType<GlobalConfigUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, {data: BodyType<GlobalConfigUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  updateGlobalNotificationConfig(data,requestOptions)
@@ -499,15 +499,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateGlobalNotificationConfigMutationResult = NonNullable<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>>
-    export type UpdateGlobalNotificationConfigMutationBody = BodyType<GlobalConfigUpdate>
+    export type UpdateGlobalNotificationConfigMutationBody = BodyType<GlobalConfigUpdateRequest>
     export type UpdateGlobalNotificationConfigMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useUpdateGlobalNotificationConfig = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateGlobalNotificationConfig>>, TError,{data: BodyType<GlobalConfigUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateGlobalNotificationConfig>>,
         TError,
-        {data: BodyType<GlobalConfigUpdate>},
+        {data: BodyType<GlobalConfigUpdateRequest>},
         TContext
       > => {
 

@@ -62,9 +62,9 @@
           <template #footer>
             <div class="actions">
               <ui-button
+                v-if="team.can_request_to_join && user?.role === 'team'"
                 size="sm"
                 variant="secondary"
-                v-if="team.can_request_to_join"
                 style="width: 100%"
                 :disabled="loadingIds.has(team.id)"
                 @click="sendJoinRequest(team.id)"

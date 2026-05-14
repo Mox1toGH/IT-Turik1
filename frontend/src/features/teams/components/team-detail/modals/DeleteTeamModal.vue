@@ -57,7 +57,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const { hideNotification } = useNotification()
+const { showNotification, hideNotification } = useNotification()
 
 const { mutate: deleteTeam, isPending: isDeleting } = useDeleteTeam()
 
@@ -97,6 +97,7 @@ const handleDeleteTeam = async () => {
       },
       onError: (error) => {
         deleteError.value = error.message
+        showNotification(error.message)
       },
     },
   )

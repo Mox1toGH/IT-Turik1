@@ -235,7 +235,7 @@ onMounted(() => {
 }
 
 .preview-actions {
-  margin-top: 0.2rem;
+  margin-top: 1rem;
 }
 
 .preview-error {

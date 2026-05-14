@@ -213,7 +213,11 @@ const { data: currentRound, isLoading: isLoadingCurrentRound } = useGetCurrentTa
 const { data: submissions, isLoading: isLoadingSubmissions } = useListMyTeamSubmissions(
   activeTournamentId,
   {
-    query: { enabled: computed(() => Boolean(isTeamRole.value && activeTournamentId.value)) },
+    query: {
+      enabled: computed(() =>
+        Boolean(isTeamRole.value && activeTournamentId.value && user.value?.role === 'team'),
+      ),
+    },
   },
 )
 

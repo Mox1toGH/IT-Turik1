@@ -71,6 +71,8 @@ const emit = defineEmits<{
   (e: 'deleted'): void
 }>()
 
+const { showNotification } = useNotification()
+
 const isDeleteModalOpen = ref(false)
 const deleteConfirmInput = ref('')
 const deleteError = ref('')
@@ -101,6 +103,8 @@ const handleDeleteTournament = () => {
       },
       onError: (error) => {
         deleteError.value = error.message
+
+        showNotification(error.message, 'error')
       },
     },
   )

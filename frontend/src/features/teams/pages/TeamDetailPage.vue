@@ -318,8 +318,8 @@ const saveBanner = () => {
         showNotification('Banner updated.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to update banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -334,8 +334,8 @@ const removeBanner = () => {
         showNotification('Banner removed.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to remove banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -442,7 +442,7 @@ watch(
   height: 2.1rem;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
-  background: #ffffff;
+  background: var(--secondary);
   color: var(--color-gray-700);
   display: inline-flex;
   align-items: center;

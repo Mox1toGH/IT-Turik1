@@ -28,7 +28,7 @@ import type {
 
 import type {
   DigitalInventoryItem,
-  EquipDigitalItem,
+  EquipDigitalItemRequest,
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponseValidationError,
@@ -45,15 +45,15 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 export const equipDigitalInventoryItem = (
-    equipDigitalItem: MaybeRef<EquipDigitalItem>,
+    equipDigitalItemRequest: MaybeRef<EquipDigitalItemRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      equipDigitalItem = unref(equipDigitalItem);
+      equipDigitalItemRequest = unref(equipDigitalItemRequest);
       
       return customInstance<DigitalInventoryItem>(
       {url: `http://localhost:8000/api/inventory/equip/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: equipDigitalItem, signal
+      data: equipDigitalItemRequest, signal
     },
       options);
     }
@@ -61,8 +61,8 @@ export const equipDigitalInventoryItem = (
 
 
 export const getEquipDigitalInventoryItemMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext> => {
 
 const mutationKey = ['equipDigitalInventoryItem'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -74,7 +74,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, {data: BodyType<EquipDigitalItem>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, {data: BodyType<EquipDigitalItemRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  equipDigitalInventoryItem(data,requestOptions)
@@ -86,15 +86,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type EquipDigitalInventoryItemMutationResult = NonNullable<Awaited<ReturnType<typeof equipDigitalInventoryItem>>>
-    export type EquipDigitalInventoryItemMutationBody = BodyType<EquipDigitalItem>
+    export type EquipDigitalInventoryItemMutationBody = BodyType<EquipDigitalItemRequest>
     export type EquipDigitalInventoryItemMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>
 
     export const useEquipDigitalInventoryItem = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof equipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof equipDigitalInventoryItem>>,
         TError,
-        {data: BodyType<EquipDigitalItem>},
+        {data: BodyType<EquipDigitalItemRequest>},
         TContext
       > => {
 
@@ -166,15 +166,15 @@ export function useListMyDigitalInventory<TData = Awaited<ReturnType<typeof list
 
 
 export const unequipDigitalInventoryItem = (
-    equipDigitalItem: MaybeRef<EquipDigitalItem>,
+    equipDigitalItemRequest: MaybeRef<EquipDigitalItemRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      equipDigitalItem = unref(equipDigitalItem);
+      equipDigitalItemRequest = unref(equipDigitalItemRequest);
       
       return customInstance<DigitalInventoryItem>(
       {url: `http://localhost:8000/api/inventory/unequip/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: equipDigitalItem, signal
+      data: equipDigitalItemRequest, signal
     },
       options);
     }
@@ -182,8 +182,8 @@ export const unequipDigitalInventoryItem = (
 
 
 export const getUnequipDigitalInventoryItemMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext> => {
 
 const mutationKey = ['unequipDigitalInventoryItem'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -195,7 +195,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, {data: BodyType<EquipDigitalItem>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, {data: BodyType<EquipDigitalItemRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  unequipDigitalInventoryItem(data,requestOptions)
@@ -207,15 +207,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UnequipDigitalInventoryItemMutationResult = NonNullable<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>>
-    export type UnequipDigitalInventoryItemMutationBody = BodyType<EquipDigitalItem>
+    export type UnequipDigitalInventoryItemMutationBody = BodyType<EquipDigitalItemRequest>
     export type UnequipDigitalInventoryItemMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>
 
     export const useUnequipDigitalInventoryItem = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unequipDigitalInventoryItem>>, TError,{data: BodyType<EquipDigitalItemRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof unequipDigitalInventoryItem>>,
         TError,
-        {data: BodyType<EquipDigitalItem>},
+        {data: BodyType<EquipDigitalItemRequest>},
         TContext
       > => {
 

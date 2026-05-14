@@ -139,6 +139,7 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import { useForm } from '@/composables/useForm'
+import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { CreateTournamentSchema } from '@/schemas/tournaments.schema'
 import { unref } from 'vue'
@@ -168,6 +169,8 @@ const form = useForm<Form>(CreateTournamentSchema, {
 
 const router = useRouter()
 const { mutate: createTournament } = useCreateTournament()
+
+const { showNotification } = useNotification()
 
 const apiToFormFieldMap: Record<string, keyof Form> = {
   start_date: 'startDate',
@@ -204,6 +207,8 @@ const handleSubmit = () => {
           const formField = apiToFormFieldMap[apiField] ?? apiField
           form.setError(formField as keyof Form, errors?.[0] ?? 'Invalid value')
         }
+
+        showNotification(error.message, 'error')
       },
     },
   )

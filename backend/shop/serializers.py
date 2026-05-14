@@ -15,6 +15,8 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class AvatarFrameSerializer(serializers.ModelSerializer):
+    svg_file = serializers.ImageField()
+
     class Meta:
         model = AvatarFrame
         fields = ('id', 'name', 'svg_file', 'is_active', 'created_at', 'updated_at')
@@ -26,6 +28,14 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ('id', 'name')
 
+class ProductWriteSerializer(serializers.ModelSerializer):
+    avatar_frame_file = serializers.FileField(write_only=True, required=False)
+
+    class Meta:
+        model = Product
+        fields = [
+            'avatar_frame_file',
+        ]
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)

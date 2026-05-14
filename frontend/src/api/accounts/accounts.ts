@@ -29,33 +29,34 @@ import type {
 
 import type {
   ActivationResponse,
-  ChangePassword,
+  ChangePasswordRequest,
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
   ErrorResponseValidationError,
-  GoogleAuth,
+  GoogleAuthRequest,
   GoogleAuthResponse,
   ListRoleActivationCodesParams,
   ListUsersParams,
-  LoginRequest,
+  LoginRequestRequest,
   LoginResponse,
   MessageResponse,
-  PasswordResetConfirm,
-  PasswordResetRequest,
-  PatchedUserUpdate,
+  PasswordResetConfirmRequest,
+  PasswordResetRequestRequest,
+  PatchedUserAvatarUpdateRequest,
+  PatchedUserUpdateRequest,
   Register,
-  RoleActivationCodeGenerate,
+  RegisterRequest,
+  RoleActivationCodeGenerateRequest,
   RoleActivationCodeGenerateResponse,
   RoleActivationCodeListResponse,
   TeamUserList,
-  TokenRefreshRequest,
+  TokenRefreshRequestRequest,
   TokenRefreshResponse,
-  UpdateUserAvatar2Body,
-  UpdateUserAvatarBody,
   User,
   UserAvatarUpdate,
-  UserUpdate
+  UserAvatarUpdateRequest,
+  UserUpdateRequest
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -124,15 +125,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const changePassword = (
-    changePassword: MaybeRef<ChangePassword>,
+    changePasswordRequest: MaybeRef<ChangePasswordRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      changePassword = unref(changePassword);
+      changePasswordRequest = unref(changePasswordRequest);
       
       return customInstance<MessageResponse>(
       {url: `http://localhost:8000/api/accounts/change-password/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: changePassword, signal
+      data: changePasswordRequest, signal
     },
       options);
     }
@@ -140,8 +141,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getChangePasswordMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePassword>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePassword>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePasswordRequest>}, TContext> => {
 
 const mutationKey = ['changePassword'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -153,7 +154,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: BodyType<ChangePassword>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: BodyType<ChangePasswordRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  changePassword(data,requestOptions)
@@ -165,15 +166,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
-    export type ChangePasswordMutationBody = BodyType<ChangePassword>
+    export type ChangePasswordMutationBody = BodyType<ChangePasswordRequest>
     export type ChangePasswordMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useChangePassword = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePassword>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: BodyType<ChangePasswordRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof changePassword>>,
         TError,
-        {data: BodyType<ChangePassword>},
+        {data: BodyType<ChangePasswordRequest>},
         TContext
       > => {
 
@@ -182,15 +183,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const googleAuth = (
-    googleAuth: MaybeRef<GoogleAuth>,
+    googleAuthRequest: MaybeRef<GoogleAuthRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      googleAuth = unref(googleAuth);
+      googleAuthRequest = unref(googleAuthRequest);
       
       return customInstance<GoogleAuthResponse>(
       {url: `http://localhost:8000/api/accounts/google-login/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: googleAuth, signal
+      data: googleAuthRequest, signal
     },
       options);
     }
@@ -198,8 +199,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getGoogleAuthMutationOptions = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuth>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuth>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuthRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuthRequest>}, TContext> => {
 
 const mutationKey = ['googleAuth'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -211,7 +212,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof googleAuth>>, {data: BodyType<GoogleAuth>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof googleAuth>>, {data: BodyType<GoogleAuthRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  googleAuth(data,requestOptions)
@@ -223,15 +224,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type GoogleAuthMutationResult = NonNullable<Awaited<ReturnType<typeof googleAuth>>>
-    export type GoogleAuthMutationBody = BodyType<GoogleAuth>
+    export type GoogleAuthMutationBody = BodyType<GoogleAuthRequest>
     export type GoogleAuthMutationError = ErrorType<ErrorResponseValidationError>
 
     export const useGoogleAuth = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuth>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof googleAuth>>, TError,{data: BodyType<GoogleAuthRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof googleAuth>>,
         TError,
-        {data: BodyType<GoogleAuth>},
+        {data: BodyType<GoogleAuthRequest>},
         TContext
       > => {
 
@@ -240,15 +241,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const login = (
-    loginRequest: MaybeRef<LoginRequest>,
+    loginRequestRequest: MaybeRef<LoginRequestRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      loginRequest = unref(loginRequest);
+      loginRequestRequest = unref(loginRequestRequest);
       
       return customInstance<LoginResponse>(
       {url: `http://localhost:8000/api/accounts/login/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: loginRequest, signal
+      data: loginRequestRequest, signal
     },
       options);
     }
@@ -256,8 +257,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getLoginMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequestRequest>}, TContext> => {
 
 const mutationKey = ['login'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -269,7 +270,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: BodyType<LoginRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: BodyType<LoginRequestRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  login(data,requestOptions)
@@ -281,15 +282,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
-    export type LoginMutationBody = BodyType<LoginRequest>
+    export type LoginMutationBody = BodyType<LoginRequestRequest>
     export type LoginMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useLogin = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof login>>,
         TError,
-        {data: BodyType<LoginRequest>},
+        {data: BodyType<LoginRequestRequest>},
         TContext
       > => {
 
@@ -298,15 +299,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const requestPasswordReset = (
-    passwordResetRequest: MaybeRef<PasswordResetRequest>,
+    passwordResetRequestRequest: MaybeRef<PasswordResetRequestRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      passwordResetRequest = unref(passwordResetRequest);
+      passwordResetRequestRequest = unref(passwordResetRequestRequest);
       
       return customInstance<MessageResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: passwordResetRequest, signal
+      data: passwordResetRequestRequest, signal
     },
       options);
     }
@@ -314,8 +315,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getRequestPasswordResetMutationOptions = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext> => {
 
 const mutationKey = ['requestPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -327,7 +328,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: BodyType<PasswordResetRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: BodyType<PasswordResetRequestRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  requestPasswordReset(data,requestOptions)
@@ -339,15 +340,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
-    export type RequestPasswordResetMutationBody = BodyType<PasswordResetRequest>
+    export type RequestPasswordResetMutationBody = BodyType<PasswordResetRequestRequest>
     export type RequestPasswordResetMutationError = ErrorType<ErrorResponseValidationError>
 
     export const useRequestPasswordReset = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof requestPasswordReset>>,
         TError,
-        {data: BodyType<PasswordResetRequest>},
+        {data: BodyType<PasswordResetRequestRequest>},
         TContext
       > => {
 
@@ -425,17 +426,17 @@ export function useValidatePasswordResetLink<TData = Awaited<ReturnType<typeof v
 export const confirmPasswordReset = (
     uidb64: MaybeRef<string>,
     token: MaybeRef<string>,
-    passwordResetConfirm: MaybeRef<PasswordResetConfirm>,
+    passwordResetConfirmRequest: MaybeRef<PasswordResetConfirmRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       uidb64 = unref(uidb64);
 token = unref(token);
-passwordResetConfirm = unref(passwordResetConfirm);
+passwordResetConfirmRequest = unref(passwordResetConfirmRequest);
       
       return customInstance<MessageResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset/${uidb64}/${token}/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: passwordResetConfirm, signal
+      data: passwordResetConfirmRequest, signal
     },
       options);
     }
@@ -443,8 +444,8 @@ passwordResetConfirm = unref(passwordResetConfirm);
 
 
 export const getConfirmPasswordResetMutationOptions = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirm>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirm>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirmRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirmRequest>}, TContext> => {
 
 const mutationKey = ['confirmPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -456,7 +457,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {uidb64: string;token: string;data: BodyType<PasswordResetConfirm>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {uidb64: string;token: string;data: BodyType<PasswordResetConfirmRequest>}> = (props) => {
           const {uidb64,token,data} = props ?? {};
 
           return  confirmPasswordReset(uidb64,token,data,requestOptions)
@@ -468,15 +469,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ConfirmPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof confirmPasswordReset>>>
-    export type ConfirmPasswordResetMutationBody = BodyType<PasswordResetConfirm>
+    export type ConfirmPasswordResetMutationBody = BodyType<PasswordResetConfirmRequest>
     export type ConfirmPasswordResetMutationError = ErrorType<ErrorResponseValidationError>
 
     export const useConfirmPasswordReset = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirm>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{uidb64: string;token: string;data: BodyType<PasswordResetConfirmRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof confirmPasswordReset>>,
         TError,
-        {uidb64: string;token: string;data: BodyType<PasswordResetConfirm>},
+        {uidb64: string;token: string;data: BodyType<PasswordResetConfirmRequest>},
         TContext
       > => {
 
@@ -547,14 +548,14 @@ export function useGetUserProfile<TData = Awaited<ReturnType<typeof getUserProfi
 
 
 export const replaceUserProfile = (
-    userUpdate: MaybeRef<UserUpdate>,
+    userUpdateRequest: MaybeRef<UserUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
-      userUpdate = unref(userUpdate);
+      userUpdateRequest = unref(userUpdateRequest);
       
       return customInstance<User>(
       {url: `http://localhost:8000/api/accounts/profile/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: userUpdate
+      data: userUpdateRequest
     },
       options);
     }
@@ -562,8 +563,8 @@ export const replaceUserProfile = (
 
 
 export const getReplaceUserProfileMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext> => {
 
 const mutationKey = ['replaceUserProfile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -575,7 +576,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceUserProfile>>, {data: BodyType<UserUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceUserProfile>>, {data: BodyType<UserUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  replaceUserProfile(data,requestOptions)
@@ -587,15 +588,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceUserProfileMutationResult = NonNullable<Awaited<ReturnType<typeof replaceUserProfile>>>
-    export type ReplaceUserProfileMutationBody = BodyType<UserUpdate>
+    export type ReplaceUserProfileMutationBody = BodyType<UserUpdateRequest>
     export type ReplaceUserProfileMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useReplaceUserProfile = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceUserProfile>>,
         TError,
-        {data: BodyType<UserUpdate>},
+        {data: BodyType<UserUpdateRequest>},
         TContext
       > => {
 
@@ -604,14 +605,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const updateUserProfile = (
-    patchedUserUpdate: MaybeRef<PatchedUserUpdate>,
+    patchedUserUpdateRequest: MaybeRef<PatchedUserUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
-      patchedUserUpdate = unref(patchedUserUpdate);
+      patchedUserUpdateRequest = unref(patchedUserUpdateRequest);
       
       return customInstance<User>(
       {url: `http://localhost:8000/api/accounts/profile/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedUserUpdate
+      data: patchedUserUpdateRequest
     },
       options);
     }
@@ -619,8 +620,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getUpdateUserProfileMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdateRequest>}, TContext> => {
 
 const mutationKey = ['updateUserProfile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -632,7 +633,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserProfile>>, {data: BodyType<PatchedUserUpdate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserProfile>>, {data: BodyType<PatchedUserUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  updateUserProfile(data,requestOptions)
@@ -644,15 +645,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateUserProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserProfile>>>
-    export type UpdateUserProfileMutationBody = BodyType<PatchedUserUpdate>
+    export type UpdateUserProfileMutationBody = BodyType<PatchedUserUpdateRequest>
     export type UpdateUserProfileMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useUpdateUserProfile = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserProfile>>, TError,{data: BodyType<PatchedUserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateUserProfile>>,
         TError,
-        {data: BodyType<PatchedUserUpdate>},
+        {data: BodyType<PatchedUserUpdateRequest>},
         TContext
       > => {
 
@@ -715,13 +716,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const updateUserAvatar2 = (
-    updateUserAvatar2Body: MaybeRef<UpdateUserAvatar2Body>,
+    export const accountsProfileAvatarUpdate = (
+    userAvatarUpdateRequest: MaybeRef<UserAvatarUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
-      updateUserAvatar2Body = unref(updateUserAvatar2Body);
+      userAvatarUpdateRequest = unref(userAvatarUpdateRequest);
       const formData = new FormData();
-if(updateUserAvatar2Body.avatar !== undefined) {
- formData.append(`avatar`, updateUserAvatar2Body.avatar)
+if(userAvatarUpdateRequest.avatar !== undefined && userAvatarUpdateRequest.avatar !== null) {
+ formData.append(`avatar`, userAvatarUpdateRequest.avatar)
  }
 
       return customInstance<UserAvatarUpdate>(
@@ -734,11 +735,11 @@ if(updateUserAvatar2Body.avatar !== undefined) {
   
 
 
-export const getUpdateUserAvatar2MutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext> => {
+export const getAccountsProfileAvatarUpdateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>, TError,{data: BodyType<UserAvatarUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>, TError,{data: BodyType<UserAvatarUpdateRequest>}, TContext> => {
 
-const mutationKey = ['updateUserAvatar2'];
+const mutationKey = ['accountsProfileAvatarUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -748,10 +749,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserAvatar2>>, {data: BodyType<UpdateUserAvatar2Body>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>, {data: BodyType<UserAvatarUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
-          return  updateUserAvatar2(data,requestOptions)
+          return  accountsProfileAvatarUpdate(data,requestOptions)
         }
 
         
@@ -759,30 +760,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateUserAvatar2MutationResult = NonNullable<Awaited<ReturnType<typeof updateUserAvatar2>>>
-    export type UpdateUserAvatar2MutationBody = BodyType<UpdateUserAvatar2Body>
-    export type UpdateUserAvatar2MutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
+    export type AccountsProfileAvatarUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>>
+    export type AccountsProfileAvatarUpdateMutationBody = BodyType<UserAvatarUpdateRequest>
+    export type AccountsProfileAvatarUpdateMutationError = ErrorType<unknown>
 
-    export const useUpdateUserAvatar2 = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useAccountsProfileAvatarUpdate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>, TError,{data: BodyType<UserAvatarUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof updateUserAvatar2>>,
+        Awaited<ReturnType<typeof accountsProfileAvatarUpdate>>,
         TError,
-        {data: BodyType<UpdateUserAvatar2Body>},
+        {data: BodyType<UserAvatarUpdateRequest>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateUserAvatar2MutationOptions(options);
+      const mutationOptions = getAccountsProfileAvatarUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     export const updateUserAvatar = (
-    updateUserAvatarBody: MaybeRef<UpdateUserAvatarBody>,
+    patchedUserAvatarUpdateRequest: MaybeRef<PatchedUserAvatarUpdateRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
-      updateUserAvatarBody = unref(updateUserAvatarBody);
+      patchedUserAvatarUpdateRequest = unref(patchedUserAvatarUpdateRequest);
       const formData = new FormData();
-if(updateUserAvatarBody.avatar !== undefined) {
- formData.append(`avatar`, updateUserAvatarBody.avatar)
+if(patchedUserAvatarUpdateRequest.avatar !== undefined && patchedUserAvatarUpdateRequest.avatar !== null) {
+ formData.append(`avatar`, patchedUserAvatarUpdateRequest.avatar)
  }
 
       return customInstance<UserAvatarUpdate>(
@@ -796,8 +797,8 @@ if(updateUserAvatarBody.avatar !== undefined) {
 
 
 export const getUpdateUserAvatarMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<PatchedUserAvatarUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<PatchedUserAvatarUpdateRequest>}, TContext> => {
 
 const mutationKey = ['updateUserAvatar'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -809,7 +810,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserAvatar>>, {data: BodyType<UpdateUserAvatarBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserAvatar>>, {data: BodyType<PatchedUserAvatarUpdateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  updateUserAvatar(data,requestOptions)
@@ -821,15 +822,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateUserAvatarMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserAvatar>>>
-    export type UpdateUserAvatarMutationBody = BodyType<UpdateUserAvatarBody>
+    export type UpdateUserAvatarMutationBody = BodyType<PatchedUserAvatarUpdateRequest>
     export type UpdateUserAvatarMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useUpdateUserAvatar = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<PatchedUserAvatarUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateUserAvatar>>,
         TError,
-        {data: BodyType<UpdateUserAvatarBody>},
+        {data: BodyType<PatchedUserAvatarUpdateRequest>},
         TContext
       > => {
 
@@ -893,15 +894,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const registerUser = (
-    register: MaybeRef<Register>,
+    registerRequest: MaybeRef<RegisterRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      register = unref(register);
+      registerRequest = unref(registerRequest);
       
       return customInstance<Register>(
       {url: `http://localhost:8000/api/accounts/register/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: register, signal
+      data: registerRequest, signal
     },
       options);
     }
@@ -909,8 +910,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getRegisterUserMutationOptions = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<Register>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<Register>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterRequest>}, TContext> => {
 
 const mutationKey = ['registerUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -922,7 +923,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerUser>>, {data: BodyType<Register>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerUser>>, {data: BodyType<RegisterRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  registerUser(data,requestOptions)
@@ -934,15 +935,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RegisterUserMutationResult = NonNullable<Awaited<ReturnType<typeof registerUser>>>
-    export type RegisterUserMutationBody = BodyType<Register>
+    export type RegisterUserMutationBody = BodyType<RegisterRequest>
     export type RegisterUserMutationError = ErrorType<ErrorResponseValidationError>
 
     export const useRegisterUser = <TError = ErrorType<ErrorResponseValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<Register>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof registerUser>>,
         TError,
-        {data: BodyType<Register>},
+        {data: BodyType<RegisterRequest>},
         TContext
       > => {
 
@@ -1014,15 +1015,15 @@ export function useListRoleActivationCodes<TData = Awaited<ReturnType<typeof lis
 
 
 export const generateRoleActivationCodes = (
-    roleActivationCodeGenerate: MaybeRef<RoleActivationCodeGenerate>,
+    roleActivationCodeGenerateRequest: MaybeRef<RoleActivationCodeGenerateRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      roleActivationCodeGenerate = unref(roleActivationCodeGenerate);
+      roleActivationCodeGenerateRequest = unref(roleActivationCodeGenerateRequest);
       
       return customInstance<RoleActivationCodeGenerateResponse>(
       {url: `http://localhost:8000/api/accounts/role-codes/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: roleActivationCodeGenerate, signal
+      data: roleActivationCodeGenerateRequest, signal
     },
       options);
     }
@@ -1030,8 +1031,8 @@ export const generateRoleActivationCodes = (
 
 
 export const getGenerateRoleActivationCodesMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerate>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerateRequest>}, TContext> => {
 
 const mutationKey = ['generateRoleActivationCodes'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1043,7 +1044,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateRoleActivationCodes>>, {data: BodyType<RoleActivationCodeGenerate>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateRoleActivationCodes>>, {data: BodyType<RoleActivationCodeGenerateRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  generateRoleActivationCodes(data,requestOptions)
@@ -1055,15 +1056,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type GenerateRoleActivationCodesMutationResult = NonNullable<Awaited<ReturnType<typeof generateRoleActivationCodes>>>
-    export type GenerateRoleActivationCodesMutationBody = BodyType<RoleActivationCodeGenerate>
+    export type GenerateRoleActivationCodesMutationBody = BodyType<RoleActivationCodeGenerateRequest>
     export type GenerateRoleActivationCodesMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useGenerateRoleActivationCodes = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateRoleActivationCodes>>, TError,{data: BodyType<RoleActivationCodeGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof generateRoleActivationCodes>>,
         TError,
-        {data: BodyType<RoleActivationCodeGenerate>},
+        {data: BodyType<RoleActivationCodeGenerateRequest>},
         TContext
       > => {
 
@@ -1072,15 +1073,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(mutationOptions, queryClient);
     }
     export const refreshToken = (
-    tokenRefreshRequest: MaybeRef<TokenRefreshRequest>,
+    tokenRefreshRequestRequest: MaybeRef<TokenRefreshRequestRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      tokenRefreshRequest = unref(tokenRefreshRequest);
+      tokenRefreshRequestRequest = unref(tokenRefreshRequestRequest);
       
       return customInstance<TokenRefreshResponse>(
       {url: `http://localhost:8000/api/accounts/token/refresh/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: tokenRefreshRequest, signal
+      data: tokenRefreshRequestRequest, signal
     },
       options);
     }
@@ -1088,8 +1089,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getRefreshTokenMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequestRequest>}, TContext> => {
 
 const mutationKey = ['refreshToken'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1101,7 +1102,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshToken>>, {data: BodyType<TokenRefreshRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshToken>>, {data: BodyType<TokenRefreshRequestRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  refreshToken(data,requestOptions)
@@ -1113,15 +1114,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RefreshTokenMutationResult = NonNullable<Awaited<ReturnType<typeof refreshToken>>>
-    export type RefreshTokenMutationBody = BodyType<TokenRefreshRequest>
+    export type RefreshTokenMutationBody = BodyType<TokenRefreshRequestRequest>
     export type RefreshTokenMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const useRefreshToken = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshToken>>, TError,{data: BodyType<TokenRefreshRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof refreshToken>>,
         TError,
-        {data: BodyType<TokenRefreshRequest>},
+        {data: BodyType<TokenRefreshRequestRequest>},
         TContext
       > => {
 

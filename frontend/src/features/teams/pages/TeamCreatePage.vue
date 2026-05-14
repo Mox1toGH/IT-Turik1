@@ -190,6 +190,8 @@ const handleFormSubmit = () => {
         for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
+
+        showNotification(error.message, 'error')
       },
     },
   )

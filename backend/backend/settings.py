@@ -27,6 +27,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     'CAMELIZE_NAMES': True,
     'OPERATION_ID_GENERATOR': 'drf_spectacular.generators.CamelCaseOperationIDGenerator',
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 SIMPLE_JWT = {

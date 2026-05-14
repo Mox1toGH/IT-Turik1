@@ -133,6 +133,7 @@ import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
 import type { RoleB96Enum } from '@/api/.ts.schemas'
 import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
+import { useNotification } from '@/composables/useNotification'
 
 interface Form {
   username: string
@@ -156,6 +157,8 @@ const form = useForm<Form>(CompleteProfileSchema, {
   phone: user.value?.phone ?? '',
   city: user.value?.city ?? '',
 })
+
+const { showNotification } = useNotification()
 
 const restrictedRoles = ['jury', 'organizer', 'admin']
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
@@ -185,6 +188,8 @@ const handleSubmit = async () => {
         for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
+
+        showNotification(error.message, 'error')
       },
     },
   )

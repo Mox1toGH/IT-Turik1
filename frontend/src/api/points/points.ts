@@ -29,7 +29,7 @@ import type {
 
 import type {
   AdminModifyPointsResponse,
-  AdminPointsBalanceModify,
+  AdminPointsBalanceModifyRequest,
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
@@ -112,16 +112,16 @@ export function useGetAdminUserPointsBalance<TData = Awaited<ReturnType<typeof g
 
 export const modifyUserPointsBalance = (
     userId: MaybeRef<number>,
-    adminPointsBalanceModify: MaybeRef<AdminPointsBalanceModify>,
+    adminPointsBalanceModifyRequest: MaybeRef<AdminPointsBalanceModifyRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       userId = unref(userId);
-adminPointsBalanceModify = unref(adminPointsBalanceModify);
+adminPointsBalanceModifyRequest = unref(adminPointsBalanceModifyRequest);
       
       return customInstance<AdminModifyPointsResponse>(
       {url: `http://localhost:8000/api/points/admin/users/${userId}/modify/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: adminPointsBalanceModify, signal
+      data: adminPointsBalanceModifyRequest, signal
     },
       options);
     }
@@ -129,8 +129,8 @@ adminPointsBalanceModify = unref(adminPointsBalanceModify);
 
 
 export const getModifyUserPointsBalanceMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModify>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModify>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModifyRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModifyRequest>}, TContext> => {
 
 const mutationKey = ['modifyUserPointsBalance'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -142,7 +142,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof modifyUserPointsBalance>>, {userId: number;data: BodyType<AdminPointsBalanceModify>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof modifyUserPointsBalance>>, {userId: number;data: BodyType<AdminPointsBalanceModifyRequest>}> = (props) => {
           const {userId,data} = props ?? {};
 
           return  modifyUserPointsBalance(userId,data,requestOptions)
@@ -154,15 +154,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ModifyUserPointsBalanceMutationResult = NonNullable<Awaited<ReturnType<typeof modifyUserPointsBalance>>>
-    export type ModifyUserPointsBalanceMutationBody = BodyType<AdminPointsBalanceModify>
+    export type ModifyUserPointsBalanceMutationBody = BodyType<AdminPointsBalanceModifyRequest>
     export type ModifyUserPointsBalanceMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useModifyUserPointsBalance = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModify>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof modifyUserPointsBalance>>, TError,{userId: number;data: BodyType<AdminPointsBalanceModifyRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof modifyUserPointsBalance>>,
         TError,
-        {userId: number;data: BodyType<AdminPointsBalanceModify>},
+        {userId: number;data: BodyType<AdminPointsBalanceModifyRequest>},
         TContext
       > => {
 
