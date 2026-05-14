@@ -1089,7 +1089,7 @@ class TournamentApiTests(APITestCase):
 
         self.client.force_authenticate(user=self.captain)
         url = reverse('tournament_teams', kwargs={'pk': tournament.id})
-        response = self.client.get(url, {'include_inactive': 'true'})
+        response = self.client.get(url, {'status': 'all'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
