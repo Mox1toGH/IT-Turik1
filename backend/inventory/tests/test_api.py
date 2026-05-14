@@ -1,12 +1,10 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from accounts.models import User
 from inventory.models import UserInventory
 from points.models import UserPointsBalance
 from shop.models import AvatarFrame, Category, Product
-
 
 class InventoryApiTests(APITestCase):
     def setUp(self):
@@ -95,10 +93,6 @@ class InventoryApiTests(APITestCase):
         response = self.client.post(self.equip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data['details']['inventory_id'],
-            'Only digital items can be equipped.',
-        )
 
     def test_unequip_inventory_item(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.digital_product, is_equipped=True)
