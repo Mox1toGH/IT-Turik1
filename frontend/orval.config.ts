@@ -2,7 +2,7 @@ import { defineConfig } from 'orval'
 
 export default defineConfig({
   api: {
-    input: 'http://localhost:8000/api/schema/',
+    input: '../backend/schema.yml',
     output: {
       mode: 'tags-split',
       target: './src/api',
