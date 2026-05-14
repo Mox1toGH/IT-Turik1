@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { computed, watchEffect } from 'vue'
+import { computed, watchEffect, watch } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
@@ -57,7 +57,18 @@ const router = useRouter()
 const { data: user } = useProfile()
 
 const teamId = computed(() => Number(route.params.id))
-const { data: team, isLoading: isLoadingTeamInfo, isError } = useTeamInfo({ id: teamId.value })
+const {
+  data: team,
+  isLoading: isLoadingTeamInfo,
+  isError,
+  error: teamError,
+} = useTeamInfo({ id: teamId.value })
+
+watch(teamError, (error) => {
+  if (error?.response?.status === 403) {
+    router.push('/teams/private')
+  }
+})
 
 watchEffect(() => {
   if (user.value && team.value) {

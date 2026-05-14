@@ -228,7 +228,14 @@ const {
   data: team,
   isLoading: isInfoLoading,
   isLoadingError: isInfoLoadingError,
+  error: infoError,
 } = useTeamInfo({ id: teamId })
+
+watch(infoError, (error) => {
+  if (error?.response?.status === 403) {
+    router.push('/teams/private')
+  }
+})
 
 const { data: activeTournament } = useActiveTeamTournament(
   { id: teamId },

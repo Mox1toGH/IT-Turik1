@@ -15,6 +15,11 @@ export const teamsRoutes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/teams/private',
+    component: () => import('./pages/TeamPrivatePage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/teams/:id',
     component: () => import('./pages/TeamDetailPage.vue'),
     meta: { requiresAuth: true },
