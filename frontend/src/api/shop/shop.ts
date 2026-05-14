@@ -46,6 +46,7 @@ import type {
   PaginatedCategoryList,
   PaginatedOrderList,
   PaginatedProductList,
+  PatchedAdminOrderStatusUpdate,
   PatchedAvatarFrame,
   PatchedCategory,
   PatchedProduct,
@@ -920,11 +921,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateAdminOrderStatus = (
     orderId: MaybeRef<number>,
+    patchedAdminOrderStatusUpdate: MaybeRef<PatchedAdminOrderStatusUpdate>,
  options?: SecondParameter<typeof customInstance>,) => {
       orderId = unref(orderId);
+patchedAdminOrderStatusUpdate = unref(patchedAdminOrderStatusUpdate);
       
       return customInstance<Order>(
-      {url: `http://localhost:8000/api/shop/admin/orders/${orderId}/status/`, method: 'PATCH'
+      {url: `http://localhost:8000/api/shop/admin/orders/${orderId}/status/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedAdminOrderStatusUpdate
     },
       options);
     }
@@ -932,8 +937,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 export const getUpdateAdminOrderStatusMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number;data: BodyType<PatchedAdminOrderStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number;data: BodyType<PatchedAdminOrderStatusUpdate>}, TContext> => {
 
 const mutationKey = ['updateAdminOrderStatus'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -945,10 +950,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminOrderStatus>>, {orderId: number}> = (props) => {
-          const {orderId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminOrderStatus>>, {orderId: number;data: BodyType<PatchedAdminOrderStatusUpdate>}> = (props) => {
+          const {orderId,data} = props ?? {};
 
-          return  updateAdminOrderStatus(orderId,requestOptions)
+          return  updateAdminOrderStatus(orderId,data,requestOptions)
         }
 
         
@@ -957,15 +962,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateAdminOrderStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminOrderStatus>>>
-    
+    export type UpdateAdminOrderStatusMutationBody = BodyType<PatchedAdminOrderStatusUpdate>
     export type UpdateAdminOrderStatusMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateAdminOrderStatus = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminOrderStatus>>, TError,{orderId: number;data: BodyType<PatchedAdminOrderStatusUpdate>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateAdminOrderStatus>>,
         TError,
-        {orderId: number},
+        {orderId: number;data: BodyType<PatchedAdminOrderStatusUpdate>},
         TContext
       > => {
 

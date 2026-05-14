@@ -10,7 +10,7 @@ export default defineConfig({
       generateErrorTypes: true,
       httpClient: 'axios',
       client: 'vue-query',
-      clean: true,
+      clean: false,
       baseUrl: 'http://localhost:8000',
       override: {
         mutator: {

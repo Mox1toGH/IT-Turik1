@@ -5,17 +5,19 @@
 export {
   useListProducts as useShopProducts,
   useListAdminCategories as useAdminShopCategories,
-  useCreateAdminCategory,
-  useUpdateAdminCategory,
-  useDeleteAdminCategory,
+  useCreateAdminCategory as useAdminCreateCategory,
+  useUpdateAdminCategory as useAdminUpdateCategory,
+  useDeleteAdminCategory as useAdminDeleteCategory,
   useListAvatarFrames as useAvatarFrames,
-  useCreateAdminProduct,
-  useUpdateAdminProduct,
-  useDeleteAdminProduct,
+  useCreateAdminProduct as useAdminCreateProduct,
+  useUpdateAdminProduct as useAdminUpdateProduct,
+  useDeleteAdminProduct as useAdminDeleteProduct,
   usePurchaseProduct as useShopPurchase,
   useListMyOrders as useMyShopOrders,
   useCancelMyOrder as useCancelMyShopOrder,
   useListAdminOrders as useAdminShopOrders,
-  useCancelAdminOrder,
-  useUpdateAdminOrderStatus,
+  useCancelAdminOrder as useAdminCancelOrder,
+  useUpdateAdminOrderStatus as useAdminUpdateOrderStatus,
 } from '@/api/shop/shop'
+
+export type { Category as ShopCategory, Product as ShopProduct } from '@/api/.ts.schemas'

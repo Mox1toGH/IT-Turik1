@@ -405,29 +405,10 @@ export interface Order {
   readonly product: Product;
   readonly quantity: number;
   readonly total_cost: number;
-  readonly status: OrderStatusEnum;
+  readonly status: Status7deEnum;
   readonly created_at: string;
   readonly updated_at: string;
 }
-
-/**
- * * `pending` - Pending
-* `confirmed` - Confirmed
-* `shipped` - Shipped
-* `completed` - Completed
-* `cancelled` - Cancelled
- */
-export type OrderStatusEnum = typeof OrderStatusEnum[keyof typeof OrderStatusEnum];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const OrderStatusEnum = {
-  pending: 'pending',
-  confirmed: 'confirmed',
-  shipped: 'shipped',
-  completed: 'completed',
-  cancelled: 'cancelled',
-} as const;
 
 export interface OwnSubmission {
   readonly id: number;
@@ -557,6 +538,10 @@ export interface PasswordResetConfirm {
 
 export interface PasswordResetRequest {
   email: string;
+}
+
+export interface PatchedAdminOrderStatusUpdate {
+  status?: Status7deEnum;
 }
 
 export interface PatchedAvatarFrame {
@@ -1021,6 +1006,25 @@ export interface ScoreItem {
   criterion_name: string;
   score: number;
 }
+
+/**
+ * * `pending` - Pending
+* `confirmed` - Confirmed
+* `shipped` - Shipped
+* `completed` - Completed
+* `cancelled` - Cancelled
+ */
+export type Status7deEnum = typeof Status7deEnum[keyof typeof Status7deEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const Status7deEnum = {
+  pending: 'pending',
+  confirmed: 'confirmed',
+  shipped: 'shipped',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
 
 /**
  * * `invited` - Invited
