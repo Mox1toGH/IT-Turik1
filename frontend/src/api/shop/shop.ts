@@ -50,7 +50,8 @@ import type {
   PatchedAvatarFrame,
   PatchedCategory,
   PatchedProduct,
-  Product
+  Product,
+  Purchase
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -1642,13 +1643,15 @@ export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TE
 
 
 export const purchaseProduct = (
-    
+    purchase: MaybeRef<Purchase>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+      purchase = unref(purchase);
       
       return customInstance<Order>(
-      {url: `http://localhost:8000/api/shop/purchase/`, method: 'POST', signal
+      {url: `http://localhost:8000/api/shop/purchase/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: purchase, signal
     },
       options);
     }
@@ -1656,8 +1659,8 @@ export const purchaseProduct = (
 
 
 export const getPurchaseProductMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,{data: BodyType<Purchase>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,{data: BodyType<Purchase>}, TContext> => {
 
 const mutationKey = ['purchaseProduct'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1669,10 +1672,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof purchaseProduct>>, void> = () => {
-          
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof purchaseProduct>>, {data: BodyType<Purchase>}> = (props) => {
+          const {data} = props ?? {};
 
-          return  purchaseProduct(requestOptions)
+          return  purchaseProduct(data,requestOptions)
         }
 
         
@@ -1681,15 +1684,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PurchaseProductMutationResult = NonNullable<Awaited<ReturnType<typeof purchaseProduct>>>
-    
+    export type PurchaseProductMutationBody = BodyType<Purchase>
     export type PurchaseProductMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
 
     export const usePurchaseProduct = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof purchaseProduct>>, TError,{data: BodyType<Purchase>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof purchaseProduct>>,
         TError,
-        void,
+        {data: BodyType<Purchase>},
         TContext
       > => {
 

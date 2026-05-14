@@ -20,4 +20,4 @@ export {
   useUpdateAdminOrderStatus as useAdminUpdateOrderStatus,
 } from '@/api/shop/shop'
 
-export type { Category as ShopCategory, Product as ShopProduct } from '@/api/.ts.schemas'
+export type { Category as ShopCategory, Product as ShopProduct, AvatarFrame as ShopAvatarFrame } from '@/api/.ts.schemas'

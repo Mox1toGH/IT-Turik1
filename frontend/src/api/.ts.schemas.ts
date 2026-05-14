@@ -41,6 +41,13 @@ export interface AdminModifyPointsResponse {
   transaction: PointsTransaction;
 }
 
+export interface AdminPointsBalanceModify {
+  operation: OperationEnum;
+  amount?: number;
+  /** @maxLength 255 */
+  reason: string;
+}
+
 export interface AdminStats {
   total_users: number;
   total_teams: number;
@@ -203,6 +210,11 @@ export interface EligibleTeam {
   id: number;
   name: string;
   members_count: number;
+}
+
+export interface EquipDigitalItem {
+  /** @minimum 1 */
+  inventory_id: number;
 }
 
 export interface ErrorResponseNotAuthenticated {
@@ -397,6 +409,23 @@ export interface NotificationSettingsResponse {
   configs: NotificationConfig[];
   global_config: GlobalConfig;
 }
+
+/**
+ * * `add` - Add
+* `subtract` - Subtract
+* `set` - Set
+* `reset` - Reset
+ */
+export type OperationEnum = typeof OperationEnum[keyof typeof OperationEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const OperationEnum = {
+  add: 'add',
+  subtract: 'subtract',
+  set: 'set',
+  reset: 'reset',
+} as const;
 
 export interface Order {
   readonly id: number;
@@ -842,6 +871,13 @@ export const ProductTypeEnum = {
   digital: 'digital',
 } as const;
 
+export interface Purchase {
+  /** @minimum 1 */
+  product_id: number;
+  /** @minimum 1 */
+  quantity: number;
+}
+
 export interface RankingItem {
   team_id: number;
   team_name: string;
@@ -898,18 +934,18 @@ export interface RoleActivationCodeGenerateResponse {
 }
 
 /**
- * * `jury` - jury
-* `organizer` - organizer
+ * * `organizer` - organizer
 * `admin` - admin
+* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
-  jury: 'jury',
   organizer: 'organizer',
   admin: 'admin',
+  jury: 'jury',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1457,10 +1493,13 @@ export interface User {
   /** @maxLength 100 */
   city?: string;
   readonly avatar: string;
-  readonly avatar_frame_url: readonly UserTeam[];
+  /** Designates whether the user can log into this admin site. */
+  readonly is_staff: boolean;
+  /** @nullable */
+  readonly avatar_frame_url: string | null;
   readonly created_at: string;
   readonly needs_onboarding: boolean;
-  readonly teams: string;
+  readonly teams: readonly UserTeam[];
 }
 
 export interface UserAvatarUpdate {
@@ -1630,6 +1669,10 @@ page_size?: number;
 
 export type ListAdminUserPointsTransactionsParams = {
 /**
+ * Order by field
+ */
+ordering?: ListAdminUserPointsTransactionsOrdering;
+/**
  * A page number within the paginated result set.
  */
 page?: number;
@@ -1639,7 +1682,22 @@ page?: number;
 page_size?: number;
 };
 
+export type ListAdminUserPointsTransactionsOrdering = typeof ListAdminUserPointsTransactionsOrdering[keyof typeof ListAdminUserPointsTransactionsOrdering];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ListAdminUserPointsTransactionsOrdering = {
+  '-amount': '-amount',
+  '-created_at': '-created_at',
+  amount: 'amount',
+  created_at: 'created_at',
+} as const;
+
 export type ListMyPointsTransactionsParams = {
+/**
+ * Order by field
+ */
+ordering?: ListMyPointsTransactionsOrdering;
 /**
  * A page number within the paginated result set.
  */
@@ -1649,6 +1707,17 @@ page?: number;
  */
 page_size?: number;
 };
+
+export type ListMyPointsTransactionsOrdering = typeof ListMyPointsTransactionsOrdering[keyof typeof ListMyPointsTransactionsOrdering];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ListMyPointsTransactionsOrdering = {
+  '-amount': '-amount',
+  '-created_at': '-created_at',
+  amount: 'amount',
+  created_at: 'created_at',
+} as const;
 
 export type SchemaRetrieveParams = {
 format?: SchemaRetrieveFormat;
@@ -1846,6 +1915,14 @@ page_size?: number;
 
 export type ListProductsParams = {
 /**
+ * Filter by category ID
+ */
+category?: number;
+/**
+ * Order by field
+ */
+ordering?: ListProductsOrdering;
+/**
  * A page number within the paginated result set.
  */
 page?: number;
@@ -1853,7 +1930,35 @@ page?: number;
  * Number of results to return per page.
  */
 page_size?: number;
+/**
+ * Filter by product type
+ */
+product_type?: ListProductsProductType;
+/**
+ * Search by name
+ */
+search?: string;
 };
+
+export type ListProductsOrdering = typeof ListProductsOrdering[keyof typeof ListProductsOrdering];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ListProductsOrdering = {
+  '-name': '-name',
+  '-price': '-price',
+  name: 'name',
+  price: 'price',
+} as const;
+
+export type ListProductsProductType = typeof ListProductsProductType[keyof typeof ListProductsProductType];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ListProductsProductType = {
+  digital: 'digital',
+  physical: 'physical',
+} as const;
 
 export type UpdateTeamBanner2Body = {
   banner?: Blob;

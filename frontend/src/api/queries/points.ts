@@ -6,6 +6,9 @@ export {
   useGetMyPointsBalance as useMyPointsBalance,
   useListMyPointsTransactions as useMyPointsTransactions,
   useGetAdminUserPointsBalance as useAdminPointsBalance,
+  useGetAdminUserPointsBalance as useAdminUserPointsBalance,
   useListAdminUserPointsTransactions as useAdminPointsTransactions,
+  useListAdminUserPointsTransactions as useAdminUserPointsTransactions,
   useModifyUserPointsBalance as useModifyUserPoints,
+  useModifyUserPointsBalance as useAdminModifyUserPoints,
 } from '@/api/points/points'
