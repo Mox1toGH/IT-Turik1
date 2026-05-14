@@ -89,3 +89,60 @@ export const evaluationKeys = {
   tournamentLeaderboard: (tournamentId: TournamentId) =>
     [...evaluationKeys.all(), 'tournamentLeaderboard', tournamentId] as const,
 }
+
+export const pointsKeys = {
+  all: () => ['points'] as const,
+  myBalance: () => [...pointsKeys.all(), 'my-balance'] as const,
+  myTransactionsPrefix: () => [...pointsKeys.all(), 'my-transactions'] as const,
+  myTransactions: (args: { page: number; pageSize: number; ordering: string }) =>
+    [...pointsKeys.myTransactionsPrefix(), args] as const,
+  userBalance: (userId: UserId) => [...pointsKeys.all(), 'user-balance', userId] as const,
+  userTransactionsPrefix: (userId: UserId) =>
+    [...pointsKeys.all(), 'user-transactions', userId] as const,
+  userTransactions: (
+    userId: UserId,
+    args: { page: number; pageSize: number; ordering: string },
+  ) => [...pointsKeys.userTransactionsPrefix(userId), args] as const,
+}
+
+export const inventoryKeys = {
+  all: () => ['inventory'] as const,
+  myPrefix: () => [...inventoryKeys.all(), 'my'] as const,
+  my: () => [...inventoryKeys.myPrefix(), 'list'] as const,
+}
+
+export const shopKeys = {
+  all: () => ['shop'] as const,
+  productsPrefix: () => [...shopKeys.all(), 'products'] as const,
+  products: (args: {
+    page: number
+    pageSize: number
+    search: string
+    category: number | null
+    productType: string
+    ordering: string
+  }) => [...shopKeys.productsPrefix(), args] as const,
+  myOrdersPrefix: () => [...shopKeys.all(), 'my-orders'] as const,
+  myOrders: (args: { page: number; pageSize: number }) =>
+    [...shopKeys.myOrdersPrefix(), args] as const,
+  adminCategoriesPrefix: () => [...shopKeys.all(), 'admin-categories'] as const,
+  adminCategories: (args: { page: number; pageSize: number }) =>
+    [...shopKeys.adminCategoriesPrefix(), args] as const,
+  adminProductsPrefix: () => [...shopKeys.all(), 'admin-products'] as const,
+  adminProducts: (args: {
+    page: number
+    pageSize: number
+    search: string
+    category: number | null
+    productType: string
+  }) => [...shopKeys.adminProductsPrefix(), args] as const,
+  adminOrdersPrefix: () => [...shopKeys.all(), 'admin-orders'] as const,
+  adminOrders: (args: { page: number; pageSize: number; status: string; user: string }) =>
+    [...shopKeys.adminOrdersPrefix(), args] as const,
+  avatarFramesPrefix: () => [...shopKeys.all(), 'avatar-frames'] as const,
+  avatarFrames: (args: { page: number; pageSize: number; search: string }) =>
+    [...shopKeys.avatarFramesPrefix(), args] as const,
+  adminAvatarFramesPrefix: () => [...shopKeys.all(), 'admin-avatar-frames'] as const,
+  adminAvatarFrames: (args: { page: number; pageSize: number; search: string }) =>
+    [...shopKeys.adminAvatarFramesPrefix(), args] as const,
+}
