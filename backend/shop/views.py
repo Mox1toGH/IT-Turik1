@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from backend.openapi import _400, _401, _403, _404
 
 from backend.permissions import is_platform_admin
@@ -33,6 +33,15 @@ class ShopPagination(PageNumberPagination):
     400: _400,
     401: _401,
 })
+@extend_schema(
+    operation_id='listProducts',
+    parameters=[
+        OpenApiParameter('search', str, description='Search by name'),
+        OpenApiParameter('category', int, description='Filter by category ID'),
+        OpenApiParameter('product_type', str, enum=['physical', 'digital'], description='Filter by product type'),
+        OpenApiParameter('ordering', str, enum=['name', '-name', 'price', '-price'], description='Order by field'),
+    ]
+)
 class ProductListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
