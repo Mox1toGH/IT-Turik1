@@ -41,7 +41,7 @@ class CertificateApiTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['unique_code'], str(cert.unique_code))
+        self.assertEqual(response.data['data']['unique_code'], str(cert.unique_code))
 
     def test_view_certificate_action(self):
         cert = Certificate.objects.create(placement='1st', user=self.user)

@@ -2,7 +2,7 @@ from django.test import TestCase
 from accounts.models import User
 from teams.models import Team
 from tournaments.models import Tournament, Round, TournamentTeamRegistration
-from points.models import PointTransaction
+from points.models import PointsTransaction
 
 class TournamentPointsIntegrationTests(TestCase):
     def setUp(self):
