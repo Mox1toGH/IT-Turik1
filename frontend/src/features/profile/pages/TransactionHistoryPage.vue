@@ -86,14 +86,22 @@ const targetUserId = computed(() => Number(route.params.id || 0))
 const isAdminUserView = computed(() => viewer.value?.role === 'admin' && !!targetUserId.value)
 
 const myQuery = useMyPointsTransactions(
-  { page: currentPage, pageSize, ordering },
-  { enabled: computed(() => !isAdminUserView.value) },
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    ordering: ordering.value as any,
+  })),
+  { query: { enabled: computed(() => !isAdminUserView.value) } },
 )
 
 const adminQuery = useAdminUserPointsTransactions(
   targetUserId,
-  { page: currentPage, pageSize, ordering },
-  { enabled: isAdminUserView },
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    ordering: ordering.value as any,
+  })),
+  { query: { enabled: isAdminUserView } },
 )
 
 const isLoading = computed(() => (isAdminUserView.value ? adminQuery.isLoading.value : myQuery.isLoading.value))
