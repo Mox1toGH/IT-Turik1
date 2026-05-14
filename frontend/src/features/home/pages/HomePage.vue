@@ -179,11 +179,11 @@ const isTeamRole = computed(() => user.value?.role === 'team')
 const myTeamIds = computed(() => new Set((user.value?.teams ?? []).map((team) => team.id)))
 
 const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useListTournaments(
-  {
+  computed(() => ({
     page: 1,
-    pageSize: 100,
+    page_size: 100,
     status: 'registration,running',
-  },
+  })),
   {
     query: { enabled: computed(() => Boolean(isTeamRole.value)) },
   },

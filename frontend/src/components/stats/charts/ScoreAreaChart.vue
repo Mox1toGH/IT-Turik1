@@ -24,7 +24,7 @@
         @mouseleave="hovered = null"
         @click="$emit('select', point.label)"
       />
-      <text v-if="hovered !== null" :x="normalized[hovered].x" :y="normalized[hovered].y - 10" class="axis-text" text-anchor="middle">
+      <text v-if="hovered !== null && normalized[hovered] && points[hovered]" :x="normalized[hovered].x" :y="normalized[hovered].y - 10" class="axis-text" text-anchor="middle">
         {{ normalized[hovered].label }}: {{ points[hovered].value.toFixed(2) }}
       </text>
     </svg>
