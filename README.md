@@ -33,6 +33,8 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 
 GOOGLE_OAUTH_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:5173/calendar/google-callback
 ```
 
 Як отримати значення:
@@ -57,6 +59,22 @@ python -c "from django.core.management.utils import get_random_secret_key; print
   2. `Create Credentials -> OAuth client ID -> Web application`.
   3. Додай `http://localhost:5173` у `Authorized JavaScript origins`.
   4. Скопіюй `Client ID`.
+- `GOOGLE_OAUTH_CLIENT_SECRET`: секрет OAuth-клієнта, доступний у тих же Credentials.
+- `GOOGLE_CALENDAR_REDIRECT_URI`: URI для OAuth callback (за замовчуванням `http://localhost:5173/calendar/google-callback`). Додай цю адресу як **Authorized redirect URI** у Google Cloud Console.
+
+### Google Calendar Integration
+
+Для роботи інтеграції з Google Calendar додатково потрібно:
+
+1. Увімкнути **Google Calendar API** у Google Cloud Console (`APIs & Services -> Library`).
+2. Додати `http://localhost:5173/calendar/google-callback` до **Authorized redirect URIs** в OAuth client.
+3. Заповнити `GOOGLE_OAUTH_CLIENT_SECRET` та `GOOGLE_CALENDAR_REDIRECT_URI` у `backend/.env`.
+
+**Можливості:**
+- Підключення Google Calendar з профілю у розділі Calendar.
+- Автоматична синхронізація всіх існуючих подій при підключенні.
+- Автоматичне додавання нових подій та раундів у Google Calendar (`post_save` сигнали).
+- Ручний експорт окремих подій через кнопку "Add to GCal".
 
 ### Frontend
 
