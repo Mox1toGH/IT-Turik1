@@ -7,6 +7,14 @@ from rest_framework.exceptions import ValidationError
 from teams.models import TeamMember
 
 from .models import Round, Submission, Tournament, TournamentTeamRegistration
+from .signals import (
+    tournament_team_registered,
+    tournament_team_left,
+    round_started,
+    round_submission_closed,
+    round_evaluated,
+    tournament_finished,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -276,6 +284,8 @@ def start_round(round_obj):
         tournament.status = Tournament.STATUS_RUNNING
         tournament.save(update_fields=['status', 'updated_at'])
 
+    round_started.send(sender=start_round, round_obj=round_obj)
+
     return round_obj
 
 
@@ -288,6 +298,8 @@ def close_submissions_on_round(round_obj):
 
     round_obj.status = Round.STATUS_SUBMISSION_CLOSED
     round_obj.save(update_fields=['status', 'updated_at'])
+
+    round_submission_closed.send(sender=close_submissions_on_round, round_obj=round_obj)
 
     return round_obj
 
@@ -304,9 +316,14 @@ def mark_round_evaluated(round_obj):
     round_obj.save(update_fields=['status', 'updated_at'])
 
     from evaluation.services import apply_passing_count
-    apply_passing_count(round_obj)
+    result = apply_passing_count(round_obj)
+    eliminated_team_ids = result.get('eliminated_team_ids', [])
 
-    _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
+    round_evaluated.send(sender=mark_round_evaluated, round_obj=round_obj, eliminated_team_ids=eliminated_team_ids)
+
+    finished = _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
+    if finished:
+        tournament_finished.send(sender=mark_round_evaluated, tournament=tournament)
 
     return round_obj
 
@@ -412,9 +429,12 @@ def register_team_for_tournament(*, tournament, team, actor):
         existing_registration.is_active = True
         existing_registration.created_by = actor
         existing_registration.save(update_fields=['is_active', 'created_by'])
+        tournament_team_registered.send(sender=register_team_for_tournament, tournament=tournament, team=team, actor=actor)
         return existing_registration
 
-    return TournamentTeamRegistration.objects.create(tournament=tournament, team=team, created_by=actor)
+    registration = TournamentTeamRegistration.objects.create(tournament=tournament, team=team, created_by=actor)
+    tournament_team_registered.send(sender=register_team_for_tournament, tournament=tournament, team=team, actor=actor)
+    return registration
 
 
 @transaction.atomic
@@ -432,6 +452,7 @@ def leave_team_from_tournament(*, tournament, team, actor):
 
     registration.is_active = False
     registration.save(update_fields=['is_active'])
+    tournament_team_left.send(sender=leave_team_from_tournament, tournament=tournament, team=team, actor=actor)
     return registration
 
 

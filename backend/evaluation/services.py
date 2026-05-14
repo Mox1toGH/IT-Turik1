@@ -5,6 +5,7 @@ from tournaments.models import Round
 from tournaments.models import TournamentTeamRegistration
 
 from .models import JuryAssignment
+from .signals import jury_assignments_created
 
 
 @transaction.atomic
@@ -60,6 +61,15 @@ def replace_round_jury_assignments(round_obj, assignments_data):
 
     if new_assignments:
         JuryAssignment.objects.bulk_create(new_assignments)
+
+    # Notify each unique jury member about their assignment
+    assigned_jury_users = list(User.objects.filter(id__in=all_jury_ids))
+    round_obj_with_tournament = Round.objects.select_related('tournament').get(id=round_obj.id)
+    jury_assignments_created.send(
+        sender=replace_round_jury_assignments,
+        round_obj=round_obj_with_tournament,
+        jury_users=assigned_jury_users,
+    )
 
     return len(new_assignments)
 

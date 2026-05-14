@@ -104,4 +104,67 @@ EVENTS = {
         message='Your certificate for tournament "{tournament_name}" is ready.',
         email_subject='Your tournament certificate is ready',
     ),
+
+    # ── Tournament lifecycle ────────────────────────────────────────
+    'tournament_team_registered': NotificationEvent(
+        key='tournament_team_registered',
+        channels=['system'],
+        title='Team Registered',
+        message='Your team "{team_name}" has been successfully registered for tournament "[tournament:{tournament_id}:{tournament_name}]".',
+    ),
+    'tournament_team_left': NotificationEvent(
+        key='tournament_team_left',
+        channels=['system'],
+        title='Team Left Tournament',
+        message='Your team "{team_name}" has left the tournament "{tournament_name}".',
+    ),
+    'tournament_team_disqualified': NotificationEvent(
+        key='tournament_team_disqualified',
+        channels=['system', 'email'],
+        title='Team Disqualified',
+        message='Your team "{team_name}" has been disqualified from tournament "[tournament:{tournament_id}:{tournament_name}]". Reason: {reason}.',
+        email_subject='Your team was disqualified from "{tournament_name}"',
+    ),
+    'tournament_round_started': NotificationEvent(
+        key='tournament_round_started',
+        channels=['system', 'email'],
+        title='New Round Started',
+        message='Round "{round_name}" in tournament "[tournament:{tournament_id}:{tournament_name}]" has started. Submit your project before the deadline.',
+        email_subject='Round "{round_name}" has started — submit your project',
+    ),
+    'tournament_round_submission_closed': NotificationEvent(
+        key='tournament_round_submission_closed',
+        channels=['system'],
+        title='Submissions Closed',
+        message='Submission period for round "{round_name}" in tournament "[tournament:{tournament_id}:{tournament_name}]" is now closed.',
+    ),
+    'tournament_round_evaluated': NotificationEvent(
+        key='tournament_round_evaluated',
+        channels=['system'],
+        title='Round Results Published',
+        message='Results for round "{round_name}" in tournament "[tournament:{tournament_id}:{tournament_name}]" have been published.',
+    ),
+    'tournament_finished': NotificationEvent(
+        key='tournament_finished',
+        channels=['system', 'email'],
+        title='Tournament Finished',
+        message='Tournament "[tournament:{tournament_id}:{tournament_name}]" has finished. Check the final leaderboard!',
+        email_subject='Tournament "{tournament_name}" has finished',
+    ),
+    'tournament_round_eliminated': NotificationEvent(
+        key='tournament_round_eliminated',
+        channels=['system', 'email'],
+        title='Team Eliminated',
+        message='Your team "{team_name}" did not advance past round "{round_name}" in tournament "[tournament:{tournament_id}:{tournament_name}]".',
+        email_subject='Your team was eliminated in round "{round_name}"',
+    ),
+
+    # ── Evaluation / jury ───────────────────────────────────────────
+    'jury_assignment_created': NotificationEvent(
+        key='jury_assignment_created',
+        channels=['system', 'email'],
+        title='Jury Assignment',
+        message='You have been assigned as a jury member for round "{round_name}" in tournament "[tournament:{tournament_id}:{tournament_name}]". Please submit your evaluations before the deadline.',
+        email_subject='You are assigned as jury for round "{round_name}"',
+    ),
 }

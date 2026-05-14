@@ -52,6 +52,7 @@ from .services import (
     start_round,
     sync_time_based_statuses,
 )
+from .signals import tournament_team_disqualified
 
 
 def get_tournament_queryset():
@@ -339,6 +340,16 @@ class TournamentTeamRegistrationDisqualificationView(APIView):
         serializer.save()
 
         action = 'activated' if registration.is_active else 'disqualified'
+
+        # Fire disqualification notification when team is disqualified (not re-activated)
+        if not registration.is_active and registration.is_disqualified:
+            tournament_team_disqualified.send(
+                sender=self.__class__,
+                tournament=registration.tournament if hasattr(registration, '_tournament_cache')
+                    else Tournament.objects.get(pk=pk),
+                team=registration.team,
+                reason=registration.disqualification_reason,
+            )
 
         return Response({
             'id': registration.id,

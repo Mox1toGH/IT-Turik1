@@ -10,7 +10,6 @@ from .models import Notification
 
 logger = logging.getLogger(__name__)
 
-# Map raw event_type keys to human-readable labels for the email badge
 EVENT_TYPE_LABELS = {
     'team_invitation_received': 'Team Invitation',
     'team_invitation_accepted': 'Invitation Accepted',
@@ -20,16 +19,37 @@ EVENT_TYPE_LABELS = {
     'team_join_request_declined': 'Join Request Declined',
     'team_member_removed': 'Membership Update',
     'team_member_left': 'Membership Update',
+
     'news_published': 'News',
     'tournament_certificate_issued': 'Certificates',
+
+    'tournament_team_registered': 'Tournament',
+    'tournament_team_left': 'Tournament',
+    'tournament_team_disqualified': 'Tournament',
+    'tournament_round_started': 'Tournament',
+    'tournament_round_submission_closed': 'Tournament',
+    'tournament_round_evaluated': 'Tournament',
+    'tournament_finished': 'Tournament',
+    'tournament_round_eliminated': 'Tournament',
+
+    'jury_assignment_created': 'Jury Assignment',
 }
 
-# Events that go to /teams (general) — cannot link to a specific team
 _GENERAL_TEAMS_EVENTS = {
-    'team_invitation_received',   # recipient hasn't joined yet
+    'team_invitation_received',
 }
 
-# Button labels per event
+_TOURNAMENT_LINKED_EVENTS = {
+    'tournament_team_registered',
+    'tournament_team_disqualified',
+    'tournament_round_started',
+    'tournament_round_submission_closed',
+    'tournament_round_evaluated',
+    'tournament_finished',
+    'tournament_round_eliminated',
+    'jury_assignment_created',
+}
+
 EVENT_ACTION_LABELS = {
     'team_invitation_received':   'View Teams',
     'team_invitation_accepted':   'View Team',
@@ -41,15 +61,31 @@ EVENT_ACTION_LABELS = {
     'team_member_left':           'View Team',
     'news_published':             'View News',
     'tournament_certificate_issued': 'View Certificates',
+
+    'tournament_team_registered':          'View Tournament',
+    'tournament_team_left':                'Browse Tournaments',
+    'tournament_team_disqualified':        'View Tournament',
+    'tournament_round_started':            'Submit Project',
+    'tournament_round_submission_closed':  'View Results',
+    'tournament_round_evaluated':          'View Leaderboard',
+    'tournament_finished':                 'View Leaderboard',
+    'tournament_round_eliminated':         'Browse Tournaments',
+
+    'jury_assignment_created':             'Start Evaluating',
 }
 
 
 def _get_action(event_type: str, message: str) -> tuple[str, str]:
     """Return (label, path) for the CTA button.
 
-    Uses the same logic as the frontend getRedirectUrl():
-    - team_invitation_received → /teams
-    - everything else         → /teams/<team_id>  (extracted from message tag)
+    Routing priority:
+    - team_invitation_received       → /teams
+    - news_published                 → /news
+    - tournament_certificate_issued  → /profile/certificates
+    - tournament_team_left           → /tournaments
+    - tournament events (linked)     → /tournaments/<tournament_id>  (from message tag)
+    - jury_assignment_created        → /evaluation  (from message tag)
+    - everything else (teams)        → /teams/<team_id>  (from message tag)
     """
     label = EVENT_ACTION_LABELS.get(event_type, 'Open Platform')
 
@@ -59,20 +95,31 @@ def _get_action(event_type: str, message: str) -> tuple[str, str]:
         return label, '/news'
     if event_type == 'tournament_certificate_issued':
         return label, '/profile/certificates'
+    if event_type == 'tournament_team_left' or event_type == 'tournament_round_eliminated':
+        return label, '/tournaments'
+
+    # Tournament-linked events: extract tournament_id from [tournament:id:name] tag
+    if event_type in _TOURNAMENT_LINKED_EVENTS:
+        match = re.search(r'\[tournament:(\d+):', message)
+        if match:
+            if event_type == 'jury_assignment_created':
+                return label, f'/tournaments/{match.group(1)}'
+            return label, f'/tournaments/{match.group(1)}'
 
     # Try to extract team_id from [team:id:name:visibility] tag
     match = re.search(r'\[team:(\d+):', message)
     if match:
         return label, f'/teams/{match.group(1)}'
 
-    return label, '/news' if event_type == 'news_published' else '/teams'
+    return label, '/teams'
 
 
 def _strip_notification_tags(text: str) -> str:
-    """Convert [user:id:name] and [team:id:name:visibility] tags to plain names."""
+    """Convert rich tags to plain names for plaintext email rendering."""
     text = re.sub(r'\[user:\d+:(.+?)\]', r'\1', text)
     text = re.sub(r'\[team:\d+:(.+?)(?::(?:public|private))?\]', r'\1', text)
     text = re.sub(r'\[news:\d+:(.+?)\]', r'\1', text)
+    text = re.sub(r'\[tournament:\d+:(.+?)\]', r'\1', text)
     return text
 
 
