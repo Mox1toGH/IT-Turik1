@@ -176,58 +176,29 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             return denied
         return super().destroy(request, *args, **kwargs)
 
-@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', responses={
-    200: TeamSerializer,
+@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', request={
+    'multipart/form-data': {
+        'type': 'object',
+        'properties': {
+            'banner': {
+                'type': 'string',
+                'format': 'binary',
+            }
+        }
+    }
+}, responses={
+    200: TeamBannerSerializer,
     400: _400,
     401: _401,
     403: _403,
     404: _404,
 })
 @extend_schema(methods=['DELETE'], operation_id='deleteTeamBanner', responses={
-    200: TeamSerializer,
+    200: TeamBannerSerializer,
     401: _401,
     403: _403,
     404: _404,
 })
-class TeamBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
-    permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
-    serializer_class = TeamBannerSerializer
-    parser_classes = [MultiPartParser, FormParser]
-
-    def get_queryset(self):
-        return get_team_queryset()
-
-    def get_object(self):
-        team = super().get_object()
-        if team.is_public or is_team_member(team, self.request.user) or is_platform_admin(self.request.user):
-            return team
-        raise PermissionDenied('You do not have access to this private team.')
-
-    def _assert_captain(self, team):
-        if team.captain_id != self.request.user.id:
-            raise PermissionDenied('Only captain can modify this team banner.')
-        return None
-
-    def patch(self, request, *args, **kwargs):
-        team = self.get_object()
-        denied = self._assert_captain(team)
-        if denied:
-            return denied
-        return super().patch(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        team = self.get_object()
-        denied = self._assert_captain(team)
-        if denied:
-            return denied
-        if team.banner:
-            team.banner.delete(save=False)
-            team.banner = None
-            team.save(update_fields=['banner'])
-        serializer = TeamSerializer(team, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class TeamBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
     serializer_class = TeamBannerSerializer

@@ -47,7 +47,7 @@
         <ui-card v-for="round in rounds" :key="round.id" class="round-card">
           <template #header>
             <div class="round-header">
-              <h4>{{ truncateText(round.name, 70) }}</h4>
+              <h4>{{ truncateText(round.name ?? '-', 70) }}</h4>
 
               <div class="header-right">
                 <ui-badge :variant="badgeVariant(round.status)">{{
@@ -128,7 +128,6 @@ import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
-import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'

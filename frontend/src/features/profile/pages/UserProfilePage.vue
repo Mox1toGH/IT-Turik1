@@ -150,7 +150,8 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { parseApiError } from '@/api/errors'
+import { formatDate } from '@/lib/date'
+import { useGetUser } from '@/api/accounts/accounts'
 
 const route = useRoute()
 const router = useRouter()

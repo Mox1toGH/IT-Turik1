@@ -32,7 +32,12 @@
         Cancel
       </ui-button>
 
-      <ui-button variant="danger" size="sm" :disabled="!canDeleteTournament" @click="handleDeleteTournament">
+      <ui-button
+        variant="danger"
+        size="sm"
+        :disabled="!canDeleteTournament"
+        @click="handleDeleteTournament"
+      >
         <loading-icon v-if="isDeleting" />
         Delete permanently
       </ui-button>
@@ -47,13 +52,12 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import { useDeleteTournament } from '@/api/queries/tournaments'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { truncateText } from '@/lib/utils'
-import type { TournamentId } from '@/api/dbTypes'
+import { useDeleteTournament } from '@/api/tournaments/tournaments'
 
 interface Props {
-  tournamentId: TournamentId
+  tournamentId: number
   tournamentName: string
   disabled?: boolean
 }
@@ -95,10 +99,8 @@ const handleDeleteTournament = () => {
         closeDeleteModal()
         emit('deleted')
       },
-      onError: (err) => {
-        deleteError.value = err.response
-          ? 'Unable to delete tournament.'
-          : 'Server connection error.'
+      onError: (error) => {
+        deleteError.value = error.message
       },
     },
   )

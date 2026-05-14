@@ -93,10 +93,11 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { parseApiError } from '@/api/errors'
-import { useTournamentRounds } from '@/api/queries/tournaments'
-import { useTournamentLeaderboard } from '@/api/queries/evaluation'
-import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation/types'
+import { useListRounds } from '@/api/tournaments/tournaments'
+import {
+  useGetTournamentLeaderboard,
+  type GetTournamentLeaderboardQueryResult,
+} from '@/api/evaluation/evaluation'
 
 interface Props {
   tournamentId: number
@@ -108,19 +109,21 @@ interface RoundColumn {
   maxScore: number
 }
 
-type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
+type TournamentEntry = GetTournamentLeaderboardQueryResult['rankings'][number]
 
 const props = defineProps<Props>()
 const tableWrapRef = ref<HTMLElement | null>(null)
 
-const { data: roundsData } = useTournamentRounds({ id: props.tournamentId })
+const { data: roundsData } = useListRounds(props.tournamentId)
 const rounds = computed(() => roundsData.value ?? [])
 
-const tournamentQuery = useTournamentLeaderboard({ tournamentId: props.tournamentId })
-const isLoading = computed(() => tournamentQuery.isLoading.value)
-const isError = computed(() => tournamentQuery.isError.value)
-const error = computed(() => parseApiError(tournamentQuery.error.value))
-const rankings = computed<TournamentEntry[]>(() => tournamentQuery.data.value?.rankings ?? [])
+const {
+  data: leaderboard,
+  isLoading,
+  isError,
+  error,
+} = useGetTournamentLeaderboard(props.tournamentId)
+const rankings = computed<TournamentEntry[]>(() => leaderboard.value?.rankings ?? [])
 
 const leaderboardRoundIds = computed(() => {
   const ids = new Set<number>()
@@ -155,7 +158,7 @@ const roundColumns = computed<RoundColumn[]>(() => {
 
   const columnsFromRounds: RoundColumn[] = baseRounds.map((round) => ({
     id: round.id,
-    name: round.name,
+    name: round.name ?? '-',
     maxScore: roundMaxScoreMap.value.get(round.id) ?? 0,
   }))
 

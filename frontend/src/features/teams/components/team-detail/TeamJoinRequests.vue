@@ -139,8 +139,6 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
       onSuccess: () => {
         const pastTense = { accept: 'accepted', decline: 'declined' }
         showNotification(`Join request ${pastTense[action]}`, 'success')
-
-        queryClient.invalidateQueries({ queryKey: teamKeys.team(props.teamId) })
       },
       onError: (error) => {
         showNotification(error.message, 'error')

@@ -47,7 +47,7 @@ import { useDeleteEvent } from '@/api/tournaments/tournaments'
 interface Props {
   modelValue: boolean
   eventId: number
-  tournamentId: TournamentId
+  tournamentId: number
   title: string
 }
 

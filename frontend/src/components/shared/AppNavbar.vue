@@ -162,17 +162,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useProfile } from '@/api/queries/accounts'
-import { useUnreadCount } from '@/api/queries/notifications'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetUnreadNotificationCount } from '@/api/notifications/notifications'
 
 const route = useRoute()
 const mobileMenuOpen = ref(false)
 
-const { data: user } = useProfile()
-const { data: unreadCount } = useUnreadCount()
+const { data: user } = useGetUserProfile()
+const { data: unreadCount } = useGetUnreadNotificationCount()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isJury = computed(() => user.value?.role === 'jury')

@@ -54,7 +54,7 @@
                 >
                   <template #trigger="{ toggleOpen }">
                     <p class="event-description" @click="toggleOpen">
-                      {{ truncateText(event.description, 100) }}
+                      {{ truncateText(event.description ?? '-', 100) }}
                     </p>
                   </template>
                 </LargeTextModal>
@@ -75,10 +75,10 @@
               :event-id="event.id"
               :tournament-id="props.tournamentId"
               :title="event.title"
-              :description="event.description"
+              :description="event.description ?? '-'"
               :start-date="event.start_datetime"
               :event-type="event.type"
-              :link="event.link"
+              :link="event.link ?? ''"
             />
 
             <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
@@ -109,7 +109,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { Event } from '@/api/.ts.schemas'
+
 import { useListEvents } from '@/api/tournaments/tournaments'
 
 interface Props {

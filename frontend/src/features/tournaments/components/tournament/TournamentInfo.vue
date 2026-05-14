@@ -160,7 +160,7 @@ const statusBadgeVariant = computed(() => {
   return 'gray'
 })
 
-const { mutate: startRegistration, isPending } = useStartRegistration()
+const { mutate: startRegistration, isPending } = useStartTournamentRegistration()
 
 const handleStartRegistration = () => {
   startRegistration({

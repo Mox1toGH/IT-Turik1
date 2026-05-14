@@ -21,6 +21,10 @@ from .serializers import (
     TournamentStatsSerializer,
 )
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+from backend.openapi import _400, _401, _403, _404
+
 
 def _round2(value):
     if value is None:
@@ -56,9 +60,18 @@ def _team_wins_losses(team):
     losses = max(total - wins, 0)
     return total, wins, losses
 
-
+@extend_schema(
+        operation_id='getPlayerStats',
+        summary="Get personal player statistics",
+        description="Calculates win rates and average scores for the authenticated user based on their team performance.",
+        responses={
+            200: PlayerStatsSerializer,
+            401: _401
+        },
+    )
 class PlayerStatsView(APIView):
     permission_classes = [IsAuthenticated]
+
 
     def get(self, request):
         user = request.user
@@ -96,7 +109,17 @@ class PlayerStatsView(APIView):
         }
         return Response(PlayerStatsSerializer(data).data)
 
-
+@extend_schema(
+        operation_id='getTeamStats',
+        summary="Get team statistics",
+        description="Returns performance metrics for a specific team. Access restricted to members or admins.",
+        responses={
+            200: TeamStatsSerializer,
+            401: _401,
+            403: _403,
+            404: _404
+        },
+    )
 class TeamStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -142,7 +165,17 @@ class TeamStatsView(APIView):
         }
         return Response(TeamStatsSerializer(data).data)
 
-
+@extend_schema(
+        operation_id='getTournamentStats',
+        summary="Get tournament organizer statistics",
+        description="Returns detailed breakdown of tournament registration, match completion, and leaderboard top 3.",
+        responses={
+            200: TournamentStatsSerializer,
+            401: _401,
+            403: _403,
+            404: _404
+        },
+    )
 class TournamentStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -200,7 +233,16 @@ class TournamentStatsView(APIView):
         }
         return Response(TournamentStatsSerializer(data).data)
 
-
+@extend_schema(
+        operation_id='getAdminStats',
+        summary="Get platform-wide admin statistics",
+        description="Returns high-level system metrics including user growth and role distributions.",
+        responses={
+            200: AdminStatsSerializer,
+            401: _401,
+            403: _403
+        },
+    )
 class AdminStatsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 

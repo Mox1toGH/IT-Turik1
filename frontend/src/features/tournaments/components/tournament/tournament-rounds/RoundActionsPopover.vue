@@ -91,8 +91,8 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: profile } = useProfile()
-const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
+const { data: profile } = useGetUserProfile()
+const { mutate: deleteRound } = useDeleteRound()
 const { mutate: startRound } = useStartRound()
 const { mutate: closeSubmissions } = useCloseRoundSubmissions()
 const { mutate: markEvaluated } = useMarkRoundEvaluated()

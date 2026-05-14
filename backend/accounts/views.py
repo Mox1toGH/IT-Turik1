@@ -137,24 +137,17 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return self.request.user
 
-
-class UserAvatarView(generics.UpdateAPIView, generics.DestroyAPIView):
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-    serializer_class = UserAvatarUpdateSerializer
-
-    def get_object(self):
-        return self.request.user
-
-    def delete(self, request, *args, **kwargs):
-        user = self.get_object()
-        if user.avatar:
-            user.avatar.delete(save=False)
-            user.avatar = None
-            user.save(update_fields=['avatar'])
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateUserAvatar', responses={
+@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateUserAvatar',request={
+    'multipart/form-data': {
+        'type': 'object',
+        'properties': {
+            'avatar': {
+                'type': 'string',
+                'format': 'binary',
+            }
+        }
+    }
+}, responses={
     200: UserAvatarUpdateSerializer,
     400: _400,
     401: _401,

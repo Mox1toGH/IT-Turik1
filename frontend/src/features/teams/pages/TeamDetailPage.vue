@@ -220,8 +220,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useRemoveTeamBanner, useTeamInfo, useUpdateTeamBanner } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
@@ -234,6 +232,9 @@ import {
   toObjectPosition,
   writeImagePosition,
 } from '@/lib/imagePosition'
+import { useGetTeam, useDeleteTeamBanner, useUpdateTeamBanner } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 
 const router = useRouter()
 const route = useRoute()
@@ -263,7 +264,7 @@ const bannerPositionY = ref(50)
 const { showNotification } = useNotification()
 
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTeamBanner()
-const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useRemoveTeamBanner()
+const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useDeleteTeamBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 
 const bannerPreviewUrl = computed(() => {
@@ -311,7 +312,7 @@ const saveBanner = () => {
     y: bannerPositionY.value,
   })
   updateBanner(
-    { teamId, file: selectedBanner.value },
+    { id: teamId, data: { banner: selectedBanner.value } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
@@ -326,7 +327,7 @@ const saveBanner = () => {
 
 const removeBanner = () => {
   removeTeamBanner(
-    { teamId },
+    { id: teamId },
     {
       onSuccess: () => {
         clearImagePosition(bannerPositionKey.value)

@@ -23,19 +23,19 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { apiClient } from '@/api/client'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
+import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
 
 type UserRole = 'admin' | 'team' | 'jury' | 'organizer'
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
   role?: UserRole
   is_staff?: boolean
-  teams?: TeamRef[]
+  readonly teams?: readonly TeamRef[]
 }
 
 type PlayerStatsResponse = {
@@ -99,19 +99,19 @@ const loadStats = async () => {
 
   try {
     if (isAdmin.value) {
-      const { data } = await apiClient.get<AdminStatsResponse>('/api/stats/admin/')
+      const data = await getAdminStats()
       adminStats.value = data
       return
     }
 
-    const { data } = await apiClient.get<PlayerStatsResponse>('/api/stats/player/')
+    const data = await getPlayerStats()
     playerStats.value = data
 
     if (isTeamRole.value) {
       const teamId = props.user.teams?.[0]?.id
       if (!teamId) return
-      const teamResponse = await apiClient.get<TeamStatsResponse>(`/api/stats/team/${teamId}/`)
-      teamStats.value = teamResponse.data
+      const data = await getTeamStats(teamId)
+      teamStats.value = data
     }
   } catch {
     isError.value = true

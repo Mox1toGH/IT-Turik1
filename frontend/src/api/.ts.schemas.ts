@@ -35,6 +35,46 @@ export interface ActiveTournament {
   start_date: string;
 }
 
+export interface AdminStats {
+  total_users: number;
+  total_teams: number;
+  total_tournaments: number;
+  new_registrations_last_7_days: number;
+  new_registrations_last_30_days: number;
+  active_tournaments: number;
+  users_by_role: RoleBreakdownItem[];
+  total_evaluation_records: number;
+}
+
+/**
+ * @nullable
+ */
+export type ArchiveStandingJuryBreakdown = unknown | null;
+
+/**
+ * @nullable
+ */
+export type ArchiveStandingRoundsBreakdown = unknown | null;
+
+export interface ArchiveStanding {
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  rank: number;
+  readonly team: TeamSummary;
+  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
+  total_score: string;
+  /** @pattern ^-?\d{0,4}(?:\.\d{0,2})?$ */
+  average_score: string;
+  criteria_breakdown: unknown;
+  /** @nullable */
+  jury_breakdown?: ArchiveStandingJuryBreakdown;
+  /** @nullable */
+  rounds_breakdown?: ArchiveStandingRoundsBreakdown;
+  readonly snapshot_at: string;
+}
+
 export interface AssignJuryResponse {
   status: string;
   created_assignments: number;
@@ -52,6 +92,39 @@ export interface AvailableJury {
   email: string;
   /** @maxLength 255 */
   full_name?: string;
+}
+
+export interface Certificate {
+  readonly id: number;
+  readonly unique_code: string;
+  /** @nullable */
+  user?: number | null;
+  readonly full_name: string;
+  /** @nullable */
+  team?: number | null;
+  readonly team_name: string;
+  /** @nullable */
+  tournament?: number | null;
+  readonly tournament_name: string;
+  /** @maxLength 100 */
+  placement: string;
+  /** @maxLength 100 */
+  certificate_number?: string;
+  /** @nullable */
+  template?: number | null;
+  readonly template_name: string;
+  readonly certificate_url: string;
+  readonly created_at: string;
+}
+
+export interface CertificateTemplate {
+  readonly id: number;
+  /** @maxLength 255 */
+  name: string;
+  image: string;
+  is_default?: boolean;
+  readonly image_url: string;
+  readonly created_at: string;
 }
 
 export interface ChangePassword {
@@ -166,10 +239,15 @@ export const EvaluationCriteriaEnum = {
 export interface Event {
   readonly id: number;
   tournament: number;
+  type: TypeEnum;
   /** @maxLength 255 */
   title: string;
   description?: string;
+  /** @maxLength 200 */
+  link?: string;
   start_datetime: string;
+  /** @nullable */
+  icon?: number | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -196,6 +274,14 @@ export interface GoogleAuthResponse {
   refresh: string;
   user: User;
   onboarding_required: boolean;
+}
+
+export interface Icon {
+  readonly id: number;
+  /** @maxLength 255 */
+  name?: string;
+  /** @maxLength 500 */
+  path: string;
 }
 
 export interface InviteMemberRequest {
@@ -233,6 +319,26 @@ export interface MarkedCountResponse {
 
 export interface MessageResponse {
   message: string;
+}
+
+export interface MyCalendarResponse {
+  events: Event[];
+  rounds: Round[];
+}
+
+export type NewsArticleContent = {[key: string]: unknown};
+
+export interface NewsArticle {
+  readonly id: number;
+  /** @maxLength 255 */
+  title: string;
+  content: NewsArticleContent;
+  /** @nullable */
+  readonly created_by: number | null;
+  readonly created_by_name: string;
+  send_notification?: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
 }
 
 export interface Notification {
@@ -278,6 +384,33 @@ export interface OwnSubmission {
   readonly updated_at: string;
 }
 
+export interface PaginatedCertificateList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Certificate[];
+}
+
+export interface PaginatedCertificateTemplateList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: CertificateTemplate[];
+}
+
+export interface PaginatedNewsArticleList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: NewsArticle[];
+}
+
 export interface PaginatedNotificationList {
   count: number;
   /** @nullable */
@@ -311,13 +444,56 @@ export interface PasswordResetRequest {
   email: string;
 }
 
+export interface PatchedCertificate {
+  readonly id?: number;
+  readonly unique_code?: string;
+  /** @nullable */
+  user?: number | null;
+  readonly full_name?: string;
+  /** @nullable */
+  team?: number | null;
+  readonly team_name?: string;
+  /** @nullable */
+  tournament?: number | null;
+  readonly tournament_name?: string;
+  /** @maxLength 100 */
+  placement?: string;
+  /** @maxLength 100 */
+  certificate_number?: string;
+  /** @nullable */
+  template?: number | null;
+  readonly template_name?: string;
+  readonly certificate_url?: string;
+  readonly created_at?: string;
+}
+
 export interface PatchedEvent {
   readonly id?: number;
   tournament?: number;
+  type?: TypeEnum;
   /** @maxLength 255 */
   title?: string;
   description?: string;
+  /** @maxLength 200 */
+  link?: string;
   start_datetime?: string;
+  /** @nullable */
+  icon?: number | null;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+}
+
+export type PatchedNewsArticleContent = {[key: string]: unknown};
+
+export interface PatchedNewsArticle {
+  readonly id?: number;
+  /** @maxLength 255 */
+  title?: string;
+  content?: PatchedNewsArticleContent;
+  /** @nullable */
+  readonly created_by?: number | null;
+  readonly created_by_name?: string;
+  send_notification?: boolean;
   readonly created_at?: string;
   readonly updated_at?: string;
 }
@@ -340,6 +516,7 @@ export interface PatchedRound {
    */
   passing_count?: number | null;
   evaluation_criteria?: EvaluationCriteriaEnum;
+  materials?: unknown;
   readonly status?: StatusE43Enum;
 }
 
@@ -369,7 +546,7 @@ export interface PatchedSubmissionEvaluation {
   readonly scores?: readonly ScoreItem[];
   readonly total_score?: number;
   /** @pattern ^-?\d{0,3}(?:\.\d{0,2})?$ */
-  readonly average_score?: string;
+  readonly final_score?: string;
   comment?: string;
   readonly created_at?: string;
 }
@@ -388,10 +565,12 @@ export interface PatchedTeam {
   contact_telegram?: string;
   /** @maxLength 100 */
   contact_discord?: string;
+  /** @nullable */
+  readonly banner?: string | null;
   readonly members?: readonly TeamMember[];
-  readonly is_member?: string;
-  readonly can_request_to_join?: string;
-  readonly is_in_active_tournament?: string;
+  readonly is_member?: boolean;
+  readonly can_request_to_join?: boolean;
+  readonly is_in_active_tournament?: boolean;
   member_ids?: number[];
 }
 
@@ -414,6 +593,8 @@ export interface PatchedTournamentAdmin {
    * @nullable
    */
   min_team_members?: number | null;
+  /** @nullable */
+  readonly banner?: string | null;
   readonly status?: StatusD67Enum;
   readonly rounds?: readonly RoundShort[];
   readonly registered_team?: TeamSummary;
@@ -440,6 +621,16 @@ export interface PatchedUserUpdate {
   city?: string;
   password?: string;
   redeem_code?: string;
+}
+
+export interface PlayerStats {
+  total_tournaments: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  average_evaluation_score: number;
+  /** @nullable */
+  current_team_name: string | null;
 }
 
 export interface RankingItem {
@@ -499,8 +690,8 @@ export interface RoleActivationCodeGenerateResponse {
 
 /**
  * * `admin` - admin
-* `jury` - jury
 * `organizer` - organizer
+* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
@@ -508,8 +699,8 @@ export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenera
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
   admin: 'admin',
-  jury: 'jury',
   organizer: 'organizer',
+  jury: 'jury',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -534,6 +725,11 @@ export const RoleB96Enum = {
   organizer: 'organizer',
 } as const;
 
+export interface RoleBreakdownItem {
+  role: string;
+  count: number;
+}
+
 export interface Round {
   readonly id: number;
   tournament?: number;
@@ -552,6 +748,7 @@ export interface Round {
    */
   passing_count?: number | null;
   evaluation_criteria?: EvaluationCriteriaEnum;
+  materials?: unknown;
   readonly status: StatusE43Enum;
 }
 
@@ -680,8 +877,6 @@ export interface SubmissionEvaluation {
   readonly id: number;
   readonly scores: readonly ScoreItem[];
   readonly total_score: number;
-  /** @pattern ^-?\d{0,3}(?:\.\d{0,2})?$ */
-  readonly average_score: string;
   comment?: string;
   readonly created_at: string;
 }
@@ -700,11 +895,18 @@ export interface Team {
   contact_telegram?: string;
   /** @maxLength 100 */
   contact_discord?: string;
+  /** @nullable */
+  readonly banner: string | null;
   readonly members: readonly TeamMember[];
-  readonly is_member: string;
-  readonly can_request_to_join: string;
-  readonly is_in_active_tournament: string;
+  readonly is_member: boolean;
+  readonly can_request_to_join: boolean;
+  readonly is_in_active_tournament: boolean;
   member_ids?: number[];
+}
+
+export interface TeamBanner {
+  /** @nullable */
+  banner?: string | null;
 }
 
 export interface TeamInvitation {
@@ -765,6 +967,26 @@ export interface TeamMember {
   /** @maxLength 255 */
   full_name?: string;
   role?: RoleB96Enum;
+  /** @nullable */
+  avatar?: string | null;
+}
+
+/**
+ * @nullable
+ */
+export type TeamStatsTopPlayer = TopPlayer | null;
+
+export interface TeamStats {
+  team_id: number;
+  team_name: string;
+  total_tournaments: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  average_member_evaluation_score: number;
+  active_members_count: number;
+  /** @nullable */
+  top_player: TeamStatsTopPlayer;
 }
 
 export interface TeamSummary {
@@ -797,6 +1019,20 @@ export interface TokenRefreshResponse {
   access: string;
 }
 
+export interface TopPlayer {
+  id: number;
+  username: string;
+  average_evaluation_score: number;
+}
+
+export interface TopTeam {
+  team_id: number;
+  team_name: string;
+  /** @nullable */
+  rank: number | null;
+  average_score: number;
+}
+
 export interface TournamentAdmin {
   readonly id: number;
   /** @maxLength 255 */
@@ -816,9 +1052,45 @@ export interface TournamentAdmin {
    * @nullable
    */
   min_team_members?: number | null;
+  /** @nullable */
+  readonly banner: string | null;
   readonly status: StatusD67Enum;
   readonly rounds: readonly RoundShort[];
   readonly registered_team: TeamSummary;
+}
+
+export interface TournamentArchiveDetail {
+  readonly id: number;
+  /** @maxLength 255 */
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  status?: StatusD67Enum;
+  /** @nullable */
+  banner?: string | null;
+  readonly rounds: readonly RoundShort[];
+  readonly teams: readonly TeamSummary[];
+  readonly standings: readonly ArchiveStanding[];
+}
+
+export interface TournamentArchiveList {
+  readonly id: number;
+  /** @maxLength 255 */
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  status?: StatusD67Enum;
+  /** @nullable */
+  banner?: string | null;
+  readonly teams: readonly TeamSummary[];
+  readonly standings: readonly ArchiveStanding[];
+}
+
+export interface TournamentBanner {
+  /** @nullable */
+  banner?: string | null;
 }
 
 export interface TournamentLeaderboardResponse {
@@ -851,6 +1123,8 @@ export interface TournamentPublic {
    * @nullable
    */
   min_team_members?: number | null;
+  /** @nullable */
+  banner?: string | null;
   status?: StatusD67Enum;
   readonly rounds: readonly RoundShort[];
   readonly registered_team: TeamSummary;
@@ -862,6 +1136,18 @@ export interface TournamentRankingItem {
   total_score: number;
   rank: number;
   rounds: RoundSummary[];
+}
+
+export interface TournamentStats {
+  tournament_id: number;
+  tournament_name: string;
+  total_registered_teams: number;
+  total_registered_players: number;
+  fill_rate: number;
+  completed_matches: number;
+  total_matches: number;
+  average_evaluation_score: number;
+  top_teams: TopTeam[];
 }
 
 export interface TournamentTeamLeave {
@@ -897,6 +1183,19 @@ export interface TournamentTeamRegistrationList {
   disqualification_reason?: string | null;
 }
 
+/**
+ * * `meet` - Meet
+* `event` - Event
+ */
+export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const TypeEnum = {
+  meet: 'meet',
+  event: 'event',
+} as const;
+
 export interface UnreadCountResponse {
   unread_count: number;
 }
@@ -917,9 +1216,15 @@ export interface User {
   phone?: string;
   /** @maxLength 100 */
   city?: string;
+  readonly avatar: string;
   readonly created_at: string;
   readonly needs_onboarding: boolean;
   readonly teams: readonly UserTeam[];
+}
+
+export interface UserAvatarUpdate {
+  /** @nullable */
+  avatar?: string | null;
 }
 
 export interface UserTeam {
@@ -947,6 +1252,14 @@ export interface UserUpdate {
   redeem_code?: string;
 }
 
+export type UpdateUserAvatar2Body = {
+  avatar?: Blob;
+};
+
+export type UpdateUserAvatarBody = {
+  avatar?: Blob;
+};
+
 export type ListRoleActivationCodesParams = {
 /**
  * Filter by role: jury, organizer, admin
@@ -959,6 +1272,65 @@ export type ListUsersParams = {
  * Filter by username, email, or full name
  */
 search?: string;
+};
+
+export type ListCertificatesParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+/**
+ * Search by username, full name, certificate number or unique code (admin only)
+ */
+search?: string;
+};
+
+export type ListCertificateTemplatesParams = {
+/**
+ * Pass "true" to disable pagination
+ */
+nopage?: string;
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type CreateCertificateTemplateBody = {
+  name: string;
+  image: Blob;
+  is_default?: boolean;
+};
+
+export type ReplaceCertificateTemplateBody = {
+  name: string;
+  image: Blob;
+  is_default?: boolean;
+};
+
+export type UpdateCertificateTemplateBody = {
+  name?: string;
+  image?: Blob;
+  is_default?: boolean;
+};
+
+export type ListNewsParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
 };
 
 export type ListNotificationsParams = {
@@ -1101,6 +1473,14 @@ export type SchemaRetrieve200Three = {[key: string]: unknown};
 
 export type SchemaRetrieve200Four = {[key: string]: unknown};
 
+export type UpdateTeamBanner2Body = {
+  banner?: Blob;
+};
+
+export type UpdateTeamBannerBody = {
+  banner?: Blob;
+};
+
 export type ListTournamentsParams = {
 createdAt?: string;
 endAt?: string;
@@ -1138,5 +1518,9 @@ tournament_id?: number;
 
 export type ListEventsParams = {
 tournament?: number;
+};
+
+export type UpdateTournamentBannerBody = {
+  banner?: Blob;
 };
 

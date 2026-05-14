@@ -39,10 +39,12 @@ import type {
   Event,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
+  Icon,
   ListEventsParams,
   ListRoundsParams,
   ListTournamentTeamsParams,
   ListTournamentsParams,
+  MyCalendarResponse,
   OwnSubmission,
   PatchedEvent,
   PatchedRound,
@@ -52,12 +54,16 @@ import type {
   Round,
   Submission,
   TournamentAdmin,
+  TournamentArchiveDetail,
+  TournamentArchiveList,
+  TournamentBanner,
   TournamentListResponse,
   TournamentPublic,
   TournamentTeamLeave,
   TournamentTeamRegistration,
   TournamentTeamRegistrationCreate,
-  TournamentTeamRegistrationList
+  TournamentTeamRegistrationList,
+  UpdateTournamentBannerBody
 } from '../.ts.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -969,6 +975,192 @@ export function useGetTeamActiveTournament<TData = Awaited<ReturnType<typeof get
 
 
 
+export const listTournamentArchive = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<TournamentArchiveList[]>(
+      {url: `http://localhost:8000/api/tournaments/archive/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListTournamentArchiveQueryKey = () => {
+    return [
+    'http:','localhost:8000','api','tournaments','archive'
+    ] as const;
+    }
+
+    
+export const getListTournamentArchiveQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchive>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getListTournamentArchiveQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchive>>> = ({ signal }) => listTournamentArchive(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData> 
+}
+
+export type ListTournamentArchiveQueryResult = NonNullable<Awaited<ReturnType<typeof listTournamentArchive>>>
+export type ListTournamentArchiveQueryError = ErrorType<unknown>
+
+
+
+export function useListTournamentArchive<TData = Awaited<ReturnType<typeof listTournamentArchive>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTournamentArchiveQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const getTournamentArchive = (
+    id: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      id = unref(id);
+      
+      return customInstance<TournamentArchiveDetail>(
+      {url: `http://localhost:8000/api/tournaments/archive/${id}/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetTournamentArchiveQueryKey = (id?: MaybeRef<number>,) => {
+    return [
+    'http:','localhost:8000','api','tournaments','archive',id
+    ] as const;
+    }
+
+    
+export const getGetTournamentArchiveQueryOptions = <TData = Awaited<ReturnType<typeof getTournamentArchive>>, TError = ErrorType<ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetTournamentArchiveQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTournamentArchive>>> = ({ signal }) => getTournamentArchive(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: computed(() => !!(unref(id))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTournamentArchive>>, TError, TData> 
+}
+
+export type GetTournamentArchiveQueryResult = NonNullable<Awaited<ReturnType<typeof getTournamentArchive>>>
+export type GetTournamentArchiveQueryError = ErrorType<ErrorResponseNotFound>
+
+
+
+export function useGetTournamentArchive<TData = Awaited<ReturnType<typeof getTournamentArchive>>, TError = ErrorType<ErrorResponseNotFound>>(
+ id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTournamentArchiveQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const listTournamentArchiveSubmissions = (
+    id: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      id = unref(id);
+      
+      return customInstance<Submission[]>(
+      {url: `http://localhost:8000/api/tournaments/archive/${id}/submissions/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListTournamentArchiveSubmissionsQueryKey = (id?: MaybeRef<number>,) => {
+    return [
+    'http:','localhost:8000','api','tournaments','archive',id,'submissions'
+    ] as const;
+    }
+
+    
+export const getListTournamentArchiveSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getListTournamentArchiveSubmissionsQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>> = ({ signal }) => listTournamentArchiveSubmissions(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: computed(() => !!(unref(id))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData> 
+}
+
+export type ListTournamentArchiveSubmissionsQueryResult = NonNullable<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>>
+export type ListTournamentArchiveSubmissionsQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>
+
+
+
+export function useListTournamentArchiveSubmissions<TData = Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(
+ id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTournamentArchiveSubmissionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
 export const getCurrentTask = (
     params?: MaybeRef<GetCurrentTaskParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -1329,7 +1521,69 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const createTournament = (
+    export const listIcons = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Icon[]>(
+      {url: `http://localhost:8000/api/tournaments/icons/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListIconsQueryKey = () => {
+    return [
+    'http:','localhost:8000','api','tournaments','icons'
+    ] as const;
+    }
+
+    
+export const getListIconsQueryOptions = <TData = Awaited<ReturnType<typeof listIcons>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getListIconsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIcons>>> = ({ signal }) => listIcons(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData> 
+}
+
+export type ListIconsQueryResult = NonNullable<Awaited<ReturnType<typeof listIcons>>>
+export type ListIconsQueryError = ErrorType<unknown>
+
+
+
+export function useListIcons<TData = Awaited<ReturnType<typeof listIcons>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListIconsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const createTournament = (
     tournamentAdmin: MaybeRef<NonReadonly<TournamentAdmin>>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -1622,7 +1876,250 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const getRound = (
+    export const tournamentsManageBannerUpdate = (
+    id: MaybeRef<number>,
+    tournamentBanner: MaybeRef<TournamentBanner>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      id = unref(id);
+tournamentBanner = unref(tournamentBanner);
+      const formData = new FormData();
+if(tournamentBanner.banner !== undefined && tournamentBanner.banner !== null) {
+ formData.append(`banner`, tournamentBanner.banner)
+ }
+
+      return customInstance<TournamentBanner>(
+      {url: `http://localhost:8000/api/tournaments/manage/${id}/banner/`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  
+
+
+export const getTournamentsManageBannerUpdateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext> => {
+
+const mutationKey = ['tournamentsManageBannerUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, {id: number;data: BodyType<TournamentBanner>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  tournamentsManageBannerUpdate(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TournamentsManageBannerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>>
+    export type TournamentsManageBannerUpdateMutationBody = BodyType<TournamentBanner>
+    export type TournamentsManageBannerUpdateMutationError = ErrorType<unknown>
+
+    export const useTournamentsManageBannerUpdate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>, TError,{id: number;data: BodyType<TournamentBanner>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof tournamentsManageBannerUpdate>>,
+        TError,
+        {id: number;data: BodyType<TournamentBanner>},
+        TContext
+      > => {
+
+      const mutationOptions = getTournamentsManageBannerUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const updateTournamentBanner = (
+    id: MaybeRef<number>,
+    updateTournamentBannerBody: MaybeRef<UpdateTournamentBannerBody>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      id = unref(id);
+updateTournamentBannerBody = unref(updateTournamentBannerBody);
+      const formData = new FormData();
+if(updateTournamentBannerBody.banner !== undefined) {
+ formData.append(`banner`, updateTournamentBannerBody.banner)
+ }
+
+      return customInstance<TournamentPublic>(
+      {url: `http://localhost:8000/api/tournaments/manage/${id}/banner/`, method: 'PATCH',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  
+
+
+export const getUpdateTournamentBannerMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext> => {
+
+const mutationKey = ['updateTournamentBanner'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTournamentBanner>>, {id: number;data: BodyType<UpdateTournamentBannerBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateTournamentBanner(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTournamentBannerMutationResult = NonNullable<Awaited<ReturnType<typeof updateTournamentBanner>>>
+    export type UpdateTournamentBannerMutationBody = BodyType<UpdateTournamentBannerBody>
+    export type UpdateTournamentBannerMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+
+    export const useUpdateTournamentBanner = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTournamentBanner>>, TError,{id: number;data: BodyType<UpdateTournamentBannerBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof updateTournamentBanner>>,
+        TError,
+        {id: number;data: BodyType<UpdateTournamentBannerBody>},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateTournamentBannerMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const deleteTournamentBanner = (
+    id: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      id = unref(id);
+      
+      return customInstance<TournamentPublic>(
+      {url: `http://localhost:8000/api/tournaments/manage/${id}/banner/`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getDeleteTournamentBannerMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTournamentBanner>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTournamentBanner>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteTournamentBanner'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTournamentBanner>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteTournamentBanner(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTournamentBannerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTournamentBanner>>>
+    
+    export type DeleteTournamentBannerMutationError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+
+    export const useDeleteTournamentBanner = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTournamentBanner>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof deleteTournamentBanner>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteTournamentBannerMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const getMyCalendar = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyCalendarResponse>(
+      {url: `http://localhost:8000/api/tournaments/my-calendar/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetMyCalendarQueryKey = () => {
+    return [
+    'http:','localhost:8000','api','tournaments','my-calendar'
+    ] as const;
+    }
+
+    
+export const getGetMyCalendarQueryOptions = <TData = Awaited<ReturnType<typeof getMyCalendar>>, TError = ErrorType<ErrorResponseNotAuthenticated>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyCalendar>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetMyCalendarQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyCalendar>>> = ({ signal }) => getMyCalendar(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyCalendar>>, TError, TData> 
+}
+
+export type GetMyCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof getMyCalendar>>>
+export type GetMyCalendarQueryError = ErrorType<ErrorResponseNotAuthenticated>
+
+
+
+export function useGetMyCalendar<TData = Awaited<ReturnType<typeof getMyCalendar>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyCalendar>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyCalendarQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const getRound = (
     id: MaybeRef<number>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {

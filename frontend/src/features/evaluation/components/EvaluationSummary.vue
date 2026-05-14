@@ -36,7 +36,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EvaluationData, RoundCriterion } from '@/api/services/evaluation/types'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
 import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
 

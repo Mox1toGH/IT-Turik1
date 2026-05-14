@@ -16,7 +16,11 @@
 
       <div v-if="isLoading" class="result result-loading">Checking...</div>
 
-      <div v-else-if="result" class="result" :class="result.is_valid ? 'result-valid' : 'result-invalid'">
+      <div
+        v-else-if="result"
+        class="result"
+        :class="result.is_valid ? 'result-valid' : 'result-invalid'"
+      >
         <div class="result-head">
           <p class="result-title">Verification result</p>
           <span class="status-badge" :class="result.is_valid ? 'status-valid' : 'status-invalid'">
@@ -24,13 +28,25 @@
           </span>
         </div>
 
-        <template v-if="result.data">
+        <template v-if="result">
           <div class="result-grid">
-            <p><span class="label">Name</span><strong>{{ result.data.full_name || '-' }}</strong></p>
-            <p><span class="label">Team</span><strong>{{ result.data.team_name || '-' }}</strong></p>
-            <p><span class="label">Tournament</span><strong>{{ result.data.tournament_name || '-' }}</strong></p>
-            <p><span class="label">Certificate number</span><strong>{{ result.data.certificate_number || '-' }}</strong></p>
-            <p><span class="label">Placement</span><strong>{{ result.data.placement || '-' }}</strong></p>
+            <p>
+              <span class="label">Name</span><strong>{{ result.full_name || '-' }}</strong>
+            </p>
+            <p>
+              <span class="label">Team</span><strong>{{ result.team_name || '-' }}</strong>
+            </p>
+            <p>
+              <span class="label">Tournament</span
+              ><strong>{{ result.tournament_name || '-' }}</strong>
+            </p>
+            <p>
+              <span class="label">Certificate number</span
+              ><strong>{{ result.certificate_number || '-' }}</strong>
+            </p>
+            <p>
+              <span class="label">Placement</span><strong>{{ result.placement || '-' }}</strong>
+            </p>
           </div>
         </template>
 
@@ -43,17 +59,21 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { $api } from '@/api/services'
-import type { VerifyCertificateResponse } from '@/api/services/certificates/types'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import {
+  verifyCertificate,
+  type VerifyCertificateQueryResult,
+} from '@/api/certificates/certificates'
 
 const route = useRoute()
 const router = useRouter()
 
+type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: string }
+
 const codeInput = ref(String(route.params.code ?? '').trim())
-const result = ref<VerifyCertificateResponse | null>(null)
+const result = ref<Result | null>(null)
 const isLoading = ref(false)
 
 watch(
@@ -90,9 +110,9 @@ async function verify() {
 
   isLoading.value = true
   try {
-    result.value = await $api.certificates.verifyByCode(code)
+    result.value = await verifyCertificate(code)
   } catch {
-    result.value = { is_valid: false, message: 'Verification failed.' }
+    result.value = { is_valid: false, message: 'Verification failed.' } as Result
   } finally {
     isLoading.value = false
   }

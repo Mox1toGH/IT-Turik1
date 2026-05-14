@@ -49,6 +49,7 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import TeamDirectoryTitleIcon from '@/icons/TeamDirectoryTitleIcon.vue'
+import { useListTeams } from '@/api/teams/teams'
 
 const { data: teams, isLoading: isLoadingTeams } = useListTeams()
 </script>

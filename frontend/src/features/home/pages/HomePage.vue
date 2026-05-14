@@ -85,7 +85,7 @@
               height: 126px;
             "
           >
-            <p>Failed to fetch account info (code: {{ error?.code }})</p>
+            <p>Failed to fetch account info (code: {{ profileError?.code }})</p>
           </div>
         </template>
 
@@ -123,7 +123,7 @@
               align-items: center;
             "
           >
-            <p>Failed to fetch profile status (code: {{ error?.code }})</p>
+            <p>Failed to fetch profile status (code: {{ profileError?.code }})</p>
           </div>
         </template>
 
@@ -163,30 +163,29 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
-import { useProfile } from '@/api/queries/accounts'
-import { parseApiError } from '@/api/errors'
-import { useCurrentRound, useTeamSubmissions, useTournaments } from '@/api/queries/tournaments'
-import { useTeams } from '@/api/queries/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useGetCurrentTask,
+  useListMyTeamSubmissions,
+  useListTournaments,
+} from '@/api/tournaments/tournaments'
 
-const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
-const error = computed(() => parseApiError(profileError.value))
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 const profileReady = computed(() => Boolean(user.value?.full_name && user.value?.city))
 const teamNames = computed(() => (user.value?.teams || []).map((team) => team.name).join(', '))
 const isTeamRole = computed(() => user.value?.role === 'team')
-const { data: teams } = useTeams()
 const myTeamIds = computed(() => new Set((user.value?.teams ?? []).map((team) => team.id)))
-const myTeams = computed(() => (teams.value ?? []).filter((team) => myTeamIds.value.has(team.id)))
 
-const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useTournaments(
+const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useListTournaments(
   {
     page: 1,
     pageSize: 100,
-    status: ['registration', 'running'],
+    status: 'registration,running',
   },
   {
-    enabled: computed(() => Boolean(isTeamRole.value)),
+    query: { enabled: computed(() => Boolean(isTeamRole.value)) },
   },
 )
 const activeTournament = computed(() =>
@@ -201,18 +200,20 @@ const shouldFetchCurrentRound = computed(
     activeTournament.value?.status === 'running',
 )
 
-const { data: currentRound, isLoading: isLoadingCurrentRound } = useCurrentRound(
-  { id: activeTournamentId },
+const { data: currentRound, isLoading: isLoadingCurrentRound } = useGetCurrentTask(
+  { tournament_id: activeTournamentId.value },
   {
-    enabled: shouldFetchCurrentRound,
-    retry: false,
+    query: {
+      enabled: shouldFetchCurrentRound,
+      retry: false,
+    },
   },
 )
 
-const { data: submissions, isLoading: isLoadingSubmissions } = useTeamSubmissions(
-  { tournamentId: activeTournamentId },
+const { data: submissions, isLoading: isLoadingSubmissions } = useListMyTeamSubmissions(
+  activeTournamentId,
   {
-    enabled: computed(() => Boolean(isTeamRole.value && activeTournamentId.value)),
+    query: { enabled: computed(() => Boolean(isTeamRole.value && activeTournamentId.value)) },
   },
 )
 

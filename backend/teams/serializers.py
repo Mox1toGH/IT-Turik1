@@ -9,6 +9,7 @@ from accounts.models import User
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from .services import assert_team_not_in_active_tournament, get_active_tournament_registration
 
+from drf_spectacular.utils import extend_schema_field
 
 def clear_invitation_states_for_member(*, team, user=None, user_id=None):
     target_user_id = user_id or getattr(user, 'id', None)
@@ -171,18 +172,19 @@ class TeamSerializer(serializers.ModelSerializer):
             return False
         return any(member.id == user.id for member in obj.members.all())
 
+    @extend_schema_field(bool)
     def get_is_member(self, obj):
         user = self._request_user()
         if not user:
             return False
         return self._is_member_for_user(obj, user)
     
+    @extend_schema_field(bool)
     def get_is_captain(self, obj):
         user = self._request_user()
         return bool(user) and obj.captain_id == user.id
 
-
-
+    @extend_schema_field(bool)
     def get_can_request_to_join(self, obj):
         user = self._request_user()
         if not user or not obj.is_public:
@@ -197,6 +199,7 @@ class TeamSerializer(serializers.ModelSerializer):
         join_request_status = get_user_join_request_status(team=obj, user=user)
         return join_request_status != TeamJoinRequest.STATUS_PENDING
 
+    @extend_schema_field(bool)
     def get_is_in_active_tournament(self, obj):
         return get_active_tournament_registration(obj) is not None
 

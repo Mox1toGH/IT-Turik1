@@ -160,13 +160,8 @@ import { type JSONContent } from '@tiptap/vue-3'
 import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
-import { parseApiError } from '@/api/errors'
-import { useEditRound } from '@/api/queries/tournaments'
-import type { Round } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
-import EditorModal from '@/components/shared/EditorModal.vue'
 import type { Criterion, Round } from '@/api/.ts.schemas'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
 
@@ -222,8 +217,8 @@ function handleSubmit() {
       id: props.round.id,
       data: {
         ...rest,
-        start_date: combineDateAndTime(form.fields.value.start_date, start_time),
-        end_date: combineDateAndTime(form.fields.value.end_date, end_time),
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
     {

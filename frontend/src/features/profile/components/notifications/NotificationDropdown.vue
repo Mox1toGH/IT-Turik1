@@ -36,63 +36,32 @@
         <div v-else-if="unreadNotifications.length === 0" class="state-message">
           There are currently no new notifications
         </div>
-          <div v-else class="notifications-list">
-            <div 
-              v-for="notification in unreadNotifications" 
-              :key="notification.id"
-              class="notification-item is-unread"
-              @click="markAsRead(notification.id)"
-            >
-              <div class="item-content">
-                <div class="item-title-row">
-                  <span v-if="!notification.is_read" class="unread-dot"></span>
-                  <span class="item-title">{{ notification.title }}</span>
-                  <button 
-                    v-if="getRedirectUrl(notification)"
-                    class="redirect-btn-mini" 
-                    @click.stop="handleNotificationClick(notification, $event)"
-                    title="Go to page"
-                  >
-                    <external-link-icon class="icon" />
-                  </button>
-                  <button 
-                    class="delete-btn-mini" 
-                    @click.stop="handleDelete(notification.id)"
-                    title="Delete notification"
-                  >
-                    <trash-icon class="icon" />
-                  </button>
-                </div>
-                <span class="item-message">
-                  <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                    <a 
-                      v-if="part.type === 'user'" 
-                      :href="`/users/${part.id}`" 
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </a>
-                    <router-link 
-                      v-else-if="part.type === 'team'" 
-                      :to="`/teams/${part.id}`" 
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <router-link
-                      v-else-if="part.type === 'news'"
-                      :to="`/news#news-${part.id}`"
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <span v-else>{{ part.text }}</span>
-                  </template>
-                </span>
-                <span class="item-date">{{ formatDate(notification.created_at) }}</span>
+        <div v-else class="notifications-list">
+          <div
+            v-for="notification in unreadNotifications"
+            :key="notification.id"
+            class="notification-item is-unread"
+            @click="markAsRead({ id: notification.id })"
+          >
+            <div class="item-content">
+              <div class="item-title-row">
+                <span v-if="!notification.is_read" class="unread-dot"></span>
+                <span class="item-title">{{ notification.title }}</span>
+                <button
+                  v-if="getRedirectUrl(notification)"
+                  class="redirect-btn-mini"
+                  @click.stop="handleNotificationClick(notification)"
+                  title="Go to page"
+                >
+                  <external-link-icon class="icon" />
+                </button>
+                <button
+                  class="delete-btn-mini"
+                  @click.stop="handleDelete(notification.id)"
+                  title="Delete notification"
+                >
+                  <trash-icon class="icon" />
+                </button>
               </div>
               <span class="item-message">
                 <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
@@ -112,31 +81,61 @@
                   >
                     {{ part.text }}
                   </router-link>
+                  <router-link
+                    v-else-if="part.type === 'news'"
+                    :to="`/news#news-${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </router-link>
                   <span v-else>{{ part.text }}</span>
                 </template>
               </span>
               <span class="item-date">{{ formatDate(notification.created_at) }}</span>
             </div>
+            <span class="item-message">
+              <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
+                <a
+                  v-if="part.type === 'user'"
+                  :href="`/users/${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </a>
+                <router-link
+                  v-else-if="part.type === 'team'"
+                  :to="`/teams/${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </router-link>
+                <span v-else>{{ part.text }}</span>
+              </template>
+            </span>
+            <span class="item-date">{{ formatDate(notification.created_at) }}</span>
           </div>
         </div>
       </div>
-
-      <div class="dropdown-footer">
-        <ui-button size="sm" variant="secondary" style="width: 100%" @click="goToAllNotifications">
-          View all notifications
-        </ui-button>
-      </div>
     </div>
 
-    <ui-confirm-modal
-      v-model="isConfirmModalOpen"
-      :title="confirmModalConfig.title"
-      :message="confirmModalConfig.message"
-      :confirm-variant="confirmModalConfig.confirmVariant"
-      :loading="isDeletingAll"
-      @confirm="confirmModalConfig.onConfirm"
-    />
+    <div class="dropdown-footer">
+      <ui-button size="sm" variant="secondary" style="width: 100%" @click="goToAllNotifications">
+        View all notifications
+      </ui-button>
+    </div>
   </div>
+
+  <ui-confirm-modal
+    v-model="isConfirmModalOpen"
+    :title="confirmModalConfig.title"
+    :message="confirmModalConfig.message"
+    :confirm-variant="confirmModalConfig.confirmVariant"
+    :loading="isDeletingAll"
+    @confirm="confirmModalConfig.onConfirm"
+  />
 </template>
 
 <script setup lang="ts">
@@ -162,10 +161,10 @@ const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
 
-const { data: notifications, isLoading, error } = useNotifications(1, 100)
-const { data: unreadCount } = useUnreadCount()
-const { mutate: markAsRead } = useMarkAsRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
+const { data: notifications, isLoading, error } = useListNotifications()
+const { data: unreadCount } = useGetUnreadNotificationCount()
+const { mutate: markAsRead } = useMarkNotificationRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 
@@ -205,9 +204,12 @@ const handleDelete = (id: number) => {
     message: 'Delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(id, {
-        onSuccess: () => {
-          isConfirmModalOpen.value = false
+      deleteNotification(
+        { id },
+        {
+          onSuccess: () => {
+            isConfirmModalOpen.value = false
+          },
         },
       )
     },
@@ -236,7 +238,7 @@ const handleDeleteAll = () => {
 
 const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
-    markAsRead(notification.id)
+    markAsRead({ id: notification.id })
   }
 
   const url = getRedirectUrl(notification)
@@ -558,6 +560,7 @@ onUnmounted(() => {
   font-size: 0.8rem;
   color: var(--foreground);
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

@@ -186,11 +186,6 @@ import JuryAssign from '../components/tournament/tournament-submissions/JuryAssi
 import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
 import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
 import DeleteTournamentModal from '../components/tournament/modals/DeleteTournamentModal.vue'
-import {
-  useRemoveTournamentBanner,
-  useTournamentInfo,
-  useUpdateTournamentBanner,
-} from '@/api/queries/tournaments'
 import { useNotification } from '@/composables/useNotification'
 import {
   clearImagePosition,
@@ -198,6 +193,12 @@ import {
   toObjectPosition,
   writeImagePosition,
 } from '@/lib/imagePosition'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useDeleteTournamentBanner,
+  useGetTournament,
+  useUpdateTournamentBanner,
+} from '@/api/tournaments/tournaments'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
@@ -205,8 +206,8 @@ const route = useRoute()
 const router = useRouter()
 const id = Number(route.params.id) || 1
 
-const { data: user } = useProfile()
-const { data: tournament } = useTournamentInfo({ id })
+const { data: user } = useGetUserProfile()
+const { data: tournament } = useGetTournament(id)
 const { showNotification } = useNotification()
 const isBannerModalOpen = ref(false)
 const selectedBanner = ref<File | null>(null)
@@ -214,7 +215,7 @@ const selectedBannerUrl = ref('')
 const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTournamentBanner()
-const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useRemoveTournamentBanner()
+const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useDeleteTournamentBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 const bannerPreviewUrl = computed(() => selectedBannerUrl.value || tournament.value?.banner || '')
 const bannerPositionKey = computed(() => `image-position:banner:tournament:${id}`)
@@ -281,7 +282,7 @@ const saveBanner = () => {
     y: bannerPositionY.value,
   })
   updateBanner(
-    { tournamentId: id, file: selectedBanner.value },
+    { id, data: { banner: selectedBanner.value } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
@@ -296,7 +297,7 @@ const saveBanner = () => {
 
 const removeBanner = () => {
   removeTournamentBanner(
-    { tournamentId: id },
+    { id },
     {
       onSuccess: () => {
         clearImagePosition(bannerPositionKey.value)

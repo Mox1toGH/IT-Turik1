@@ -9,11 +9,7 @@
     </template>
 
     <div class="modal-body">
-      <div
-        v-if="previewUrl"
-        class="avatar-preview-frame"
-        @pointerdown="onPreviewPointerDown"
-      >
+      <div v-if="previewUrl" class="avatar-preview-frame" @pointerdown="onPreviewPointerDown">
         <img
           :src="previewUrl"
           alt="Avatar preview"
@@ -47,16 +43,19 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useRemoveAvatar, useUpdateAvatar } from '@/api/queries/accounts'
-import { accountKeys } from '@/api/queries/keys'
-import type { User } from '@/api/dbTypes'
-import { clearImagePosition, readImagePosition, toObjectPosition, writeImagePosition } from '@/lib/imagePosition'
+import {
+  clearImagePosition,
+  readImagePosition,
+  toObjectPosition,
+  writeImagePosition,
+} from '@/lib/imagePosition'
+import type { User } from '@/api/.ts.schemas'
+import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
 
 const props = defineProps<{
   user?: User
@@ -66,7 +65,9 @@ const props = defineProps<{
 const isOpen = ref(false)
 const selectedAvatar = ref<File | null>(null)
 const selectedAvatarUrl = ref('')
-const avatarPositionKey = computed(() => (props.user?.id ? `image-position:avatar:user:${props.user.id}` : ''))
+const avatarPositionKey = computed(() =>
+  props.user?.id ? `image-position:avatar:user:${props.user.id}` : '',
+)
 const positionX = ref(50)
 const positionY = ref(50)
 
@@ -82,9 +83,8 @@ const previewObjectPosition = computed(() =>
 )
 
 const { showNotification } = useNotification()
-const queryClient = useQueryClient()
-const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useUpdateAvatar()
-const { mutate: removeAvatarRequest, isPending: isRemovingAvatar } = useRemoveAvatar()
+const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useUpdateUserAvatar()
+const { mutate: removeAvatarRequest, isPending: isRemovingAvatar } = useDeleteUserAvatar()
 const isUpdating = computed(() => isUpdatingAvatar.value || isRemovingAvatar.value)
 
 const closeModal = () => {
@@ -111,7 +111,6 @@ const onAvatarChange = (event: Event) => {
 const removeAvatar = () => {
   removeAvatarRequest(void 0, {
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: accountKeys.profile() })
       clearImagePosition(avatarPositionKey.value)
       showNotification('Avatar removed.', 'success')
       resetState()
@@ -128,10 +127,9 @@ const saveAvatar = () => {
   if (!selectedAvatar.value) return
 
   updateAvatar(
-    { file: selectedAvatar.value },
+    { data: { avatar: selectedAvatar.value } },
     {
       onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: accountKeys.profile() })
         if (avatarPositionKey.value) {
           writeImagePosition(avatarPositionKey.value, { x: positionX.value, y: positionY.value })
         }

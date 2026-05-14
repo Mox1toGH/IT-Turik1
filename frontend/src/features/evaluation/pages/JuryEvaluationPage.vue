@@ -86,25 +86,24 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAssignments } from '@/api/queries/evaluation'
-import { useTournaments } from '@/api/queries/tournaments'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
 import { useListJuryAssignments } from '@/api/evaluation/evaluation'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const selectedRounds = ref<string[]>([])
 const selectedTournamentIds = ref<string[]>([])
 const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
 
-const { data: assignments, isLoading, isError, refetch } = useAssignments()
+const { data: assignments, isLoading, isError, refetch } = useListJuryAssignments()
 const {
   data: tournamentsResponse,
   isLoading: isTournamentsLoading,
   isError: isTournamentsError,
-} = useTournaments({
+} = useListTournaments({
   page: 1,
   pageSize: 200,
 })

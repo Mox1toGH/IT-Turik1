@@ -167,12 +167,12 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import AvatarModal from '../components/profile/modals/AvatarModal.vue'
-import { useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { parseApiError } from '@/api/errors'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { formatDate } from '@/lib/date'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
@@ -195,11 +195,6 @@ const goToNotifications = () => {
 
 const goToCertificates = () => {
   router.push('/profile/certificates')
-}
-
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
 }
 </script>
 

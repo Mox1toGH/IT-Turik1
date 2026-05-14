@@ -141,6 +141,8 @@ import { useNotification } from '@/composables/useNotification'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
+import type { Team } from '@/api/.ts.schemas'
+import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 
 interface Props {
   team?: Team
@@ -165,7 +167,7 @@ const captainName = computed(() => {
 const canLeaveTeam = computed(() => props.team?.is_member && !props.isCaptain)
 
 // ── Join Request ────────────────────────────────────────────────────
-const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useSendJoinRequest()
+const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useCreateTeamJoinRequest()
 
 const sendJoinRequest = () => {
   if (!props.team) return

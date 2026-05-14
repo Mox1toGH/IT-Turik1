@@ -78,7 +78,7 @@ import { useUpdateEvent } from '@/api/tournaments/tournaments'
 interface Props {
   modelValue: boolean
   eventId: number
-  tournamentId: TournamentId
+  tournamentId: number
   title: string
   description: string
   startDate: Date | string

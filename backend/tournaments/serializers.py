@@ -233,7 +233,6 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             'id',
             'scores',
             'total_score',
-            'average_score',
             'comment',
             'created_at',
         )
@@ -697,6 +696,7 @@ class TournamentArchiveListSerializer(serializers.ModelSerializer):
             'standings',
         )
 
+    @extend_schema_field(TeamSummarySerializer(many=True))
     def get_teams(self, obj):
         registrations = (
             obj.team_registrations
@@ -706,6 +706,7 @@ class TournamentArchiveListSerializer(serializers.ModelSerializer):
         )
         return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
 
+    @extend_schema_field(ArchiveStandingSerializer(many=True))
     def get_standings(self, obj):
         standings = (
             obj.leaderboard_entries
@@ -736,6 +737,7 @@ class TournamentArchiveDetailSerializer(serializers.ModelSerializer):
             'standings',
         )
 
+    @extend_schema_field(TeamSummarySerializer(many=True))
     def get_teams(self, obj):
         registrations = (
             obj.team_registrations
@@ -745,6 +747,7 @@ class TournamentArchiveDetailSerializer(serializers.ModelSerializer):
         )
         return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
 
+    @extend_schema_field(ArchiveStandingSerializer(many=True))
     def get_standings(self, obj):
         standings = (
             obj.leaderboard_entries

@@ -58,7 +58,12 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useProfile } from '@/api/queries/accounts'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useListEligibleTeamsForTournament,
+  useRegisterTeamForTournament,
+  useUnregisterTeamFromTournament,
+} from '@/api/tournaments/tournaments'
 
 interface Props {
   tournamentId: number
@@ -67,7 +72,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const isOpen = ref(false)
 const search = ref('')

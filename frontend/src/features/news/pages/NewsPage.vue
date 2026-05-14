@@ -45,7 +45,7 @@
     <ui-card v-else-if="isLoadingError" :isError="true">
       <template #error>
         <div class="error-box">
-          <p>Failed to fetch news (code: {{ parsedError?.code }})</p>
+          <p>Failed to fetch news (code: {{ newsError?.code }})</p>
         </div>
       </template>
     </ui-card>
@@ -77,8 +77,12 @@
                 </p>
               </div>
               <div v-if="canModifyNews(item)" class="news-actions">
-                <ui-button size="sm" variant="secondary" @click="openEditModal(item)">Edit</ui-button>
-                <ui-button size="sm" variant="danger" @click="openDeleteConfirm(item)">Delete</ui-button>
+                <ui-button size="sm" variant="secondary" @click="openEditModal(item)"
+                  >Edit</ui-button
+                >
+                <ui-button size="sm" variant="danger" @click="openDeleteConfirm(item)"
+                  >Delete</ui-button
+                >
               </div>
             </div>
           </template>
@@ -107,13 +111,23 @@
           Previous
         </ui-button>
         <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
-        <ui-button size="sm" variant="secondary" :disabled="currentPage === totalPages" @click="nextPage">
+        <ui-button
+          size="sm"
+          variant="secondary"
+          :disabled="currentPage === totalPages"
+          @click="nextPage"
+        >
           Next
         </ui-button>
       </div>
     </ui-card>
 
-    <ui-modal v-if="canManageNews" v-model="isCreateOpen" maxWidth="760px" :close-on-backdrop="!isCreating">
+    <ui-modal
+      v-if="canManageNews"
+      v-model="isCreateOpen"
+      maxWidth="760px"
+      :close-on-backdrop="!isCreating"
+    >
       <template #title>Create news</template>
 
       <div class="section-head">
@@ -129,7 +143,9 @@
             :isInvalid="!!form.errors.value.title"
             @blur="form.validateField('title')"
           />
-          <small v-if="form.errors.value.title" class="text-error">{{ form.errors.value.title }}</small>
+          <small v-if="form.errors.value.title" class="text-error">{{
+            form.errors.value.title
+          }}</small>
         </label>
 
         <label class="form-item">
@@ -158,7 +174,12 @@
       </form>
     </ui-modal>
 
-    <ui-modal v-if="canManageNews" v-model="isEditOpen" maxWidth="760px" :close-on-backdrop="!isUpdating">
+    <ui-modal
+      v-if="canManageNews"
+      v-model="isEditOpen"
+      maxWidth="760px"
+      :close-on-backdrop="!isUpdating"
+    >
       <template #title>Edit news</template>
 
       <form class="create-form" @submit.prevent="handleEdit">
@@ -170,7 +191,9 @@
             :isInvalid="!!editForm.errors.value.title"
             @blur="editForm.validateField('title')"
           />
-          <small v-if="editForm.errors.value.title" class="text-error">{{ editForm.errors.value.title }}</small>
+          <small v-if="editForm.errors.value.title" class="text-error">{{
+            editForm.errors.value.title
+          }}</small>
         </label>
 
         <label class="form-item">
@@ -228,13 +251,12 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import NewsBoardTitleIcon from '@/icons/NewsBoardTitleIcon.vue'
 import EditorModal from '@/features/tournaments/components/create-round/modals/EditorModal.vue'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
-import { useProfile } from '@/api/queries/accounts'
-import { useCreateNews, useDeleteNews, useNewsList, useUpdateNews } from '@/api/queries/news'
 import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
-import type { NewsArticle } from '@/api/dbTypes'
+import { useCreateNews, useDeleteNews, useListNews, useUpdateNews } from '@/api/news/news'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { NewsArticle } from '@/api/.ts.schemas'
 
 interface CreateNewsForm {
   title: string
@@ -255,7 +277,7 @@ const editForm = useForm<CreateNewsForm>(CreateNewsSchema, {
 
 const { showNotification } = useNotification()
 const route = useRoute()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
@@ -270,8 +292,7 @@ const {
   isLoading: isLoadingNews,
   isLoadingError,
   error: newsError,
-} = useNewsList({ page: currentPage, pageSize })
-const parsedError = computed(() => parseApiError(newsError.value))
+} = useListNews(computed(() => ({ page: currentPage.value, pageSize })))
 const newsItems = computed(() => news.value?.results ?? [])
 const totalNews = computed(() => news.value?.count ?? 0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
@@ -287,7 +308,7 @@ function handleCreate() {
 
   createNews(
     {
-      body: {
+      data: {
         title: form.fields.value.title,
         content: form.fields.value.content as JSONContent,
         send_notification: form.fields.value.send_notification,
@@ -300,11 +321,10 @@ function handleCreate() {
         showNotification('News created successfully.', 'success')
       },
       onError(error) {
-        const parsed = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsed?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof CreateNewsForm, errors?.[0] ?? 'Invalid value')
         }
-        showNotification(parsed?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -334,7 +354,7 @@ function handleEdit() {
   updateNews(
     {
       id: editingNewsId.value,
-      body: {
+      data: {
         title: editForm.fields.value.title,
         content: editForm.fields.value.content as JSONContent,
         send_notification: editForm.fields.value.send_notification,
@@ -347,11 +367,10 @@ function handleEdit() {
         showNotification('News updated successfully.', 'success')
       },
       onError(error) {
-        const parsed = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsed?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           editForm.setError(field as keyof CreateNewsForm, errors?.[0] ?? 'Invalid value')
         }
-        showNotification(parsed?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -374,8 +393,7 @@ function handleDelete() {
         showNotification('News deleted successfully.', 'success')
       },
       onError(error) {
-        const parsed = parseApiError(error)
-        showNotification(parsed?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -567,7 +585,9 @@ watch(
   max-height: 180px;
   overflow: hidden;
   opacity: 0.96;
-  transition: max-height 0.32s ease, opacity 0.24s ease;
+  transition:
+    max-height 0.32s ease,
+    opacity 0.24s ease;
   will-change: max-height, opacity;
 }
 

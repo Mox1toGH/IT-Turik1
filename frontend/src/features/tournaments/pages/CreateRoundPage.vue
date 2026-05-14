@@ -205,8 +205,8 @@ function handleSubmit() {
       data: {
         tournament: tournamentId,
         ...rest,
-        start_date: combineDateAndTime(form.fields.value.start_date, start_time),
-        end_date: combineDateAndTime(form.fields.value.end_date, end_time),
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
     {

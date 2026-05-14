@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
+import { useGetUserProfile } from '@/api/accounts/accounts'
 import StatsSection from '@/components/stats/StatsSection.vue'
-import { useProfile } from '@/api/queries/accounts'
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 </script>

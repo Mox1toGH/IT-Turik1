@@ -51,7 +51,10 @@ import type {
   TeamUserList,
   TokenRefreshRequest,
   TokenRefreshResponse,
+  UpdateUserAvatar2Body,
+  UpdateUserAvatarBody,
   User,
+  UserAvatarUpdate,
   UserUpdate
 } from '../.ts.schemas';
 
@@ -709,6 +712,183 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getDeleteUserProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const updateUserAvatar2 = (
+    updateUserAvatar2Body: MaybeRef<UpdateUserAvatar2Body>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      updateUserAvatar2Body = unref(updateUserAvatar2Body);
+      const formData = new FormData();
+if(updateUserAvatar2Body.avatar !== undefined) {
+ formData.append(`avatar`, updateUserAvatar2Body.avatar)
+ }
+
+      return customInstance<UserAvatarUpdate>(
+      {url: `http://localhost:8000/api/accounts/profile/avatar/`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  
+
+
+export const getUpdateUserAvatar2MutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext> => {
+
+const mutationKey = ['updateUserAvatar2'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserAvatar2>>, {data: BodyType<UpdateUserAvatar2Body>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateUserAvatar2(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserAvatar2MutationResult = NonNullable<Awaited<ReturnType<typeof updateUserAvatar2>>>
+    export type UpdateUserAvatar2MutationBody = BodyType<UpdateUserAvatar2Body>
+    export type UpdateUserAvatar2MutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
+
+    export const useUpdateUserAvatar2 = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar2>>, TError,{data: BodyType<UpdateUserAvatar2Body>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof updateUserAvatar2>>,
+        TError,
+        {data: BodyType<UpdateUserAvatar2Body>},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateUserAvatar2MutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const updateUserAvatar = (
+    updateUserAvatarBody: MaybeRef<UpdateUserAvatarBody>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      updateUserAvatarBody = unref(updateUserAvatarBody);
+      const formData = new FormData();
+if(updateUserAvatarBody.avatar !== undefined) {
+ formData.append(`avatar`, updateUserAvatarBody.avatar)
+ }
+
+      return customInstance<UserAvatarUpdate>(
+      {url: `http://localhost:8000/api/accounts/profile/avatar/`, method: 'PATCH',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  
+
+
+export const getUpdateUserAvatarMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext> => {
+
+const mutationKey = ['updateUserAvatar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserAvatar>>, {data: BodyType<UpdateUserAvatarBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateUserAvatar(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUserAvatarMutationResult = NonNullable<Awaited<ReturnType<typeof updateUserAvatar>>>
+    export type UpdateUserAvatarMutationBody = BodyType<UpdateUserAvatarBody>
+    export type UpdateUserAvatarMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
+
+    export const useUpdateUserAvatar = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserAvatar>>, TError,{data: BodyType<UpdateUserAvatarBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof updateUserAvatar>>,
+        TError,
+        {data: BodyType<UpdateUserAvatarBody>},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateUserAvatarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const deleteUserAvatar = (
+    
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `http://localhost:8000/api/accounts/profile/avatar/`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getDeleteUserAvatarMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserAvatar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUserAvatar>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteUserAvatar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUserAvatar>>, void> = () => {
+          
+
+          return  deleteUserAvatar(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteUserAvatarMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUserAvatar>>>
+    
+    export type DeleteUserAvatarMutationError = ErrorType<ErrorResponseNotAuthenticated>
+
+    export const useDeleteUserAvatar = <TError = ErrorType<ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUserAvatar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof deleteUserAvatar>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteUserAvatarMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
