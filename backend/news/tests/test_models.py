@@ -70,4 +70,4 @@ class NewsModelTests(TestCase):
     def test_multiple_articles_by_same_author(self):
         NewsArticle.objects.create(title='N1', content={}, created_by=self.user)
         NewsArticle.objects.create(title='N2', content={}, created_by=self.user)
-        self.assertEqual(self.user.newsarticle_set.count(), 2)
+        self.assertEqual(self.user.created_news_articles.count(), 2)
