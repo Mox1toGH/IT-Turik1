@@ -353,7 +353,7 @@ const openImagePreview = (url: string) => {
 const handlePurchase = () => {
   if (!activeProduct.value) return
   purchase(
-    { productId: activeProduct.value.id, quantity: Number(purchaseQty.value || 1) },
+    { data: { product_id: activeProduct.value.id, quantity: Number(purchaseQty.value || 1) } },
     {
       onSuccess: (res: any) => {
         if (res.id) {
@@ -372,7 +372,7 @@ const handlePurchase = () => {
   )
 }
 
-const { data: adminCategoryData } = useAdminShopCategories({}, { enabled: isAdmin })
+const { data: adminCategoryData } = useAdminShopCategories({}, { query: { enabled: isAdmin } })
 const adminCategories = computed(() => adminCategoryData.value?.results ?? [])
 const isProductFormOpen = ref(false)
 const editingProduct = ref<ShopProduct | null>(null)
