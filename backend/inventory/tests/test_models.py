@@ -31,7 +31,7 @@ class InventoryModelTests(TestCase):
 
     def test_inventory_item_timestamps(self):
         item = UserInventory.objects.create(user=self.user, product=self.product)
-        self.assertIsNotNone(item.created_at)
+        self.assertIsNotNone(item.acquired_at)
         self.assertIsNotNone(item.updated_at)
 
     def test_multiple_items_for_same_user(self):
