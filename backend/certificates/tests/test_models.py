@@ -62,7 +62,7 @@ class CertificateModelTests(TestCase):
 
     def test_certificate_unique_code(self):
         cert = Certificate.objects.create(user=self.user, placement='1st')
-        self.assertIsInstance(uuid.UUID(cert.unique_code), uuid.UUID)
+        self.assertIsInstance(uuid.UUID(str(cert.unique_code)), uuid.UUID)
 
     def test_certificate_cascade_null(self):
         cert = Certificate.objects.create(user=self.user, team=self.team, placement='1st')
@@ -79,6 +79,7 @@ class CertificateModelTests(TestCase):
 
     def test_certificate_number_generation(self):
         cert = Certificate.objects.create(placement='1st')
+        cert.refresh_from_db()
         self.assertIn('CERT-', cert.certificate_number)
 
     def test_certificate_resolve_participant_name_with_username(self):
