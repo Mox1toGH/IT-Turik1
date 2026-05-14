@@ -61,11 +61,17 @@ class MyPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
-@extend_schema(operation_id='listMyPointsTransactions', responses={
-    200: PointsTransactionSerializer(many=True),
-    400: _400,
-    401: _401,
-})
+@extend_schema(
+    operation_id='listMyPointsTransactions',
+    parameters=[
+        OpenApiParameter('ordering', str, enum=['created_at', '-created_at', 'amount', '-amount'], description='Order by field'),
+    ],
+    responses={
+        200: PointsTransactionSerializer(many=True),
+        400: _400,
+        401: _401,
+    }
+)
 class MyPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
@@ -100,13 +106,19 @@ class AdminUserPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
-@extend_schema(operation_id='listAdminUserPointsTransactions', responses={
-    200: PointsTransactionSerializer(many=True),
-    400: _400,
-    401: _401,
-    403: _403,
-    404: _404,
-})
+@extend_schema(
+    operation_id='listAdminUserPointsTransactions',
+    parameters=[
+        OpenApiParameter('ordering', str, enum=['created_at', '-created_at', 'amount', '-amount'], description='Order by field'),
+    ],
+    responses={
+        200: PointsTransactionSerializer(many=True),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    }
+)
 class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
