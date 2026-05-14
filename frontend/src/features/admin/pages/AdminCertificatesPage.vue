@@ -141,11 +141,13 @@ const { showNotification } = useNotification()
 
 const { data: users } = useListUsers()
 const { data: teams } = useListTeams()
-const { data: tournamentsResponse } = useListTournaments({
-  page: 1,
-  pageSize: 200,
-  searchQuery: '',
-})
+const { data: tournamentsResponse, isLoading: isTournamentsLoading } = useListTournaments(
+  computed(() => ({
+    page: 1,
+    page_size: 200,
+    searchQuery: '',
+  })),
+)
 
 const templatesPage = ref(1)
 const templatesPageSize = 8

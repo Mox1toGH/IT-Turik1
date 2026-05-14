@@ -103,10 +103,10 @@ const {
   data: tournamentsResponse,
   isLoading: isTournamentsLoading,
   isError: isTournamentsError,
-} = useListTournaments({
+} = useListTournaments(computed(() => ({
   page: 1,
-  pageSize: 200,
-})
+  page_size: 200,
+})))
 
 const evaluationStatusOptions = [
   { value: 'all', label: 'All evaluations' },

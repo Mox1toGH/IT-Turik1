@@ -34,7 +34,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True,
     )
-    scores = ScoreItemSerializer(many=True, read_only=True)
+    scores = ScoreItemSerializer(many=True, required=True)
 
     class Meta:
         model = SubmissionEvaluation
@@ -132,14 +132,17 @@ class JuryAssignmentSerializer(serializers.ModelSerializer):
     submission_details = SubmissionSerializer(source='submission', read_only=True)
     round_details = RoundShortSerializer(source='submission.round', read_only=True)
     evaluation = SubmissionEvaluationSerializer(read_only=True)
+    @extend_schema_field(bool)
+    def get_is_evaluated(self, obj):
+        return hasattr(obj, 'evaluation')
+
     is_evaluated = serializers.SerializerMethodField()
 
     class Meta:
         model = JuryAssignment
         fields = ('id', 'submission', 'submission_details', 'round_details', 'evaluation', 'is_evaluated', 'created_at')
 
-    def get_is_evaluated(self, obj):
-        return hasattr(obj, 'evaluation')
+
 
 
 class AvailableJurySerializer(serializers.ModelSerializer):
