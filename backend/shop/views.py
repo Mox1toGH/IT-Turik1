@@ -84,7 +84,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 class PurchaseView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='purchaseProduct', responses={
+    @extend_schema(operation_id='purchaseProduct', request=PurchaseSerializer, responses={
         201: OrderSerializer,
         400: _400,
         401: _401,
