@@ -4,7 +4,8 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from points.models import PointsTransaction, UserPointsBalance
-from shop.models import AvatarFrame, Category, Order, Product, UserDigitalInventory
+from shop.models import AvatarFrame, Category, Order, Product
+from inventory.models import UserInventory
 
 
 class ShopApiTests(APITestCase):
@@ -180,7 +181,7 @@ class ShopApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(UserDigitalInventory.objects.filter(user=self.user, product=digital).exists())
+        self.assertTrue(UserInventory.objects.filter(user=self.user, product=digital).exists())
 
     def test_purchase_digital_product_rejects_duplicate_ownership(self):
         digital = Product.objects.create(
@@ -194,7 +195,7 @@ class ShopApiTests(APITestCase):
             is_active=True,
         )
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        UserDigitalInventory.objects.create(user=self.user, product=digital)
+        UserInventory.objects.create(user=self.user, product=digital)
         self.client.force_authenticate(user=self.user)
 
         response = self.client.post(
@@ -216,7 +217,7 @@ class ShopApiTests(APITestCase):
             digital_asset_url='/avatar-frames/fire-tongues.svg',
             is_active=True,
         )
-        inventory = UserDigitalInventory.objects.create(user=self.user, product=digital)
+        inventory = UserInventory.objects.create(user=self.user, product=digital)
         self.client.force_authenticate(user=self.user)
 
         inventory_url = reverse('shop-my-inventory')
