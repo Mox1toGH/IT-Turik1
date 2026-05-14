@@ -168,14 +168,15 @@ class UserSerializer(serializers.ModelSerializer):
             'phone',
             'city',
             'avatar',
+            'is_staff',
             'avatar_frame_url',
             'created_at',
             'needs_onboarding',
             'teams',
         )
-        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
+        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams', 'is_staff')
 
-    @extend_schema_field(UserTeamSerializer(many=True))
+    @extend_schema_field(serializers.URLField(allow_null=True))
     def get_avatar_frame_url(self, obj):
         from inventory.models import UserInventory
 
@@ -196,6 +197,7 @@ class UserSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(url)
         return url
 
+    @extend_schema_field(UserTeamSerializer(many=True))
     def get_teams(self, obj):
         return [
             {

@@ -30,42 +30,9 @@ import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
 
-type UserRole = 'admin' | 'team' | 'jury' | 'organizer'
-type TeamRef = { id: number; name: string }
-type ProfileLike = {
-  role?: UserRole
-  is_staff?: boolean
-  readonly teams?: readonly TeamRef[]
-}
+import type { User, AdminStats as AdminStatsResponse, PlayerStats as PlayerStatsResponse, TeamStats as TeamStatsResponse } from '@/api/.ts.schemas'
 
-type PlayerStatsResponse = {
-  total_tournaments: number
-  wins: number
-  losses: number
-  win_rate: number
-  average_evaluation_score: number
-  current_team_name: string | null
-}
-
-type TeamStatsResponse = {
-  win_rate: number
-  active_members_count: number
-  top_player: {
-    id: number
-    username: string
-    average_evaluation_score: number
-  } | null
-}
-
-type AdminStatsResponse = {
-  total_users: number
-  total_teams: number
-  total_tournaments: number
-  new_registrations_last_7_days: number
-  new_registrations_last_30_days: number
-  active_tournaments: number
-  users_by_role: Array<{ role: string; count: number }>
-}
+type ProfileLike = User
 
 interface Props {
   user?: ProfileLike | null

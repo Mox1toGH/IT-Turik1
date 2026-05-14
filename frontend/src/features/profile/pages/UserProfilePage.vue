@@ -244,6 +244,11 @@ const submitPointsUpdate = async () => {
   try {
     await modifyUserPoints({
       userId: userId.value,
+      data: {
+        operation: operation.value,
+        amount: amount.value,
+        reason: reason.value,
+      },
     })
     await refetchAdminBalance()
     reason.value = ''

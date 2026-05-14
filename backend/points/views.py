@@ -122,7 +122,7 @@ class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
 class AdminModifyUserPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='modifyUserPointsBalance', responses={
+    @extend_schema(operation_id='modifyUserPointsBalance', request=AdminPointsBalanceModifySerializer, responses={
         200: inline_serializer("AdminModifyPointsResponse", fields={
             "user": UserLookupSerializer(),
             "balance": UserPointsBalanceSerializer(),
