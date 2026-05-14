@@ -131,7 +131,7 @@ const canCancel = (status: ShopOrderStatus) => ['pending', 'confirmed'].includes
 
 const changeStatus = (orderId: number, status: 'pending' | 'confirmed' | 'shipped' | 'completed') => {
   updateStatus(
-    { orderId, body: { status } },
+    { orderId, data: { status } },
     {
       onSuccess: () => showNotification('Order status updated.', 'success'),
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),

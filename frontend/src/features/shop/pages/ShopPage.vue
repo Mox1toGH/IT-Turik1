@@ -273,7 +273,7 @@ import {
   useShopPurchase,
 } from '@/api/queries/shop'
 import { useNotification } from '@/composables/useNotification'
-import type { ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
+import type { ShopCategory, ShopProduct } from '@/api/queries/shop'
 
 const { showNotification } = useNotification()
 const { data: profile } = useProfile()

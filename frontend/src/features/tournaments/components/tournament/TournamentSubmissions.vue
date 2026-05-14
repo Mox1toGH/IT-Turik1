@@ -116,7 +116,7 @@
               >
                 <template #trigger="{ toggleOpen }">
                   <p class="text-muted" :title="submission.description" @click="toggleOpen">
-                    {{ truncateText(submission.description, 200) }}
+                    {{ truncateText(submission.description ?? '', 200) }}
                   </p>
                 </template>
               </large-text-modal>
