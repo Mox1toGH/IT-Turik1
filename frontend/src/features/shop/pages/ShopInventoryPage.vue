@@ -84,7 +84,7 @@ const items = computed(() => data.value?.results ?? [])
 
 const equip = (inventoryId: number) => {
   equipItem(
-    { inventoryId },
+    { data: { inventory_id: inventoryId } },
     {
       onSuccess: () => showNotification('Avatar frame equipped.', 'success'),
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
@@ -94,7 +94,7 @@ const equip = (inventoryId: number) => {
 
 const unequip = (inventoryId: number) => {
   unequipItem(
-    { inventoryId },
+    { data: { inventory_id: inventoryId } },
     {
       onSuccess: () => showNotification('Avatar frame removed.', 'success'),
       onError: (e) => showNotification(parseApiError(e)?.message, 'error'),

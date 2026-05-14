@@ -399,9 +399,9 @@ const { mutate: updateProduct, isPending: isUpdatingProduct } = useAdminUpdatePr
 const { mutate: deleteProduct, isPending: isDeletingProduct } = useAdminDeleteProduct()
 const isSavingProduct = computed(() => isCreatingProduct.value || isUpdatingProduct.value)
 
-const submitProductForm = (body: UpsertProductBody) => {
+const submitProductForm = (body: any) => {
   if (!editingProduct.value) {
-    createProduct(body, {
+    createProduct({ data: body }, {
       onSuccess: () => {
         isProductFormOpen.value = false
         showNotification('Product created.', 'success')
@@ -412,7 +412,7 @@ const submitProductForm = (body: UpsertProductBody) => {
   }
 
   updateProduct(
-    { id: editingProduct.value.id, body },
+    { id: editingProduct.value.id, data: body },
     {
       onSuccess: () => {
         isProductFormOpen.value = false
@@ -470,7 +470,7 @@ const { mutate: removeCategory } = useAdminDeleteCategory()
 
 const submitCategoryForm = () => {
   if (!editingCategoryId.value) {
-    createCategory(categoryForm.value, {
+    createCategory({ data: categoryForm.value }, {
       onSuccess: () => {
         categoryForm.value = { name: '' }
         showNotification('Category created.', 'success')
@@ -481,7 +481,7 @@ const submitCategoryForm = () => {
   }
 
   updateCategory(
-    { id: editingCategoryId.value, body: categoryForm.value },
+    { id: editingCategoryId.value, data: categoryForm.value },
     {
       onSuccess: () => {
         editingCategoryId.value = null
