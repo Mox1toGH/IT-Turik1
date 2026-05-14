@@ -23,9 +23,9 @@ class InventoryApiTests(APITestCase):
             role='team',
         )
 
-        self.category = Category.objects.create(name='Digital Goods')
+        self.category = Category.objects.create(name=f'Inventory Digital Goods {self.user.username}')
         self.avatar_frame = AvatarFrame.objects.create(
-            name='Inventory Frame',
+            name=f'Inventory Frame {self.user.username}',
             svg_file='avatar-frames/inventory.svg',
             is_active=True,
         )
@@ -95,7 +95,10 @@ class InventoryApiTests(APITestCase):
         response = self.client.post(self.equip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('inventory_id', response.data)
+        self.assertEqual(
+            response.data['details']['inventory_id'],
+            'Only digital items can be equipped.',
+        )
 
     def test_unequip_inventory_item(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.digital_product, is_equipped=True)
