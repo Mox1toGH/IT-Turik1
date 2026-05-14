@@ -116,7 +116,7 @@
             :src="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url"
             class="detail-image"
             alt="Product image"
-            @click="openImagePreview(activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url)"
+            @click="openImagePreview(activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url || '')"
           />
         </div>
         <p>{{ activeProduct.description || 'No description' }}</p>
@@ -131,7 +131,7 @@
               v-model="purchaseQty"
               type="number"
               :min="1"
-              :max="Math.max(1, activeProduct.stock_quantity)"
+              :max="Math.max(1, activeProduct.stock_quantity || 0)"
             />
           </label>
           <p><strong>Will deduct:</strong> {{ (purchaseQty || 1) * activeProduct.price }} points</p>
