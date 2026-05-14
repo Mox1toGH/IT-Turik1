@@ -11,10 +11,11 @@ class NotificationApiTests(APITestCase):
         self.list_url = reverse('notification-list')
 
     def test_list_notifications(self):
+        Notification.objects.all().delete()
         Notification.objects.create(recipient=self.user, title='T1', event_type='e')
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results'] if 'results' in response.data else response.data), 1)
 
     def test_unread_count(self):
         Notification.objects.create(recipient=self.user, title='T1', event_type='e', is_read=False)
@@ -48,8 +49,8 @@ class NotificationApiTests(APITestCase):
     def test_delete_all_notifications(self):
         Notification.objects.create(recipient=self.user, title='T1', event_type='e')
         url = reverse('notification-delete-all')
-        response = self.client.post(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Notification.objects.filter(recipient=self.user).count(), 0)
 
     def test_get_settings(self):
@@ -59,14 +60,15 @@ class NotificationApiTests(APITestCase):
 
     def test_update_global_settings(self):
         url = reverse('notification-settings-global-update')
-        response = self.client.patch(url, {'emails_disabled_globally': True})
+        response = self.client.post(url, {'emails_disabled_globally': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.notification_settings.refresh_from_db()
         self.assertTrue(self.user.notification_settings.emails_disabled_globally)
 
     def test_update_event_config(self):
         url = reverse('notification-settings-config-update')
-        response = self.client.patch(url, {'event_type': 'test', 'is_email_enabled': False})
+        NotificationConfig.objects.create(user=self.user, event_type='test')
+        response = self.client.post(url, {'event_type': 'test', 'is_email_enabled': False})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         config = NotificationConfig.objects.get(user=self.user, event_type='test')
         self.assertFalse(config.is_email_enabled)

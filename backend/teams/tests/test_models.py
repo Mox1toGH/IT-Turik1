@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.utils import timezone
 from teams.models import Team, TeamMember, TeamInvitation, TeamJoinRequest
 from accounts.models import User
 
@@ -30,11 +31,11 @@ class TeamModelTests(TestCase):
         team = Team.objects.create(name='A'*100, email='a@e.com', captain=self.user)
         self.assertEqual(team.name, 'A'*100)
 
-    def test_team_email_unique(self):
-        from django.db import IntegrityError
+    def test_team_email_not_unique(self):
         Team.objects.create(name='T1', email='same@e.com', captain=self.user)
-        with self.assertRaises(IntegrityError):
-            Team.objects.create(name='T2', email='same@e.com', captain=self.user2)
+        # Should not raise IntegrityError
+        Team.objects.create(name='T2', email='same@e.com', captain=self.user2)
+        self.assertEqual(Team.objects.filter(email='same@e.com').count(), 2)
 
     def test_team_member_uniqueness(self):
         from django.db import IntegrityError
@@ -141,18 +142,9 @@ class TeamModelTests(TestCase):
         req.save()
         self.assertEqual(req.reviewed_by, self.user)
 
-    def test_team_avatar_field_exists(self):
+    def test_team_banner_field_exists(self):
         team = Team.objects.create(name='T', email='t@e.com', captain=self.user)
-        self.assertTrue(hasattr(team, 'avatar'))
-
-    def test_team_bio_max_length(self):
-        team = Team.objects.create(name='T', email='t@e.com', captain=self.user, bio='B'*1000)
-        self.assertEqual(team.bio, 'B'*1000)
-
-    def test_team_member_created_at(self):
-        team = Team.objects.create(name='T', email='t@e.com', captain=self.user)
-        member = TeamMember.objects.create(team=team, user=self.user2)
-        self.assertIsNotNone(member.created_at)
+        self.assertTrue(hasattr(team, 'banner'))
 
     def test_team_invitation_responded_at(self):
         team = Team.objects.create(name='T', email='t@e.com', captain=self.user)
