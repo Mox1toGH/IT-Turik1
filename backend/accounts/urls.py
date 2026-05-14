@@ -1,6 +1,13 @@
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from .google_calendar import (
+    GoogleCalendarCallbackView,
+    GoogleCalendarConnectView,
+    GoogleCalendarDisconnectView,
+    GoogleCalendarStatusView,
+)
+
 from .views import (
     ActivationView,
     ChangePasswordView,
@@ -29,4 +36,9 @@ urlpatterns = [
     path('profile/avatar/', UserAvatarView.as_view(), name='profile_avatar'),
     path('users/', UserListView.as_view(), name='users'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
+
+    path('google-calendar/status/', GoogleCalendarStatusView.as_view(), name='google_calendar_status'),
+    path('google-calendar/connect/', GoogleCalendarConnectView.as_view(), name='google_calendar_connect'),
+    path('google-calendar/callback/', GoogleCalendarCallbackView.as_view(), name='google_calendar_callback'),
+    path('google-calendar/disconnect/', GoogleCalendarDisconnectView.as_view(), name='google_calendar_disconnect'),
 ]
