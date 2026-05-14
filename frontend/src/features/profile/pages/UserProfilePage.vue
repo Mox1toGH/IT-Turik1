@@ -244,18 +244,13 @@ const submitPointsUpdate = async () => {
   try {
     await modifyUserPoints({
       userId: userId.value,
-      body: {
-        operation: operation.value,
-        amount: operation.value === 'reset' ? undefined : Number(amount.value),
-        reason: reason.value.trim(),
-      },
     })
     await refetchAdminBalance()
     reason.value = ''
     amount.value = 0
     showNotification('Points balance updated.', 'success')
   } catch (error) {
-    showNotification(erorr?.message || 'Failed to update points balance.', 'error')
+    showNotification(error?.message || 'Failed to update points balance.', 'error')
   }
 }
 </script>
