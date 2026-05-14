@@ -23,7 +23,7 @@
           <ui-card v-for="order in orders" :key="order.id" class="order-card">
             <template #header>
               <div class="order-head">
-                <strong>#{{ order.id }} · {{ order.product.name }}</strong>
+                <strong>#{{ order.id }} Â· {{ order.product.name }}</strong>
                 <ui-badge>{{ order.status }}</ui-badge>
               </div>
             </template>
@@ -75,8 +75,10 @@ const { showNotification } = useNotification()
 const page = ref(1)
 const pageSize = ref(12)
 
-const { data, isLoading, isLoadingError, error } = useMyShopOrders({ page, pageSize })
-const { data: txData } = useMyPointsTransactions({ page: 1, pageSize: 100, ordering: '-created_at' })
+const { data, isLoading, isLoadingError, error } = useMyShopOrders(
+  computed(() => ({ page: page.value, page_size: pageSize.value })),
+)
+const { data: txData } = useMyPointsTransactions({ page: 1, page_size: 100, ordering: '-created_at' })
 const { mutate: cancelOrder, isPending: isCancelling } = useCancelMyShopOrder()
 
 const parsedError = computed(() => parseApiError(error.value))

@@ -98,12 +98,14 @@ const userFilter = ref('')
 
 watch([statusFilter, userFilter], () => { page.value = 1 })
 
-const { data, isLoading, isLoadingError, error } = useAdminShopOrders({
-  page,
-  pageSize,
-  status: statusFilter,
-  user: userFilter,
-})
+const { data, isLoading, isLoadingError, error } = useAdminShopOrders(
+  computed(() => ({
+    page: page.value,
+    page_size: pageSize.value,
+    status: statusFilter.value || undefined,
+    user: userFilter.value || undefined,
+  })),
+)
 const { mutate: updateStatus } = useAdminUpdateOrderStatus()
 const { mutate: cancelOrder, isPending: isCancelling } = useAdminCancelOrder()
 

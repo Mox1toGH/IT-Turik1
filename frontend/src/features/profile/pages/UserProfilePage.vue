@@ -204,6 +204,7 @@ import { useGetUser, useGetUserProfile } from '@/api/accounts/accounts'
 import { useAdminModifyUserPoints, useAdminUserPointsBalance } from '@/api/queries/points'
 import { useNotification } from '@/composables/useNotification'
 import { formatDate } from '@/lib/date'
+import { parseApiError } from '@/api/errors'
 
 const route = useRoute()
 const router = useRouter()
@@ -243,7 +244,7 @@ const submitPointsUpdate = async () => {
 
   try {
     await modifyUserPoints({
-      userId: userId.value,
+      id: userId.value,
       data: {
         operation: operation.value,
         amount: amount.value,
@@ -255,7 +256,8 @@ const submitPointsUpdate = async () => {
     amount.value = 0
     showNotification('Points balance updated.', 'success')
   } catch (error) {
-    showNotification(error?.message || 'Failed to update points balance.', 'error')
+    const parsed = parseApiError(error)
+    showNotification(parsed?.message || 'Failed to update points balance.', 'error')
   }
 }
 </script>
