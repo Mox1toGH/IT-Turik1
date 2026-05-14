@@ -317,7 +317,7 @@ class AdminOrderListView(generics.ListAPIView):
 class AdminOrderStatusUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='updateAdminOrderStatus', responses={
+    @extend_schema(operation_id='updateAdminOrderStatus', request=AdminOrderStatusUpdateSerializer, responses={
         200: OrderSerializer,
         400: _400,
         401: _401,
