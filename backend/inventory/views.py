@@ -37,7 +37,7 @@ class MyDigitalInventoryView(generics.ListAPIView):
 class EquipDigitalInventoryItemView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='equipDigitalInventoryItem', responses={
+    @extend_schema(operation_id='equipDigitalInventoryItem', request=EquipDigitalItemSerializer, responses={
         200: DigitalInventoryItemSerializer,
         400: _400,
         401: _401,
@@ -71,7 +71,7 @@ class EquipDigitalInventoryItemView(APIView):
 class UnequipDigitalInventoryItemView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='unequipDigitalInventoryItem', responses={
+    @extend_schema(operation_id='unequipDigitalInventoryItem', request=EquipDigitalItemSerializer, responses={
         200: DigitalInventoryItemSerializer,
         400: _400,
         401: _401,
