@@ -174,6 +174,7 @@ class RoundSummarySerializer(serializers.Serializer):
     round_name = serializers.CharField()
     total_score = serializers.FloatField()
     average_score = serializers.FloatField()
+    jury_breakdown = serializers.JSONField(required=False, allow_null=True)
 
 
 class TournamentRankingItemSerializer(serializers.Serializer):

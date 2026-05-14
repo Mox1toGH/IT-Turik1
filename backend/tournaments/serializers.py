@@ -226,6 +226,7 @@ class ScoreItemSerializer(serializers.Serializer):
 
 class SubmissionEvaluationSerializer(serializers.ModelSerializer):
     scores = ScoreItemSerializer(many=True, read_only=True)
+    final_score = serializers.FloatField(read_only=True)
 
     class Meta:
         model = SubmissionEvaluation
@@ -233,6 +234,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             'id',
             'scores',
             'total_score',
+            'final_score',
             'comment',
             'created_at',
         )

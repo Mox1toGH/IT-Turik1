@@ -326,6 +326,7 @@ class TeamMemberRemoveView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='leaveTeam',
+    request=None,
     responses={
         200: DetailResponseSerializer,
         400: _400,
@@ -445,6 +446,7 @@ class TeamInvitationAcceptView(TeamInvitationRespondView):
 
 @extend_schema(
     operation_id='declineTeamInvitation',
+    request=None,
     responses={
         200: TeamSerializer,
         400: _400,
@@ -558,6 +560,7 @@ class TeamJoinRequestReviewView(generics.GenericAPIView):
 
 @extend_schema(
     operation_id='acceptTeamJoinRequest',
+    request=None,
     responses={
         200: TeamSerializer,
         400: _400,
@@ -572,6 +575,7 @@ class TeamJoinRequestAcceptView(TeamJoinRequestReviewView):
 
 @extend_schema(
     operation_id='declineTeamJoinRequest',
+    request=None,
     responses={
         200: TeamSerializer,
         400: _400,
