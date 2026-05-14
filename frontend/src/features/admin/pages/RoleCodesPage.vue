@@ -8,6 +8,9 @@
           <p class="section-subtitle">
             Generate and monitor one-time registration codes for restricted roles.
           </p>
+          <p class="admin-nav-link">
+            <router-link to="/admin/certificates">Go to Certificates Admin</router-link>
+          </p>
         </div>
       </template>
 
@@ -128,8 +131,10 @@
                 </div>
               </ui-card>
 
-              <ui-card class="empty-card" v-if="!codes.length">
-                <p class="text-muted empty-error">No codes found for current filter.</p>
+              <ui-card class="empty-card">
+                <p v-if="!codes.length" class="text-muted empty-error">
+                  No codes found for current filter.
+                </p>
               </ui-card>
             </template>
           </div>
@@ -281,6 +286,16 @@ const formatDateTime = (value: string | number | Date) => {
   text-align: center;
 }
 
+.admin-nav-link {
+  margin: 0.4rem 0 0;
+}
+
+.admin-nav-link a {
+  font-weight: 700;
+  color: var(--brand-700);
+  text-decoration: none;
+}
+
 @media (max-width: 900px) {
   .counts {
     grid-template-columns: 1fr;
@@ -291,3 +306,4 @@ const formatDateTime = (value: string | number | Date) => {
   }
 }
 </style>
+

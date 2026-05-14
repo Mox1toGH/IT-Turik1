@@ -144,18 +144,23 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 
 .team-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
 .team-header h3 {
   font-family: var(--font-display);
+  min-width: 0;
 }
 
 .badges {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 .pagination {

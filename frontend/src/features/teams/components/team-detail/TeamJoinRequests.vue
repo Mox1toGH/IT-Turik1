@@ -43,9 +43,17 @@
           v-for="joinRequest in filteredPendingJoinRequests"
           :key="`join-request-${joinRequest.id}`"
         >
-          <div>
-            <p class="join-request-name">{{ joinRequest.user.username }}</p>
-            <p class="text-muted join-request-email">{{ joinRequest.user.email }}</p>
+          <div class="join-request-user">
+            <user-avatar
+              :avatar="joinRequest.user.avatar"
+              :username="joinRequest.user.username"
+              :full-name="joinRequest.user.full_name"
+              :size="40"
+            />
+            <div>
+              <p class="join-request-name">{{ joinRequest.user.username }}</p>
+              <p class="text-muted join-request-email">{{ joinRequest.user.email }}</p>
+            </div>
           </div>
 
           <template #footer>
@@ -90,6 +98,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 
@@ -130,6 +139,8 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
       onSuccess: () => {
         const pastTense = { accept: 'accepted', decline: 'declined' }
         showNotification(`Join request ${pastTense[action]}`, 'success')
+
+        queryClient.invalidateQueries({ queryKey: teamKeys.team(props.teamId) })
       },
       onError: (error) => {
         showNotification(error.message, 'error')
@@ -175,6 +186,12 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
 .join-request-name,
 .join-request-email {
   margin: 0;
+}
+
+.join-request-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .join-request-name {

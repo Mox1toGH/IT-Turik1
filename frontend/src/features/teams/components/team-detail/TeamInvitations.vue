@@ -59,13 +59,21 @@
             :key="`invitation-pending-${invitation.id}`"
             class="card-item"
           >
-            <div>
+            <div class="team-invitations-user">
+              <user-avatar
+                :avatar="invitation.user.avatar"
+                :username="invitation.user.username"
+                :full-name="invitation.user.full_name"
+                :size="40"
+              />
+              <div>
               <div style="display: flex; justify-content: space-between">
                 <p class="team-invitations-name">{{ invitation.user.username }}</p>
                 <ui-badge class>invited</ui-badge>
               </div>
 
               <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
+              </div>
             </div>
           </ui-card>
 
@@ -75,12 +83,22 @@
             class="card-item"
           >
             <template #header>
-              <div style="display: flex; justify-content: space-between">
-                <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
-                <div v-else style="display: flex; gap: 4px">
-                  <ui-badge variant="red">Declined</ui-badge>
-                  <ui-badge>Invatation</ui-badge>
+              <div class="team-invitations-user">
+                <user-avatar
+                  :avatar="invitation.user.avatar"
+                  :username="invitation.user.username"
+                  :full-name="invitation.user.full_name"
+                  :size="40"
+                />
+                <div style="flex: 1">
+                  <div style="display: flex; justify-content: space-between">
+                    <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                    <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
+                    <div v-else style="display: flex; gap: 4px">
+                      <ui-badge variant="red">Declined</ui-badge>
+                      <ui-badge>Invatation</ui-badge>
+                    </div>
+                  </div>
                 </div>
               </div>
             </template>
@@ -113,6 +131,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -219,11 +238,19 @@ const resendInvitation = (userId: number) => {
 }
 
 .team-invitations-name {
+  margin: 0;
   font-weight: 700;
 }
 
 .team-invitations-email {
+  margin: 0;
   font-size: 0.84rem;
+}
+
+.team-invitations-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .row-actions {

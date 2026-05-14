@@ -106,6 +106,7 @@
               form.errors.value.city
             }}</small>
           </label>
+
         </div>
 
         <div class="actions">

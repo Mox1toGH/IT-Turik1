@@ -1,6 +1,6 @@
 <template>
   <template v-if="user?.role === 'team' && (hasEligibleTeams || props.registeredTeamId)">
-    <ui-button :disabled="isPending" @click="open">
+    <ui-button v-if="!props.registeredTeamId" :disabled="isPending" @click="open">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
     </ui-button>
@@ -58,12 +58,7 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useGetUserProfile } from '@/api/accounts/accounts'
-import {
-  useListEligibleTeamsForTournament,
-  useRegisterTeamForTournament,
-  useUnregisterTeamFromTournament,
-} from '@/api/tournaments/tournaments'
+import { useProfile } from '@/api/queries/accounts'
 
 interface Props {
   tournamentId: number
@@ -72,7 +67,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const { data: user } = useGetUserProfile()
+const { data: user } = useProfile()
 
 const isOpen = ref(false)
 const search = ref('')
@@ -107,9 +102,7 @@ function handleJoin(teamId: number) {
   register(
     { id: props.tournamentId, data: { team_id: teamId } },
     {
-      onSuccess: () => {
-        close()
-      },
+      onSuccess: () => close(),
       onError: (error) => {
         showNotification(error?.message, 'error')
       },

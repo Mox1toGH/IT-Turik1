@@ -17,6 +17,13 @@
           </div>
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
         </div>
+        <user-avatar
+          :avatar="user?.avatar"
+          :username="user?.username || 'user'"
+          :full-name="user?.full_name || ''"
+          :size="108"
+          :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+        />
       </template>
 
       <div class="details">
@@ -142,8 +149,8 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { useGetUser } from '@/api/accounts/accounts'
-import { formatDate } from '@/lib/date'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { parseApiError } from '@/api/errors'
 
 const route = useRoute()
 const router = useRouter()

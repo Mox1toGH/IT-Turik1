@@ -129,12 +129,14 @@
     <div class="add-member-box" v-if="!team.is_in_active_tournament">
       <h3>Invite user</h3>
 
-      <ui-select
-        placeholder="Select user"
-        v-model="addMemberSelection"
-        :options="userOptions"
-        :isLoading="isLoadingUsers"
-      />
+      <div class="form-item">
+        <ui-select
+          placeholder="Select user"
+          v-model="addMemberSelection"
+          :options="userOptions"
+          :isLoading="isLoadingUsers"
+        />
+      </div>
 
       <ui-button
         @click="addMember"

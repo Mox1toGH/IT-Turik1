@@ -88,7 +88,7 @@ def get_user_join_request_status(*, team, user):
 class TeamMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar')
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
@@ -147,12 +147,18 @@ class TeamSerializer(serializers.ModelSerializer):
             'organization',
             'contact_telegram',
             'contact_discord',
+            'banner',
             'members',
             'is_member',
             'can_request_to_join',
             'is_in_active_tournament',
             'member_ids',
         )
+        read_only_fields = ('banner',)
+        extra_kwargs = {
+            'contact_telegram': {'required': False, 'allow_blank': True},
+            'contact_discord': {'required': False, 'allow_blank': True},
+        }
 
     def _request_user(self):
         request = self.context.get('request')
@@ -256,9 +262,15 @@ class TeamSerializer(serializers.ModelSerializer):
 
         return instance
 
+class TeamBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ('banner',)
+
 class DetailResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 
 class JoinRequestDetailResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
+

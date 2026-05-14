@@ -78,10 +78,12 @@ import { useUpdateEvent } from '@/api/tournaments/tournaments'
 interface Props {
   modelValue: boolean
   eventId: number
-  tournamentId: number
-  eventTitle: string
-  eventDescription: string
-  eventStartDate: Date | string
+  tournamentId: TournamentId
+  title: string
+  description: string
+  startDate: Date | string
+  eventType: 'meet' | 'event'
+  link: string
 }
 
 interface Form {
@@ -98,12 +100,11 @@ const emit = defineEmits<{
 
 const { showNotification } = useNotification()
 
-const date =
-  props.eventStartDate instanceof Date ? props.eventStartDate : new Date(props.eventStartDate)
+const date = props.startDate instanceof Date ? props.startDate : new Date(props.startDate)
 const pad = (value: number) => String(value).padStart(2, '0')
 const form = useForm<Form>(EditEventSchema, {
-  title: props.eventTitle,
-  description: props.eventDescription,
+  title: props.title,
+  description: props.description,
   startDate: date,
   startTime: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
 })
@@ -116,6 +117,8 @@ const editEvent = () => {
       data: {
         title: form.fields.value.title,
         description: form.fields.value.description,
+        type: props.eventType,
+        link: props.link,
         start_datetime: combineDateAndTime(
           form.fields.value.startDate,
           form.fields.value.startTime,

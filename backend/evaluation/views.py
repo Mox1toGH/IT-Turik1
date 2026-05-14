@@ -1,4 +1,3 @@
-from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
@@ -43,22 +42,6 @@ class JuryAssignmentListView(generics.ListAPIView):
         round_id = self.request.query_params.get('round_id')
         if round_id:
             qs = qs.filter(submission__round_id=round_id)
-        
-        # Filter by team not disqualified
-        qs = qs.filter(
-            submission__team__tournament_registrations__tournament=F('submission__round__tournament'),
-            submission__team__tournament_registrations__is_disqualified=False
-        )
-        
-        # Filter by tournament not finished
-        qs = qs.filter(
-            submission__round__tournament__status__in=[
-                Tournament.STATUS_DRAFT,
-                Tournament.STATUS_REGISTRATION,
-                Tournament.STATUS_RUNNING
-            ]
-        )
-        
         return qs
 
 
@@ -73,7 +56,7 @@ class JuryAssignmentDetailView(generics.RetrieveAPIView):
     serializer_class = JuryAssignmentSerializer
 
     def get_queryset(self):
-        qs = JuryAssignment.objects.filter(
+        return JuryAssignment.objects.filter(
             jury=self.request.user
         ).select_related(
             'submission',
@@ -81,23 +64,6 @@ class JuryAssignmentDetailView(generics.RetrieveAPIView):
             'submission__round',
             'submission__round__tournament',
         ).prefetch_related('evaluation')
-        
-        # Filter by team not disqualified
-        qs = qs.filter(
-            submission__team__tournament_registrations__tournament=F('submission__round__tournament'),
-            submission__team__tournament_registrations__is_disqualified=False
-        )
-        
-        # Filter by tournament not finished
-        qs = qs.filter(
-            submission__round__tournament__status__in=[
-                Tournament.STATUS_DRAFT,
-                Tournament.STATUS_REGISTRATION,
-                Tournament.STATUS_RUNNING
-            ]
-        )
-        
-        return qs
 
 
 @extend_schema(operation_id='createJuryEvaluation', responses={

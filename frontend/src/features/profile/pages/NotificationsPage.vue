@@ -90,6 +90,14 @@
                 >
                   {{ part.text }}
                 </router-link>
+                <router-link
+                  v-else-if="part.type === 'news'"
+                  :to="`/news#news-${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </router-link>
                 <span v-else>{{ part.text }}</span>
               </template>
             </p>
@@ -145,13 +153,9 @@ const isSettingsModalOpen = ref(false)
 const page = ref(1)
 const router = useRouter()
 
-const {
-  data: notificationsData,
-  isLoading,
-  error,
-} = useListNotifications(computed(() => ({ page: page.value })))
-const { mutate: markAsRead } = useMarkNotificationRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
+const { data: notificationsData, isLoading, error } = useNotifications(page)
+const { mutate: markAsRead } = useMarkAsRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 const { showNotification } = useNotification()
@@ -187,7 +191,7 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead({ id })
+  markAsRead(id)
 }
 
 const handleMarkAllRead = () => {
@@ -203,17 +207,10 @@ const handleDelete = (id: number) => {
     message: 'Are you sure you want to delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(
-        { id },
-        {
-          onSuccess: () => {
-            showNotification('Notification deleted', 'success')
-            isConfirmModalOpen.value = false
-          },
-          onError: (err) => {
-            console.error('Failed to delete notification:', err)
-            showNotification('Failed to delete notification', 'error')
-          },
+      deleteNotification(id, {
+        onSuccess: () => {
+          showNotification('Notification deleted', 'success')
+          isConfirmModalOpen.value = false
         },
       )
     },
@@ -269,13 +266,20 @@ const getRedirectUrl = (notification: Notification) => {
     }
     return '/teams'
   }
+  if (type === 'news_published') {
+    const match = notification.message.match(/\[news:(\d+):.+?\]/)
+    if (match) {
+      return `/news#news-${match[1]}`
+    }
+    return '/news'
+  }
   return null
 }
 
 const parseMessage = (message: string) => {
   const parts = []
-  // Matches [user:id:name] or [team:id:name]
-  const regex = /\[(user|team):(\d+):(.+?)\]/g
+  // Matches [user:id:name], [team:id:name], or [news:id:title]
+  const regex = /\[(user|team|news):(\d+):(.+?)\]/g
   let lastIndex = 0
   let match
 

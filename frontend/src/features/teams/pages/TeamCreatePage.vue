@@ -2,7 +2,7 @@
   <section class="page-shell teams-page">
     <ui-card>
       <template #header>
-        <div class="teams-header">
+        <div>
           <p class="section-eyebrow">Teams</p>
           <h1 class="section-title">Create new team</h1>
           <p class="section-subtitle">Create a team and optionally add initial members.</p>
@@ -199,10 +199,6 @@ const handleFormSubmit = () => {
 <style scoped>
 .teams-page {
   gap: 1.2rem;
-}
-
-.teams-header {
-  margin-bottom: 1rem;
 }
 
 .back-link {

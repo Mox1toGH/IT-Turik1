@@ -12,6 +12,7 @@ from .views import (
     TokenRefreshView,
     UserDetailView,
     UserListView,
+    UserAvatarView,
     UserProfileView,
 )
 
@@ -26,6 +27,7 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('role-codes/', RoleActivationCodeAdminView.as_view(), name='role_codes_admin'),
     path('profile/', UserProfileView.as_view(), name='profile'),
+    path('profile/avatar/', UserAvatarView.as_view(), name='profile_avatar'),
     path('users/', UserListView.as_view(), name='users'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
 ]

@@ -6,24 +6,40 @@
 
     <app-navbar />
 
-    <AppNotifications />
+    <Transition name="global-notice" mode="out-in">
+      <div
+        v-if="notification"
+        :key="notification.id"
+        :class="['notice', 'app-notice', notification.type, `type-${notification.type}`]"
+        role="status"
+        aria-live="polite"
+      >
+        <span>{{ notification.message }}</span>
+        <ui-button
+          class="close-notice-btn"
+          :variant="notification.type === 'success' ? 'default' : 'danger'"
+          size="sm"
+          type="button"
+          @click="hideNotification()"
+          ><CrossIcon
+        /></ui-button>
+      </div>
+    </Transition>
 
     <main class="page-content">
-      <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <div :key="$route.path">
-            <component :is="Component" />
-          </div>
-        </transition>
-      </router-view>
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useNotification } from '@/composables/useNotification'
 import AppNavbar from './components/shared/AppNavbar.vue'
+import UiButton from './components/ui/UiButton.vue'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
-import AppNotifications from './components/shared/AppNotifications.vue'
+import CrossIcon from './icons/CrossIcon.vue'
+
+const { notification, hideNotification } = useNotification()
 
 const applyTheme = () => {
   const html = document.documentElement
@@ -40,28 +56,6 @@ applyTheme()
 </script>
 
 <style scoped>
-.page-enter-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-.page-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
 .app-shell {
   --nav-offset: 76px;
   position: relative;
@@ -99,6 +93,57 @@ applyTheme()
   margin: 1.6rem auto 2.4rem;
   position: relative;
   z-index: 9;
+}
+
+.app-notice {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  margin: 0;
+  width: min(92vw, 420px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  z-index: 2000;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(20px);
+}
+
+.close-notice-btn {
+  background: transparent;
+  border: none;
+}
+
+.type-info {
+  color: #0f3a58;
+  background: #ecfeff;
+  border-color: #7dd3fc;
+}
+
+.type-warning {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.global-notice-enter-active,
+.global-notice-leave-active {
+  transition:
+    opacity 220ms ease,
+    transform 220ms ease;
+}
+
+.global-notice-enter-from,
+.global-notice-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.global-notice-enter-to,
+.global-notice-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @media (max-width: 680px) {

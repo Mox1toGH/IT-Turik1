@@ -49,11 +49,7 @@ class CanSetResults(HasTournamentPermission):
 
 
 class CanManageAssignments(HasTournamentPermission):
-    def has_permission(self, request, view):
-        return (
-            user_has_permission(request.user, Permission.MANAGE_ROUNDS) or
-            user_has_permission(request.user, Permission.SET_RESULTS)
-        )
+    required_permission = Permission.MANAGE_ROUNDS
 
 
 class CanManageRoundsOrReadOnly(HasTournamentPermissionOrReadOnly):

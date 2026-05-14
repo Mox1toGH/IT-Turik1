@@ -18,20 +18,33 @@
           <template v-else>
             <router-link to="/" :class="navItemClass('home')">Home</router-link>
             <router-link to="/teams" :class="navItemClass('teams')">Teams</router-link>
+            <router-link to="/tournaments" :class="navItemClass('tournaments')"
+              >Tournaments</router-link
+            >
+            <router-link to="/news" :class="navItemClass('news')"> News </router-link>
+            <router-link to="/calendar" :class="navItemClass('calendar')"> Calendar </router-link>
             <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
               >Evaluations</router-link
             >
-            <router-link to="/profile" :class="navItemClass('profile')">Profile</router-link>
+            <router-link
+              to="/profile"
+              class="profile-avatar-link"
+              :class="{ active: isSectionActive('profile') }"
+            >
+              <user-avatar
+                :avatar="user?.avatar"
+                :username="user?.username || 'User'"
+                :full-name="user?.full_name || ''"
+                :size="34"
+                :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+              />
+            </router-link>
 
             <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
               >Admin</router-link
             >
 
             <notification-dropdown />
-
-            <ui-button @click="logout" size="sm" variant="danger" class="logout-btn"
-              >Logout</ui-button
-            >
           </template>
         </div>
 
@@ -83,13 +96,36 @@
               >Teams</router-link
             >
             <router-link
+              to="/tournaments"
+              :class="navItemClass('tournaments')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >Tournaments</router-link
+            >
+            <router-link
+              to="/news"
+              :class="navItemClass('news')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+            >
+              News
+            </router-link>
+            <router-link
+              to="/calendar"
+              :class="navItemClass('calendar')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >Calendar</router-link
+            >
+            <router-link
               v-if="isJury"
               to="/evaluation"
               :class="navItemClass('evaluation')"
               @click="mobileMenuOpen = false"
               class="mobile-nav-item"
-              >Evaluations</router-link
             >
+              Evaluations
+            </router-link>
             <router-link
               to="/profile"
               :class="navItemClass('profile')"
@@ -98,19 +134,23 @@
               >Profile</router-link
             >
             <router-link
+              to="/profile/notifications"
+              :class="navItemClass('notifications')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item mobile-notifications-link"
+            >
+              Notifications
+              <span v-if="unreadCount?.unread_count" class="mobile-notification-badge">
+                {{ unreadCount.unread_count > 99 ? '99+' : unreadCount.unread_count }}
+              </span>
+            </router-link>
+            <router-link
               v-if="isAdmin"
               to="/admin/role-codes"
               :class="navItemClass('admin')"
               @click="mobileMenuOpen = false"
               class="mobile-nav-item"
               >Admin</router-link
-            >
-            <ui-button
-              @click="handleMobileLogout"
-              size="sm"
-              variant="danger"
-              class="mobile-logout-btn"
-              >Logout</ui-button
             >
           </template>
         </div>
@@ -121,24 +161,34 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import UiButton from '../ui/UiButton.vue'
-import { useUserStore } from '@/stores/user'
+import { useRoute } from 'vue-router'
+import { useProfile } from '@/api/queries/accounts'
+import { useUnreadCount } from '@/api/queries/notifications'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
-import { useGetUserProfile } from '@/api/accounts/accounts'
+import UserAvatar from './UserAvatar.vue'
 
 const route = useRoute()
-const router = useRouter()
-const store = useUserStore()
 const mobileMenuOpen = ref(false)
 
-const { data: user } = useGetUserProfile()
+const { data: user } = useProfile()
+const { data: unreadCount } = useUnreadCount()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isJury = computed(() => user.value?.role === 'jury')
 
-type Section = 'home' | 'teams' | 'evaluation' | 'profile' | 'admin' | 'login' | 'register'
+type Section =
+  | 'home'
+  | 'teams'
+  | 'tournaments'
+  | 'news'
+  | 'calendar'
+  | 'evaluation'
+  | 'profile'
+  | 'notifications'
+  | 'admin'
+  | 'login'
+  | 'register'
 
 const navItemClass = (section: Section, cta = false) => ({
   'nav-item': true,
@@ -146,25 +196,19 @@ const navItemClass = (section: Section, cta = false) => ({
   active: isSectionActive(section),
 })
 
-const logout = () => {
-  store.logout()
-  router.push('/login')
-}
-
-const handleMobileLogout = () => {
-  mobileMenuOpen.value = false
-  logout()
-}
-
 const isSectionActive = (section: Section) => {
   const path = route.path
 
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
+  if (section === 'news') return path === '/news' || path.startsWith('/news/')
+  if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
+  if (section === 'calendar') return path === '/calendar'
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
-  if (section === 'admin') return path === '/admin/role-codes'
+  if (section === 'notifications') return path === '/profile/notifications'
+  if (section === 'admin') return path.startsWith('/admin/')
 
   return false
 }
@@ -223,9 +267,18 @@ const isSectionActive = (section: Section) => {
   transition: all 0.2s ease;
 }
 
-.logout-btn {
-  padding: 0.45rem 0.85rem;
+.profile-avatar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
   border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.profile-avatar-link:hover,
+.profile-avatar-link.active {
+  background: var(--secondary);
 }
 
 .nav-item:hover {
@@ -337,10 +390,25 @@ const isSectionActive = (section: Section) => {
   background: linear-gradient(120deg, var(--brand-600), var(--brand-500));
 }
 
-.mobile-logout-btn {
-  width: 100%;
-  margin-top: 0.5rem;
+.mobile-notifications-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
   border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  background: var(--destructive);
 }
 
 @media (max-width: 817px) {

@@ -5,6 +5,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Q
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, status, serializers as drf_serializers
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -33,6 +34,7 @@ from .serializers import (
     RoleActivationCodeListResponseSerializer,
     ActivationResponseSerializer,
     TeamUserListSerializer,
+    UserAvatarUpdateSerializer,
     UserSerializer,
     UserUpdateSerializer,
 )
@@ -50,6 +52,10 @@ class RegisterView(generics.CreateAPIView):
 
 @extend_schema(
     operation_id='activateAccount',
+    parameters=[
+        OpenApiParameter('uidb64', str, OpenApiParameter.PATH, description='Base64-encoded user ID'),
+        OpenApiParameter('token', str, OpenApiParameter.PATH, description='Activation token'),
+    ],
     responses={
         200: ActivationResponseSerializer,
         400: _400,
@@ -132,6 +138,48 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
         return self.request.user
 
 
+class UserAvatarView(generics.UpdateAPIView, generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = UserAvatarUpdateSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=['avatar'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateUserAvatar', responses={
+    200: UserAvatarUpdateSerializer,
+    400: _400,
+    401: _401,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteUserAvatar', responses={
+    204: OpenApiResponse(description='Avatar deleted successfully.'),
+    401: _401,
+})
+class UserAvatarView(generics.UpdateAPIView, generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = UserAvatarUpdateSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save(update_fields=['avatar'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @extend_schema(
     operation_id='listUsers',
     parameters=[
@@ -191,14 +239,21 @@ class PasswordResetRequestView(generics.GenericAPIView):
         )
 
 
-@extend_schema(methods=['GET'], operation_id='validatePasswordResetLink', responses={
-    200: MessageResponseSerializer,
-    400: _400,
-})
-@extend_schema(methods=['POST'], operation_id='confirmPasswordReset', request=PasswordResetConfirmSerializer, responses={
-    200: MessageResponseSerializer,
-    400: _400,
-})
+@extend_schema(methods=['GET'], operation_id='validatePasswordResetLink',
+    parameters=[
+        OpenApiParameter('uidb64', str, OpenApiParameter.PATH),
+        OpenApiParameter('token', str, OpenApiParameter.PATH),
+    ],
+    responses={200: MessageResponseSerializer, 400: _400},
+)
+@extend_schema(methods=['POST'], operation_id='confirmPasswordReset',
+    parameters=[
+        OpenApiParameter('uidb64', str, OpenApiParameter.PATH),
+        OpenApiParameter('token', str, OpenApiParameter.PATH),
+    ],
+    request=PasswordResetConfirmSerializer,
+    responses={200: MessageResponseSerializer, 400: _400},
+)
 class PasswordResetConfirmView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = PasswordResetConfirmSerializer

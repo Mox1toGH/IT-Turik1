@@ -109,9 +109,6 @@ def mark_round_evaluated(round_obj):
     from evaluation.services import apply_passing_count
     apply_passing_count(round_obj)
 
-    from evaluation.leaderboard_service import save_leaderboard_snapshot
-    save_leaderboard_snapshot(tournament_id=tournament.id, round_id=round_obj.id)
-
     _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
 
     return round_obj

@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.test import override_settings
@@ -13,10 +14,18 @@ from .models import RoleActivationCode, User
 from backend.permissions import Permission, user_has_permission
 
 
+VALID_GIF = (
+    b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!'
+    b'\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00'
+    b'\x00\x02\x02L\x01\x00;'
+)
+
+
 @override_settings(GOOGLE_OAUTH_CLIENT_ID='test-google-client-id')
 class GoogleAuthViewTests(APITestCase):
     url = reverse('google_login')
     profile_url = reverse('profile')
+    profile_avatar_url = reverse('profile_avatar')
 
     @patch('accounts.views.id_token.verify_oauth2_token')
     def test_google_login_creates_user_and_returns_jwt(self, mocked_verify):
@@ -240,6 +249,43 @@ class GoogleAuthViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=user.id).exists())
+
+    def test_profile_avatar_upload_updates_avatar(self):
+        user = User.objects.create_user(
+            username='avatar-user',
+            email='avatar-user@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_authenticate(user=user)
+        avatar = SimpleUploadedFile('avatar.gif', VALID_GIF, content_type='image/gif')
+
+        response = self.client.patch(
+            self.profile_avatar_url,
+            {
+                'avatar': avatar,
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertTrue(bool(user.avatar))
+
+    def test_profile_avatar_delete_removes_avatar(self):
+        user = User.objects.create_user(
+            username='avatar-remove-user',
+            email='avatar-remove-user@example.com',
+            password='StrongPass123!',
+        )
+        user.avatar = SimpleUploadedFile('avatar.gif', VALID_GIF, content_type='image/gif')
+        user.save(update_fields=['avatar'])
+        self.client.force_authenticate(user=user)
+
+        response = self.client.delete(self.profile_avatar_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        user.refresh_from_db()
+        self.assertFalse(bool(user.avatar))
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')

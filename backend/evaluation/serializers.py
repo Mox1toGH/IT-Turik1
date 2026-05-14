@@ -44,11 +44,11 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             'assignment',
             'scores',
             'total_score',
-            'average_score',
+            'final_score',
             'comment',
             'created_at',
         )
-        read_only_fields = ('total_score', 'average_score', 'created_at')
+        read_only_fields = ('total_score', 'final_score', 'created_at')
 
     def validate_assignment(self, value):
         request = self.context.get('request')

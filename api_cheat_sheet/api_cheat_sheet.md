@@ -1,67 +1,67 @@
-# API Cheat Sheet
+#  API Cheat Sheet
 
 ---
 
 ### 1. Турніри
 
-| Дія                                     | Метод         | Шлях                                                             | Доступ                             |
-| :-------------------------------------- | :------------ | :--------------------------------------------------------------- | :--------------------------------- |
-| **Список турнірів**                     | GET           | `/api/tournaments/`                                              | Всі                                |
-| **Деталі турніру**                      | GET           | `/api/tournaments/{id}/`                                         | Всі (+ `registered_team` для Auth) |
-| **Створити турнір**                     | POST          | `/api/tournaments/manage/`                                       | Admin                              |
-| **Редагувати турнір**                   | PATCH/DEL     | `/api/tournaments/manage/{id}/`                                  | Admin                              |
-| **Відкрити реєстрацію**                 | POST          | `/api/tournaments/{id}/start-registration/`                      | Admin                              |
-| **Доступні команди капітана**           | GET           | `/api/tournaments/{id}/eligible-teams/`                          | Auth                               |
-| **Зареєстровані команди турніру**       | GET           | `/api/tournaments/{id}/teams/`                                   | Auth                               |
-| **Активний турнір команди**             | GET           | `/api/tournaments/active/?team_id={id}`                          | Auth                               |
-| **Реєстрація команди**                  | POST          | `/api/tournaments/{id}/register-team/`                           | Капітан                            |
-| **Вихід команди з турніру**             | POST          | `/api/tournaments/{id}/leave-team/`                              | Капітан                            |
-| **Деталі реєстрації**                   | GET           | `/api/tournaments/{id}/registrations/{reg_id}/`                  | Admin                              |
-| **Дискваліфікація/реактивація команди** | PATCH         | `/api/tournaments/{id}/registrations/{reg_id}/disqualification/` | Admin                              |
-| **Список раундів**                      | GET           | `/api/tournaments/{id}/rounds/`                                  | Auth                               |
-| **Створити раунд**                      | POST          | `/api/tournaments/{id}/rounds/`                                  | Admin                              |
-| **Деталі/Зміна/Видалення раунду**       | GET/PATCH/DEL | `/api/tournaments/rounds/{id}/`                                  | GET: Auth, PATCH/DEL: Admin        |
-| **Почати раунд**                        | POST          | `/api/tournaments/rounds/{id}/start/`                            | Admin                              |
-| **Закрити прийом робіт**                | POST          | `/api/tournaments/rounds/{id}/close-submissions/`                | Admin                              |
-| **Фіналізація оцінок**                  | POST          | `/api/tournaments/rounds/{id}/mark-evaluated/`                   | Admin                              |
-| **Всі роботи турніру**                  | GET           | `/api/tournaments/{id}/submissions/`                             | Auth                               |
-| **Роботи моєї команди у турнірі**       | GET           | `/api/tournaments/{id}/my-submissions/`                          | Auth (автофільтр по команді)       |
-| **Всі роботи раунду**                   | GET           | `/api/tournaments/rounds/{id}/submissions/`                      | Auth (журі/адмін)                  |
-| **Мої роботи**                          | GET           | `/api/tournaments/submissions/`                                  | Команда                            |
-| **Подати роботу**                       | POST          | `/api/tournaments/submissions/`                                  | Лише капітан команди               |
-| **Деталі/Зміна роботи**                 | GET/PATCH     | `/api/tournaments/submissions/{id}/`                             | GET: Команда, PATCH: Лише капітан  |
-| **Поточне завдання**                    | GET           | `/api/tournaments/current-task/?tournament_id={id}` _(опц.)_     | Учасники                           |
-| **Список подій**                        | GET           | `/api/tournaments/events/?tournament={id}` _(опц.)_              | Всі                                |
-| **Деталі події**                        | GET           | `/api/tournaments/events/{id}/`                                  | Всі                                |
-| **Створити подію**                      | POST          | `/api/tournaments/events/`                                       | Admin                              |
-| **Редагувати подію**                    | PATCH         | `/api/tournaments/events/{id}/`                                  | Admin                              |
-| **Видалити подію**                      | DELETE        | `/api/tournaments/events/{id}/`                                  | Admin                              |
-| **Список іконок**                       | GET           | `/api/tournaments/icons/`                                        | Всі                                |
+| Дія | Метод | Шлях | Доступ |
+| :--- | :--- | :--- | :--- |
+| **Список турнірів** | GET | `/api/tournaments/` | Всі |
+| **Деталі турніру** | GET | `/api/tournaments/{id}/` | Всі (+ `registered_team` для Auth) |
+| **Створити турнір** | POST | `/api/tournaments/manage/` | Admin |
+| **Редагувати турнір** | PATCH/DEL| `/api/tournaments/manage/{id}/` | Admin |
+| **Відкрити реєстрацію**| POST | `/api/tournaments/{id}/start-registration/` | Admin |
+| **Доступні команди капітана** | GET | `/api/tournaments/{id}/eligible-teams/` | Auth |
+| **Зареєстровані команди турніру** | GET | `/api/tournaments/{id}/teams/` | Auth |
+| **Активний турнір команди** | GET | `/api/tournaments/active/?team_id={id}` | Auth |
+| **Реєстрація команди** | POST | `/api/tournaments/{id}/register-team/` | Капітан |
+| **Вихід команди з турніру** | POST | `/api/tournaments/{id}/leave-team/` | Капітан |
+| **Деталі реєстрації**| GET | `/api/tournaments/{id}/registrations/{reg_id}/` | Admin |
+| **Дискваліфікація/реактивація команди**| PATCH | `/api/tournaments/{id}/registrations/{reg_id}/disqualification/` | Admin |
+| **Список раундів** | GET | `/api/tournaments/{id}/rounds/` | Auth |
+| **Створити раунд** | POST | `/api/tournaments/{id}/rounds/` | Admin |
+| **Деталі/Зміна/Видалення раунду**| GET/PATCH/DEL | `/api/tournaments/rounds/{id}/` | GET: Auth, PATCH/DEL: Admin |
+| **Почати раунд** | POST | `/api/tournaments/rounds/{id}/start/` | Admin |
+| **Закрити прийом робіт**| POST | `/api/tournaments/rounds/{id}/close-submissions/` | Admin |
+| **Фіналізація оцінок** | POST | `/api/tournaments/rounds/{id}/mark-evaluated/` | Admin |
+| **Всі роботи турніру** | GET | `/api/tournaments/{id}/submissions/` | Auth |
+| **Роботи моєї команди у турнірі** | GET | `/api/tournaments/{id}/my-submissions/` | Auth (автофільтр по команді) |
+| **Всі роботи раунду** | GET | `/api/tournaments/rounds/{id}/submissions/` | Auth (журі/адмін) |
+| **Мої роботи** | GET | `/api/tournaments/submissions/` | Команда |
+| **Подати роботу** | POST | `/api/tournaments/submissions/` | Лише капітан команди |
+| **Деталі/Зміна роботи** | GET/PATCH | `/api/tournaments/submissions/{id}/` | GET: Команда, PATCH: Лише капітан |
+| **Поточне завдання** | GET | `/api/tournaments/current-task/?tournament_id={id}` *(опц.)* | Учасники |
+| **Список подій** | GET | `/api/tournaments/events/?tournament={id}` *(опц.)* | Всі |
+| **Деталі події** | GET | `/api/tournaments/events/{id}/` | Всі |
+| **Створити подію** | POST | `/api/tournaments/events/` | Admin |
+| **Редагувати подію** | PATCH | `/api/tournaments/events/{id}/` | Admin |
+| **Видалити подію** | DELETE | `/api/tournaments/events/{id}/` | Admin |
+| **Список іконок** | GET | `/api/tournaments/icons/` | Всі |
 
 > **`GET /api/tournaments/current-task/`**
->
 > - Повертає перший активний раунд (`status=active`) серед турнірів зі статусом `running`, відсортований за `end_date`, `id`.
 > - Опційний фільтр: `tournament_id` (query param).
 > - Доступ: лише авторизовані користувачі, які є `admin` або учасниками/капітанами команди.
 > - Якщо активного раунду немає — `404` (`No active round is available right now.`).
 > - Поля відповіді: `id`, `tournament_id`, `tournament_name`, `name`, `task`, `deadline`, `must_have_requirements`, `tech_requirements`.
 
-### 2. Раунди
+### 2. Раунди 
 
-| Дія                          | Метод         | Шлях                                                               | Доступ |
-| :--------------------------- | :------------ | :----------------------------------------------------------------- | :----- | ----- |
-| **Розподіл робіт (журі)**    | POST          | `/api/evaluation/rounds/{id}/assign-jury/`                         | Admin  |
-| **Доступне журі для раунду** | GET           | `/api/evaluation/rounds/{id}/available-jury/?include_assigned=true | false` | Admin |
-| **Призначені роботи**        | GET           | `/api/evaluation/assignments/`                                     | Jury   |
-| **Відправити оцінку**        | POST          | `/api/evaluation/evaluate/`                                        | Jury   |
-| **Перегл/Зміна/Вид. оцінки** | GET/PATCH/DEL | `/api/evaluation/evaluate/{id}/`                                   | Jury   |
+| Дія | Метод | Шлях | Доступ |
+| :--- | :--- | :--- | :--- |
+| **Розподіл робіт (журі)**| POST | `/api/evaluation/rounds/{id}/assign-jury/` | Admin |
+| **Доступне журі для раунду**| GET | `/api/evaluation/rounds/{id}/available-jury/?include_assigned=true|false` | Admin |
+| **Призначені роботи** | GET | `/api/evaluation/assignments/` | Jury |
+| **Відправити оцінку** | POST | `/api/evaluation/evaluate/` | Jury |
+| **Перегл/Зміна/Вид. оцінки**| GET/PATCH/DEL| `/api/evaluation/evaluate/{id}/` | Jury |
+
+
 
 ---
 
 ### 1. Турніри (Admin)
 
 **Деталі турніру — GET `/api/tournaments/{id}/`**
-
 ```json
 {
   "id": 5,
@@ -79,13 +79,11 @@
   }
 }
 ```
-
 > Поле `registered_team` — команда, якою авторизований користувач зареєстрований у цьому турнірі (капітан або учасник, `is_active=true`).
 > Якщо не авторизований або команди немає — `registered_team: null`.
 > Використовується для визначення `team` при поданні submission.
 
 **Створення турніру — POST `/api/tournaments/manage/`**
-
 ```json
 {
   "name": "Hack 2026",
@@ -98,7 +96,6 @@
 ```
 
 **Редагування турніру — PATCH `/api/tournaments/manage/{id}/`**
-
 ```json
 {
   "max_teams": 25,
@@ -107,23 +104,18 @@
 ```
 
 **Реєстрація команди — POST `/api/tournaments/{id}/register-team/`**
-
 ```json
 { "team_id": 10 }
 ```
-
 > **Перевірки колізій (Phase 7):**
->
 > - Команда не може бути зареєстрована в іншому активному турнірі (`registration` або `running`).
 > - Жоден учасник команди (включно з капітаном) не може одночасно брати участь в іншому активному турнірі у складі іншої команди.
 > - При конфлікті учасників API повертає email-и учасників, що вже беруть участь в іншому активному турнірі.
 
 **Вихід команди з турніру — POST `/api/tournaments/{id}/leave-team/`**
-
 ```json
 { "team_id": 10 }
 ```
-
 > Доступно лише капітану цієї команди.
 > Endpoint **не видаляє команду з БД і не видаляє запис реєстрації фізично**.
 > Фактично виконується soft-delete участі: реєстрація лишається в історії, але стає неактивною (`is_active = false`).
@@ -131,19 +123,16 @@
 > Якщо команда не має активної реєстрації в цьому турнірі — `400`.
 
 **Доступні команди капітана — GET `/api/tournaments/{id}/eligible-teams/`**
-
 ```json
 [
   { "id": 10, "name": "Team Alpha", "members_count": 3 },
   { "id": 14, "name": "Team Beta", "members_count": 2 }
 ]
 ```
-
 > Повертає тільки команди, де `team.captain_id == request.user.id`.
 > Додаткових перевірок eligibility тут немає (перевірки колізій виконуються на етапі реєстрації).
 
 **Зареєстровані команди турніру — GET `/api/tournaments/{id}/teams/`**
-
 ```json
 [
   {
@@ -161,24 +150,20 @@
   }
 ]
 ```
-
 > За замовчуванням повертає тільки активні реєстрації (`is_active=true`).
 > Щоб отримати також неактивні (soft-deleted) реєстрації, використовуйте `?include_inactive=true`.
 > Якщо турнір не існує — `404`.
 >
 > `status` filter:
->
 > - `?status=active` -> only active registrations (`is_active=true`)
 > - `?status=disqualified` -> only disqualified registrations (`is_active=false` and `disqualification_reason` is not empty)
 > - `?status=all` -> all registrations (active + inactive)
 >
 > Important distinction:
->
 > - `left team` -> `is_active=false` and empty `disqualification_reason`
 > - `disqualified team` -> `is_active=false` and non-empty `disqualification_reason`
 
 **Активний турнір команди — GET `/api/tournaments/active/?team_id={id}`**
-
 ```json
 {
   "id": 3,
@@ -187,30 +172,24 @@
   "start_date": "2026-05-01T10:00:00Z"
 }
 ```
-
 > Повертає активний турнір команди (статус `registration` або `running`) тільки для активної реєстрації (`is_active=true`).
 > Якщо активної участі для `team_id` немає — повертає `404`.
 
 **Дисквалификація/Активація команди (Admin) — PATCH `/api/tournaments/{id}/registrations/{reg_id}/disqualification/`**
-
 ```json
 { "action": "disqualify", "disqualification_reason": "Rules violation" }
 ```
-
 ```json
 { "action": "reactivate" }
 ```
-
 ```json
 { "action": "disqualify" }
 ```
-
 > If `disqualification_reason` is empty, backend saves default reason: `Disqualified by admin`.
 > Деактивовані команди (`is_active: false`) не можуть подавати роботи. Запис не видаляється.
 > Деактивація можлива як вручну через цей endpoint, так і автоматично після оцінювання раунду за правилом `passing_count`.
 
 > **Обмеження під час активного турніру (`registration` або `running`):**
->
 > - Заборонені: інвайти в команду, join-request, прийняття інвайту/заявки, зміна `name`, зміна `is_public`.
 > - Дозволено: видалення учасника капітаном, але тільки коли поточний розмір команди **строго більший** за `tournament.min_team_members`.
 > - Для фронтенду в `GET /api/teams/{id}/` доступне поле `is_in_active_tournament` (`true/false`) для умовного приховування заборонених дій.
@@ -218,12 +197,10 @@
 ### 2. Раунди
 
 **Список раундів — GET `/api/tournaments/{id}/rounds/`**
-
 - Доступні фільтри: `?status=active,submission_closed`
 - Звичайні користувачі бачать тільки раунди, які не мають статусу `draft`. Адміни бачать всі.
 
 **Створення раунду (Admin) — POST `/api/tournaments/{id}/rounds/`**
-
 ```json
 {
   "name": "Final Stage",
@@ -245,11 +222,9 @@
 ```
 
 **Видалення раунду (Admin) — DELETE `/api/tournaments/rounds/{id}/`**
-
 - Неможливо видалити останній раунд турніру.
 
 **Редагування раунду — PATCH `/api/tournaments/rounds/{id}/`**
-
 ```json
 {
   "passing_count": 8,
@@ -263,7 +238,6 @@
 ```
 
 > **Валідація раунду (актуальна бізнес-логіка):**
->
 > - `start_date < end_date` (інакше 400).
 > - Дати раунду мають бути в межах дат турніру (включно): дозволено `start_date == tournament.start_date` і `end_date == tournament.end_date`.
 > - Раунди одного турніру не можуть перетинатися в часі. Перевірка виконується в бізнес-логіці моделі (`Round.clean()`), тому працює однаково для create/update.
@@ -273,7 +247,6 @@
 > Якщо вказано `passing_count` і в турнірі вже є зареєстровані команди, значення не може перевищувати кількість зареєстрованих команд. Якщо команд ще немає (реєстрація не відкрита), перевірка пропускається.
 >
 > **Авто-відсів за `passing_count` (після evaluated):**
->
 > - Застосовується під час переходу раунду в `evaluated` (manual `mark-evaluated` або auto-evaluation).
 > - Команди з `rank <= passing_count` залишаються активними.
 > - Команди з `rank > passing_count` автоматично деактивуються в `TournamentTeamRegistration` (`is_active=false`).
@@ -282,7 +255,6 @@
 ### 3. Роботи (Команда)
 
 **Всі роботи турніру — GET `/api/tournaments/{id}/submissions/`**
-
 ```json
 [
   {
@@ -307,23 +279,19 @@
   }
 ]
 ```
-
 > Повертає всі submissions усіх раундів вказаного турніру, відсортовані за `updated_at` (спадання).
 > Якщо турнір не існує — `404`.
 
 **Роботи моєї команди у турнірі — GET `/api/tournaments/{id}/my-submissions/`**
-
 > Повертає submissions тільки однієї команди користувача в цьому турнірі.
 > `team_id` передавати не потрібно: бекенд сам знаходить команду користувача (капітан або учасник) в активній реєстрації турніру.
 > Якщо користувач не бере участі в цьому турнірі — `404`.
 
 **Всі роботи раунду (Jury/Admin) — GET `/api/tournaments/rounds/{id}/submissions/`**
-
 > Аналогічна структура відповіді, але фільтрує submissions тільки для конкретного раунду.
 > Якщо раунд не існує — `404`.
 
 **Подача роботи — POST `/api/tournaments/submissions/`**
-
 ```json
 {
   "round": 1,
@@ -332,32 +300,27 @@
   "description": "Ready for review"
 }
 ```
-
 > `team` is not accepted in request payload.
 > Backend resolves team automatically from active tournament registration for selected `round`, where `request.user` is captain.
 > If user is not a captain of an active registered team in this tournament, API returns `400` with `team` error.
 > If multiple active captain teams are found in the same tournament, API returns `400` (ambiguous team).
-> **Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
-
+**Редагування роботи — PATCH `/api/tournaments/submissions/{id}/`**
 ```json
 {
   "github_url": "https://github.com/user/new-repo-link",
   "description": "Updated submission notes"
 }
 ```
-
 > Редагувати submission може тільки капітан відповідної команди.
 > Перегляд (`GET`) лишається доступним для капітана та учасників цієї команди.
 
 ### 4. Розклад / Події (Admin)
 
 **Список подій — GET `/api/tournaments/events/`**
-
 > Опційний query-параметр: `?tournament={id}` для фільтрації за турніром.
 > Сортування: за `start_datetime` (зростання).
 
 **Створення події — POST `/api/tournaments/events/`**
-
 ```json
 {
   "tournament": 1,
@@ -371,7 +334,6 @@
 ```
 
 **Створення без іконки (авто-призначення) — POST `/api/tournaments/events/`**
-
 ```json
 {
   "tournament": 1,
@@ -380,14 +342,11 @@
   "start_datetime": "2026-05-02T18:00:00Z"
 }
 ```
-
 > Якщо `icon` не передано або `null`:
->
 > - `type == "meet"` → автоматично призначається іконка з `name="meet_default"` (camera)
 > - `type == "event"` → автоматично призначається іконка з `name="event_default"` (calendar)
 
 **Редагування події — PATCH `/api/tournaments/events/{id}/`**
-
 ```json
 {
   "title": "Updated Title",
@@ -396,40 +355,33 @@
 ```
 
 **Видалення події — DELETE `/api/tournaments/events/{id}/`**
-
 > Повертає `204 No Content`.
 
 > **Валідація подій:**
->
 > - `start_datetime` є обов'язковим.
 > - Якщо `type == "event"` — поле `link` ігнорується (встановлюється порожнім).
 > - Якщо `type == "meet"` — поле `link` дозволено.
 > - `tournament` має існувати.
 
 **Список іконок — GET `/api/tournaments/icons/`**
-
 ```json
 [
   { "id": 1, "name": "meet_default", "path": "icons/camera.svg" },
   { "id": 2, "name": "event_default", "path": "icons/calendar.svg" }
 ]
 ```
-
 > Повертає всі іконки з бази. Доступ публічний.
 
 ### 5. Оцінювання (Jury/Admin)
 
 **Розподіл робіт (Admin) — POST `/api/evaluation/rounds/{id}/assign-jury/`**
-
 ```json
 [
   { "submission": 101, "jury": [12, 13] },
   { "submission": 102, "jury": [12, 13] }
 ]
 ```
-
 > **Логіка призначення (manual replace-all):**
->
 > - endpoint доступний тільки у `round.status = submission_closed`;
 > - потрібно покрити **всі** submission цього раунду;
 > - для кожного submission має бути щонайменше 1 jury;
@@ -439,14 +391,11 @@
 > - при успіху попередні призначення раунду видаляються, створюються рівно ті, що передані в payload.
 
 **Доступне журі (Admin) — GET `/api/evaluation/rounds/{id}/available-jury/`**
-
 > Query param: `include_assigned` (`true` за замовчуванням).
->
 > - `true`: повертає всіх користувачів з роллю `jury`.
 > - `false`: виключає журі, яке вже має призначення в цьому раунді.
 
 **Створення оцінки (Jury) — POST `/api/evaluation/evaluate/`**
-
 ```json
 {
   "tournament_id": 123,
@@ -458,9 +407,7 @@
   "comment": "Excellent work!"
 }
 ```
-
-_Response Example:_
-
+*Response Example:*
 ```json
 {
   "id": 12,
@@ -471,13 +418,12 @@ _Response Example:_
   ],
   "comment": "Excellent work!",
   "total_score": 18,
-  "average_score": 9.0,
+  "final_score": 9.0,
   "created_at": "2026-04-26T10:00:00Z"
 }
 ```
 
 **Оновлення оцінки (Jury) — PATCH `/api/evaluation/evaluate/{id}/`**
-
 ```json
 {
   "scores": [
@@ -489,7 +435,6 @@ _Response Example:_
 ```
 
 > **Важливо для оцінювання:**
->
 > - `tournament_id` є **обов'язковим** для створення оцінки.
 > - `assignment` має належати саме до переданого `tournament_id`, інакше повернеться помилка валідації.
 > - `tournament_id` використовується лише для валідації (write-only) і не повертається у відповіді.
@@ -498,3 +443,73 @@ _Response Example:_
 > - Дублікати `criterion_id` не допускаються.
 > - Необхідно передати оцінки для **всіх** критеріїв раунду. Якщо потрібен 0, його потрібно передати явно (`"score": 0`).
 > - **Авто-фіналізація:** Коли всі `JuryAssignment` для раунду мають оцінки, раунд автоматично переходить у статус `evaluated`. У цей момент також застосовується авто-відсів команд за `passing_count` поточного раунду. Якщо це останній раунд — турнір завершується автоматично.
+
+---
+
+### Team Banner API
+
+**Оновлення банера команди — PATCH `/api/teams/{id}/banner/`**
+- Auth required.
+- Доступ на зміну: тільки капітан команди.
+- `Content-Type: multipart/form-data`
+- Поле: `banner` (image file)
+
+Приклад (curl):
+```bash
+curl -X PATCH "http://localhost:8000/api/teams/3/banner/" \
+  -H "Authorization: Bearer <token>" \
+  -F "banner=@/path/to/banner.jpg"
+```
+
+Успіх: `200 OK` + оновлений об'єкт команди (включно з полем `banner`).
+
+**Видалення банера команди — DELETE `/api/teams/{id}/banner/`**
+- Auth required.
+- Доступ на видалення: тільки капітан команди.
+
+Приклад (curl):
+```bash
+curl -X DELETE "http://localhost:8000/api/teams/3/banner/" \
+  -H "Authorization: Bearer <token>"
+```
+
+Успіх: `200 OK` + оновлений об'єкт команди, де `banner: null`.
+
+**Поле в Team API**
+- У відповідях `GET /api/teams/` та `GET /api/teams/{id}/` присутнє поле:
+  - `banner: string | null` (URL банера або `null`).
+
+---
+
+### Tournament Banner API
+
+**Оновлення банера турніру — PATCH `/api/tournaments/manage/{id}/banner/`**
+- Auth required.
+- Доступ на зміну: користувач із правом редагування турнірів (`CanEditTournament` / admin).
+- `Content-Type: multipart/form-data`
+- Поле: `banner` (image file)
+
+Приклад (curl):
+```bash
+curl -X PATCH "http://localhost:8000/api/tournaments/manage/5/banner/" \
+  -H "Authorization: Bearer <token>" \
+  -F "banner=@/path/to/banner.jpg"
+```
+
+Успіх: `200 OK` + оновлений об'єкт турніру (включно з полем `banner`).
+
+**Видалення банера турніру — DELETE `/api/tournaments/manage/{id}/banner/`**
+- Auth required.
+- Доступ на видалення: користувач із правом редагування турнірів (`CanEditTournament` / admin).
+
+Приклад (curl):
+```bash
+curl -X DELETE "http://localhost:8000/api/tournaments/manage/5/banner/" \
+  -H "Authorization: Bearer <token>"
+```
+
+Успіх: `200 OK` + оновлений об'єкт турніру, де `banner: null`.
+
+**Поле в Tournament API**
+- У відповідях `GET /api/tournaments/` та `GET /api/tournaments/{id}/` присутнє поле:
+  - `banner: string | null` (URL банера або `null`).

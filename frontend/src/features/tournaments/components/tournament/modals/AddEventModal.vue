@@ -108,8 +108,10 @@ const createEvent = () => {
     {
       data: {
         tournament: props.tournamentId,
+        type: 'event',
         title: form.fields.value.title,
         description: form.fields.value.description,
+        link: '',
         start_datetime: combineDateAndTime(
           form.fields.value.start_date,
           form.fields.value.start_time,

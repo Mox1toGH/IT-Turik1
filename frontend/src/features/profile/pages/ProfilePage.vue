@@ -15,6 +15,16 @@
           </div>
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
         </div>
+        <div class="avatar-row">
+          <user-avatar
+            :avatar="user?.avatar"
+            :username="user?.username || 'user'"
+            :full-name="user?.full_name || ''"
+            :size="108"
+            :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+          />
+          <avatar-modal :user="user" :disabled="isLoading" />
+        </div>
       </template>
 
       <div class="details">
@@ -27,7 +37,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.username || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -40,7 +50,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.email || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -66,7 +76,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.full_name || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -79,7 +89,7 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong>{{ user?.city || '-' }}</strong>
+            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -125,10 +135,17 @@
         </ui-card>
       </div>
 
+      <div class="stats-link-row">
+        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
+          >My Statistics</ui-button
+        >
+      </div>
+
       <div class="actions">
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
-        <ui-button variant="secondary" :disabled="isLoading || isDeleting" @click="logout">
+        <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
+        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
           Log Out
         </ui-button>
       </div>
@@ -149,11 +166,13 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
+import AvatarModal from '../components/profile/modals/AvatarModal.vue'
+import { useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { useGetUserProfile } from '@/api/accounts/accounts'
-import { formatDate } from '@/lib/date'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { parseApiError } from '@/api/errors'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
@@ -173,6 +192,15 @@ const goToEditProfile = () => {
 const goToNotifications = () => {
   router.push('/profile/notifications')
 }
+
+const goToCertificates = () => {
+  router.push('/profile/certificates')
+}
+
+const formatDate = (date: Date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('uk-UA')
+}
 </script>
 
 <style scoped>
@@ -190,6 +218,13 @@ const goToNotifications = () => {
 .meta {
   margin: 0;
   font-size: 0.86rem;
+}
+
+.avatar-row {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .details {
@@ -258,15 +293,19 @@ const goToNotifications = () => {
   flex-wrap: wrap;
 }
 
+.stats-link-row {
+  margin-top: 0.9rem;
+}
+
 .danger-zone {
   margin-top: 1.4rem;
   padding-top: 1rem;
   border: 1px solied var(--destructive);
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
-  align-items: start;
 }
 
 .danger-text {
+  margin: 0 0 0.6rem;
   color: color-mix(in srgb, var(--destructive) 80%, transparent);
   font-weight: 600;
 }

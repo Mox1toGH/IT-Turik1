@@ -7,3 +7,6 @@ google-auth
 python-dotenv
 drf-spectacular
 
+Pillow
+WeasyPrint
+qrcode[pil]

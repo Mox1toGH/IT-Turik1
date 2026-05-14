@@ -1,5 +1,5 @@
 import { combineDateAndTime } from '@/lib/date'
-import { tiptapJsonToText } from '@/lib/tiptap'
+import { tiptapJsonToText } from '@/lib/utils'
 import * as v from 'valibot'
 
 export const TimeSchema = v.pipe(
@@ -41,6 +41,8 @@ export const CreateTournamentSchema = v.pipe(
     ['endDate'],
   ),
 )
+
+export const EditTournamentSchema = CreateTournamentSchema
 
 function tiptapJsonMinLength(min: number, message: string) {
   return v.pipe(
@@ -85,12 +87,10 @@ export const CreateRoundSchema = v.pipe(
 
   v.forward(
     v.partialCheck(
-      [['start_date'], ['end_date'], ['start_time'], ['end_time']],
-      (input) => {
-        const combinedStartDate = combineDateAndTime(input.start_date, input.start_time)
-        const combinedEndDate = combineDateAndTime(input.end_date, input.end_time)
-        return combinedEndDate > combinedStartDate
-      },
+      [['start_date'], ['start_time'], ['end_date'], ['end_time']],
+      (input) =>
+        combineDateAndTime(input.end_date, input.end_time) >
+        combineDateAndTime(input.start_date, input.start_time),
       'End date/time must be after start date/time',
     ),
     ['end_date'],

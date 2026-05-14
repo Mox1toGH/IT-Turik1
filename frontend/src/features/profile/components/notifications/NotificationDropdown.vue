@@ -36,32 +36,63 @@
         <div v-else-if="unreadNotifications.length === 0" class="state-message">
           There are currently no new notifications
         </div>
-        <div v-else class="notifications-list">
-          <div
-            v-for="notification in unreadNotifications"
-            :key="notification.id"
-            class="notification-item is-unread"
-            @click="markAsRead({ id: notification.id })"
-          >
-            <div class="item-content">
-              <div class="item-title-row">
-                <span v-if="!notification.is_read" class="unread-dot"></span>
-                <span class="item-title">{{ notification.title }}</span>
-                <button
-                  v-if="getRedirectUrl(notification)"
-                  class="redirect-btn-mini"
-                  @click.stop="handleNotificationClick(notification)"
-                  title="Go to page"
-                >
-                  <external-link-icon class="icon" />
-                </button>
-                <button
-                  class="delete-btn-mini"
-                  @click.stop="handleDelete(notification.id)"
-                  title="Delete notification"
-                >
-                  <trash-icon class="icon" />
-                </button>
+          <div v-else class="notifications-list">
+            <div 
+              v-for="notification in unreadNotifications" 
+              :key="notification.id"
+              class="notification-item is-unread"
+              @click="markAsRead(notification.id)"
+            >
+              <div class="item-content">
+                <div class="item-title-row">
+                  <span v-if="!notification.is_read" class="unread-dot"></span>
+                  <span class="item-title">{{ notification.title }}</span>
+                  <button 
+                    v-if="getRedirectUrl(notification)"
+                    class="redirect-btn-mini" 
+                    @click.stop="handleNotificationClick(notification, $event)"
+                    title="Go to page"
+                  >
+                    <external-link-icon class="icon" />
+                  </button>
+                  <button 
+                    class="delete-btn-mini" 
+                    @click.stop="handleDelete(notification.id)"
+                    title="Delete notification"
+                  >
+                    <trash-icon class="icon" />
+                  </button>
+                </div>
+                <span class="item-message">
+                  <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
+                    <a 
+                      v-if="part.type === 'user'" 
+                      :href="`/users/${part.id}`" 
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </a>
+                    <router-link 
+                      v-else-if="part.type === 'team'" 
+                      :to="`/teams/${part.id}`" 
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </router-link>
+                    <router-link
+                      v-else-if="part.type === 'news'"
+                      :to="`/news#news-${part.id}`"
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </router-link>
+                    <span v-else>{{ part.text }}</span>
+                  </template>
+                </span>
+                <span class="item-date">{{ formatDate(notification.created_at) }}</span>
               </div>
               <span class="item-message">
                 <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
@@ -131,10 +162,10 @@ const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
 
-const { data: notifications, isLoading, error } = useListNotifications({ page: 1, page_size: 100 })
-const { data: unreadCount } = useGetUnreadNotificationCount()
-const { mutate: markAsRead } = useMarkNotificationRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
+const { data: notifications, isLoading, error } = useNotifications(1, 100)
+const { data: unreadCount } = useUnreadCount()
+const { mutate: markAsRead } = useMarkAsRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 
@@ -174,15 +205,9 @@ const handleDelete = (id: number) => {
     message: 'Delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(
-        { id },
-        {
-          onSuccess: () => {
-            isConfirmModalOpen.value = false
-          },
-          onError: (err) => {
-            console.error('Failed to delete notification from dropdown:', err)
-          },
+      deleteNotification(id, {
+        onSuccess: () => {
+          isConfirmModalOpen.value = false
         },
       )
     },
@@ -211,7 +236,7 @@ const handleDeleteAll = () => {
 
 const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
-    markAsRead({ id: notification.id })
+    markAsRead(notification.id)
   }
 
   const url = getRedirectUrl(notification)
@@ -237,13 +262,20 @@ const getRedirectUrl = (notification: Notification) => {
     }
     return '/teams'
   }
+  if (type === 'news_published') {
+    const match = notification.message.match(/\[news:(\d+):.+?\]/)
+    if (match) {
+      return `/news#news-${match[1]}`
+    }
+    return '/news'
+  }
   return null
 }
 
 const parseMessage = (message: string) => {
   const parts = []
-  // Matches [user:id:name] or [team:id:name]
-  const regex = /\[(user|team):(\d+):(.+?)\]/g
+  // Matches [user:id:name], [team:id:name], or [news:id:title]
+  const regex = /\[(user|team|news):(\d+):(.+?)\]/g
   let lastIndex = 0
   let match
 

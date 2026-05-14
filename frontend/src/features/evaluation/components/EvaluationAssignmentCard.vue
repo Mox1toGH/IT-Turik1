@@ -105,9 +105,7 @@ const githubUrl = computed(() => submissionDetails.value.github_url ?? '')
 const demoVideoUrl = computed(() => submissionDetails.value.demo_video_url ?? '')
 const liveDemoUrl = computed(() => submissionDetails.value.live_demo_url ?? '')
 const description = computed(() => submissionDetails.value.description ?? 'No description')
-const canEditEvaluation = computed(
-  () => props.assignment.round_details.status === 'submission_closed',
-)
+const canEditEvaluation = computed(() => props.assignment.round_details.status !== 'evaluated')
 
 const toggleForm = () => {
   showForm.value = !showForm.value

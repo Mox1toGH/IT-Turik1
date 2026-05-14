@@ -175,7 +175,6 @@ const openDisqualifyModal = (team: TournamentTeamRegistrationList) => {
   pendingAction.value = { team, action: 'disqualified' }
   disqualificationReason.value = ''
   confirmModalTitle.value = `Disqualify ${truncateText(team.name, 10)}`
-  confirmModalConfirmMessage.value = undefined
   confirmModalConfirmText.value = 'Disqualify'
   confirmModalVariant.value = 'danger'
   showConfirmModal.value = true
@@ -253,7 +252,7 @@ const handleConfirmAction = () => {
 }
 
 .team-item:hover {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  background: var(--accent);
 }
 
 .team-item:not(:last-child) {
