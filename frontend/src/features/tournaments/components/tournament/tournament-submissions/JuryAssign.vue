@@ -167,6 +167,7 @@ const {
   error: juryFetchError,
 } = useListAvailableJury(
   computed(() => closedRound.value?.id ?? 0),
+  undefined,
   {
     query: { enabled: computed(() => !!closedRound.value) },
   },

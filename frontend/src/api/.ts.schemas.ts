@@ -935,8 +935,8 @@ export interface RoleActivationCodeGenerateResponse {
 
 /**
  * * `organizer` - organizer
-* `admin` - admin
 * `jury` - jury
+* `admin` - admin
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
@@ -944,8 +944,8 @@ export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenera
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
   organizer: 'organizer',
-  admin: 'admin',
   jury: 'jury',
+  admin: 'admin',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1179,6 +1179,10 @@ export interface Team {
 export interface TeamBanner {
   /** @nullable */
   banner?: string | null;
+}
+
+export interface TeamDetailResponse {
+  detail: string;
 }
 
 export interface TeamInvitation {
@@ -1634,6 +1638,20 @@ export type UpdateCertificateTemplateBody = {
   is_default?: boolean;
 };
 
+export type ListJuryAssignmentsParams = {
+/**
+ * Filter by round ID
+ */
+round_id?: number;
+};
+
+export type ListAvailableJuryParams = {
+/**
+ * Include jurors already assigned to this round
+ */
+include_assigned?: boolean;
+};
+
 export type ListMyDigitalInventoryParams = {
 /**
  * A page number within the paginated result set.
@@ -1972,7 +1990,7 @@ export type ListTournamentsParams = {
 createdAt?: string;
 endAt?: string;
 page?: number;
-pageSize?: number;
+page_size?: number;
 searchQuery?: string;
 startAt?: string;
 /**

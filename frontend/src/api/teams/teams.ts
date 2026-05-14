@@ -28,7 +28,6 @@ import type {
 } from 'vue';
 
 import type {
-  DetailResponse,
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
@@ -37,6 +36,7 @@ import type {
   PatchedTeam,
   Team,
   TeamBanner,
+  TeamDetailResponse,
   TeamInvitation,
   TeamInvitationInbox,
   TeamJoinRequest,
@@ -679,16 +679,16 @@ export function useListTeamInvitationsByTeam<TData = Awaited<ReturnType<typeof l
 
 export const createTeamJoinRequest = (
     id: MaybeRef<number>,
-    detailResponse: MaybeRef<DetailResponse>,
+    teamDetailResponse: MaybeRef<TeamDetailResponse>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
-detailResponse = unref(detailResponse);
+teamDetailResponse = unref(teamDetailResponse);
       
-      return customInstance<DetailResponse | DetailResponse>(
+      return customInstance<TeamDetailResponse | TeamDetailResponse>(
       {url: `http://localhost:8000/api/teams/${id}/join-requests/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: detailResponse, signal
+      data: teamDetailResponse, signal
     },
       options);
     }
@@ -696,8 +696,8 @@ detailResponse = unref(detailResponse);
 
 
 export const getCreateTeamJoinRequestMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<DetailResponse>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<DetailResponse>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<TeamDetailResponse>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<TeamDetailResponse>}, TContext> => {
 
 const mutationKey = ['createTeamJoinRequest'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -709,7 +709,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTeamJoinRequest>>, {id: number;data: BodyType<DetailResponse>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTeamJoinRequest>>, {id: number;data: BodyType<TeamDetailResponse>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  createTeamJoinRequest(id,data,requestOptions)
@@ -721,15 +721,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateTeamJoinRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createTeamJoinRequest>>>
-    export type CreateTeamJoinRequestMutationBody = BodyType<DetailResponse>
+    export type CreateTeamJoinRequestMutationBody = BodyType<TeamDetailResponse>
     export type CreateTeamJoinRequestMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>
 
     export const useCreateTeamJoinRequest = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<DetailResponse>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeamJoinRequest>>, TError,{id: number;data: BodyType<TeamDetailResponse>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createTeamJoinRequest>>,
         TError,
-        {id: number;data: BodyType<DetailResponse>},
+        {id: number;data: BodyType<TeamDetailResponse>},
         TContext
       > => {
 
@@ -921,7 +921,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 ) => {
       id = unref(id);
       
-      return customInstance<DetailResponse>(
+      return customInstance<TeamDetailResponse>(
       {url: `http://localhost:8000/api/teams/${id}/leave/`, method: 'POST', signal
     },
       options);

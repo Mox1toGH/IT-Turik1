@@ -87,7 +87,7 @@ class SyncStatusesMixin:
     operation_id='listTournaments',
     parameters=[
         OpenApiParameter('page', OpenApiTypes.INT, default=1),
-        OpenApiParameter('pageSize', OpenApiTypes.INT, default=20),
+        OpenApiParameter('page_size', OpenApiTypes.INT, default=20),
         OpenApiParameter('searchQuery', OpenApiTypes.STR, required=False),
         OpenApiParameter('status', OpenApiTypes.STR, required=False, description='Comma-separated statuses'),
         OpenApiParameter('startAt', OpenApiTypes.DATE, required=False),
@@ -165,21 +165,13 @@ class TournamentListView(SyncStatusesMixin, generics.GenericAPIView):
         page = self._parse_positive_int(request.query_params.get('page', 1), 'page')
         page_size = min(
             self._parse_positive_int(
-                request.query_params.get('pageSize', self.DEFAULT_PAGE_SIZE),
-                'pageSize',
+                request.query_params.get('page_size', self.DEFAULT_PAGE_SIZE),
+                'page_size',
             ),
             self.MAX_PAGE_SIZE,
         )
         offset = (page - 1) * page_size
         page_queryset = queryset[offset:offset + page_size]
-
-        serializer = TournamentPublicSerializer(
-            page_queryset,
-            many=True,
-            context={'request': request},
-        )
-        return Response({'data': serializer.data, 'total': total})
-
 
         return Response(
             TournamentListResponseSerializer({

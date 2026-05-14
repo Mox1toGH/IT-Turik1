@@ -218,7 +218,7 @@ const {
   data: adminPointsBalance,
   isLoading: isAdminPointsLoading,
   refetch: refetchAdminBalance,
-} = useAdminUserPointsBalance(userId, { enabled: isAdmin })
+} = useAdminUserPointsBalance(userId, { query: { enabled: isAdmin } })
 
 const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useAdminModifyUserPoints()
 const operation = ref<'add' | 'subtract' | 'set' | 'reset'>('add')
@@ -244,7 +244,7 @@ const submitPointsUpdate = async () => {
 
   try {
     await modifyUserPoints({
-      id: userId.value,
+      userId: userId.value,
       data: {
         operation: operation.value,
         amount: amount.value,

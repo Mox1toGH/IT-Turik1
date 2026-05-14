@@ -36,6 +36,8 @@ import type {
   ErrorResponseValidationError,
   JuryAssignment,
   JuryAssignmentItem,
+  ListAvailableJuryParams,
+  ListJuryAssignmentsParams,
   PatchedSubmissionEvaluation,
   RoundLeaderboardResponse,
   RoundPassingStatusResponse,
@@ -79,13 +81,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 export const listJuryAssignments = (
-    
+    params?: MaybeRef<ListJuryAssignmentsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      
+      params = unref(params);
       
       return customInstance<JuryAssignment[]>(
-      {url: `http://localhost:8000/api/evaluation/assignments/`, method: 'GET', signal
+      {url: `http://localhost:8000/api/evaluation/assignments/`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -93,23 +96,23 @@ export const listJuryAssignments = (
 
 
 
-export const getListJuryAssignmentsQueryKey = () => {
+export const getListJuryAssignmentsQueryKey = (params?: MaybeRef<ListJuryAssignmentsParams>,) => {
     return [
-    'http:','localhost:8000','api','evaluation','assignments'
+    'http:','localhost:8000','api','evaluation','assignments', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListJuryAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof listJuryAssignments>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJuryAssignments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListJuryAssignmentsQueryOptions = <TData = Awaited<ReturnType<typeof listJuryAssignments>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(params?: MaybeRef<ListJuryAssignmentsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJuryAssignments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListJuryAssignmentsQueryKey();
+  const queryKey =  getListJuryAssignmentsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJuryAssignments>>> = ({ signal }) => listJuryAssignments(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listJuryAssignments>>> = ({ signal }) => listJuryAssignments(params, requestOptions, signal);
 
       
 
@@ -124,11 +127,11 @@ export type ListJuryAssignmentsQueryError = ErrorType<ErrorResponseNotAuthentica
 
 
 export function useListJuryAssignments<TData = Awaited<ReturnType<typeof listJuryAssignments>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJuryAssignments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: MaybeRef<ListJuryAssignmentsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listJuryAssignments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListJuryAssignmentsQueryOptions(options)
+  const queryOptions = getListJuryAssignmentsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -497,7 +500,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const assignJuryToRound = (
     id: MaybeRef<number>,
-    juryAssignmentItem: MaybeRef<JuryAssignmentItem>,
+    juryAssignmentItem: MaybeRef<JuryAssignmentItem[]>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
@@ -514,8 +517,8 @@ juryAssignmentItem = unref(juryAssignmentItem);
 
 
 export const getAssignJuryToRoundMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem[]>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem[]>}, TContext> => {
 
 const mutationKey = ['assignJuryToRound'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -527,7 +530,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignJuryToRound>>, {id: number;data: BodyType<JuryAssignmentItem>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignJuryToRound>>, {id: number;data: BodyType<JuryAssignmentItem[]>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  assignJuryToRound(id,data,requestOptions)
@@ -539,15 +542,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AssignJuryToRoundMutationResult = NonNullable<Awaited<ReturnType<typeof assignJuryToRound>>>
-    export type AssignJuryToRoundMutationBody = BodyType<JuryAssignmentItem>
+    export type AssignJuryToRoundMutationBody = BodyType<JuryAssignmentItem[]>
     export type AssignJuryToRoundMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useAssignJuryToRound = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignJuryToRound>>, TError,{id: number;data: BodyType<JuryAssignmentItem[]>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof assignJuryToRound>>,
         TError,
-        {id: number;data: BodyType<JuryAssignmentItem>},
+        {id: number;data: BodyType<JuryAssignmentItem[]>},
         TContext
       > => {
 
@@ -557,12 +560,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const listAvailableJury = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListAvailableJuryParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
       return customInstance<AvailableJury[]>(
-      {url: `http://localhost:8000/api/evaluation/rounds/${id}/available-jury/`, method: 'GET', signal
+      {url: `http://localhost:8000/api/evaluation/rounds/${id}/available-jury/`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -570,23 +576,25 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-export const getListAvailableJuryQueryKey = (id?: MaybeRef<number>,) => {
+export const getListAvailableJuryQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListAvailableJuryParams>,) => {
     return [
-    'http:','localhost:8000','api','evaluation','rounds',id,'available-jury'
+    'http:','localhost:8000','api','evaluation','rounds',id,'available-jury', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListAvailableJuryQueryOptions = <TData = Awaited<ReturnType<typeof listAvailableJury>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvailableJury>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListAvailableJuryQueryOptions = <TData = Awaited<ReturnType<typeof listAvailableJury>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListAvailableJuryParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvailableJury>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListAvailableJuryQueryKey(id);
+  const queryKey =  getListAvailableJuryQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAvailableJury>>> = ({ signal }) => listAvailableJury(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAvailableJury>>> = ({ signal }) => listAvailableJury(id,params, requestOptions, signal);
 
       
 
@@ -601,11 +609,12 @@ export type ListAvailableJuryQueryError = ErrorType<ErrorResponseValidationError
 
 
 export function useListAvailableJury<TData = Awaited<ReturnType<typeof listAvailableJury>>, TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvailableJury>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListAvailableJuryParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAvailableJury>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListAvailableJuryQueryOptions(id,options)
+  const queryOptions = getListAvailableJuryQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

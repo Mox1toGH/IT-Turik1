@@ -292,7 +292,7 @@ class TeamBannerSerializer(serializers.ModelSerializer):
         model = Team
         fields = ('banner',)
 
-class DetailResponseSerializer(serializers.Serializer):
+class TeamDetailResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 

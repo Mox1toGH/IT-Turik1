@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 from backend.openapi import _400, _401, _403, _404
 
@@ -26,11 +26,17 @@ from .serializers import (
 )
 
 
-@extend_schema(operation_id='listJuryAssignments', responses={
-    200: JuryAssignmentSerializer(many=True),
-    401: _401,
-    403: _403,
-})
+@extend_schema(
+    operation_id='listJuryAssignments',
+    parameters=[
+        OpenApiParameter('round_id', int, description='Filter by round ID'),
+    ],
+    responses={
+        200: JuryAssignmentSerializer(many=True),
+        401: _401,
+        403: _403,
+    }
+)
 class JuryAssignmentListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = JuryAssignmentSerializer
@@ -122,13 +128,17 @@ class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
         try_auto_evaluate_round(round_obj)
 
 
-@extend_schema(operation_id='assignJuryToRound', responses={
-    201: AssignJuryResponseSerializer,
-    400: _400,
-    401: _401,
-    403: _403,
-    404: _404,
-})
+@extend_schema(
+    operation_id='assignJuryToRound',
+    request=JuryAssignmentItemSerializer(many=True),
+    responses={
+        201: AssignJuryResponseSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    }
+)
 class AdminRoundAssignmentView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageAssignments]
     serializer_class = JuryAssignmentItemSerializer
@@ -147,13 +157,19 @@ class AdminRoundAssignmentView(generics.GenericAPIView):
         )
 
 
-@extend_schema(operation_id='listAvailableJury', responses={
-    200: AvailableJurySerializer(many=True),
-    400: _400,
-    401: _401,
-    403: _403,
-    404: _404,
-})
+@extend_schema(
+    operation_id='listAvailableJury',
+    parameters=[
+        OpenApiParameter('include_assigned', bool, description='Include jurors already assigned to this round'),
+    ],
+    responses={
+        200: AvailableJurySerializer(many=True),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    }
+)
 class AvailableJuryListView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageAssignments]
     serializer_class = AvailableJurySerializer

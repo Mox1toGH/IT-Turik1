@@ -20,7 +20,7 @@ from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from .serializers import (
     clear_invitation_states_for_member,
     clear_join_request_states_for_member,
-    DetailResponseSerializer,
+    TeamDetailResponseSerializer,
     TeamInvitationInboxSerializer,
     TeamInvitationSerializer,
     TeamJoinRequestSerializer,
@@ -328,7 +328,7 @@ class TeamMemberRemoveView(generics.GenericAPIView):
     operation_id='leaveTeam',
     request=None,
     responses={
-        200: DetailResponseSerializer,
+        200: TeamDetailResponseSerializer,
         400: _400,
         401: _401,
         404: _404,
@@ -336,7 +336,7 @@ class TeamMemberRemoveView(generics.GenericAPIView):
 )
 class TeamLeaveView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = DetailResponseSerializer
+    serializer_class = TeamDetailResponseSerializer
 
     @staticmethod
     def _get_team(pk):
@@ -359,7 +359,7 @@ class TeamLeaveView(generics.GenericAPIView):
         clear_invitation_states_for_member(team=team, user=request.user)
         clear_join_request_states_for_member(team=team, user=request.user)
         return Response(
-            DetailResponseSerializer({'detail': 'You left the team.'}).data,
+            TeamDetailResponseSerializer({'detail': 'You left the team.'}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -461,8 +461,8 @@ class TeamInvitationDeclineView(TeamInvitationRespondView):
 @extend_schema(
     operation_id='createTeamJoinRequest',
     responses={
-        200: DetailResponseSerializer,
-        201: DetailResponseSerializer,
+        200: TeamDetailResponseSerializer,
+        201: TeamDetailResponseSerializer,
         400: _400,
         401: _401,
         404: _404,
@@ -470,7 +470,7 @@ class TeamInvitationDeclineView(TeamInvitationRespondView):
 )
 class TeamJoinRequestCreateView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = DetailResponseSerializer
+    serializer_class = TeamDetailResponseSerializer
 
     @staticmethod
     def _get_team(pk):
@@ -502,7 +502,7 @@ class TeamJoinRequestCreateView(generics.GenericAPIView):
         if not created:
             if join_request.status == TeamJoinRequest.STATUS_PENDING:
                 return Response(
-                    DetailResponseSerializer({'detail': 'Join request already sent.'}).data,
+                    TeamDetailResponseSerializer({'detail': 'Join request already sent.'}).data,
                     status=status.HTTP_200_OK,
                 )
             join_request.status = TeamJoinRequest.STATUS_PENDING
@@ -513,7 +513,7 @@ class TeamJoinRequestCreateView(generics.GenericAPIView):
         join_request_received.send(sender=self.__class__, join_request=join_request)
 
         return Response(
-            DetailResponseSerializer({'detail': 'Join request sent.'}).data,
+            TeamDetailResponseSerializer({'detail': 'Join request sent.'}).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
