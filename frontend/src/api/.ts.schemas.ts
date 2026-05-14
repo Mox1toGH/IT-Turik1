@@ -94,6 +94,22 @@ export interface AvailableJury {
   full_name?: string;
 }
 
+export interface AvatarFrame {
+  readonly id: number;
+  /** @maxLength 100 */
+  name: string;
+  svg_file: string;
+  is_active?: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+export interface Category {
+  readonly id: number;
+  /** @maxLength 120 */
+  name: string;
+}
+
 export interface Certificate {
   readonly id: number;
   readonly unique_code: string;
@@ -158,6 +174,14 @@ export interface DeletedCountResponse {
 
 export interface DetailResponse {
   detail: string;
+}
+
+export interface DigitalInventoryItem {
+  readonly id: number;
+  readonly product: Product;
+  readonly is_equipped: boolean;
+  readonly acquired_at: string;
+  readonly updated_at: string;
 }
 
 export interface DisqualificationResponse {
@@ -368,6 +392,37 @@ export interface NotificationSettingsResponse {
   global_config: GlobalConfig;
 }
 
+export interface Order {
+  readonly id: number;
+  readonly user: UserShort;
+  readonly user_profile_url: string;
+  readonly product: Product;
+  readonly quantity: number;
+  readonly total_cost: number;
+  readonly status: OrderStatusEnum;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+/**
+ * * `pending` - Pending
+* `confirmed` - Confirmed
+* `shipped` - Shipped
+* `completed` - Completed
+* `cancelled` - Cancelled
+ */
+export type OrderStatusEnum = typeof OrderStatusEnum[keyof typeof OrderStatusEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const OrderStatusEnum = {
+  pending: 'pending',
+  confirmed: 'confirmed',
+  shipped: 'shipped',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
 export interface OwnSubmission {
   readonly id: number;
   readonly team: TeamSummary;
@@ -382,6 +437,24 @@ export interface OwnSubmission {
   description?: string;
   readonly created_at: string;
   readonly updated_at: string;
+}
+
+export interface PaginatedAvatarFrameList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: AvatarFrame[];
+}
+
+export interface PaginatedCategoryList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Category[];
 }
 
 export interface PaginatedCertificateList {
@@ -402,6 +475,15 @@ export interface PaginatedCertificateTemplateList {
   results: CertificateTemplate[];
 }
 
+export interface PaginatedDigitalInventoryItemList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: DigitalInventoryItem[];
+}
+
 export interface PaginatedNewsArticleList {
   count: number;
   /** @nullable */
@@ -418,6 +500,33 @@ export interface PaginatedNotificationList {
   /** @nullable */
   previous?: string | null;
   results: Notification[];
+}
+
+export interface PaginatedOrderList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Order[];
+}
+
+export interface PaginatedPointsTransactionList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: PointsTransaction[];
+}
+
+export interface PaginatedProductList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: Product[];
 }
 
 export interface PassingStatusItem {
@@ -442,6 +551,22 @@ export interface PasswordResetConfirm {
 
 export interface PasswordResetRequest {
   email: string;
+}
+
+export interface PatchedAvatarFrame {
+  readonly id?: number;
+  /** @maxLength 100 */
+  name?: string;
+  svg_file?: string;
+  is_active?: boolean;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+}
+
+export interface PatchedCategory {
+  readonly id?: number;
+  /** @maxLength 120 */
+  name?: string;
 }
 
 export interface PatchedCertificate {
@@ -494,6 +619,38 @@ export interface PatchedNewsArticle {
   readonly created_by?: number | null;
   readonly created_by_name?: string;
   send_notification?: boolean;
+  readonly created_at?: string;
+  readonly updated_at?: string;
+}
+
+export interface PatchedProduct {
+  readonly id?: number;
+  /** @maxLength 255 */
+  name?: string;
+  description?: string;
+  /**
+   * Price in points
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  price?: number;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  stock_quantity?: number;
+  readonly category?: Category;
+  category_id?: number;
+  product_type?: ProductTypeEnum;
+  readonly avatar_frame?: AvatarFrame;
+  /** @nullable */
+  avatar_frame_id?: number | null;
+  avatar_frame_file?: string;
+  digital_asset_url?: string;
+  readonly images?: readonly ProductImage[];
+  uploaded_images?: string[];
+  is_active?: boolean;
+  readonly is_available?: boolean;
   readonly created_at?: string;
   readonly updated_at?: string;
 }
@@ -632,6 +789,67 @@ export interface PlayerStats {
   /** @nullable */
   current_team_name: string | null;
 }
+
+export interface PointsTransaction {
+  id: number;
+  user_id: number;
+  /** @nullable */
+  order_id?: number | null;
+  amount: number;
+  reason: string;
+  created_at: string;
+}
+
+export interface Product {
+  readonly id: number;
+  /** @maxLength 255 */
+  name: string;
+  description?: string;
+  /**
+   * Price in points
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  price: number;
+  /**
+   * @minimum 0
+   * @maximum 9223372036854776000
+   */
+  stock_quantity?: number;
+  readonly category: Category;
+  category_id: number;
+  product_type?: ProductTypeEnum;
+  readonly avatar_frame: AvatarFrame;
+  /** @nullable */
+  avatar_frame_id?: number | null;
+  avatar_frame_file?: string;
+  digital_asset_url?: string;
+  readonly images: readonly ProductImage[];
+  uploaded_images?: string[];
+  is_active?: boolean;
+  readonly is_available: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+export interface ProductImage {
+  readonly id: number;
+  image: string;
+  readonly created_at: string;
+}
+
+/**
+ * * `physical` - Physical
+* `digital` - Digital
+ */
+export type ProductTypeEnum = typeof ProductTypeEnum[keyof typeof ProductTypeEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const ProductTypeEnum = {
+  physical: 'physical',
+  digital: 'digital',
+} as const;
 
 export interface RankingItem {
   team_id: number;
@@ -969,6 +1187,7 @@ export interface TeamMember {
   role?: RoleB96Enum;
   /** @nullable */
   avatar?: string | null;
+  readonly avatar_frame_url: string;
 }
 
 /**
@@ -1009,6 +1228,9 @@ export interface TeamUserList {
   /** @maxLength 255 */
   full_name?: string;
   role?: RoleB96Enum;
+  /** @nullable */
+  avatar?: string | null;
+  readonly avatar_frame_url: string;
 }
 
 export interface TokenRefreshRequest {
@@ -1217,14 +1439,29 @@ export interface User {
   /** @maxLength 100 */
   city?: string;
   readonly avatar: string;
+  readonly avatar_frame_url: readonly UserTeam[];
   readonly created_at: string;
   readonly needs_onboarding: boolean;
-  readonly teams: readonly UserTeam[];
+  readonly teams: string;
 }
 
 export interface UserAvatarUpdate {
   /** @nullable */
   avatar?: string | null;
+}
+
+export interface UserShort {
+  readonly id: number;
+  /**
+   * Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.
+   * @maxLength 150
+   * @pattern ^[\w.@+-]+$
+   */
+  username: string;
+  /** @maxLength 254 */
+  email: string;
+  /** @maxLength 255 */
+  full_name?: string;
 }
 
 export interface UserTeam {
@@ -1322,6 +1559,17 @@ export type UpdateCertificateTemplateBody = {
   is_default?: boolean;
 };
 
+export type ListMyDigitalInventoryParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
 export type ListNewsParams = {
 /**
  * A page number within the paginated result set.
@@ -1334,6 +1582,28 @@ page_size?: number;
 };
 
 export type ListNotificationsParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListAdminUserPointsTransactionsParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListMyPointsTransactionsParams = {
 /**
  * A page number within the paginated result set.
  */
@@ -1404,7 +1674,6 @@ export const SchemaRetrieveLang = {
   hi: 'hi',
   hr: 'hr',
   hsb: 'hsb',
-  ht: 'ht',
   hu: 'hu',
   hy: 'hy',
   ia: 'ia',
@@ -1472,6 +1741,83 @@ export type SchemaRetrieve200Two = {[key: string]: unknown};
 export type SchemaRetrieve200Three = {[key: string]: unknown};
 
 export type SchemaRetrieve200Four = {[key: string]: unknown};
+
+export type ListAdminAvatarFramesParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListAdminCategoriesParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListAdminOrdersParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListAdminProductsParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListAvatarFramesParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListMyOrdersParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
+
+export type ListProductsParams = {
+/**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+};
 
 export type UpdateTeamBanner2Body = {
   banner?: Blob;

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from .models import AvatarFrame, Category, Order, Product, ProductImage
 
@@ -73,6 +74,7 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'created_at', 'updated_at', 'is_available')
 
+    @extend_schema_field(serializers.BooleanField())
     def get_is_available(self, obj):
         if obj.product_type == Product.TYPE_DIGITAL:
             return bool(obj.is_active)
@@ -154,6 +156,7 @@ class OrderSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
+    @extend_schema_field(serializers.CharField())
     def get_user_profile_url(self, obj):
         request = self.context.get('request')
         if request is None:

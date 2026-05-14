@@ -37,6 +37,31 @@ import {
   getListMyTeamSubmissionsQueryKey,
 } from '@/api/tournaments/tournaments'
 
+import {
+  getGetMyPointsBalanceQueryKey,
+  getListMyPointsTransactionsQueryKey,
+  getGetAdminUserPointsBalanceQueryKey,
+  getListAdminUserPointsTransactionsQueryKey,
+} from '@/api/points/points'
+
+import {
+  getListProductsQueryKey,
+  getGetProductQueryKey,
+  getListMyOrdersQueryKey,
+  getListAdminCategoriesQueryKey,
+  getGetAdminCategoryQueryKey,
+  getListAdminProductsQueryKey,
+  getGetAdminProductQueryKey,
+  getListAdminOrdersQueryKey,
+  getListAvatarFramesQueryKey,
+  getListAdminAvatarFramesQueryKey,
+  getGetAdminAvatarFrameQueryKey,
+} from '@/api/shop/shop'
+
+import {
+  getListMyDigitalInventoryQueryKey,
+} from '@/api/inventory/inventory'
+
 type Ctx = {
   vars: Record<string, unknown>
   data: Record<string, unknown>
@@ -187,6 +212,73 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetEventQueryKey(vars.id as number)),
   ],
   deleteEvent: [v(() => getListEventsQueryKey())],
+
+  // Points
+  modifyUserPointsBalance: [
+    v(({ vars }) => getGetAdminUserPointsBalanceQueryKey(vars.userId as number)),
+    v(({ vars }) => getListAdminUserPointsTransactionsQueryKey(vars.userId as number)),
+  ],
+
+  // Shop
+  purchaseProduct: [
+    v(() => getListMyOrdersQueryKey()),
+    v(() => getGetMyPointsBalanceQueryKey()),
+    v(() => getListMyPointsTransactionsQueryKey()),
+    v(() => getListMyDigitalInventoryQueryKey()),
+  ],
+  cancelMyOrder: [
+    v(() => getListMyOrdersQueryKey()),
+    v(() => getGetMyPointsBalanceQueryKey()),
+    v(() => getListMyPointsTransactionsQueryKey()),
+  ],
+  createAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
+  replaceAdminCategory: [
+    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
+    v(() => getListAdminCategoriesQueryKey()),
+  ],
+  updateAdminCategory: [
+    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
+    v(() => getListAdminCategoriesQueryKey()),
+  ],
+  deleteAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
+  createAdminProduct: [v(() => getListAdminProductsQueryKey())],
+  replaceAdminProduct: [
+    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
+    v(() => getListAdminProductsQueryKey()),
+    v(() => getListProductsQueryKey()),
+    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
+  ],
+  updateAdminProduct: [
+    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
+    v(() => getListAdminProductsQueryKey()),
+    v(() => getListProductsQueryKey()),
+    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
+  ],
+  deleteAdminProduct: [
+    v(() => getListAdminProductsQueryKey()),
+    v(() => getListProductsQueryKey()),
+  ],
+  updateAdminOrderStatus: [v(() => getListAdminOrdersQueryKey())],
+  cancelAdminOrder: [v(() => getListAdminOrdersQueryKey())],
+  createAdminAvatarFrame: [v(() => getListAdminAvatarFramesQueryKey())],
+  replaceAdminAvatarFrame: [
+    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
+    v(() => getListAdminAvatarFramesQueryKey()),
+    v(() => getListAvatarFramesQueryKey()),
+  ],
+  updateAdminAvatarFrame: [
+    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
+    v(() => getListAdminAvatarFramesQueryKey()),
+    v(() => getListAvatarFramesQueryKey()),
+  ],
+  deleteAdminAvatarFrame: [
+    v(() => getListAdminAvatarFramesQueryKey()),
+    v(() => getListAvatarFramesQueryKey()),
+  ],
+
+  // Inventory
+  equipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
+  unequipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
 }
 
 export const queryClient = new QueryClient({

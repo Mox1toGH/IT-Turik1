@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from drf_spectacular.utils import extend_schema
 
 from backend.permissions import is_platform_admin
 
@@ -42,6 +43,7 @@ class _PointsHistoryBaseView(generics.ListAPIView):
 class MyPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(operation_id='getMyPointsBalance')
     def get(self, request):
         balance_obj, _ = UserPointsBalance.objects.get_or_create(
             user=request.user,
@@ -55,6 +57,7 @@ class MyPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
+@extend_schema(operation_id='listMyPointsTransactions')
 class MyPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
@@ -66,6 +69,7 @@ class MyPointsTransactionHistoryView(_PointsHistoryBaseView):
 class AdminUserPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(operation_id='getAdminUserPointsBalance')
     def get(self, request, user_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can view user points balance.')
@@ -83,6 +87,7 @@ class AdminUserPointsBalanceView(APIView):
         return Response(UserPointsBalanceSerializer(data).data)
 
 
+@extend_schema(operation_id='listAdminUserPointsTransactions')
 class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
     permission_classes = [IsAuthenticated]
 
@@ -98,6 +103,7 @@ class AdminUserPointsTransactionHistoryView(_PointsHistoryBaseView):
 class AdminModifyUserPointsBalanceView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(operation_id='modifyUserPointsBalance')
     def post(self, request, user_id):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can modify user points balance.')

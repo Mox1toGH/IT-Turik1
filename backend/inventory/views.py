@@ -5,6 +5,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
 
 from shop.models import Product
 from .models import UserInventory
@@ -17,6 +18,7 @@ class InventoryPagination(PageNumberPagination):
     max_page_size = 100
 
 
+@extend_schema(operation_id='listMyDigitalInventory')
 class MyDigitalInventoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DigitalInventoryItemSerializer
@@ -31,6 +33,7 @@ class MyDigitalInventoryView(generics.ListAPIView):
 class EquipDigitalInventoryItemView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(operation_id='equipDigitalInventoryItem')
     def post(self, request):
         serializer = EquipDigitalItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -59,6 +62,7 @@ class EquipDigitalInventoryItemView(APIView):
 class UnequipDigitalInventoryItemView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(operation_id='unequipDigitalInventoryItem')
     def post(self, request):
         serializer = EquipDigitalItemSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
