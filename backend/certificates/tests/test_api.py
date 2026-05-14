@@ -16,8 +16,7 @@ class CertificateApiTests(APITestCase):
 
     def test_list_certificates_anonymous(self):
         response = self.client.get(self.list_url)
-        # Assuming listing might be restricted or public
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_certificate_admin_only(self):
         self.client.force_authenticate(user=self.user)
@@ -29,7 +28,7 @@ class CertificateApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_retrieve_certificate_by_uuid(self):
-        cert = Certificate.objects.create(placement='1st')
+        cert = Certificate.objects.create(placement='1st', user=self.user)
         url = reverse('certificate-detail', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
@@ -45,7 +44,7 @@ class CertificateApiTests(APITestCase):
         self.assertEqual(response.data['unique_code'], str(cert.unique_code))
 
     def test_view_certificate_action(self):
-        cert = Certificate.objects.create(placement='1st')
+        cert = Certificate.objects.create(placement='1st', user=self.user)
         url = reverse('certificate-view', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
