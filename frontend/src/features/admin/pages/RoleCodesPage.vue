@@ -182,7 +182,11 @@ const {
   isLoading,
   isLoadingError,
   error: getRoleCodesError,
-} = useListRoleActivationCodes(computed(() => ({ role: selectedRoleFilter.value })))
+} = useListRoleActivationCodes(
+  computed(() => ({
+    ...(selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {}),
+  })),
+)
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)
@@ -306,4 +310,3 @@ const formatDateTime = (value: string | number | Date) => {
   }
 }
 </style>
-
