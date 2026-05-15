@@ -1,10 +1,6 @@
 import type { QueryClient } from '@tanstack/vue-query'
 
 import type { Notification, PaginatedNotificationList } from '@/api/.ts.schemas'
-import {
-  getGetUnreadNotificationCountQueryKey,
-  getListNotificationsQueryKey,
-} from '@/api/notifications/notifications'
 
 type SocketEnvelope = {
   event: string
@@ -19,10 +15,10 @@ let clientRef: QueryClient | null = null
 
 const MAX_BACKOFF_MS = 30000
 
-const unreadKey = getGetUnreadNotificationCountQueryKey()
+const unreadKey = ['http:', 'localhost:8000', 'api', 'notifications', 'unread-count'] as const
 
 function listQueryPrefix() {
-  return getListNotificationsQueryKey().slice(0, 4)
+  return ['http:', 'localhost:8000', 'api', 'notifications'] as const
 }
 
 function getWsUrl(token: string): string {
