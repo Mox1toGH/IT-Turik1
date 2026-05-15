@@ -5,8 +5,12 @@
         <div class="header">
           <h1>{{ archive?.name ?? `Archive ${id}` }}</h1>
           <div class="actions">
-            <ui-button asLink to="/tournaments/archive" size="sm" variant="secondary">Back</ui-button>
-            <ui-button asLink :to="`/tournaments/${id}`" size="sm" variant="secondary">Open tournament</ui-button>
+            <ui-button asLink to="/tournaments/archive" size="sm" variant="secondary"
+              >Back</ui-button
+            >
+            <ui-button asLink :to="`/tournaments/${id}`" size="sm" variant="secondary"
+              >Open tournament</ui-button
+            >
           </div>
         </div>
       </template>
@@ -27,7 +31,11 @@
               <span>Total</span>
               <span>Average</span>
             </div>
-            <div v-for="row in archive.standings" :key="`${row.rank}-${row.team.id}`" class="table-row">
+            <div
+              v-for="row in archive.standings"
+              :key="`${row.rank}-${row.team.id}`"
+              class="table-row"
+            >
               <span>{{ row.rank }}</span>
               <span>{{ row.team.name }}</span>
               <span>{{ row.total_score }}</span>
@@ -65,12 +73,15 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { useTournamentArchiveDetail, useTournamentArchiveSubmissions } from '@/api/queries/tournaments'
+import {
+  useGetTournamentArchive,
+  useListTournamentArchiveSubmissions,
+} from '@/api/tournaments/tournaments'
 
 const route = useRoute()
 const id = Number(route.params.id)
-const { data, isLoading } = useTournamentArchiveDetail({ id })
-const { data: submissionsData } = useTournamentArchiveSubmissions({ id })
+const { data, isLoading } = useGetTournamentArchive(id)
+const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 const archive = computed(() => data.value)
 const submissions = computed(() => submissionsData.value ?? [])
 </script>

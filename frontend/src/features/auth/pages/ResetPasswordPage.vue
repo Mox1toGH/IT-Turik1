@@ -8,7 +8,7 @@
 
       <div>
         <p v-if="isLoading" class="text-muted">Checking your reset link...</p>
-        <p v-else-if="validationError" class="notice error">{{ validationError.message }}</p>
+        <p v-else-if="error" class="notice error">{{ error.message }}</p>
 
         <div v-else-if="isSuccess" class="notice success reset-success">
           Password has been reset successfully.
@@ -20,13 +20,13 @@
             <label class="form-label"> New password </label>
             <ui-password-field
               v-model="form.new_password"
-              :isInvalid="!!resetingError?.details.new_password"
+              :isInvalid="!!resetError?.details.new_password"
               autocomplete="new-password"
               placeholder="Create a strong password"
               required
             />
-            <small v-if="resetingError?.details.new_password" class="text-error">{{
-              resetingError.details.new_password[0]
+            <small v-if="resetError?.details.new_password" class="text-error">{{
+              resetError.details.new_password[0]
             }}</small>
             <small v-else class="text-muted">
               Use at least 8 characters, including upper/lowercase letters, a number, and a special
@@ -39,12 +39,12 @@
             <ui-password-field
               v-model="form.confirm_password"
               autocomplete="new-password"
-              :isInvalid="!!resetingError?.details.confirm_password"
+              :isInvalid="!!resetError?.details.confirm_password"
               placeholder="Repeat your new password"
               required
             />
-            <small v-if="resetingError?.details.confirm_password" class="text-error">{{
-              resetingError.details.confirm_password[0]
+            <small v-if="resetError?.details.confirm_password" class="text-error">{{
+              resetError.details.confirm_password[0]
             }}</small>
           </div>
 
@@ -64,9 +64,8 @@ import { useRoute } from 'vue-router'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useResetPassword, useValidateResetLink } from '@/api/queries/accounts'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { parseApiError } from '@/api/errors'
+import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 
 const route = useRoute()
 const form = ref({
@@ -77,22 +76,19 @@ const form = ref({
 const uid = computed(() => String(route.params.uid))
 const token = computed(() => String(route.params.token))
 
-const { isLoading, error } = useValidateResetLink({ uid: uid.value, token: token.value })
-const validationError = computed(() => parseApiError(error.value))
-
+const { isLoading, error } = useValidatePasswordResetLink(uid.value, token.value)
 const {
   mutate: resetPassword,
   isPending: isResetingPassword,
   isSuccess,
   error: resetError,
-} = useResetPassword()
-const resetingError = computed(() => parseApiError(resetError.value))
+} = useConfirmPasswordReset()
 
 const handleReset = () => {
   resetPassword({
-    uid: uid.value,
+    uidb64: uid.value,
     token: token.value,
-    body: form.value,
+    data: form.value,
   })
 }
 </script>

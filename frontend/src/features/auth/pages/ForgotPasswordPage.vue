@@ -35,29 +35,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useForgotPassword } from '@/api/queries/accounts'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { useRequestPasswordReset } from '@/api/accounts/accounts'
 
 const { showNotification } = useNotification()
 const email = ref('')
 
-const {
-  mutate: forgotPassword,
-  isPending: isLoading,
-  error: forgotPasswordError,
-} = useForgotPassword()
-const error = computed(() => parseApiError(forgotPasswordError.value))
+const { mutate: forgotPassword, isPending: isLoading, error } = useRequestPasswordReset()
 
 const handleSubmit = () => {
   forgotPassword(
-    { body: { email: email.value } },
+    { data: { email: email.value } },
     {
       onSuccess: () => {
         showNotification('Password reset email sent successfully.', 'success')

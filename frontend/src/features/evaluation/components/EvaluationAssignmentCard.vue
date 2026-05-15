@@ -35,7 +35,7 @@
       <evaluation-summary
         v-if="assignment.evaluation"
         :evaluation="assignment.evaluation"
-        :criteria="assignment.criteria"
+        :criteria="assignment.round_details.criteria"
       />
     </div>
 
@@ -67,16 +67,16 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { JuryAssignmentData } from '@/api/services/evaluation/types'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'
+import type { JuryAssignment } from '@/api/.ts.schemas'
 
 interface Props {
-  assignment: JuryAssignmentData
+  assignment: JuryAssignment
 }
 
 const props = defineProps<Props>()

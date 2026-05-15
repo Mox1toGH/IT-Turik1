@@ -26,7 +26,9 @@
 
       <template #footer>
         <div class="hero-actions">
-          <ui-button asLink to="/teams/create" class="manage-link">Create new team</ui-button>
+          <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" class="manage-link"
+            >Create new team</ui-button
+          >
         </div>
       </template>
     </ui-card>
@@ -45,13 +47,15 @@ import UiCard from '@/components/ui/UiCard.vue'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
-import { useTeams } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import TeamDirectoryTitleIcon from '@/icons/TeamDirectoryTitleIcon.vue'
+import { useListTeams } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
-const { data: teams, isLoading: isLoadingTeams } = useTeams()
+const { data: teams, isLoading: isLoadingTeams } = useListTeams()
+const { data: user } = useGetUserProfile()
 </script>
 
 <style scoped>

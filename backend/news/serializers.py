@@ -6,10 +6,13 @@ from accounts.models import User
 from notifications.services import NotificationService
 from .models import NewsArticle
 
+from drf_spectacular.utils import extend_schema_field, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
 class NewsArticleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     send_notification = serializers.BooleanField(write_only=True, required=False, default=False)
+    content = serializers.DictField(required=True)
 
     class Meta:
         model = NewsArticle
@@ -25,7 +28,7 @@ class NewsArticleSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('created_by', 'created_by_name', 'created_at', 'updated_at')
 
-    def get_created_by_name(self, obj):
+    def get_created_by_name(self, obj) -> str:
         if not obj.created_by:
             return ''
         return obj.created_by.full_name or obj.created_by.username

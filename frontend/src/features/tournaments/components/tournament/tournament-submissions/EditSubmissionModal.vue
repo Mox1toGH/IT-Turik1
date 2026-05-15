@@ -50,10 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SubmissionId, TournamentId } from '@/api/dbTypes'
-import { parseApiError } from '@/api/errors'
-import { tournamentsKeys } from '@/api/queries/keys'
-import { useEditSubmission } from '@/api/queries/tournaments'
+import { useUpdateSubmission } from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
@@ -61,7 +58,6 @@ import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { EditSubmissionSchema } from '@/schemas/tournaments.schema'
-import { useQueryClient } from '@tanstack/vue-query'
 
 interface Form {
   github_url: string
@@ -71,8 +67,8 @@ interface Form {
 
 interface Props {
   modelValue: boolean
-  tournamentId: TournamentId
-  submissionId: SubmissionId
+  tournamentId: number
+  submissionId: number
   defaultValues?: Partial<Form>
 }
 
@@ -81,7 +77,6 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const queryClient = useQueryClient()
 const { showNotification } = useNotification()
 
 const form = useForm<Form>(EditSubmissionSchema, {
@@ -90,29 +85,27 @@ const form = useForm<Form>(EditSubmissionSchema, {
   description: props.defaultValues?.description ?? '',
 })
 
-const { mutate: edit, isPending } = useEditSubmission()
+const { mutate: edit, isPending } = useUpdateSubmission()
 const editRound = () => {
   if (!form.validate()) return
 
   edit(
     {
-      submissionId: props.submissionId,
-      body: {
+      id: props.submissionId,
+      data: {
         ...form.fields.value,
       },
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
 
       onSuccess() {
-        queryClient.invalidateQueries({ queryKey: tournamentsKeys.submissions(props.tournamentId) })
         showNotification('Updated successfully', 'success')
         emit('update:modelValue', false)
       },

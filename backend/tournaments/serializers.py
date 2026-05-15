@@ -1,9 +1,11 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from typing import Any
 from rest_framework import serializers
 
 from evaluation.models import JuryAssignment
+from evaluation.models import SubmissionEvaluation
 from teams.models import Team
 from teams.models import TeamMember
 
@@ -23,8 +25,18 @@ from .services import (
 from teams.serializers import TeamMemberSerializer, TeamSummarySerializer
 from evaluation.models import LeaderboardEntry
 
+from drf_spectacular.utils import extend_schema_field
+
+
+class CriterionSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    max_score = serializers.FloatField()
 
 class RoundShortSerializer(serializers.ModelSerializer):
+    criteria = CriterionSerializer(many=True)
+
     class Meta:
         model = Round
         fields = (
@@ -40,7 +52,8 @@ class RoundShortSerializer(serializers.ModelSerializer):
 
 class TournamentPublicSerializer(serializers.ModelSerializer):
     rounds = RoundShortSerializer(many=True, read_only=True)
-    registered_team = serializers.SerializerMethodField()  # <-- додати
+    registered_team = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Tournament
@@ -55,10 +68,11 @@ class TournamentPublicSerializer(serializers.ModelSerializer):
             'banner',
             'status',
             'rounds',
-            'registered_team',  # <-- додати
+            'registered_team',
         )
 
-    def get_registered_team(self, obj):  # <-- додати метод
+    @extend_schema_field(TeamSummarySerializer)
+    def get_registered_team(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return None
@@ -87,9 +101,6 @@ class ActiveTournamentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tournament
         fields = ('id', 'name', 'status', 'start_date')
-
-
-
 
 class TournamentBannerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -131,6 +142,8 @@ class TournamentAdminSerializer(TournamentPublicSerializer):
 
 
 class RoundSerializer(serializers.ModelSerializer):
+    criteria = CriterionSerializer(many=True)
+
     class Meta:
         model = Round
         fields = (
@@ -206,9 +219,31 @@ class SubmissionAssignmentJurySerializer(serializers.Serializer):
     role = serializers.CharField()
 
 
+class ScoreItemSerializer(serializers.Serializer):
+    criterion_id = serializers.CharField()
+    criterion_name = serializers.CharField()
+    score = serializers.IntegerField()
+
+
+class SubmissionEvaluationSerializer(serializers.ModelSerializer):
+    scores = ScoreItemSerializer(many=True, read_only=True)
+    final_score = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = SubmissionEvaluation
+        fields = (
+            'id',
+            'scores',
+            'total_score',
+            'final_score',
+            'comment',
+            'created_at',
+        )
+
+
 class SubmissionAssignmentSerializer(serializers.ModelSerializer):
     jury = SubmissionAssignmentJurySerializer(read_only=True)
-    evaluation = serializers.SerializerMethodField()
+    evaluation = SubmissionEvaluationSerializer(read_only=True)
 
     class Meta:
         model = JuryAssignment
@@ -475,7 +510,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             'disqualification_reason',
         )
  
-    def get_members_count(self, obj):
+    def get_members_count(self, obj) -> int:
         return len(self._get_unique_team_users(obj))
 
     def _get_unique_team_users(self, obj):
@@ -492,7 +527,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             unique_users.append(user)
         return unique_users
 
-    def get_members(self, obj):
+    def get_members(self, obj) -> list[dict[str, Any]]:
         return TeamMemberSerializer(self._get_unique_team_users(obj), many=True).data
 
 
@@ -646,3 +681,101 @@ class TournamentArchiveDetailSerializer(serializers.ModelSerializer):
         )
         return ArchiveStandingSerializer(standings, many=True, context=self.context).data
 
+class TournamentArchiveListSerializer(serializers.ModelSerializer):
+    teams = serializers.SerializerMethodField()
+    standings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tournament
+        fields = (
+            'id',
+            'name',
+            'description',
+            'start_date',
+            'end_date',
+            'status',
+            'banner',
+            'teams',
+            'standings',
+        )
+
+    @extend_schema_field(TeamSummarySerializer(many=True))
+    def get_teams(self, obj):
+        registrations = (
+            obj.team_registrations
+            .select_related('team')
+            .filter(is_active=True)
+            .order_by('team__name')
+        )
+        return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
+
+    @extend_schema_field(ArchiveStandingSerializer(many=True))
+    def get_standings(self, obj):
+        standings = (
+            obj.leaderboard_entries
+            .filter(round__isnull=True)
+            .select_related('team')
+            .order_by('rank')
+        )
+        return ArchiveStandingSerializer(standings, many=True, context=self.context).data
+
+
+class TournamentArchiveDetailSerializer(serializers.ModelSerializer):
+    rounds = RoundShortSerializer(many=True, read_only=True)
+    teams = serializers.SerializerMethodField()
+    standings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Tournament
+        fields = (
+            'id',
+            'name',
+            'description',
+            'start_date',
+            'end_date',
+            'status',
+            'banner',
+            'rounds',
+            'teams',
+            'standings',
+        )
+
+    @extend_schema_field(TeamSummarySerializer(many=True))
+    def get_teams(self, obj):
+        registrations = (
+            obj.team_registrations
+            .select_related('team')
+            .filter(is_active=True)
+            .order_by('team__name')
+        )
+        return TeamSummarySerializer([r.team for r in registrations], many=True, context=self.context).data
+
+    @extend_schema_field(ArchiveStandingSerializer(many=True))
+    def get_standings(self, obj):
+        standings = (
+            obj.leaderboard_entries
+            .filter(round__isnull=True)
+            .select_related('team')
+            .order_by('rank')
+        )
+        return ArchiveStandingSerializer(standings, many=True, context=self.context).data
+
+
+class TournamentListResponseSerializer(serializers.Serializer):
+    data = TournamentPublicSerializer(many=True)
+    total = serializers.IntegerField()
+
+
+class DisqualificationResponseSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    tournament_id = serializers.IntegerField()
+    is_active = serializers.BooleanField()
+    action = serializers.CharField()
+
+
+class EligibleTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    members_count = serializers.IntegerField()

@@ -150,11 +150,10 @@ import EditorModal from '../components/create-round/modals/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateRoundSchema } from '@/schemas/tournaments.schema'
 import type { JSONContent } from '@tiptap/core'
-import { useCreateRound } from '@/api/queries/tournaments'
 import { useRoute, useRouter } from 'vue-router'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
+import { useCreateRound } from '@/api/tournaments/tournaments'
 
 interface RoundCriteriaItem {
   id: string
@@ -202,16 +201,16 @@ function handleSubmit() {
 
   createRound(
     {
-      id: tournamentId,
-      body: {
+      tournamentPk: tournamentId,
+      data: {
         tournament: tournamentId,
         ...rest,
-        start_date: combineDateAndTime(form.fields.value.start_date, start_time),
-        end_date: combineDateAndTime(form.fields.value.end_date, end_time),
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
     {
-      onSuccess: () => {
+      onSuccess: (_data) => {
         router.push({
           path: `/tournaments/${tournamentId}`,
           query: {
@@ -220,11 +219,10 @@ function handleSubmit() {
         })
       },
       onError(error) {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )

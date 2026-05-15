@@ -29,20 +29,18 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import type { AxiosError } from 'axios'
-import { apiClient } from '@/api/client'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { parseApiError } from '@/api/errors'
-import type { ApiError } from '@/api/errors'
+import type { RoleB96Enum } from '@/api/.ts.schemas'
+import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
 
-type UserRole = 'admin' | 'team' | 'jury' | 'organizer'
+type UserRole = RoleB96Enum
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
   role?: UserRole
   is_staff?: boolean
-  teams?: TeamRef[]
+  readonly teams?: readonly TeamRef[]
 }
 
 type PlayerStatsResponse = {
@@ -157,12 +155,12 @@ const loadStats = async () => {
 
   try {
     if (props.user.is_staff) {
-      const { data } = await apiClient.get<AdminStatsResponse>('/api/stats/admin/')
+      const data = await getAdminStats()
       adminStats.value = data
       return
     }
 
-    const { data } = await apiClient.get<PlayerStatsResponse>('/api/stats/player/')
+    const data = await getPlayerStats()
     playerStats.value = data
 
     if (props.user.role === 'team') {
@@ -170,16 +168,22 @@ const loadStats = async () => {
       if (!firstTeamId) return
 
       try {
-        const teamRes = await apiClient.get<TeamStatsResponse>(`/api/stats/team/${firstTeamId}/`)
-        teamStats.value = teamRes.data
+        const data = await getTeamStats(firstTeamId)
+        teamStats.value = data
       } catch {
         // Keep player stats visible if team stats are unavailable for this user/team.
       }
     }
-  } catch (err) {
-    const parsed = parseApiError(err as AxiosError<ApiError>)
+  } catch (error) {
     isError.value = true
-    errorMessage.value = parsed?.message || 'Failed to load statistics. Please try again.'
+
+    if (error instanceof Error) {
+      errorMessage.value = error.message
+    } else if (typeof error === 'string') {
+      errorMessage.value = error
+    } else {
+      errorMessage.value = 'An unknown error occurred.'
+    }
   } finally {
     isLoading.value = false
   }

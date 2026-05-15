@@ -12,7 +12,7 @@
           :options="filterOptions"
           :is-loading="isLoadingRounds"
           :is-error="isRoundsError"
-          :error="parsedRoundsError?.message"
+          :error="roundsError?.message"
         />
       </div>
     </template>
@@ -110,13 +110,13 @@
             <template #default>
               <large-text-modal
                 title="Round description"
-                :text="submission.description"
+                :text="submission.description ?? '-'"
                 max-length="200"
                 style="max-width: 800px"
               >
                 <template #trigger="{ toggleOpen }">
                   <p class="text-muted" :title="submission.description" @click="toggleOpen">
-                    {{ truncateText(submission.description, 200) }}
+                    {{ truncateText(submission.description ?? '', 200) }}
                   </p>
                 </template>
               </large-text-modal>
@@ -170,7 +170,9 @@
                   class="submission-result-item"
                 >
                   <div class="jury-head">
-                    <p class="jury-name">{{ assignment.jury.full_name || assignment.jury.username }}</p>
+                    <p class="jury-name">
+                      {{ assignment.jury.full_name || assignment.jury.username }}
+                    </p>
                     <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
                       {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
                     </ui-badge>
@@ -187,12 +189,16 @@
                       <div class="score-track-head">
                         <p class="text-muted">Score</p>
                         <p class="text-muted">
-                          {{ assignment.evaluation.total_score }} / {{ roundMaxScore(submission.round_details.id) }}
+                          {{ assignment.evaluation.total_score }} /
+                          {{ roundMaxScore(submission.round_details.id) }}
                         </p>
                       </div>
                       <ui-progress-bar
                         :percent="
-                          scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                          scorePercent(
+                            submission.round_details.id,
+                            assignment.evaluation.total_score,
+                          )
                         "
                         :height="10"
                         fill-color="color-mix(in srgb, var(--primary) 55%, transparent)"
@@ -208,7 +214,9 @@
                       >
                         <span>{{ score.criterion_name || score.criterion_id }}</span>
                         <span>
-                          {{ score.score }}/{{ criterionMaxScore(submission.round_details.id, score.criterion_id) }}
+                          {{ score.score }}/{{
+                            criterionMaxScore(submission.round_details.id, score.criterion_id)
+                          }}
                         </span>
                       </div>
                     </div>
@@ -228,9 +236,6 @@
 </template>
 
 <script setup lang="ts">
-import type { RoundStatus, TournamentId } from '@/api/dbTypes'
-import { parseApiError } from '@/api/errors'
-import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import UiBadge, { type Variants } from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -244,33 +249,34 @@ import { formatDate } from '@/lib/date'
 import { truncateText } from '@/lib/utils'
 import { computed, ref } from 'vue'
 import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'
+import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
+import type { StatusE43Enum } from '@/api/.ts.schemas'
 
 interface Props {
-  tournamentId: TournamentId
+  tournamentId: number
 }
 
 const props = defineProps<Props>()
-
 const isEditOpen = ref(false)
 
-const { data: submissions, isLoading: isLoadingSubmissions } = useTeamSubmissions({
-  tournamentId: props.tournamentId,
-})
+const { data: submissions, isLoading: isLoadingSubmissions } = useListMyTeamSubmissions(
+  props.tournamentId,
+)
 
 const {
   data: rounds,
   isLoading: isLoadingRounds,
   isError: isRoundsError,
   error: roundsError,
-} = useTournamentRounds({ id: props.tournamentId })
-const parsedRoundsError = computed(() => parseApiError(roundsError.value))
+} = useListRounds(props.tournamentId)
 
 const filterOptions = computed(() =>
   rounds.value?.map((round) => ({
-    value: round.name,
-    label: round.name,
+    value: round.name ?? '',
+    label: round.name ?? '',
   })),
 )
+
 const filterOption = ref<string[]>([])
 const filteredSubmissions = computed(() => {
   if (!filterOption.value.length) {
@@ -278,14 +284,14 @@ const filteredSubmissions = computed(() => {
   }
 
   return (submissions.value ?? []).filter((submission) =>
-    filterOption.value.includes(submission.round_details.name),
+    filterOption.value.includes(submission.round_details.name ?? ''),
   )
 })
 
-const submissionStatus = (roundStatus: RoundStatus) => {
+const submissionStatus = (roundStatus?: StatusE43Enum) => {
   return roundStatus === 'active' ? 'Active' : 'Closed'
 }
-const badgeVariant = (roundStatus: RoundStatus): Variants => {
+const badgeVariant = (roundStatus?: StatusE43Enum): Variants => {
   return roundStatus === 'active' ? 'primary' : 'red'
 }
 
@@ -294,7 +300,7 @@ const submissionEvaluations = (submission: NonNullable<typeof submissions.value>
 }
 
 const submissionAssignments = (submission: NonNullable<typeof submissions.value>[number]) => {
-  return [...(submission.assignments ?? [])].sort((a, b) => {
+  return [...submission.assignments].sort((a, b) => {
     const left = (a.jury.full_name || a.jury.username || '').toLowerCase()
     const right = (b.jury.full_name || b.jury.username || '').toLowerCase()
     return left.localeCompare(right)
@@ -306,13 +312,13 @@ const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number
 }
 
 const roundMaxScore = (roundId: number) => {
-  const round = (rounds.value ?? []).find((item) => item.id === roundId)
-  if (!round?.criteria?.length) return 0
+  const round = rounds.value?.find((item) => item.id === roundId)
+  if (!round?.criteria) return 0
   return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
 }
 
 const criterionMaxScore = (roundId: number, criterionId: string) => {
-  const round = (rounds.value ?? []).find((item) => item.id === roundId)
+  const round = rounds.value?.find((item) => item.id === roundId)
   const criterion = round?.criteria?.find((item) => item.id === criterionId)
   return Number(criterion?.max_score || 0)
 }
@@ -497,5 +503,3 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
   }
 }
 </style>
-
-

@@ -8,7 +8,9 @@
             <h1 class="tournaments-title">Tournaments list</h1>
           </div>
           <div class="header-actions">
-            <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary">Archive</ui-button>
+            <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary"
+              >Archive</ui-button
+            >
             <ui-button
               v-if="user?.role === 'admin'"
               size="sm"
@@ -23,7 +25,7 @@
 
       <template #error>
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching tournaments (code: {{ error?.code }})</p>
+          <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
         </div>
       </template>
 
@@ -98,7 +100,9 @@
                     :class="{ 'tournament-top--with-banner': Boolean(tournament.banner) }"
                     :style="
                       tournament.banner
-                        ? { backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})` }
+                        ? {
+                            backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})`,
+                          }
                         : {}
                     "
                   >
@@ -179,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -189,13 +193,11 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import TournamentsListTitleIcon from '@/icons/TournamentsListTitleIcon.vue'
-import { parseApiError } from '@/api/errors'
 import { truncateText } from '@/lib/utils'
-import { useProfile } from '@/api/queries/accounts'
-import { useTournaments } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
-import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
-import type { TournamentStatus } from '@/api/dbTypes'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { ListTournamentsParams, StatusD67Enum } from '@/api/.ts.schemas'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const statusOptions = computed(() => {
   const base = [
@@ -213,26 +215,28 @@ const pageSize = 12
 const currentPage = ref(1)
 const searchInput = ref('')
 const searchQuery = ref('')
-const statusFilter = ref<NonNullable<GetTournamentsArgs['status']>>([])
+const statusFilter = ref<NonNullable<StatusD67Enum[]>>([])
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
+const params = computed(() => ({
+  page: currentPage.value,
+  searchQuery: searchQuery.value,
+  pageSize,
+  status: statusFilter.value,
+})) as unknown as Ref<ListTournamentsParams>
 const {
   data,
   isLoading,
   isFetching,
   error: tournamentsError,
   isError,
-} = useTournaments(
-  { page: currentPage, searchQuery, pageSize, status: statusFilter },
-  {
-    staleTime: 1000 * 60 * 5,
-  },
-)
-const error = computed(() => parseApiError(tournamentsError.value))
+} = useListTournaments(params, {
+  query: { staleTime: 1000 * 60 * 5 },
+})
 
 const pageItems = computed(() => data.value?.data ?? [])
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / pageSize))
-const statusBadgeVariant = (status: TournamentStatus) => {
+const statusBadgeVariant = (status?: StatusD67Enum) => {
   if (status === 'draft') return 'gray'
   if (status === 'finished') return 'gray'
   if (status === 'running') return 'green'

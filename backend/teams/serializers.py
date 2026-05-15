@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from django.utils import timezone
 from rest_framework import serializers
@@ -9,6 +10,7 @@ from accounts.models import User
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from .services import assert_team_not_in_active_tournament, get_active_tournament_registration
 
+from drf_spectacular.utils import extend_schema_field
 
 def clear_invitation_states_for_member(*, team, user=None, user_id=None):
     target_user_id = user_id or getattr(user, 'id', None)
@@ -86,9 +88,31 @@ def get_user_join_request_status(*, team, user):
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+
+        url = equipped_item.product.effective_digital_asset_url
+        if not url:
+            return None
+
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
@@ -171,18 +195,19 @@ class TeamSerializer(serializers.ModelSerializer):
             return False
         return any(member.id == user.id for member in obj.members.all())
 
+    @extend_schema_field(bool)
     def get_is_member(self, obj):
         user = self._request_user()
         if not user:
             return False
         return self._is_member_for_user(obj, user)
     
+    @extend_schema_field(bool)
     def get_is_captain(self, obj):
         user = self._request_user()
         return bool(user) and obj.captain_id == user.id
 
-
-
+    @extend_schema_field(bool)
     def get_can_request_to_join(self, obj):
         user = self._request_user()
         if not user or not obj.is_public:
@@ -197,6 +222,7 @@ class TeamSerializer(serializers.ModelSerializer):
         join_request_status = get_user_join_request_status(team=obj, user=user)
         return join_request_status != TeamJoinRequest.STATUS_PENDING
 
+    @extend_schema_field(bool)
     def get_is_in_active_tournament(self, obj):
         return get_active_tournament_registration(obj) is not None
 
@@ -262,8 +288,15 @@ class TeamSerializer(serializers.ModelSerializer):
 
         return instance
 
-
 class TeamBannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = ('banner',)
+
+class TeamDetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class JoinRequestDetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+

@@ -24,9 +24,8 @@
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useActivateAccount } from '@/api/queries/accounts'
 import { useNotification } from '@/composables/useNotification'
-import { parseApiError } from '@/api/errors'
+import { useActivateAccount } from '@/api/accounts/accounts'
 
 const route = useRoute()
 const { showNotification } = useNotification()
@@ -39,11 +38,10 @@ onMounted(async () => {
   if (!token) return
 
   activate(
-    { uid: uid as string, token: token as string },
+    { uidb64: uid as string, token: token as string },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )

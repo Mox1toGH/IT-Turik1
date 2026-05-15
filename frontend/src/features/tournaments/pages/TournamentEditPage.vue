@@ -6,7 +6,7 @@
 
     <template #error>
       <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament (code: {{ parsedError?.code }})</p>
+        <p>Error while fetching tournament (code: {{ error?.code }})</p>
       </div>
     </template>
 
@@ -31,7 +31,9 @@
             :isInvalid="!!form.errors.value.name"
             @blur="form.validateField('name')"
           />
-          <small v-if="form.errors.value.name" class="text-error">{{ form.errors.value.name }}</small>
+          <small v-if="form.errors.value.name" class="text-error">{{
+            form.errors.value.name
+          }}</small>
         </label>
 
         <label class="form-item description-field">
@@ -145,8 +147,6 @@
 </template>
 
 <script setup lang="ts">
-import { parseApiError } from '@/api/errors'
-import type { EditTournamentBody } from '@/api/services/tournaments/types'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
@@ -157,12 +157,15 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
-import { useEditTournament, useTournamentInfo } from '@/api/queries/tournaments'
 import { EditTournamentSchema } from '@/schemas/tournaments.schema'
 import { computed, unref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { TournamentId } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
+import {
+  useGetTournament,
+  useUpdateTournament,
+  type UpdateTournamentMutationBody,
+} from '@/api/tournaments/tournaments'
 
 interface Form {
   name: string
@@ -179,7 +182,7 @@ const route = useRoute()
 const router = useRouter()
 const { showNotification } = useNotification()
 
-const tournamentId = computed(() => Number(route.params.id || 0) as TournamentId)
+const tournamentId = computed(() => Number(route.params.id || 0))
 
 const form = useForm<Form>(EditTournamentSchema, {
   name: '',
@@ -192,31 +195,23 @@ const form = useForm<Form>(EditTournamentSchema, {
   min_team_members: 2,
 })
 
-const {
-  data: tournament,
-  isLoading,
-  isFetching,
-  error,
-  isError,
-} = useTournamentInfo({ id: tournamentId.value })
+const { data: tournament, isLoading, isFetching, error, isError } = useGetTournament(tournamentId)
 
-const { mutate: editTournament, isPending } = useEditTournament()
-
-const parsedError = computed(() => parseApiError(error.value))
+const { mutate: editTournament, isPending } = useUpdateTournament()
 
 const apiToFormFieldMap: Record<string, keyof Form> = {
   start_date: 'startDate',
   end_date: 'endDate',
 }
 
-function toPayload(values: Form): EditTournamentBody {
+function toPayload(values: Form): UpdateTournamentMutationBody {
   return {
     name: values.name,
     description: values.description,
     max_teams: values.max_teams,
     min_team_members: values.min_team_members,
-    start_date: combineDateAndTime(values.startDate, values.startTime),
-    end_date: combineDateAndTime(values.endDate, values.endTime),
+    start_date: combineDateAndTime(values.startDate, values.startTime).toISOString(),
+    end_date: combineDateAndTime(values.endDate, values.endTime).toISOString(),
   }
 }
 
@@ -242,8 +237,8 @@ watch(
       startTime: toTime(value.start_date),
       endDate,
       endTime: toTime(value.end_date),
-      max_teams: value.max_teams,
-      min_team_members: value.min_team_members,
+      max_teams: value.max_teams ?? 2,
+      min_team_members: value.min_team_members ?? 2,
     }
   },
   { immediate: true },
@@ -257,24 +252,20 @@ const handleSubmit = () => {
   editTournament(
     {
       id: tournamentId.value,
-      body: toPayload(values),
+      data: toPayload(values),
     },
     {
       onSuccess() {
         showNotification('Tournament updated successfully.', 'success')
         router.push(`/tournaments/${tournamentId.value}`)
       },
-      onError: (requestError) => {
-        const errorResponse = parseApiError(requestError)
-
-        for (const [apiField, errors] of Object.entries(errorResponse?.details || {})) {
+      onError: (error) => {
+        for (const [apiField, errors] of Object.entries(error?.details || {})) {
           const formField = apiToFormFieldMap[apiField] ?? apiField
           form.setError(formField as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        if (!Object.keys(errorResponse?.details || {}).length) {
-          showNotification(errorResponse?.message || 'Failed to update tournament', 'error')
-        }
+        showNotification(error.message, 'error')
       },
     },
   )

@@ -168,7 +168,8 @@ import CalendarDayDetail from './CalendarDayDetail.vue'
 import { truncateText } from '@/lib/utils'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { TournamentEvent, Round } from '@/api/dbTypes'
+import { useListRounds } from '@/api/tournaments/tournaments'
+import type { Event, Round } from '@/api/.ts.schemas'
 
 interface CalendarItem {
   id: string
@@ -182,10 +183,12 @@ interface CalendarItem {
 }
 
 interface Props {
-  events: TournamentEvent[]
+  events: Event[]
   rounds: Round[]
   gcalConnected?: boolean
 }
+
+useListRounds
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
@@ -210,8 +213,18 @@ const selectedDate = ref<Date | null>(null)
 const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
 const navLabel = computed(() => {
@@ -223,7 +236,11 @@ const navLabel = computed(() => {
     const weekEnd = new Date(weekStart)
     weekEnd.setDate(weekEnd.getDate() + 6)
     const startFmt = weekStart.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })
-    const endFmt = weekEnd.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })
+    const endFmt = weekEnd.toLocaleDateString('uk-UA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
     return `${startFmt} — ${endFmt}`
   }
   const d = new Date(viewYear.value, viewMonth.value, viewDay.value)
@@ -234,14 +251,12 @@ const calendarItems = computed<CalendarItem[]>(() => {
   const items: CalendarItem[] = []
 
   for (const event of props.events) {
-    const date = event.start_datetime instanceof Date
-      ? event.start_datetime
-      : new Date(event.start_datetime)
+    const date = new Date(event.start_datetime)
 
     items.push({
       id: `event-${event.id}`,
       title: event.title,
-      description: event.description,
+      description: event.description ?? '-',
       date,
       type: event.type === 'meet' ? 'meet' : 'event',
       color: event.type === 'meet' ? 'primary' : 'green',
@@ -251,12 +266,8 @@ const calendarItems = computed<CalendarItem[]>(() => {
   }
 
   for (const round of props.rounds) {
-    const startDate = round.start_date instanceof Date
-      ? round.start_date
-      : new Date(round.start_date)
-    const endDate = round.end_date instanceof Date
-      ? round.end_date
-      : new Date(round.end_date)
+    const startDate = new Date(round.start_date)
+    const endDate = new Date(round.end_date)
 
     items.push({
       id: `round-start-${round.id}`,
@@ -297,9 +308,11 @@ function getItemsForDate(date: Date): CalendarItem[] {
 }
 
 function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate()
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
 }
 
 function getWeekStart(y: number, m: number, d: number): Date {
@@ -416,10 +429,14 @@ function navigateToItem(item: CalendarItem) {
 
 function typeLabel(type: CalendarItem['type']): string {
   switch (type) {
-    case 'meet': return 'Consultation'
-    case 'event': return 'Event'
-    case 'round-start': return 'Round start'
-    case 'round-deadline': return 'Deadline'
+    case 'meet':
+      return 'Consultation'
+    case 'event':
+      return 'Event'
+    case 'round-start':
+      return 'Round start'
+    case 'round-deadline':
+      return 'Deadline'
   }
 }
 
@@ -485,14 +502,17 @@ function next() {
   selectedDate.value = null
 }
 
-watch(() => [props.events, props.rounds], () => {
-  if (selectedDate.value) {
-    const items = getItemsForDate(selectedDate.value)
-    if (items.length === 0) {
-      selectedDate.value = null
+watch(
+  () => [props.events, props.rounds],
+  () => {
+    if (selectedDate.value) {
+      const items = getItemsForDate(selectedDate.value)
+      if (items.length === 0) {
+        selectedDate.value = null
+      }
     }
-  }
-})
+  },
+)
 </script>
 
 <style scoped>
@@ -533,7 +553,9 @@ watch(() => [props.events, props.rounds], () => {
   font-weight: 600;
   cursor: pointer;
   color: var(--muted-foreground);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .view-btn:not(:last-child) {

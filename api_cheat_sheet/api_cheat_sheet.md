@@ -37,6 +37,10 @@
 | **Редагувати подію** | PATCH | `/api/tournaments/events/{id}/` | Admin |
 | **Видалити подію** | DELETE | `/api/tournaments/events/{id}/` | Admin |
 | **Список іконок** | GET | `/api/tournaments/icons/` | Всі |
+| **Архів турнірів** | GET | `/api/tournaments/archive/` | Всі |
+| **Деталі архівного турніру** | GET | `/api/tournaments/archive/{id}/` | Всі |
+| **Роботи архівного турніру** | GET | `/api/tournaments/archive/{id}/submissions/` | Auth |
+| **Мій календар** | GET | `/api/tournaments/my-calendar/` | Auth |
 
 > **`GET /api/tournaments/current-task/`**
 > - Повертає перший активний раунд (`status=active`) серед турнірів зі статусом `running`, відсортований за `end_date`, `id`.
@@ -513,3 +517,32 @@ curl -X DELETE "http://localhost:8000/api/tournaments/manage/5/banner/" \
 **Поле в Tournament API**
 - У відповідях `GET /api/tournaments/` та `GET /api/tournaments/{id}/` присутнє поле:
   - `banner: string | null` (URL банера або `null`).
+
+---
+
+### 6. Архів турнірів
+
+**Список архіву — GET `/api/tournaments/archive/`**
+- Повертає тільки турніри зі статусом `finished`.
+- Сортування: за `end_date` (спадання).
+- Містить коротку інформацію про раунди та топ-команди.
+
+**Деталі архіву — GET `/api/tournaments/archive/{id}/`**
+- Повертає повну інформацію про завершений турнір, включаючи фінальний лідерборд.
+
+**Роботи архіву — GET `/api/tournaments/archive/{id}/submissions/`**
+- Повертає всі роботи учасників у цьому завершеному турнірі.
+
+### 7. Календар
+
+**Мій календар — GET `/api/tournaments/my-calendar/`**
+- Повертає персоналізований розклад для користувача.
+- Для звичайних гравців: події та дедлайни раундів ТІЛЬКИ тих турнірів, де вони беруть участь (активна реєстрація).
+- Для адмінів/організаторів: події всіх активних турнірів.
+- Структура відповіді:
+```json
+{
+  "events": [...],
+  "rounds": [...]
+}
+```

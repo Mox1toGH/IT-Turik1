@@ -1,9 +1,11 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from accounts.models import User
 from tournaments.models import Submission
 from .models import JuryAssignment, SubmissionEvaluation
-from tournaments.serializers import SubmissionSerializer
+from tournaments.serializers import SubmissionSerializer, CriterionSerializer
 from tournaments.models import Tournament
+from .models import Round
 
 
 class JuryAssignmentItemSerializer(serializers.Serializer):
@@ -19,6 +21,12 @@ class JuryAssignmentItemSerializer(serializers.Serializer):
         return value
 
 
+class ScoreItemSerializer(serializers.Serializer):
+    criterion_id = serializers.CharField()
+    criterion_name = serializers.CharField()
+    score = serializers.IntegerField()
+
+
 class SubmissionEvaluationSerializer(serializers.ModelSerializer):
     tournament_id = serializers.PrimaryKeyRelatedField(
         source='tournament',
@@ -26,6 +34,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
         write_only=True,
         required=True,
     )
+    scores = ScoreItemSerializer(many=True, required=True)
 
     class Meta:
         model = SubmissionEvaluation
@@ -40,6 +49,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             'created_at',
         )
         read_only_fields = ('total_score', 'final_score', 'created_at')
+        ref_name = 'EvaluationSubmissionEvaluation'
 
     def validate_assignment(self, value):
         request = self.context.get('request')
@@ -70,27 +80,27 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
         if scores is not None and assignment:
             round_obj = assignment.submission.round
             criteria = round_obj.criteria
-            
+
             if not criteria:
                 raise serializers.ValidationError({"scores": "Round has no evaluation criteria."})
-            
+
             criteria_dict = {c['id']: c for c in criteria}
             score_ids = set()
-            
+
             for s in scores:
                 c_id = s.get('criterion_id')
                 if not c_id:
-                     raise serializers.ValidationError({"scores": "Each score must have a criterion_id."})
+                    raise serializers.ValidationError({"scores": "Each score must have a criterion_id."})
                 if c_id not in criteria_dict:
-                     raise serializers.ValidationError({"scores": f"Invalid criterion_id: {c_id}"})
+                    raise serializers.ValidationError({"scores": f"Invalid criterion_id: {c_id}"})
                 if c_id in score_ids:
-                     raise serializers.ValidationError({"scores": f"Duplicate criterion_id: {c_id}"})
-                     
+                    raise serializers.ValidationError({"scores": f"Duplicate criterion_id: {c_id}"})
+
                 score = s.get('score')
                 if score is None or not isinstance(score, (int, float)) or score < 0 or score > criteria_dict[c_id]['max_score']:
-                     raise serializers.ValidationError({"scores": f"Invalid score for {c_id}. Must be between 0 and {criteria_dict[c_id]['max_score']}"})
+                    raise serializers.ValidationError({"scores": f"Invalid score for {c_id}. Must be between 0 and {criteria_dict[c_id]['max_score']}"})
                 score_ids.add(c_id)
-                
+
             missing = set(criteria_dict.keys()) - score_ids
             if missing:
                 raise serializers.ValidationError({"scores": f"Missing scores for criteria: {', '.join(missing)}"})
@@ -111,20 +121,98 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class RoundShortSerializer(serializers.ModelSerializer):
+    criteria = extend_schema_field(CriterionSerializer(many=True))(serializers.JSONField())
+
+    class Meta:
+        model = Round
+        fields = ('id', 'name', 'start_date', 'end_date', 'status', 'criteria', 'tournament')
+        ref_name = 'EvaluationRoundShort'
+
+
 class JuryAssignmentSerializer(serializers.ModelSerializer):
     submission_details = SubmissionSerializer(source='submission', read_only=True)
+    round_details = RoundShortSerializer(source='submission.round', read_only=True)
     evaluation = SubmissionEvaluationSerializer(read_only=True)
+    @extend_schema_field(bool)
+    def get_is_evaluated(self, obj):
+        return hasattr(obj, 'evaluation')
+
     is_evaluated = serializers.SerializerMethodField()
 
     class Meta:
         model = JuryAssignment
-        fields = ('id', 'submission', 'submission_details', 'evaluation', 'is_evaluated', 'created_at')
+        fields = ('id', 'submission', 'submission_details', 'round_details', 'evaluation', 'is_evaluated', 'created_at')
 
-    def get_is_evaluated(self, obj):
-        return hasattr(obj, 'evaluation')
+
 
 
 class AvailableJurySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'full_name')
+
+
+class AssignJuryResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    created_assignments = serializers.IntegerField()
+
+
+# --- Leaderboard serializers ---
+
+class RankingItemSerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    average_score = serializers.FloatField()
+    rank = serializers.IntegerField()
+
+
+class RoundLeaderboardResponseSerializer(serializers.Serializer):
+    round_id = serializers.IntegerField()
+    is_snapshot = serializers.BooleanField()
+    rankings = RankingItemSerializer(many=True)
+
+
+class RoundSummarySerializer(serializers.Serializer):
+    round_id = serializers.IntegerField()
+    round_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    average_score = serializers.FloatField()
+    jury_breakdown = serializers.JSONField(required=False, allow_null=True)
+
+
+class TournamentRankingItemSerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    rank = serializers.IntegerField()
+    rounds = RoundSummarySerializer(many=True)
+
+
+class TournamentLeaderboardResponseSerializer(serializers.Serializer):
+    tournament_id = serializers.IntegerField()
+    is_snapshot = serializers.BooleanField()
+    rankings = TournamentRankingItemSerializer(many=True)
+
+
+# --- Passing status serializers ---
+
+class PassingStatusItemSerializer(serializers.Serializer):
+    rank = serializers.IntegerField()
+    team_id = serializers.IntegerField()
+    team_name = serializers.CharField()
+    total_score = serializers.FloatField()
+    average_score = serializers.FloatField()
+    passed = serializers.BooleanField()
+    is_active = serializers.BooleanField(allow_null=True)
+    disqualification_reason = serializers.CharField(allow_null=True)
+    registration_id = serializers.IntegerField(allow_null=True)
+
+
+class RoundPassingStatusResponseSerializer(serializers.Serializer):
+    round_id = serializers.IntegerField()
+    round_name = serializers.CharField()
+    passing_count = serializers.IntegerField(allow_null=True)
+    total_teams = serializers.IntegerField()
+    results = PassingStatusItemSerializer(many=True)

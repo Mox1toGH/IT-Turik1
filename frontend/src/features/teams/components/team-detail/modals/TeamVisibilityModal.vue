@@ -76,8 +76,8 @@
         </span>
       </div>
 
-      <p v-if="changeVisibilityError?.message" class="text-error modal-error">
-        {{ changeVisibilityError.message }}
+      <p v-if="error?.message" class="text-error modal-error">
+        {{ error.message }}
       </p>
     </div>
 
@@ -115,18 +115,17 @@ import DangerIcon from '@/icons/DangerIcon.vue'
 import EyeInCircle from '@/icons/EyeInCircle.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LockIcon from '@/icons/LockIcon.vue'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
-import { computed, ref } from 'vue'
-import { useChangeTeamVisibility } from '@/api/queries/teams'
-import { parseApiError } from '@/api/errors'
+import { ref } from 'vue'
 import { truncateText } from '@/lib/utils'
+import type { Team } from '@/api/.ts.schemas'
+import { useUpdateTeam } from '@/api/teams/teams'
 
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
 }
 
 const emit = defineEmits<{
-  (e: 'changedTeamVisibility', newTeamValue: GetTeamInfoResponse): void
+  (e: 'changedTeamVisibility', newTeamValue: Team): void
 }>()
 
 const props = defineProps<Props>()
@@ -139,12 +138,7 @@ const toggleVisibilityModal = () => {
   isVisibilityModalOpen.value = !isVisibilityModalOpen.value
 }
 
-const {
-  mutate: changeTeamVisibility,
-  isPending: isChangingVisibility,
-  error,
-} = useChangeTeamVisibility()
-const changeVisibilityError = computed(() => parseApiError(error.value))
+const { mutate: changeTeamVisibility, isPending: isChangingVisibility, error } = useUpdateTeam()
 
 const confirmChangeVisibility = async () => {
   if (!props.team?.id || selectedVisibility.value === undefined) return
@@ -152,7 +146,7 @@ const confirmChangeVisibility = async () => {
   hideNotification()
 
   changeTeamVisibility(
-    { teamId: props.team.id, body: { is_public: selectedVisibility.value } },
+    { id: props.team.id, data: { is_public: selectedVisibility.value } },
     {
       onSuccess: (data) => {
         showNotification(
@@ -163,11 +157,8 @@ const confirmChangeVisibility = async () => {
 
         toggleVisibilityModal()
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to change team visibility.' : 'Unable to change team visibility.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )

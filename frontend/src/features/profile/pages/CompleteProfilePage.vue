@@ -128,16 +128,16 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useProfile, useUpdateProfile } from '@/api/queries/accounts'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import type { UserRole } from '@/api/dbTypes'
 import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
-import { parseApiError } from '@/api/errors'
+import type { RoleB96Enum } from '@/api/.ts.schemas'
+import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
+import { useNotification } from '@/composables/useNotification'
 
 interface Form {
   username: string
-  role: UserRole
+  role: RoleB96Enum
   redeem_code: string
   password: string
   full_name: string
@@ -146,7 +146,7 @@ interface Form {
 }
 
 const router = useRouter()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const form = useForm<Form>(CompleteProfileSchema, {
   username: user.value?.username ?? '',
@@ -157,6 +157,8 @@ const form = useForm<Form>(CompleteProfileSchema, {
   phone: user.value?.phone ?? '',
   city: user.value?.city ?? '',
 })
+
+const { showNotification } = useNotification()
 
 const restrictedRoles = ['jury', 'organizer', 'admin']
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
@@ -170,23 +172,24 @@ watch(
   },
 )
 
-const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile()
+const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateUserProfile()
 
 const handleSubmit = async () => {
   if (!form.validate()) return
 
   updateProfile(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
       onSuccess: () => {
         localStorage.removeItem('needs_onboarding')
         router.push('/')
       },
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
+
+        showNotification(error.message, 'error')
       },
     },
   )

@@ -7,7 +7,9 @@
           <calendar-title-icon class="title-icon" />
           <h1>Calendar</h1>
         </div>
-        <p class="sub">Events, consultations, deadlines and round milestones across your tournaments.</p>
+        <p class="sub">
+          Events, consultations, deadlines and round milestones across your tournaments.
+        </p>
       </div>
       <div class="gcal-actions">
         <template v-if="gcalLoading">
@@ -37,7 +39,7 @@
     <ui-card>
       <template #error>
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Failed to load calendar data (code: {{ error?.code }})</p>
+          <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
         </div>
       </template>
 
@@ -88,13 +90,11 @@ import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
-import { useMyCalendar } from '@/api/queries/tournaments'
-import { parseApiError } from '@/api/errors'
 import { computed, onMounted, ref } from 'vue'
 import { googleCalendarService } from '@/api/services/google-calendar'
+import { useGetMyCalendar } from '@/api/tournaments/tournaments'
 
-const { data, isLoading, isError, error: calendarError } = useMyCalendar()
-const error = computed(() => parseApiError(calendarError.value))
+const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
 
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])

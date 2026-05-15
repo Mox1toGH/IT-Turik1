@@ -1,7 +1,11 @@
 <template>
   <form class="form" @submit.prevent="handleSubmit">
     <div class="criteria-list">
-      <div v-for="criterion in assignment.criteria" :key="criterion.id" class="criterion-row">
+      <div
+        v-for="criterion in assignment.round_details.criteria"
+        :key="criterion.id"
+        class="criterion-row"
+      >
         <div class="criterion-head">
           <p class="criterion-name">{{ criterion.name }}</p>
           <p class="criterion-max">Max: {{ criterion.max_score }}</p>
@@ -45,12 +49,16 @@ import { computed, reactive, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
-import { useCreateEvaluation, useUpdateEvaluation } from '@/api/queries/evaluation'
-import type { EvaluationData, JuryAssignmentData, ScoreItem } from '@/api/services/evaluation/types'
+import type { JuryAssignment, ScoreItem } from '@/api/.ts.schemas'
+import {
+  useCreateJuryEvaluation,
+  useUpdateJuryEvaluation,
+  type GetJuryEvaluationQueryResult,
+} from '@/api/evaluation/evaluation'
 
 interface Props {
-  assignment: JuryAssignmentData
-  existingEvaluation?: EvaluationData | null
+  assignment: JuryAssignment
+  existingEvaluation?: GetJuryEvaluationQueryResult | null
 }
 
 const props = defineProps<Props>()
@@ -61,8 +69,8 @@ const emit = defineEmits<{
 }>()
 
 const scoresMap = reactive<Record<string, number>>(
-  props.assignment.criteria.reduce<Record<string, number>>((acc, criterion) => {
-    const existingScore = props.existingEvaluation?.scores.find(
+  props.assignment.round_details.criteria.reduce<Record<string, number>>((acc, criterion) => {
+    const existingScore = props.existingEvaluation?.scores?.find(
       (score) => score.criterion_id === criterion.id,
     )?.score
     acc[criterion.id] = typeof existingScore === 'number' ? existingScore : 0
@@ -73,7 +81,7 @@ const scoresMap = reactive<Record<string, number>>(
 const comment = ref(props.existingEvaluation?.comment ?? '')
 
 const scoreItems = computed<ScoreItem[]>(() =>
-  props.assignment.criteria.map((criterion) => ({
+  props.assignment.round_details.criteria.map((criterion) => ({
     criterion_id: criterion.id,
     criterion_name: criterion.name,
     score: Number(scoresMap[criterion.id] ?? 0),
@@ -88,13 +96,13 @@ const hasCriterionError = (criterionId: string, maxScore: number) => {
 }
 
 const hasAnyError = computed(() =>
-  props.assignment.criteria.some((criterion) =>
+  props.assignment.round_details.criteria.some((criterion) =>
     hasCriterionError(criterion.id, criterion.max_score),
   ),
 )
 
-const createMutation = useCreateEvaluation()
-const updateMutation = useUpdateEvaluation()
+const createMutation = useCreateJuryEvaluation()
+const updateMutation = useUpdateJuryEvaluation()
 const isPending = computed(() => createMutation.isPending.value || updateMutation.isPending.value)
 
 const tournamentId = computed(
@@ -119,19 +127,23 @@ const handleSubmit = () => {
     updateMutation.mutate(
       {
         id: props.existingEvaluation.id,
-        body,
+        data: body,
       },
       {
-        onSuccess: () => emit('success'),
+        onSuccess: () => {
+          emit('success')
+        },
       },
     )
     return
   }
 
   createMutation.mutate(
-    { body },
+    { data: body },
     {
-      onSuccess: () => emit('success'),
+      onSuccess: () => {
+        emit('success')
+      },
     },
   )
 }

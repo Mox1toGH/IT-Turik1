@@ -39,9 +39,9 @@ import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import type { GetRegisteredTeamsResponse } from '@/api/services/tournaments/types'
+import type { TournamentTeamRegistrationList } from '@/api/.ts.schemas'
 
-type Team = GetRegisteredTeamsResponse[number]
+type Team = TournamentTeamRegistrationList
 
 interface Props {
   sectionType: 'active' | 'disqualified'

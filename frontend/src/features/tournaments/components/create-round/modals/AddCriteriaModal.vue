@@ -91,25 +91,19 @@ import UiModal from '@/components/ui/UiModal.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { truncateText } from '@/lib/utils'
-
-interface RoundCriteriaItem {
-  id: string
-  name: string
-  description: string
-  max_score: number
-}
+import type { Criterion } from '@/api/.ts.schemas'
 
 const emit = defineEmits<{
   (e: 'blur'): void
 }>()
 
-const modelValue = defineModel<RoundCriteriaItem[]>({ default: () => [] })
+const modelValue = defineModel<Criterion[]>({ default: () => [] })
 
 const isOpen = ref(false)
 const criteriaList = computed(() => modelValue.value ?? [])
 const criteriaCount = computed(() => criteriaList.value.length)
 
-const newCriterion = ref<Omit<RoundCriteriaItem, 'id'>>({
+const newCriterion = ref<Omit<Criterion, 'id'>>({
   name: '',
   description: '',
   max_score: 1,

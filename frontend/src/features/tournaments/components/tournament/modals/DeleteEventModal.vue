@@ -40,18 +40,14 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useDeleteEvent } from '@/api/queries/tournaments'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { tournamentsKeys } from '@/api/queries/keys'
-import type { TournamentId } from '@/api/dbTypes'
+import { useDeleteEvent } from '@/api/tournaments/tournaments'
 
 interface Props {
   modelValue: boolean
   eventId: number
-  tournamentId: TournamentId
+  tournamentId: number
   title: string
 }
 
@@ -70,7 +66,6 @@ function closeModal() {
 }
 
 const { showNotification } = useNotification()
-const queryClient = useQueryClient()
 const { mutate: deleteEvent, isPending } = useDeleteEvent()
 const canDelete = computed(() => {
   return confirmInput.value === props.title && !isPending.value
@@ -84,16 +79,14 @@ async function handleDelete() {
 
   deleteEvent(
     {
-      eventId: props.eventId,
+      id: props.eventId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
 
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: tournamentsKeys.events(props.tournamentId) })
         emit('update:modelValue', false)
         showNotification('Event deleted successfully', 'success')
       },
