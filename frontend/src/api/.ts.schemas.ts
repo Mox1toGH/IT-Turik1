@@ -191,7 +191,8 @@ export interface CertificateTemplate {
   name: string;
   image: string;
   is_default?: boolean;
-  readonly image_url: string;
+  /** @nullable */
+  readonly image_url: string | null;
   readonly created_at: string;
 }
 
@@ -340,6 +341,35 @@ export const EvaluationCriteriaEnum = {
   score: 'score',
 } as const;
 
+export interface EvaluationRoundShort {
+  readonly id: number;
+  /** @maxLength 255 */
+  name?: string;
+  start_date: string;
+  end_date: string;
+  status?: StatusE43Enum;
+  criteria: unknown;
+  tournament: number;
+}
+
+export interface EvaluationSubmissionEvaluation {
+  readonly id: number;
+  assignment: number;
+  scores: ScoreItem[];
+  readonly total_score: number;
+  /** @pattern ^-?\d{0,3}(?:\.\d{0,2})?$ */
+  readonly final_score: string;
+  comment?: string;
+  readonly created_at: string;
+}
+
+export interface EvaluationSubmissionEvaluationRequest {
+  tournament_id: number;
+  assignment: number;
+  scores: ScoreItemRequest[];
+  comment?: string;
+}
+
 export interface Event {
   readonly id: number;
   tournament: number;
@@ -413,8 +443,8 @@ export interface JuryAssignment {
   readonly id: number;
   submission: number;
   readonly submission_details: Submission;
-  readonly round_details: RoundShort;
-  readonly evaluation: SubmissionEvaluation;
+  readonly round_details: EvaluationRoundShort;
+  readonly evaluation: EvaluationSubmissionEvaluation;
   readonly is_evaluated: boolean;
   readonly created_at: string;
 }
@@ -724,6 +754,13 @@ export interface PatchedCertificateTemplateRequest {
   is_default?: boolean;
 }
 
+export interface PatchedEvaluationSubmissionEvaluationRequest {
+  tournament_id?: number;
+  assignment?: number;
+  scores?: ScoreItemRequest[];
+  comment?: string;
+}
+
 export interface PatchedEventRequest {
   tournament?: number;
   type?: TypeEnum;
@@ -798,13 +835,6 @@ export interface PatchedRoundRequest {
   passing_count?: number | null;
   evaluation_criteria?: EvaluationCriteriaEnum;
   materials?: unknown;
-}
-
-export interface PatchedSubmissionEvaluationRequest {
-  tournament_id?: number;
-  assignment?: number;
-  scores?: ScoreItemRequest[];
-  comment?: string;
 }
 
 export interface PatchedSubmissionRequest {
@@ -1092,8 +1122,8 @@ export interface RoleActivationCodeGenerateResponse {
 
 /**
  * * `organizer` - organizer
-* `jury` - jury
 * `admin` - admin
+* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
@@ -1101,8 +1131,8 @@ export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenera
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
   organizer: 'organizer',
-  jury: 'jury',
   admin: 'admin',
+  jury: 'jury',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1358,9 +1388,6 @@ export interface SubmissionEvaluation {
 }
 
 export interface SubmissionEvaluationRequest {
-  tournament_id: number;
-  assignment: number;
-  scores: ScoreItemRequest[];
   comment?: string;
 }
 
@@ -1480,7 +1507,8 @@ export interface TeamMember {
   role?: RoleB96Enum;
   /** @nullable */
   avatar?: string | null;
-  readonly avatar_frame_url: string;
+  /** @nullable */
+  readonly avatar_frame_url: string | null;
 }
 
 export interface TeamMemberRequest {
@@ -1573,7 +1601,8 @@ export interface TeamUserList {
   role?: RoleB96Enum;
   /** @nullable */
   avatar?: string | null;
-  readonly avatar_frame_url: string;
+  /** @nullable */
+  readonly avatar_frame_url: string | null;
 }
 
 export interface TokenRefreshRequestRequest {
@@ -1765,12 +1794,14 @@ export interface TournamentTeamRegistrationCreateRequest {
   team_id: number;
 }
 
+export type TournamentTeamRegistrationListMembersItem = {[key: string]: unknown};
+
 export interface TournamentTeamRegistrationList {
   id: number;
   registration_id: number;
   name: string;
-  readonly members_count: string;
-  readonly members: string;
+  readonly members_count: number;
+  readonly members: readonly TournamentTeamRegistrationListMembersItem[];
   is_public: boolean;
   is_active?: boolean;
   is_disqualified: boolean;
@@ -2101,6 +2132,7 @@ export const SchemaRetrieveLang = {
   hi: 'hi',
   hr: 'hr',
   hsb: 'hsb',
+  ht: 'ht',
   hu: 'hu',
   hy: 'hy',
   ia: 'ia',

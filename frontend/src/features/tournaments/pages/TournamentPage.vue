@@ -440,7 +440,11 @@ watch(
 }
 
 .section-title {
-  color: white;
+  color: var(--foreground);
+}
+
+.hero-card--with-banner .section-title {
+  color: #fff;
 }
 
 .hero-card--with-banner :deep(.ui-card-body),
