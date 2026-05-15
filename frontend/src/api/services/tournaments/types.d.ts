@@ -56,6 +56,19 @@ export interface CreateTournamentArgs {
   body: CreateTournamentBody
 }
 
+// Edit tournament
+export type EditTournamentBody = CreateTournamentBody
+
+export interface EditTournamentArgs {
+  id: TournamentId
+  body: EditTournamentBody
+}
+
+// Delete tournament
+export interface DeleteTournamentArgs {
+  id: TournamentId
+}
+
 // Tournament info
 export interface GetTournamentInfoArgs {
   id: TournamentId

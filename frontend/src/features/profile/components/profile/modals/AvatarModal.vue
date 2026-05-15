@@ -9,9 +9,21 @@
     </template>
 
     <div class="modal-body">
-      <img v-if="previewUrl" :src="previewUrl" alt="Avatar preview" class="avatar-preview" />
+      <div
+        v-if="previewUrl"
+        class="avatar-preview-frame"
+        @pointerdown="onPreviewPointerDown"
+      >
+        <img
+          :src="previewUrl"
+          alt="Avatar preview"
+          class="avatar-preview"
+          :style="{ objectPosition: previewObjectPosition }"
+        />
+      </div>
       <div v-else class="avatar-empty">No avatar</div>
 
+      <p v-if="previewUrl" class="position-hint">Drag image to choose avatar position</p>
       <input type="file" accept="image/*" @change="onAvatarChange" />
     </div>
 
@@ -44,6 +56,7 @@ import { useNotification } from '@/composables/useNotification'
 import { useRemoveAvatar, useUpdateAvatar } from '@/api/queries/accounts'
 import { accountKeys } from '@/api/queries/keys'
 import type { User } from '@/api/dbTypes'
+import { clearImagePosition, readImagePosition, toObjectPosition, writeImagePosition } from '@/lib/imagePosition'
 
 const props = defineProps<{
   user?: User
@@ -53,11 +66,20 @@ const props = defineProps<{
 const isOpen = ref(false)
 const selectedAvatar = ref<File | null>(null)
 const selectedAvatarUrl = ref('')
+const avatarPositionKey = computed(() => (props.user?.id ? `image-position:avatar:user:${props.user.id}` : ''))
+const positionX = ref(50)
+const positionY = ref(50)
 
 const previewUrl = computed(() => {
   if (selectedAvatarUrl.value) return selectedAvatarUrl.value
   return props.user?.avatar || ''
 })
+const previewObjectPosition = computed(() =>
+  toObjectPosition({
+    x: positionX.value,
+    y: positionY.value,
+  }),
+)
 
 const { showNotification } = useNotification()
 const queryClient = useQueryClient()
@@ -71,6 +93,9 @@ const closeModal = () => {
 
 const resetState = () => {
   selectedAvatar.value = null
+  const saved = readImagePosition(avatarPositionKey.value)
+  positionX.value = saved.x
+  positionY.value = saved.y
   if (selectedAvatarUrl.value) {
     URL.revokeObjectURL(selectedAvatarUrl.value)
     selectedAvatarUrl.value = ''
@@ -87,6 +112,7 @@ const removeAvatar = () => {
   removeAvatarRequest(void 0, {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: accountKeys.profile() })
+      clearImagePosition(avatarPositionKey.value)
       showNotification('Avatar removed.', 'success')
       resetState()
     },
@@ -106,6 +132,9 @@ const saveAvatar = () => {
     {
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: accountKeys.profile() })
+        if (avatarPositionKey.value) {
+          writeImagePosition(avatarPositionKey.value, { x: positionX.value, y: positionY.value })
+        }
         showNotification('Avatar updated.', 'success')
         resetState()
       },
@@ -114,6 +143,36 @@ const saveAvatar = () => {
       },
     },
   )
+}
+
+const onPreviewPointerDown = (event: PointerEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  target.setPointerCapture(event.pointerId)
+
+  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
+    const rect = target.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
+    positionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
+    positionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
+  }
+
+  applyPositionFromPointer(event)
+
+  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
+  const handleUp = (pointerEvent: PointerEvent) => {
+    applyPositionFromPointer(pointerEvent)
+    target.removeEventListener('pointermove', handleMove)
+    target.removeEventListener('pointerup', handleUp)
+    target.removeEventListener('pointercancel', handleUp)
+    if (avatarPositionKey.value) {
+      writeImagePosition(avatarPositionKey.value, { x: positionX.value, y: positionY.value })
+    }
+  }
+
+  target.addEventListener('pointermove', handleMove)
+  target.addEventListener('pointerup', handleUp)
+  target.addEventListener('pointercancel', handleUp)
 }
 
 watch(selectedAvatar, (file) => {
@@ -125,6 +184,16 @@ watch(selectedAvatar, (file) => {
     selectedAvatarUrl.value = URL.createObjectURL(file)
   }
 })
+
+watch(
+  avatarPositionKey,
+  (key) => {
+    const saved = readImagePosition(key)
+    positionX.value = saved.x
+    positionY.value = saved.y
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -151,7 +220,7 @@ watch(selectedAvatar, (file) => {
   gap: 0.75rem;
 }
 
-.avatar-preview,
+.avatar-preview-frame,
 .avatar-empty {
   width: 120px;
   height: 120px;
@@ -159,8 +228,27 @@ watch(selectedAvatar, (file) => {
   border: 1px solid var(--line-soft);
 }
 
+.avatar-preview-frame {
+  overflow: hidden;
+  cursor: move;
+}
+
+.position-hint {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: 0.8rem;
+}
+
+.avatar-preview,
+.avatar-empty {
+  width: 100%;
+  height: 100%;
+}
+
 .avatar-preview {
   object-fit: cover;
+  user-select: none;
+  pointer-events: none;
 }
 
 .avatar-empty {

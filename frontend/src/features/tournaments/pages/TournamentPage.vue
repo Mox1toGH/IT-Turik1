@@ -20,15 +20,17 @@
       </template>
 
       <template #footer>
-        <ui-button
-          asLink
-          to="/tournaments"
-          variant="secondary"
-          size="sm"
-          class="tournament-link hero-content"
-        >
-          Back to tournaments
-        </ui-button>
+        <div class="hero-actions hero-content">
+          <ui-button
+            asLink
+            to="/tournaments"
+            variant="secondary"
+            size="sm"
+            class="tournament-link"
+          >
+            Back to tournaments
+          </ui-button>
+        </div>
       </template>
     </ui-card>
 
@@ -92,20 +94,65 @@
       <p>Submissions are available for team members and admins.</p>
     </ui-card>
 
+    <ui-card v-if="user?.role === 'admin'" class="manage-zone">
+      <div>
+        <div class="manage-row">
+          <div>
+            <h3>Edit tournament</h3>
+            <p class="text-muted">Update tournament details in edit workspace.</p>
+          </div>
+          <ui-button asLink variant="secondary" size="sm" :to="`/tournaments/${id}/edit`">
+            Edit tournament
+          </ui-button>
+        </div>
+
+        <div>
+          <div class="danger-zone-header">
+            <danger-icon />
+            <span>Danger Zone</span>
+          </div>
+
+          <div class="danger-zone-box">
+            <div class="manage-row danger-zone-row">
+              <div>
+                <h3>Delete tournament</h3>
+                <p class="text-muted">
+                  This action permanently deletes the tournament and cannot be undone.
+                </p>
+              </div>
+
+              <DeleteTournamentModal
+                :tournament-id="id"
+                :tournament-name="tournament?.name ?? `Tournament ${id}`"
+                @deleted="onTournamentDeleted"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ui-card>
+
     <ui-modal v-model="isBannerModalOpen" @close="resetBannerState">
       <template #title>
         <h3>Tournament banner</h3>
       </template>
 
       <div class="banner-modal-body">
-        <img
+        <div
           v-if="bannerPreviewUrl"
-          :src="bannerPreviewUrl"
-          alt="Tournament banner preview"
-          class="banner-preview"
-        />
+          class="banner-preview-frame"
+          @pointerdown="onBannerPreviewPointerDown"
+        >
+          <img
+            :src="bannerPreviewUrl"
+            alt="Tournament banner preview"
+            class="banner-preview"
+            :style="{ objectPosition: bannerObjectPosition }"
+          />
+        </div>
         <div v-else class="banner-empty">No banner</div>
 
+        <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
         <input type="file" accept="image/*" @change="onBannerChange" />
       </div>
 
@@ -130,6 +177,7 @@
 
 <script setup lang="ts">
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
+import DangerIcon from '@/icons/DangerIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -144,12 +192,14 @@ import JuryAssign from '../components/tournament/tournament-submissions/JuryAssi
 import TournamentSubmissions from '../components/tournament/TournamentSubmissions.vue'
 import { useProfile } from '@/api/queries/accounts'
 import TournamentLeaderboard from '../components/tournament/TournamentLeaderboard.vue'
+import DeleteTournamentModal from '../components/tournament/modals/DeleteTournamentModal.vue'
 import {
   useRemoveTournamentBanner,
   useTournamentInfo,
   useUpdateTournamentBanner,
 } from '@/api/queries/tournaments'
 import { useNotification } from '@/composables/useNotification'
+import { clearImagePosition, readImagePosition, toObjectPosition, writeImagePosition } from '@/lib/imagePosition'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
@@ -163,12 +213,20 @@ const { showNotification } = useNotification()
 const isBannerModalOpen = ref(false)
 const selectedBanner = ref<File | null>(null)
 const selectedBannerUrl = ref('')
+const bannerPositionX = ref(50)
+const bannerPositionY = ref(50)
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTournamentBanner()
 const { mutate: removeTournamentBanner, isPending: isRemovingBanner } = useRemoveTournamentBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 const bannerPreviewUrl = computed(() => selectedBannerUrl.value || tournament.value?.banner || '')
+const bannerPositionKey = computed(() => `image-position:banner:tournament:${id}`)
+const bannerObjectPosition = computed(() =>
+  toObjectPosition({ x: bannerPositionX.value, y: bannerPositionY.value }),
+)
 const heroBannerStyle = computed(() =>
-  tournament.value?.banner ? { backgroundImage: `url(${tournament.value.banner})` } : {},
+  tournament.value?.banner
+    ? { backgroundImage: `url(${tournament.value.banner})`, backgroundPosition: bannerObjectPosition.value }
+    : {},
 )
 
 const currentSection = ref<Sections>('information')
@@ -189,12 +247,20 @@ const setActiveSection = (section: Sections) => {
   currentSection.value = section
 }
 
+const onTournamentDeleted = () => {
+  showNotification('Tournament deleted successfully.', 'success')
+  router.push('/tournaments')
+}
+
 const closeBannerModal = () => {
   isBannerModalOpen.value = false
 }
 
 const resetBannerState = () => {
   selectedBanner.value = null
+  const saved = readImagePosition(bannerPositionKey.value)
+  bannerPositionX.value = saved.x
+  bannerPositionY.value = saved.y
   if (selectedBannerUrl.value) {
     URL.revokeObjectURL(selectedBannerUrl.value)
     selectedBannerUrl.value = ''
@@ -209,6 +275,7 @@ const onBannerChange = (event: Event) => {
 
 const saveBanner = () => {
   if (!selectedBanner.value) return
+  writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
   updateBanner(
     { tournamentId: id, file: selectedBanner.value },
     {
@@ -228,6 +295,7 @@ const removeBanner = () => {
     { tournamentId: id },
     {
       onSuccess: () => {
+        clearImagePosition(bannerPositionKey.value)
         showNotification('Banner removed.', 'success')
         resetBannerState()
       },
@@ -236,6 +304,34 @@ const removeBanner = () => {
       },
     },
   )
+}
+
+const onBannerPreviewPointerDown = (event: PointerEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  target.setPointerCapture(event.pointerId)
+
+  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
+    const rect = target.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
+    bannerPositionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
+    bannerPositionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
+  }
+
+  applyPositionFromPointer(event)
+
+  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
+  const handleUp = (pointerEvent: PointerEvent) => {
+    applyPositionFromPointer(pointerEvent)
+    writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
+    target.removeEventListener('pointermove', handleMove)
+    target.removeEventListener('pointerup', handleUp)
+    target.removeEventListener('pointercancel', handleUp)
+  }
+
+  target.addEventListener('pointermove', handleMove)
+  target.addEventListener('pointerup', handleUp)
+  target.addEventListener('pointercancel', handleUp)
 }
 
 watch(selectedBanner, (file) => {
@@ -247,6 +343,16 @@ watch(selectedBanner, (file) => {
     selectedBannerUrl.value = URL.createObjectURL(file)
   }
 })
+
+watch(
+  bannerPositionKey,
+  (key) => {
+    const saved = readImagePosition(key)
+    bannerPositionX.value = saved.x
+    bannerPositionY.value = saved.y
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query[sectionQueryKey],
@@ -351,6 +457,12 @@ watch(
   width: max-content;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .sections {
   display: flex;
   gap: 0.5rem;
@@ -367,12 +479,70 @@ watch(
   gap: 1rem;
 }
 
+.manage-zone {
+  margin-top: 1rem;
+}
+
+.manage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.manage-row:not(:last-child) {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+}
+
+.manage-row h3 {
+  font-size: 1rem;
+}
+
+.manage-row p {
+  margin-top: 0.3rem;
+}
+
+.danger-zone-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  margin: 0.2rem 0 0;
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--destructive) 80%, transparent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.danger-zone-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
+.danger-zone-box {
+  margin-top: 0.6rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+
+.danger-zone-row h3 {
+  color: color-mix(in srgb, var(--destructive) 80%, transparent);
+}
+
 .banner-modal-body {
   display: grid;
   gap: 0.75rem;
 }
 
-.banner-preview,
+.banner-preview-frame,
 .banner-empty {
   width: 100%;
   max-width: 480px;
@@ -381,8 +551,23 @@ watch(
   border: 1px solid var(--line-soft);
 }
 
+.banner-preview-frame {
+  overflow: hidden;
+  cursor: move;
+}
+
+.position-hint {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: 0.82rem;
+}
+
 .banner-preview {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  user-select: none;
+  pointer-events: none;
 }
 
 .banner-empty {
@@ -396,6 +581,11 @@ watch(
 @media (max-width: 810px) {
   .tournament-grid {
     flex-direction: column;
+  }
+
+  .manage-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

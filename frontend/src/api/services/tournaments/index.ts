@@ -6,6 +6,8 @@ import type {
   CreateEventArgs,
   CreateRoundArgs,
   CreateTournamentArgs,
+  DeleteTournamentArgs,
+  EditTournamentArgs,
   DeleteEventArgs,
   DeleteRoundArgs,
   EditEventArgs,
@@ -108,6 +110,16 @@ export const tournamentsService = {
 
   createTournament: async (args: CreateTournamentArgs) => {
     const { data } = await apiClient.post(`${prefix}/manage/`, args.body)
+    return data
+  },
+
+  editTournament: async (args: EditTournamentArgs) => {
+    const { data } = await apiClient.patch(`${prefix}/manage/${args.id}/`, args.body)
+    return data
+  },
+
+  deleteTournament: async (args: DeleteTournamentArgs) => {
+    const { data } = await apiClient.delete(`${prefix}/manage/${args.id}/`)
     return data
   },
 

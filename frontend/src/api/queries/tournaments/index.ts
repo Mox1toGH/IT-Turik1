@@ -6,8 +6,10 @@ import type {
   CreateEventArgs,
   CreateRoundArgs,
   CreateTournamentArgs,
+  DeleteTournamentArgs,
   DeleteEventArgs,
   DeleteRoundArgs,
+  EditTournamentArgs,
   EditEventArgs,
   EditRoundArgs,
   EditRoundResponse,
@@ -143,6 +145,41 @@ export const useCreateTournament = (
     CreateTournamentArgs
   >({
     mutationFn: $api.tournaments.createTournament,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.lists() })
+    },
+    ...config,
+  })
+}
+
+export const useEditTournament = (
+  config?: MutationConfig<
+    unknown,
+    AxiosError<ApiError<keyof EditTournamentArgs['body']>>,
+    EditTournamentArgs
+  >,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<
+    unknown,
+    AxiosError<ApiError<keyof EditTournamentArgs['body']>>,
+    EditTournamentArgs
+  >({
+    mutationFn: $api.tournaments.editTournament,
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: tournamentsKeys.touranment(vars.id) })
+    },
+    ...config,
+  })
+}
+
+export const useDeleteTournament = (
+  config?: MutationConfig<unknown, AxiosError<ApiError>, DeleteTournamentArgs>,
+) => {
+  const queryClient = useQueryClient()
+  return useMutation<unknown, AxiosError<ApiError>, DeleteTournamentArgs>({
+    mutationFn: $api.tournaments.deleteTournament,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tournamentsKeys.lists() })
     },

@@ -3,7 +3,10 @@
     <ui-card class="calendar-hero">
       <div>
         <p class="eyebrow">Schedule</p>
-        <h1>Calendar</h1>
+        <div class="title-row">
+          <calendar-title-icon class="title-icon" />
+          <h1>Calendar</h1>
+        </div>
         <p class="sub">Events, consultations, deadlines and round milestones across your tournaments.</p>
       </div>
     </ui-card>
@@ -54,6 +57,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
+import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
 import { useMyCalendar } from '@/api/queries/tournaments'
 import { parseApiError } from '@/api/errors'
@@ -91,9 +95,22 @@ const hasItems = computed(() => events.value.length > 0 || rounds.value.length >
 }
 
 h1 {
-  margin: 0.45rem 0 0;
+  margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.4rem, 1.3vw + 1rem, 2rem);
+}
+
+.title-row {
+  margin-top: 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.title-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  opacity: 0.92;
 }
 
 .sub {
