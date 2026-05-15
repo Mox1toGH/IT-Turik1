@@ -49,9 +49,12 @@
         }}</small>
       </label>
 
-      <p class="auth-link" style="text-align: end">
-        <router-link to="/forgot-password">Forgot password?</router-link>
-      </p>
+      <div class="auth-link-row">
+        <ui-button variant="secondary" type="button" :disabled="isSendingReset" @click="sendResetEmail">
+          <LoadingIcon v-if="isSendingReset" />
+          Send reset email
+        </ui-button>
+      </div>
 
       <ui-button type="submit" :disabled="isChangingPassword">
         <LoadingIcon v-if="isChangingPassword" />
@@ -62,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { useChangePassword } from '@/api/accounts/accounts'
+import { useChangePassword, useRequestPasswordReset } from '@/api/accounts/accounts'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
@@ -70,6 +73,7 @@ import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { ChangePasswordSchema } from '@/schemas/profile.schema'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 import { ref } from 'vue'
 
 interface PasswordForm {
@@ -79,6 +83,7 @@ interface PasswordForm {
 }
 
 const isOpen = ref(false)
+const { data: user } = useGetUserProfile()
 const form = useForm<PasswordForm>(ChangePasswordSchema, {
   current_password: '',
   new_password: '',
@@ -91,6 +96,7 @@ const resetPasswordState = () => {
 
 const { showNotification } = useNotification()
 const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword()
+const { mutate: requestReset, isPending: isSendingReset } = useRequestPasswordReset()
 
 const handlePasswordChange = () => {
   if (!form.validate()) return
@@ -109,11 +115,35 @@ const handlePasswordChange = () => {
     },
   )
 }
+
+const sendResetEmail = () => {
+  const email = user.value?.email
+  if (!email) {
+    showNotification('Account email is missing.', 'error')
+    return
+  }
+
+  requestReset(
+    { data: { email } },
+    {
+      onSuccess: () => {
+        showNotification('Password reset email sent to your account email.', 'success')
+      },
+      onError: (error) => {
+        showNotification(error?.message || 'Failed to send reset email.', 'error')
+      },
+    },
+  )
+}
 </script>
 
 <style scoped>
 .password-form {
   display: grid;
   gap: 0.75rem;
+}
+.auth-link-row {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

@@ -86,6 +86,19 @@ class PasswordResetFlowTests(APITestCase):
         response = self.client.post(self.request_url, {'email': 'missing@example.com'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_password_reset_request_uses_authenticated_user_email_when_email_not_provided(self):
+        user = User.objects.create_user(
+            username='auth-reset-user',
+            email='auth-reset-user@example.com',
+            password='StrongPass123!',
+            is_active=True,
+        )
+        self.client.force_authenticate(user=user)
+        response = self.client.post(self.request_url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Reset your password', mail.outbox[0].body)
+
     def test_password_reset_confirm_get_rejects_invalid_or_expired_link(self):
         user = User.objects.create_user(username='invalid-link-user', email='i@e.com', password='P', is_active=True)
         uid, _ = self._get_uid_and_token(user)

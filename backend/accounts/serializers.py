@@ -590,16 +590,22 @@ class UserAvatarUpdateSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError('No account found with this email address.')
-        return value
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def save(self):
-        email = self.validated_data['email']
-        user = User.objects.get(email=email)
+        email = self.validated_data.get('email')
+        request = self.context.get('request')
+
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                raise serializers.ValidationError({'email': 'No account found with this email address.'})
+        elif request and request.user and request.user.is_authenticated:
+            user = request.user
+            if not user.email:
+                raise serializers.ValidationError({'email': 'Your account does not have an email address.'})
+        else:
+            raise serializers.ValidationError({'email': 'Email is required for unauthenticated requests.'})
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
