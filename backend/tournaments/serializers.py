@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from typing import Any
 from rest_framework import serializers
 
 from evaluation.models import JuryAssignment
@@ -509,7 +510,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             'disqualification_reason',
         )
  
-    def get_members_count(self, obj):
+    def get_members_count(self, obj) -> int:
         return len(self._get_unique_team_users(obj))
 
     def _get_unique_team_users(self, obj):
@@ -526,7 +527,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             unique_users.append(user)
         return unique_users
 
-    def get_members(self, obj):
+    def get_members(self, obj) -> list[dict[str, Any]]:
         return TeamMemberSerializer(self._get_unique_team_users(obj), many=True).data
 
 
