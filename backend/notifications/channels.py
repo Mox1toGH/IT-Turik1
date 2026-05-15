@@ -21,6 +21,7 @@ EVENT_TYPE_LABELS = {
     'team_member_removed': 'Membership Update',
     'team_member_left': 'Membership Update',
     'news_published': 'News',
+    'certificate_received': 'Certificate',
 }
 
 # Events that go to /teams (general) — cannot link to a specific team
@@ -39,6 +40,7 @@ EVENT_ACTION_LABELS = {
     'team_member_removed':        'Browse Teams',
     'team_member_left':           'View Team',
     'news_published':             'View News',
+    'certificate_received':       'View Certificates',
 }
 
 
@@ -55,6 +57,8 @@ def _get_action(event_type: str, message: str) -> tuple[str, str]:
         return label, '/teams'
     if event_type == 'news_published':
         return label, '/news'
+    if event_type == 'certificate_received':
+        return label, '/profile/certificates'
 
     # Try to extract team_id from [team:id:name:visibility] tag
     match = re.search(r'\[team:(\d+):', message)
