@@ -50,8 +50,8 @@
               <h4>{{ truncateText(round.name ?? '-', 70) }}</h4>
 
               <div class="header-right">
-                <ui-badge :variant="badgeVariant(round.status)">{{
-                  badgeStatus(round.status)
+                <ui-badge :variant="badgeVariant(getEffectiveRoundStatus(round))">{{
+                  badgeStatus(getEffectiveRoundStatus(round))
                 }}</ui-badge>
                 <round-actions-popover
                   v-if="user?.role === 'admin'"
@@ -82,7 +82,7 @@
               Edit
             </ui-button>
 
-            <template v-if="round.status === 'active' && user?.role === 'team'">
+            <template v-if="getEffectiveRoundStatus(round) === 'active' && user?.role === 'team'">
               <ui-button
                 v-if="submittedRoundIds.has(round.id)"
                 size="sm"
@@ -159,6 +159,13 @@ const isSubmitOpen = ref(false)
 const isEditOpen = ref(false)
 const selectedRound = ref<Round | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
+
+function getEffectiveRoundStatus(round: Round): Round['status'] {
+  if (round.status !== 'active') return round.status
+  const endTimestamp = new Date(round.end_date).getTime()
+  if (!Number.isFinite(endTimestamp)) return round.status
+  return Date.now() >= endTimestamp ? 'submission_closed' : 'active'
+}
 
 function openDetails(round: Round) {
   selectedRound.value = round
