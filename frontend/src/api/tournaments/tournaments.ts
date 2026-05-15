@@ -38,6 +38,8 @@ import type {
   ErrorResponseValidationError,
   Event,
   EventRequest,
+  ExportToGoogleCalendarRequestRequest,
+  ExportToGoogleCalendarResponse,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
   Icon,
@@ -2215,7 +2217,65 @@ export function useGetMyCalendar<TData = Awaited<ReturnType<typeof getMyCalendar
 
 
 
-export const getRound = (
+export const exportToGoogleCalendar = (
+    exportToGoogleCalendarRequestRequest: MaybeRef<ExportToGoogleCalendarRequestRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      exportToGoogleCalendarRequestRequest = unref(exportToGoogleCalendarRequestRequest);
+      
+      return customInstance<ExportToGoogleCalendarResponse>(
+      {url: `http://localhost:8000/api/tournaments/my-calendar/export-to-google/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: exportToGoogleCalendarRequestRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getExportToGoogleCalendarMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext> => {
+
+const mutationKey = ['exportToGoogleCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exportToGoogleCalendar>>, {data: BodyType<ExportToGoogleCalendarRequestRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  exportToGoogleCalendar(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExportToGoogleCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof exportToGoogleCalendar>>>
+    export type ExportToGoogleCalendarMutationBody = BodyType<ExportToGoogleCalendarRequestRequest>
+    export type ExportToGoogleCalendarMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
+
+    export const useExportToGoogleCalendar = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof exportToGoogleCalendar>>,
+        TError,
+        {data: BodyType<ExportToGoogleCalendarRequestRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getExportToGoogleCalendarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const getRound = (
     id: MaybeRef<number>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {

@@ -61,8 +61,10 @@
         v-if="selectedDate"
         :date="selectedDate"
         :items="selectedDayItems"
+        :gcal-connected="gcalConnected"
         @close="selectedDate = null"
         @navigate="navigateToItem"
+        @export-item="emitExport"
       />
     </template>
 
@@ -106,8 +108,10 @@
         v-if="selectedDate"
         :date="selectedDate"
         :items="selectedDayItems"
+        :gcal-connected="gcalConnected"
         @close="selectedDate = null"
         @navigate="navigateToItem"
+        @export-item="emitExport"
       />
     </template>
 
@@ -133,6 +137,11 @@
                   Join
                 </a>
               </span>
+              <span v-if="gcalConnected" class="day-view-link">
+                <a href="#" @click.stop.prevent="emitExport(item)"
+                  ><google-calendar-icon class="link-icon" /> Add to GCal</a
+                >
+              </span>
             </div>
             <p class="day-view-title">{{ item.title }}</p>
             <p v-if="item.description" class="day-view-description">{{ item.description }}</p>
@@ -152,13 +161,13 @@ import ArrowLeftIcon from '@/icons/ArrowLeft.vue'
 import ArrowRightIcon from '@/icons/ArrowRight.vue'
 import ClockIcon from '@/icons/ClockIcon.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
+import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import CalendarDayDetail from './CalendarDayDetail.vue'
 import { truncateText } from '@/lib/utils'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useListRounds } from '@/api/tournaments/tournaments'
 import type { Event, Round } from '@/api/.ts.schemas'
 
 interface CalendarItem {
@@ -175,11 +184,14 @@ interface CalendarItem {
 interface Props {
   events: Event[]
   rounds: Round[]
+  gcalConnected?: boolean
 }
 
-useListRounds
-
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  exportEvent: [eventId: number]
+  exportRound: [roundId: number]
+}>()
 const router = useRouter()
 
 type ViewMode = 'month' | 'week' | 'day'
@@ -427,6 +439,16 @@ function typeLabel(type: CalendarItem['type']): string {
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+}
+
+function emitExport(item: CalendarItem) {
+  const isRound = item.type === 'round-start' || item.type === 'round-deadline'
+  const rawId = parseInt(item.id.replace(/^(event-|round-start-|round-deadline-)/, ''))
+  if (isRound) {
+    emit('exportRound', rawId)
+  } else {
+    emit('exportEvent', rawId)
+  }
 }
 
 function prev() {

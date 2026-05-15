@@ -35,6 +35,7 @@ from .views import (
     TournamentCertificateDeliveryStatusView,
     MyCalendarView,
     TournamentSendCertificatesView,
+    ExportToGoogleCalendarView,
 )
 
 router = DefaultRouter()
@@ -95,6 +96,7 @@ urlpatterns = [
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
     path('my-calendar/', MyCalendarView.as_view(), name='my_calendar'),
+    path('my-calendar/export-to-google/', ExportToGoogleCalendarView.as_view(), name='export_to_google_calendar'),
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),
     path('icons/', IconListView.as_view(), name='icon_list'),
 ] + router.urls

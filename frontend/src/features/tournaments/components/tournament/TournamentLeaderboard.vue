@@ -237,11 +237,13 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import { useListCertificateTemplates } from '@/api/certificates/certificates'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useGetTournamentLeaderboard } from '@/api/evaluation/evaluation'
+import {
+  useGetTournamentLeaderboard,
+  type GetTournamentLeaderboardQueryResult,
+} from '@/api/evaluation/evaluation'
 import { useGetTournament, useListRounds } from '@/api/tournaments/tournaments'
 import { customInstance } from '@/lib/apiClient'
 import { useNotification } from '@/composables/useNotification'
-import type { GetTournamentLeaderboardResponse } from '@/api/services/evaluation/types'
 
 interface Props {
   tournamentId: number
@@ -251,7 +253,7 @@ interface RoundColumn {
   name: string
   maxScore: number
 }
-type TournamentEntry = GetTournamentLeaderboardResponse['rankings'][number]
+type TournamentEntry = GetTournamentLeaderboardQueryResult['rankings'][number]
 type ParsedApiError = { message?: string }
 
 function parseApiError(error: unknown): ParsedApiError | null {

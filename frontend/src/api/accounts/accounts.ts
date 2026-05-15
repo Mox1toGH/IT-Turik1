@@ -33,9 +33,13 @@ import type {
   ErrorResponseNotAuthenticated,
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
+  ErrorResponseServiceUnavailable,
   ErrorResponseValidationError,
   GoogleAuthRequest,
   GoogleAuthResponse,
+  GoogleCalendarCallbackRequestRequest,
+  GoogleCalendarConnectResponse,
+  GoogleCalendarStatus,
   ListRoleActivationCodesParams,
   ListUsersParams,
   LoginRequestRequest,
@@ -182,7 +186,239 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const googleAuth = (
+    export const callbackGoogleCalendar = (
+    googleCalendarCallbackRequestRequest: MaybeRef<GoogleCalendarCallbackRequestRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      googleCalendarCallbackRequestRequest = unref(googleCalendarCallbackRequestRequest);
+      
+      return customInstance<GoogleCalendarStatus>(
+      {url: `http://localhost:8000/api/accounts/google-calendar/callback/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: googleCalendarCallbackRequestRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getCallbackGoogleCalendarMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof callbackGoogleCalendar>>, TError,{data: BodyType<GoogleCalendarCallbackRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof callbackGoogleCalendar>>, TError,{data: BodyType<GoogleCalendarCallbackRequestRequest>}, TContext> => {
+
+const mutationKey = ['callbackGoogleCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof callbackGoogleCalendar>>, {data: BodyType<GoogleCalendarCallbackRequestRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  callbackGoogleCalendar(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CallbackGoogleCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof callbackGoogleCalendar>>>
+    export type CallbackGoogleCalendarMutationBody = BodyType<GoogleCalendarCallbackRequestRequest>
+    export type CallbackGoogleCalendarMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>
+
+    export const useCallbackGoogleCalendar = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof callbackGoogleCalendar>>, TError,{data: BodyType<GoogleCalendarCallbackRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof callbackGoogleCalendar>>,
+        TError,
+        {data: BodyType<GoogleCalendarCallbackRequestRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getCallbackGoogleCalendarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const connectGoogleCalendar = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<GoogleCalendarConnectResponse>(
+      {url: `http://localhost:8000/api/accounts/google-calendar/connect/`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getConnectGoogleCalendarMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof connectGoogleCalendar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof connectGoogleCalendar>>, TError,void, TContext> => {
+
+const mutationKey = ['connectGoogleCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof connectGoogleCalendar>>, void> = () => {
+          
+
+          return  connectGoogleCalendar(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConnectGoogleCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof connectGoogleCalendar>>>
+    
+    export type ConnectGoogleCalendarMutationError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>
+
+    export const useConnectGoogleCalendar = <TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseServiceUnavailable>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof connectGoogleCalendar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof connectGoogleCalendar>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getConnectGoogleCalendarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const disconnectGoogleCalendar = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<GoogleCalendarStatus>(
+      {url: `http://localhost:8000/api/accounts/google-calendar/disconnect/`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getDisconnectGoogleCalendarMutationOptions = <TError = ErrorType<ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectGoogleCalendar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof disconnectGoogleCalendar>>, TError,void, TContext> => {
+
+const mutationKey = ['disconnectGoogleCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disconnectGoogleCalendar>>, void> = () => {
+          
+
+          return  disconnectGoogleCalendar(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisconnectGoogleCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof disconnectGoogleCalendar>>>
+    
+    export type DisconnectGoogleCalendarMutationError = ErrorType<ErrorResponseNotAuthenticated>
+
+    export const useDisconnectGoogleCalendar = <TError = ErrorType<ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectGoogleCalendar>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof disconnectGoogleCalendar>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getDisconnectGoogleCalendarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const getGoogleCalendarStatus = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<GoogleCalendarStatus>(
+      {url: `http://localhost:8000/api/accounts/google-calendar/status/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetGoogleCalendarStatusQueryKey = () => {
+    return [
+    'http:','localhost:8000','api','accounts','google-calendar','status'
+    ] as const;
+    }
+
+    
+export const getGetGoogleCalendarStatusQueryOptions = <TData = Awaited<ReturnType<typeof getGoogleCalendarStatus>>, TError = ErrorType<ErrorResponseNotAuthenticated>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGoogleCalendarStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetGoogleCalendarStatusQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGoogleCalendarStatus>>> = ({ signal }) => getGoogleCalendarStatus(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGoogleCalendarStatus>>, TError, TData> 
+}
+
+export type GetGoogleCalendarStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getGoogleCalendarStatus>>>
+export type GetGoogleCalendarStatusQueryError = ErrorType<ErrorResponseNotAuthenticated>
+
+
+
+export function useGetGoogleCalendarStatus<TData = Awaited<ReturnType<typeof getGoogleCalendarStatus>>, TError = ErrorType<ErrorResponseNotAuthenticated>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGoogleCalendarStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGoogleCalendarStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const googleAuth = (
     googleAuthRequest: MaybeRef<GoogleAuthRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {

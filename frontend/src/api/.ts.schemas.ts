@@ -130,6 +130,12 @@ export interface AvatarFrameRequest {
   is_active?: boolean;
 }
 
+export interface CalendarExportError {
+  type: TypeBd0Enum;
+  id: number;
+  error: string;
+}
+
 export interface Category {
   readonly id: number;
   /** @maxLength 120 */
@@ -316,6 +322,18 @@ export interface ErrorResponsePermissionDenied {
   details?: string | null;
 }
 
+export interface ErrorResponseServiceUnavailable {
+  /** Machine-readable error code. */
+  code: string;
+  /** Human-readable error summary. */
+  message: string;
+  /**
+   * Always null for non-validation errors.
+   * @nullable
+   */
+  details?: string | null;
+}
+
 /**
  * Field-level validation errors. Keys are field names, values are lists of messages.
  */
@@ -348,7 +366,7 @@ export interface EvaluationRoundShort {
   start_date: string;
   end_date: string;
   status?: StatusE43Enum;
-  criteria: unknown;
+  readonly criteria: readonly Criterion[];
   tournament: number;
 }
 
@@ -373,7 +391,7 @@ export interface EvaluationSubmissionEvaluationRequest {
 export interface Event {
   readonly id: number;
   tournament: number;
-  type: TypeEnum;
+  type: EventTypeEnum;
   /** @maxLength 255 */
   title: string;
   description?: string;
@@ -388,7 +406,7 @@ export interface Event {
 
 export interface EventRequest {
   tournament: number;
-  type: TypeEnum;
+  type: EventTypeEnum;
   /**
    * @minLength 1
    * @maxLength 255
@@ -405,6 +423,37 @@ export interface EventRequest {
 export interface EventType {
   key: string;
   title: string;
+}
+
+/**
+ * * `meet` - Meet
+* `event` - Event
+ */
+export type EventTypeEnum = typeof EventTypeEnum[keyof typeof EventTypeEnum];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const EventTypeEnum = {
+  meet: 'meet',
+  event: 'event',
+} as const;
+
+export interface ExportToGoogleCalendarRequestRequest {
+  event_ids?: number[];
+  round_ids?: number[];
+}
+
+export interface ExportToGoogleCalendarResponse {
+  created: ExportedCalendarItem[];
+  errors: CalendarExportError[];
+}
+
+export interface ExportedCalendarItem {
+  type: TypeBd0Enum;
+  id: number;
+  google_event_id?: string;
+  google_event_ids?: string[];
+  html_link?: string;
 }
 
 export interface GlobalConfig {
@@ -425,6 +474,19 @@ export interface GoogleAuthResponse {
   refresh: string;
   user: User;
   onboarding_required: boolean;
+}
+
+export interface GoogleCalendarCallbackRequestRequest {
+  /** @minLength 1 */
+  code: string;
+}
+
+export interface GoogleCalendarConnectResponse {
+  auth_url: string;
+}
+
+export interface GoogleCalendarStatus {
+  connected: boolean;
 }
 
 export interface Icon {
@@ -763,7 +825,7 @@ export interface PatchedEvaluationSubmissionEvaluationRequest {
 
 export interface PatchedEventRequest {
   tournament?: number;
-  type?: TypeEnum;
+  type?: EventTypeEnum;
   /**
    * @minLength 1
    * @maxLength 255
@@ -1810,16 +1872,16 @@ export interface TournamentTeamRegistrationList {
 }
 
 /**
- * * `meet` - Meet
-* `event` - Event
+ * * `event` - event
+* `round` - round
  */
-export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
+export type TypeBd0Enum = typeof TypeBd0Enum[keyof typeof TypeBd0Enum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const TypeEnum = {
-  meet: 'meet',
+export const TypeBd0Enum = {
   event: 'event',
+  round: 'round',
 } as const;
 
 export interface UnreadCountResponse {
@@ -1967,6 +2029,10 @@ page_size?: number;
 
 export type ListJuryAssignmentsParams = {
 /**
+ * all | evaluated | not_evaluated (default: all)
+ */
+evaluation_status?: string;
+/**
  * A page number within the paginated result set.
  */
 page?: number;
@@ -1975,9 +2041,17 @@ page?: number;
  */
 page_size?: number;
 /**
- * Filter by round ID
+ * Filter by single round ID
  */
 round_id?: number;
+/**
+ * Comma-separated round IDs
+ */
+round_ids?: string;
+/**
+ * Comma-separated tournament IDs
+ */
+tournament_ids?: string;
 };
 
 export type ListAvailableJuryParams = {

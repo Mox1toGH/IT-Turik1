@@ -26,6 +26,12 @@
               Join
             </a>
           </span>
+          <span v-if="gcalConnected" class="day-detail-link">
+            <a href="#" @click.stop.prevent="$emit('exportItem', item)">
+              <google-calendar-icon class="link-icon" />
+              GCal
+            </a>
+          </span>
         </div>
         <p class="day-detail-title">{{ item.title }}</p>
         <p v-if="item.description" class="day-detail-description">{{ item.description }}</p>
@@ -44,6 +50,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import CrossIcon from '@/icons/CrossIcon.vue'
 import ClockIcon from '@/icons/ClockIcon.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
+import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import { formatDate } from '@/lib/date'
 
 interface CalendarItem {
@@ -60,10 +67,11 @@ interface CalendarItem {
 interface Props {
   date: Date
   items: CalendarItem[]
+  gcalConnected?: boolean
 }
 
 defineProps<Props>()
-defineEmits<{ close: []; navigate: [item: CalendarItem] }>()
+defineEmits<{ close: []; navigate: [item: CalendarItem]; exportItem: [item: CalendarItem] }>()
 
 function typeLabel(type: CalendarItem['type']): string {
   switch (type) {

@@ -53,3 +53,7 @@ _404 = _error_response(
     description='Requested resource was not found.',
     code_example='not_found',
 )
+_503 = _error_response(
+    description='Service temporarily unavailable.',
+    code_example='service_unavailable',
+)

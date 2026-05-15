@@ -122,6 +122,7 @@ def _code_for_status(status_code):
         status.HTTP_403_FORBIDDEN: 'permission_denied',
         status.HTTP_404_NOT_FOUND: 'not_found',
         status.HTTP_429_TOO_MANY_REQUESTS: 'too_many_requests',
+        status.HTTP_503_SERVICE_UNAVAILABLE: 'service_unavailable',
         status.HTTP_500_INTERNAL_SERVER_ERROR: 'server_error',
     }
     return mapping.get(status_code, 'error')
@@ -134,6 +135,7 @@ def _default_message_for_status(status_code):
         status.HTTP_403_FORBIDDEN: 'Permission denied.',
         status.HTTP_404_NOT_FOUND: 'Resource not found.',
         status.HTTP_429_TOO_MANY_REQUESTS: 'Too many requests.',
+        status.HTTP_503_SERVICE_UNAVAILABLE: 'Service temporarily unavailable.',
         status.HTTP_500_INTERNAL_SERVER_ERROR: 'Server error.',
     }
     return defaults.get(status_code, 'Request failed.')

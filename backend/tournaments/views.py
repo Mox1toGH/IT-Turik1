@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
@@ -50,6 +52,8 @@ from .serializers import (
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationDisqualificationSerializer,
     TournamentBannerSerializer,
+    ExportToGoogleCalendarRequestSerializer,
+    ExportToGoogleCalendarResponseSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -59,6 +63,7 @@ from .services import (
     start_round,
     sync_time_based_statuses,
 )
+from accounts.google_calendar import _get_calendar_service
 
 
 def get_tournament_queryset():
@@ -1372,4 +1377,136 @@ class TournamentSendCertificatesView(SyncStatusesMixin, APIView):
                 'skipped_count': skipped_count,
             },
             status=status.HTTP_200_OK,
+class ExportToGoogleCalendarView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ExportToGoogleCalendarRequestSerializer
+
+    @extend_schema(
+        operation_id='exportToGoogleCalendar',
+        request=ExportToGoogleCalendarRequestSerializer,
+        responses={
+            200: ExportToGoogleCalendarResponseSerializer,
+            400: _400,
+            401: _401,
+        },
+    )
+    def post(self, request):
+        user = request.user
+        if not user.google_calendar_connected:
+            return Response(
+                {'detail': 'Google Calendar is not connected. Please connect first.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        service = _get_calendar_service(user)
+        if not service:
+            return Response(
+                {'detail': 'Failed to connect to Google Calendar. Please reconnect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request_serializer = self.get_serializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        event_ids = request_serializer.validated_data.get('event_ids', [])
+        round_ids = request_serializer.validated_data.get('round_ids', [])
+
+        if not event_ids and not round_ids:
+            raise ValidationError({'event_ids': ['Provide event_ids or round_ids to export.']})
+
+        created = []
+        errors = []
+
+        if event_ids:
+            events = Event.objects.filter(id__in=event_ids).select_related('tournament')
+            for event in events:
+                try:
+                    start_dt = event.start_datetime
+                    end_dt = start_dt + timedelta(hours=1)
+
+                    gcal_event = {
+                        'summary': f'{event.title} — {event.tournament.name}',
+                        'description': event.description or '',
+                        'start': {
+                            'dateTime': start_dt.isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                        'end': {
+                            'dateTime': end_dt.isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                    }
+                    if event.link:
+                        gcal_event['description'] += f'\n\nLink: {event.link}'
+
+                    result = service.events().insert(
+                        calendarId='primary', body=gcal_event
+                    ).execute()
+                    created.append({
+                        'type': 'event',
+                        'id': event.id,
+                        'google_event_id': result.get('id'),
+                        'html_link': result.get('htmlLink'),
+                    })
+                except Exception as e:
+                    errors.append({
+                        'type': 'event',
+                        'id': event.id,
+                        'error': str(e),
+                    })
+
+        if round_ids:
+            rounds = Round.objects.filter(id__in=round_ids).select_related('tournament')
+            for round_obj in rounds:
+                try:
+                    gcal_event_start = {
+                        'summary': f'{round_obj.name} starts — {round_obj.tournament.name}',
+                        'description': f'Round starts for tournament {round_obj.tournament.name}',
+                        'start': {
+                            'dateTime': round_obj.start_date.isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                        'end': {
+                            'dateTime': (round_obj.start_date + timedelta(hours=1)).isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                    }
+                    result_start = service.events().insert(
+                        calendarId='primary', body=gcal_event_start
+                    ).execute()
+
+                    gcal_event_deadline = {
+                        'summary': f'{round_obj.name} deadline — {round_obj.tournament.name}',
+                        'description': f'Submission deadline for {round_obj.name}',
+                        'start': {
+                            'dateTime': round_obj.end_date.isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                        'end': {
+                            'dateTime': (round_obj.end_date + timedelta(minutes=30)).isoformat(),
+                            'timeZone': 'UTC',
+                        },
+                    }
+                    result_deadline = service.events().insert(
+                        calendarId='primary', body=gcal_event_deadline
+                    ).execute()
+
+                    created.append({
+                        'type': 'round',
+                        'id': round_obj.id,
+                        'google_event_ids': [
+                            result_start.get('id'),
+                            result_deadline.get('id'),
+                        ],
+                    })
+                except Exception as e:
+                    errors.append({
+                        'type': 'round',
+                        'id': round_obj.id,
+                        'error': str(e),
+                    })
+
+        return Response(
+            ExportToGoogleCalendarResponseSerializer(
+                {'created': created, 'errors': errors},
+            ).data,
         )
