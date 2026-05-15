@@ -13,6 +13,7 @@ from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from tournaments.permissions import CanManageAssignments, CanSetResults
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
 from .leaderboard_service import compute_leaderboard, get_leaderboard, get_tournament_leaderboard
+from .realtime import emit_tournament_leaderboard_updated
 
 from .models import JuryAssignment, SubmissionEvaluation
 from .serializers import (
@@ -150,8 +151,17 @@ class JuryEvaluationCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
-        round_obj = serializer.instance.assignment.submission.round
+        evaluation = serializer.instance
+        submission = evaluation.assignment.submission
+        round_obj = submission.round
         try_auto_evaluate_round(round_obj)
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_created',
+            submission_id=submission.id,
+            evaluation_id=evaluation.id,
+        )
 
 
 @extend_schema(methods=['GET'], operation_id='getJuryEvaluation', responses={
@@ -190,8 +200,30 @@ class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
-        round_obj = serializer.instance.assignment.submission.round
+        evaluation = serializer.instance
+        submission = evaluation.assignment.submission
+        round_obj = submission.round
         try_auto_evaluate_round(round_obj)
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_updated',
+            submission_id=submission.id,
+            evaluation_id=evaluation.id,
+        )
+
+    def perform_destroy(self, instance):
+        submission = instance.assignment.submission
+        round_obj = submission.round
+        evaluation_id = instance.id
+        instance.delete()
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_deleted',
+            submission_id=submission.id,
+            evaluation_id=evaluation_id,
+        )
 
 
 @extend_schema(

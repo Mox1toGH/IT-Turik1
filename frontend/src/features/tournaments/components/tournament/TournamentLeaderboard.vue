@@ -82,11 +82,11 @@
           </div>
         </template>
 
-        <ui-card v-if="isError" class="empty">
+        <ui-card v-if="isError && !isLeaderboardNotReady" class="empty">
           <p>{{ errorMessage }}</p>
         </ui-card>
 
-        <ui-card v-else-if="rankings.length === 0" class="empty">
+        <ui-card v-else-if="rankings.length === 0 || isLeaderboardNotReady" class="empty">
           <p>No leaderboard data yet.</p>
         </ui-card>
 
@@ -226,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -243,6 +243,8 @@ import {
 } from '@/api/evaluation/evaluation'
 import { useGetTournament, useListRounds } from '@/api/tournaments/tournaments'
 import { customInstance } from '@/lib/apiClient'
+import { queryClient } from '@/lib/queryClient'
+import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
 import { useNotification } from '@/composables/useNotification'
 
 interface Props {
@@ -273,6 +275,7 @@ function getHttpStatus(error: unknown): number | null {
 }
 
 const props = defineProps<Props>()
+let unsubscribeLeaderboardSocket: (() => void) | null = null
 const tableWrapRef = ref<HTMLElement | null>(null)
 const isCreatingGoogleSheet = ref(false)
 const isSendCertificatesModalOpen = ref(false)
@@ -299,7 +302,15 @@ const {
   isLoading,
   isError,
   error,
-} = useGetTournamentLeaderboard(props.tournamentId)
+} = useGetTournamentLeaderboard(props.tournamentId, {
+  query: {
+    retry: (failureCount, queryError) => {
+      const status = getHttpStatus(queryError)
+      if (status === 404 || status === 403) return false
+      return failureCount < 2
+    },
+  },
+})
 const rankings = computed<TournamentEntry[]>(() => leaderboard.value?.rankings ?? [])
 
 const leaderboardRoundIds = computed(() => {
@@ -360,9 +371,22 @@ const errorMessage = computed(() =>
       ? 'Leaderboard is not available yet.'
       : error.value.message || 'Failed to load leaderboard.',
 )
+const isLeaderboardNotReady = computed(() => {
+  const status = getHttpStatus(error.value)
+  return status === 404 || status === 403
+})
 const isExportDisabled = computed(
   () => isLoading.value || isError.value || rankings.value.length === 0,
 )
+
+onMounted(() => {
+  unsubscribeLeaderboardSocket = subscribeTournamentLeaderboard(queryClient, props.tournamentId)
+})
+
+onBeforeUnmount(() => {
+  unsubscribeLeaderboardSocket?.()
+  unsubscribeLeaderboardSocket = null
+})
 
 function getRoundScore(entry: TournamentEntry, roundId: number) {
   const round = getRoundBreakdown(entry, roundId)

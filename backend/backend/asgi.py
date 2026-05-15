@@ -17,8 +17,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
 django_asgi_app = get_asgi_application()
 
-from notifications.routing import websocket_urlpatterns  # noqa: E402
+from notifications.routing import websocket_urlpatterns as notification_ws_urlpatterns  # noqa: E402
+from evaluation.routing import websocket_urlpatterns as leaderboard_ws_urlpatterns  # noqa: E402
 from notifications.ws_auth import JwtAuthMiddlewareStack  # noqa: E402
+
+websocket_urlpatterns = [
+    *notification_ws_urlpatterns,
+    *leaderboard_ws_urlpatterns,
+]
 
 application = ProtocolTypeRouter({
     'http': django_asgi_app,
