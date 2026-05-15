@@ -11,11 +11,14 @@ from google.oauth2 import id_token
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.db import transaction
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
+from teams.models import Team, TeamMember
+from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from .models import RoleActivationCode, User
 from drf_spectacular.utils import extend_schema_field
 
@@ -152,11 +155,48 @@ class UserTeamSerializer(serializers.Serializer):
     contact_telegram = serializers.CharField()
     contact_discord = serializers.CharField()
 
+
+class UserActiveTournamentTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class UserActiveTournamentRoundSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    status = serializers.CharField()
+
+
+class UserActiveTournamentSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    current_round = UserActiveTournamentRoundSerializer(allow_null=True)
+
+
+class UserTournamentHistoryItemSerializer(serializers.Serializer):
+    tournament_id = serializers.IntegerField()
+    tournament_name = serializers.CharField()
+    tournament_status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    final_rank = serializers.IntegerField(allow_null=True)
+    final_score = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
     avatar = serializers.ImageField(read_only=True)
     avatar_frame_url = serializers.SerializerMethodField()
+    active_tournament = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -174,8 +214,17 @@ class UserSerializer(serializers.ModelSerializer):
             'created_at',
             'needs_onboarding',
             'teams',
+            'active_tournament',
         )
-        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams', 'is_staff')
+        read_only_fields = (
+            'id',
+            'email',
+            'created_at',
+            'needs_onboarding',
+            'teams',
+            'is_staff',
+            'active_tournament',
+        )
 
     @extend_schema_field(serializers.URLField(allow_null=True))
     def get_avatar_frame_url(self, obj) -> Optional[str]:
@@ -209,6 +258,90 @@ class UserSerializer(serializers.ModelSerializer):
             }
             for team in obj.teams.all()
         ]
+
+    @staticmethod
+    def _team_registration_status(registration: TournamentTeamRegistration) -> str:
+        if registration.is_disqualified:
+            return 'disqualified'
+        if registration.is_active:
+            return 'active'
+        return 'inactive'
+
+    @extend_schema_field(UserActiveTournamentSerializer(allow_null=True))
+    def get_active_tournament(self, obj):
+        team_ids = set(TeamMember.objects.filter(user=obj).values_list('team_id', flat=True)) | set(
+            Team.objects.filter(captain=obj).values_list('id', flat=True)
+        )
+        if not team_ids:
+            return None
+
+        registration = (
+            TournamentTeamRegistration.objects.select_related('tournament', 'team')
+            .filter(
+                team_id__in=team_ids,
+                tournament__status__in=[
+                    Tournament.STATUS_REGISTRATION,
+                    Tournament.STATUS_RUNNING,
+                ],
+            )
+            .filter(Q(is_active=True) | Q(is_disqualified=True))
+            .annotate(
+                tournament_status_priority=Case(
+                    When(tournament__status=Tournament.STATUS_RUNNING, then=Value(0)),
+                    When(tournament__status=Tournament.STATUS_REGISTRATION, then=Value(1)),
+                    default=Value(2),
+                    output_field=IntegerField(),
+                ),
+                registration_status_priority=Case(
+                    When(is_disqualified=True, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            .order_by(
+                'tournament_status_priority',
+                'registration_status_priority',
+                'tournament__start_date',
+                'id',
+            )
+            .first()
+        )
+
+        if registration is None:
+            return None
+
+        current_round = (
+            Round.objects.filter(
+                tournament_id=registration.tournament_id,
+                status=Round.STATUS_ACTIVE,
+            )
+            .order_by('start_date', 'id')
+            .first()
+        )
+
+        return {
+            'id': registration.tournament.id,
+            'name': registration.tournament.name,
+            'status': registration.tournament.status,
+            'start_date': registration.tournament.start_date,
+            'end_date': registration.tournament.end_date,
+            'team': {
+                'id': registration.team.id,
+                'name': registration.team.name,
+            },
+            'team_registration_status': self._team_registration_status(registration),
+            'current_round': (
+                {
+                    'id': current_round.id,
+                    'name': current_round.name,
+                    'start_date': current_round.start_date,
+                    'end_date': current_round.end_date,
+                    'status': current_round.status,
+                }
+                if current_round is not None
+                else None
+            ),
+        }
     
 class GoogleAuthResponseSerializer(serializers.Serializer):
     access = serializers.CharField()

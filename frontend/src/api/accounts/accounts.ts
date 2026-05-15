@@ -60,6 +60,7 @@ import type {
   User,
   UserAvatarUpdate,
   UserAvatarUpdateRequest,
+  UserTournamentHistoryItem,
   UserUpdateRequest
 } from '../.ts.schemas';
 
@@ -1480,6 +1481,68 @@ export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError =
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetUserQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const listUserTournamentHistory = (
+    id: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      id = unref(id);
+      
+      return customInstance<UserTournamentHistoryItem[]>(
+      {url: `http://localhost:8000/api/accounts/users/${id}/tournaments-history/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getListUserTournamentHistoryQueryKey = (id?: MaybeRef<number>,) => {
+    return [
+    'http:','localhost:8000','api','accounts','users',id,'tournaments-history'
+    ] as const;
+    }
+
+    
+export const getListUserTournamentHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listUserTournamentHistory>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getListUserTournamentHistoryQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserTournamentHistory>>> = ({ signal }) => listUserTournamentHistory(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: computed(() => !!(unref(id))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData> 
+}
+
+export type ListUserTournamentHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof listUserTournamentHistory>>>
+export type ListUserTournamentHistoryQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>
+
+
+
+export function useListUserTournamentHistory<TData = Awaited<ReturnType<typeof listUserTournamentHistory>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound>>(
+ id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListUserTournamentHistoryQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

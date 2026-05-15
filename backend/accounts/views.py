@@ -3,6 +3,7 @@ import re
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, status, serializers as drf_serializers
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -20,6 +21,9 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParamet
 from backend.openapi import _400, _401, _403, _404
 
 from .models import RoleActivationCode, User
+from evaluation.models import LeaderboardEntry
+from teams.models import Team, TeamMember
+from tournaments.models import Tournament, TournamentTeamRegistration
 from .serializers import (
     MessageResponseSerializer,
     ChangePasswordSerializer,
@@ -36,6 +40,7 @@ from .serializers import (
     TeamUserListSerializer,
     UserAvatarUpdateSerializer,
     UserSerializer,
+    UserTournamentHistoryItemSerializer,
     UserUpdateSerializer,
 )
 
@@ -198,6 +203,93 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_active=True, is_superuser=False)
+
+
+@extend_schema(
+    operation_id='listUserTournamentHistory',
+    responses={
+        200: UserTournamentHistoryItemSerializer(many=True),
+        401: _401,
+        404: _404,
+    },
+)
+class UserTournamentHistoryView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserTournamentHistoryItemSerializer
+
+    @staticmethod
+    def _team_registration_status(registration: TournamentTeamRegistration) -> str:
+        if registration.is_disqualified:
+            return 'disqualified'
+        if registration.is_active:
+            return 'active'
+        return 'inactive'
+
+    def get(self, request, pk):
+        user = get_object_or_404(User.objects.filter(is_active=True, is_superuser=False), pk=pk)
+
+        team_ids = set(TeamMember.objects.filter(user=user).values_list('team_id', flat=True)) | set(
+            Team.objects.filter(captain=user).values_list('id', flat=True)
+        )
+        if not team_ids:
+            return Response([], status=status.HTTP_200_OK)
+
+        registrations = (
+            TournamentTeamRegistration.objects.select_related('tournament', 'team')
+            .filter(
+                team_id__in=team_ids,
+                tournament__status=Tournament.STATUS_FINISHED,
+            )
+            .order_by('-tournament__end_date', '-created_at', '-id')
+        )
+
+        by_tournament: dict[int, TournamentTeamRegistration] = {}
+        for registration in registrations:
+            if registration.tournament_id not in by_tournament:
+                by_tournament[registration.tournament_id] = registration
+
+        if not by_tournament:
+            return Response([], status=status.HTTP_200_OK)
+
+        standings = (
+            LeaderboardEntry.objects.filter(
+                round__isnull=True,
+                tournament_id__in=by_tournament.keys(),
+                team_id__in=[registration.team_id for registration in by_tournament.values()],
+            )
+            .values('tournament_id', 'team_id', 'rank', 'total_score')
+        )
+        standings_map = {
+            (entry['tournament_id'], entry['team_id']): entry
+            for entry in standings
+        }
+
+        payload = []
+        for registration in sorted(
+            by_tournament.values(),
+            key=lambda reg: (reg.tournament.end_date, reg.tournament.created_at),
+            reverse=True,
+        ):
+            standing = standings_map.get((registration.tournament_id, registration.team_id))
+            payload.append({
+                'tournament_id': registration.tournament.id,
+                'tournament_name': registration.tournament.name,
+                'tournament_status': registration.tournament.status,
+                'start_date': registration.tournament.start_date,
+                'end_date': registration.tournament.end_date,
+                'team': {
+                    'id': registration.team.id,
+                    'name': registration.team.name,
+                },
+                'team_registration_status': self._team_registration_status(registration),
+                'final_rank': standing['rank'] if standing else None,
+                'final_score': standing['total_score'] if standing else None,
+            })
+
+        return Response(
+            UserTournamentHistoryItemSerializer(payload, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(

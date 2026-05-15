@@ -21,6 +21,7 @@ from .views import (
     UserListView,
     UserAvatarView,
     UserProfileView,
+    UserTournamentHistoryView,
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     path('profile/avatar/', UserAvatarView.as_view(), name='profile_avatar'),
     path('users/', UserListView.as_view(), name='users'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
+    path('users/<int:pk>/tournaments-history/', UserTournamentHistoryView.as_view(), name='user_tournaments_history'),
 
     path('google-calendar/status/', GoogleCalendarStatusView.as_view(), name='google_calendar_status'),
     path('google-calendar/connect/', GoogleCalendarConnectView.as_view(), name='google_calendar_connect'),

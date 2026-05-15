@@ -149,6 +149,32 @@
         </ui-card>
       </div>
 
+      <div v-if="user?.active_tournament" class="tournament-overview-row">
+        <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
+          <ui-card class="active-tournament-card">
+            <template #header>
+              <span class="card-text-title">Active tournament</span>
+            </template>
+            <div class="active-tournament-content">
+              <div>
+                <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
+                <p class="active-tournament-meta">{{ formatDate(user.active_tournament.start_date) }} - {{ formatDate(user.active_tournament.end_date) }}</p>
+              </div>
+              <ui-button
+                as-link
+                to="/profile/tournaments-history"
+                variant="secondary"
+                size="sm"
+                class="history-btn"
+                @click.stop
+              >
+                Tournament history
+              </ui-button>
+            </div>
+          </ui-card>
+        </router-link>
+      </div>
+
       <div class="stats-link-row">
         <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
           >My Statistics</ui-button
@@ -221,6 +247,7 @@ const goToNotifications = () => {
 const goToCertificates = () => {
   router.push('/profile/certificates')
 }
+
 </script>
 
 <style scoped>
@@ -341,6 +368,58 @@ const goToCertificates = () => {
   flex-wrap: wrap;
 }
 
+.tournament-overview-row {
+  margin-top: 0.9rem;
+  min-width: 220px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.overview-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.active-tournament-card {
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  min-height: 100%;
+}
+
+.active-tournament-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.active-tournament-name,
+.active-tournament-meta {
+  margin: 0;
+}
+
+.active-tournament-name {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.history-btn {
+  align-self: center;
+  border-color: color-mix(in srgb, var(--primary) 75%, #ffffff 25%);
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.history-btn:hover,
+.history-btn:focus-visible,
+.history-btn:active {
+  background: color-mix(in srgb, var(--primary) 84%, black 16%);
+  color: white;
+  border-color: color-mix(in srgb, var(--primary) 72%, black 28%);
+}
+
 .danger-zone {
   margin-top: 1.4rem;
   padding-top: 1rem;
@@ -387,6 +466,11 @@ const goToCertificates = () => {
 
   .details {
     grid-template-columns: 1fr;
+  }
+
+  .tournament-overview-row {
+    width: 100%;
+    min-width: 0;
   }
 
   .actions {
