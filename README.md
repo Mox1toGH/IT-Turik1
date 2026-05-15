@@ -119,21 +119,22 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-#### Варіант A: з WebSocket — рекомендовано (realtime notifications)
+#### З WebSocket — рекомендовано (realtime notifications)
 
 ```powershell
 daphne -b 0.0.0.0 -p 8000 backend.asgi:application
 ```
 
-#### Варіант B: без WebSocket (тільки REST API)
+#### Без WebSocket (тільки REST API)
 
 ```powershell
 python manage.py runserver
 ```
 
-> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише у Варіанті A.
+> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише з Daphne.
 
 Backend буде доступний на `http://localhost:8000`.
+
 ### Frontend (в новому терміналі)
 
 ```powershell
@@ -142,18 +143,28 @@ nvm use
 npm install
 ```
 
-#### Генерація API-клієнта. Лише при першому запуску:
+
+#### Генерація API (OpenAPI & Orval):
+
+Якщо змінились або додались нові ендпоінти в backend, оновіть згенерований API-клієнт на frontend. (Перший запуск)
+
+> Запускати лише з запущеним backend-сервером!
+
 ```powershell
 npm run generate-api
 ```
-> Запускати лише з запущеним backend-сервером!
 
-#### Запуск frontend серверу:
+Оновлені хуки з'являться у `frontend/src/api/`.
+
+#### Запуск Vite (frontend - серверу):
+
 ```powershell
 npm run dev
 ```
 
 Frontend буде доступний на `http://localhost:5173`.
+
+---
 
 ### Superuser (ручний варіант)
 
@@ -195,7 +206,6 @@ docker compose up --build
 Docker автоматично:
 - запустить PostgreSQL
 - виконає міграції
-- згенерує openapi схему
 - запустить backend і frontend
 
 ### Наступні запуски
@@ -239,34 +249,17 @@ docker compose exec backend python manage.py <команда>
 # Перебудувати образи після змін у Dockerfile або requirements.txt
 docker compose up --build
 
+# Оновити API-клієнт після змін в ендпоінтах (backend має бути запущений)
+docker compose exec frontend npm run generate-api
+# Оновлені хуки з'являться у frontend/src/api/
+
 # Видалити всі дані БД (повний скид)
 docker compose down -v
 ```
 
 ---
 
-## 5. Генерація API (OpenAPI & Orval)
 
-Якщо змінились або додались нові ендпоінти в backend, оновіть згенерований API-клієнт на frontend.
-Переконайся, що Django сервер запущений.
-
-### Ручний варіант
-
-```powershell
-cd frontend
-nvm use
-npm run generate-api
-```
-
-### Docker варіант
-
-```bash
-docker compose exec frontend npm run generate-api
-```
-
-Оновлені хуки з'являться у `frontend/src/api/`.
-
----
 
 ## 6. Правила розробки
 
