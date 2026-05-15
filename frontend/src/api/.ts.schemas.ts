@@ -1183,18 +1183,18 @@ export interface RoleActivationCodeGenerateResponse {
 }
 
 /**
- * * `admin` - admin
+ * * `jury` - jury
+* `admin` - admin
 * `organizer` - organizer
-* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
+  jury: 'jury',
   admin: 'admin',
   organizer: 'organizer',
-  jury: 'jury',
 } as const;
 
 export interface RoleActivationCodeListResponse {

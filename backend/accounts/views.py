@@ -16,7 +16,13 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView as _TokenRefreshView,
 )
 
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter, inline_serializer
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    inline_serializer,
+)
 
 from backend.openapi import _400, _401, _403, _404
 
@@ -45,10 +51,42 @@ from .serializers import (
 )
 
 
-@extend_schema(operation_id='registerUser', responses={
-    201: RegisterSerializer,
-    400: _400,
-})
+@extend_schema(
+    operation_id='registerUser',
+    request=RegisterSerializer,
+    responses={
+        201: RegisterSerializer,
+        400: _400,
+    },
+    examples=[
+        OpenApiExample(
+            'Team Registration Request',
+            value={
+                'username': 'team_user_1',
+                'email': 'team_user_1@example.com',
+                'password': 'StrongPass123!',
+                'role': 'team',
+                'full_name': 'Team User',
+                'phone': '+380991112233',
+                'city': 'Kyiv',
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Register Success Response',
+            value={
+                'username': 'team_user_1',
+                'email': 'team_user_1@example.com',
+                'role': 'team',
+                'full_name': 'Team User',
+                'phone': '+380991112233',
+                'city': 'Kyiv',
+            },
+            response_only=True,
+            status_codes=['201'],
+        ),
+    ],
+)
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -299,6 +337,19 @@ class UserTournamentHistoryView(generics.GenericAPIView):
         200: MessageResponseSerializer,
         400: _400,
     },
+    examples=[
+        OpenApiExample(
+            'Password Reset Request',
+            value={'email': 'team_user_1@example.com'},
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Password Reset Response',
+            value={'message': 'Password reset email sent successfully.'},
+            response_only=True,
+            status_codes=['200'],
+        ),
+    ],
 )
 class PasswordResetRequestView(generics.GenericAPIView):
     permission_classes = (AllowAny,)
@@ -328,6 +379,22 @@ class PasswordResetRequestView(generics.GenericAPIView):
     ],
     request=PasswordResetConfirmSerializer,
     responses={200: MessageResponseSerializer, 400: _400},
+    examples=[
+        OpenApiExample(
+            'Password Reset Confirm Request',
+            value={
+                'new_password': 'NewStrongPass123!',
+                'confirm_password': 'NewStrongPass123!',
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            'Password Reset Confirm Response',
+            value={'message': 'Password has been reset successfully.'},
+            response_only=True,
+            status_codes=['200'],
+        ),
+    ],
 )
 class PasswordResetConfirmView(generics.GenericAPIView):
     permission_classes = (AllowAny,)

@@ -9,9 +9,10 @@ from django.contrib.auth.tokens import default_token_generator
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -25,6 +26,18 @@ from drf_spectacular.utils import extend_schema_field
 
 RESTRICTED_ROLES = {'jury', 'organizer', 'admin'}
 MAX_ACTIVE_CODES_PER_ROLE = 10
+
+
+def send_html_email(subject: str, template_name: str, context: dict, recipient: str) -> None:
+    html_message = render_to_string(template_name, context)
+    email = EmailMessage(
+        subject=subject,
+        body=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.content_subtype = 'html'
+    email.send()
 
 
 def validate_strong_password(password, user=None, field_name='password'):
@@ -137,11 +150,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             token = default_token_generator.make_token(user)
 
             activation_link = f"http://localhost:5173/activate/{uid}/{token}"
-            send_mail(
+            send_html_email(
                 subject='Account activation',
-                message=f'Open this link to activate your account: {activation_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+                template_name='accounts/account_activation_email.html',
+                context={
+                    'subject': 'Account activation',
+                    'title': 'Activate your account',
+                    'username': user.username,
+                    'action_url': activation_link,
+                    'action_label': 'Activate account',
+                    'secondary_message': 'If you did not create this account, you can safely ignore this email.',
+                },
+                recipient=user.email,
             )
             return user
 
@@ -584,12 +604,18 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         reset_link = f"http://localhost:5173/reset-password/{uid}/{token}"
-
-        send_mail(
+        send_html_email(
             subject='Password reset',
-            message=f'Open this link to reset your password: {reset_link}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            template_name='accounts/password_reset_email.html',
+            context={
+                'subject': 'Password reset',
+                'title': 'Reset your password',
+                'username': user.username,
+                'action_url': reset_link,
+                'action_label': 'Reset password',
+                'secondary_message': 'If you did not request a password reset, you can safely ignore this email.',
+            },
+            recipient=user.email,
         )
 
         return user

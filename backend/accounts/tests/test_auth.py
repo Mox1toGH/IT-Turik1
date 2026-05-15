@@ -78,6 +78,9 @@ class PasswordResetFlowTests(APITestCase):
         response = self.client.post(self.request_url, {'email': user.email}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].content_subtype, 'html')
+        self.assertIn('Reset your password', mail.outbox[0].body)
+        self.assertIn('TournamentOS', mail.outbox[0].body)
 
     def test_password_reset_request_rejects_nonexistent_email(self):
         response = self.client.post(self.request_url, {'email': 'missing@example.com'}, format='json')
