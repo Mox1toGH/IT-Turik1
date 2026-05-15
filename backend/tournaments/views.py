@@ -585,7 +585,16 @@ class RoundListCreateView(generics.ListCreateAPIView):
         queryset = get_round_queryset().filter(tournament_id=tournament.id)
         user = self.request.user
 
-        if not user_has_permission(user, Permission.VIEW_TOURNAMENT):
+        can_view_draft = user_has_permission(user, Permission.VIEW_TOURNAMENT)
+        if not can_view_draft:
+            can_view_draft = TournamentTeamRegistration.objects.filter(
+                tournament_id=tournament.id,
+                is_active=True,
+            ).filter(
+                Q(team__captain_id=user.id) | Q(team__team_members__user_id=user.id),
+            ).exists()
+
+        if not can_view_draft:
             queryset = queryset.exclude(status=Round.STATUS_DRAFT)
 
         status_param = self.request.query_params.get('status')
