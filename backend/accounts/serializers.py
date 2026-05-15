@@ -5,14 +5,18 @@ import string
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
-
+from rest_framework.exceptions import APIException
 from .models import RoleActivationCode, User
+from drf_spectacular.utils import extend_schema_field
 
 
 RESTRICTED_ROLES = {'jury', 'organizer', 'admin'}
@@ -43,6 +47,8 @@ def generate_unique_role_code(length=12):
             return code
     raise serializers.ValidationError({'message': ['Unable to generate a unique activation code. Please retry.']})
 
+class MessageResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -135,11 +141,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
             return user
 
+class ActivationResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    message = serializers.CharField()
+
+class UserTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    contact_telegram = serializers.CharField()
+    contact_discord = serializers.CharField()
 
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
     avatar = serializers.ImageField(read_only=True)
+    avatar_frame_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -152,12 +168,36 @@ class UserSerializer(serializers.ModelSerializer):
             'phone',
             'city',
             'avatar',
+            'is_staff',
+            'avatar_frame_url',
             'created_at',
             'needs_onboarding',
             'teams',
         )
-        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
+        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams', 'is_staff')
 
+    @extend_schema_field(serializers.URLField(allow_null=True))
+    def get_avatar_frame_url(self, obj):
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+
+        url = equipped_item.product.effective_digital_asset_url
+        if not url:
+            return None
+
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
+
+    @extend_schema_field(UserTeamSerializer(many=True))
     def get_teams(self, obj):
         return [
             {
@@ -168,12 +208,114 @@ class UserSerializer(serializers.ModelSerializer):
             }
             for team in obj.teams.all()
         ]
+    
+class GoogleAuthResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = UserSerializer()
+    onboarding_required = serializers.BooleanField()
+
+class GoogleAuthSerializer(serializers.Serializer):
+    id_token = serializers.CharField()
+
+    def validate(self, attrs):
+        raw_id_token = attrs.get('id_token')
+
+        if not settings.GOOGLE_OAUTH_CLIENT_ID:
+            raise APIException('Google auth is not configured.')
+
+        try:
+            payload = id_token.verify_oauth2_token(
+                raw_id_token,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID,
+            )
+        except ValueError:
+            raise serializers.ValidationError({'id_token': 'Invalid Google token.'})
+
+        if payload.get('iss') not in {'accounts.google.com', 'https://accounts.google.com'}:
+            raise serializers.ValidationError({'id_token': 'Invalid token issuer.'})
+
+        if not payload.get('email_verified'):
+            raise serializers.ValidationError({'id_token': 'Google email is not verified.'})
+
+        email = payload.get('email')
+        if not email:
+            raise serializers.ValidationError({'id_token': 'Google account email is missing.'})
+
+        attrs['email'] = email
+        attrs['full_name'] = payload.get('name', '')
+        return attrs
+
+    @staticmethod
+    def _generate_unique_username(email):
+        base = re.sub(r'[^a-zA-Z0-9_]', '', email.split('@')[0]) or 'user'
+        base = base[:140]
+        username = base
+        index = 1
+
+        while User.objects.filter(username=username).exists():
+            suffix = str(index)
+            username = f"{base[:150 - len(suffix)]}{suffix}"
+            index += 1
+
+        return username
+
+    def save(self):
+        email = self.validated_data['email']
+        full_name = self.validated_data['full_name']
+
+        user = User.objects.filter(email=email).first()
+        if user is None:
+            username = self._generate_unique_username(email)
+            user = User.objects.create(
+                username=username,
+                email=email,
+                full_name=full_name,
+                is_active=True,
+                needs_onboarding=True,
+            )
+            user.set_unusable_password()
+            user.save()
+        else:
+            updated_fields = []
+            if not user.is_active:
+                user.is_active = True
+                updated_fields.append('is_active')
+            if full_name and not user.full_name:
+                user.full_name = full_name
+                updated_fields.append('full_name')
+            if updated_fields:
+                user.save(update_fields=updated_fields)
+
+        refresh = RefreshToken.for_user(user)
+        self.validated_data['response'] = {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+            'onboarding_required': user.needs_onboarding,
+        }
+        return user, refresh
 
 
 class TeamUserListSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj):
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+        return equipped_item.product.effective_digital_asset_url or None
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -371,7 +513,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.save(update_fields=['password'])
         return user
 
-
 class RoleActivationCodeSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     used_by_username = serializers.CharField(source='used_by.username', read_only=True)
@@ -422,3 +563,18 @@ class RoleActivationCodeGenerateSerializer(serializers.Serializer):
                 )
             )
         return created_codes
+    
+class ActiveCountsSerializer(serializers.Serializer):
+    jury = serializers.IntegerField()
+    organizer = serializers.IntegerField()
+    admin = serializers.IntegerField()
+
+
+class RoleActivationCodeListResponseSerializer(serializers.Serializer):
+    codes = RoleActivationCodeSerializer(many=True)
+    active_counts = ActiveCountsSerializer()
+
+
+class RoleActivationCodeGenerateResponseSerializer(serializers.Serializer):
+    created = RoleActivationCodeSerializer(many=True)
+    active_counts = ActiveCountsSerializer()

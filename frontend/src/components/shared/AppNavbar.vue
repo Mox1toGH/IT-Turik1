@@ -21,12 +21,9 @@
             <router-link to="/tournaments" :class="navItemClass('tournaments')"
               >Tournaments</router-link
             >
-            <router-link to="/news" :class="navItemClass('news')">
-              News
-            </router-link>
-            <router-link to="/calendar" :class="navItemClass('calendar')">
-              Calendar
-            </router-link>
+            <router-link to="/news" :class="navItemClass('news')"> News </router-link>
+            <router-link to="/shop" :class="navItemClass('shop')">Shop</router-link>
+            <router-link to="/calendar" :class="navItemClass('calendar')"> Calendar </router-link>
             <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
               >Evaluations</router-link
             >
@@ -37,6 +34,7 @@
             >
               <user-avatar
                 :avatar="user?.avatar"
+                :avatar-frame-url="user?.avatar_frame_url"
                 :username="user?.username || 'User'"
                 :full-name="user?.full_name || ''"
                 :size="34"
@@ -122,6 +120,13 @@
               >Calendar</router-link
             >
             <router-link
+              to="/shop"
+              :class="navItemClass('shop')"
+              @click="mobileMenuOpen = false"
+              class="mobile-nav-item"
+              >Shop</router-link
+            >
+            <router-link
               v-if="isJury"
               to="/evaluation"
               :class="navItemClass('evaluation')"
@@ -166,17 +171,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useProfile } from '@/api/queries/accounts'
-import { useUnreadCount } from '@/api/queries/notifications'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetUnreadNotificationCount } from '@/api/notifications/notifications'
 
 const route = useRoute()
 const mobileMenuOpen = ref(false)
 
-const { data: user } = useProfile()
-const { data: unreadCount } = useUnreadCount()
+const { data: user } = useGetUserProfile()
+const { data: unreadCount } = useGetUnreadNotificationCount()
 
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isJury = computed(() => user.value?.role === 'jury')
@@ -186,6 +191,7 @@ type Section =
   | 'teams'
   | 'tournaments'
   | 'news'
+  | 'shop'
   | 'calendar'
   | 'evaluation'
   | 'profile'
@@ -206,6 +212,8 @@ const isSectionActive = (section: Section) => {
   if (section === 'home') return path === '/'
   if (section === 'teams') return path === '/teams' || path.startsWith('/teams/')
   if (section === 'news') return path === '/news' || path.startsWith('/news/')
+  if (section === 'shop')
+    return path === '/shop' || path.startsWith('/shop/') || path === '/profile/orders'
   if (section === 'tournaments') return path === '/tournaments' || path.startsWith('/tournaments/')
   if (section === 'calendar') return path === '/calendar'
   if (section === 'evaluation') return path === '/evaluation' || path.startsWith('/evaluation/')

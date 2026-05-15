@@ -62,14 +62,13 @@
 </template>
 
 <script setup lang="ts">
-import { parseApiError } from '@/api/errors'
+import { useChangePassword } from '@/api/accounts/accounts'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useChangePassword } from '@/api/queries/accounts'
 import { ChangePasswordSchema } from '@/schemas/profile.schema'
 import { ref } from 'vue'
 
@@ -97,14 +96,13 @@ const handlePasswordChange = () => {
   if (!form.validate()) return
 
   changePassword(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
       onSuccess: () => {
         showNotification('Password updated successfully.', 'success')
       },
       onError(error) {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof PasswordForm, errors?.[0] ?? 'Invalid value')
         }
       },

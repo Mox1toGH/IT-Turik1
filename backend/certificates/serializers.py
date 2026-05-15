@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Certificate, CertificateTemplate
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 
 
 class CertificateTemplateSerializer(serializers.ModelSerializer):
@@ -36,6 +38,7 @@ class CertificateSerializer(serializers.ModelSerializer):
             'certificate_number': {'required': False, 'allow_blank': True},
         }
 
+    @extend_schema_field(OpenApiTypes.URI)
     def get_certificate_url(self, obj):
         request = self.context.get('request')
         if request:
@@ -43,12 +46,15 @@ class CertificateSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(f"/api/certificates/{obj.unique_code}/view/")
         return None
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_full_name(self, obj):
         return obj.full_name
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_team_name(self, obj):
         return obj.team_name
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_tournament_name(self, obj):
         return obj.tournament_name
 

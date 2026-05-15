@@ -4,7 +4,9 @@
       <template #header>
         <div class="header">
           <h1>Tournament Archive</h1>
-          <ui-button asLink to="/tournaments" size="sm" variant="secondary">Back to active list</ui-button>
+          <ui-button asLink to="/tournaments" size="sm" variant="secondary"
+            >Back to active list</ui-button
+          >
         </div>
       </template>
 
@@ -18,10 +20,17 @@
         <div v-if="items.length" class="grid">
           <ui-card v-for="item in items" :key="item.id" class="archive-card">
             <h3>{{ item.name }}</h3>
-            <p class="meta">Teams: {{ item.teams.length }} | Results: {{ item.standings.length }}</p>
+            <p class="meta">
+              Teams: {{ item.teams.length }} | Results: {{ item.standings.length }}
+            </p>
             <p class="description">{{ item.description }}</p>
             <template #footer>
-              <ui-button asLink :to="`/tournaments/archive/${item.id}`" size="sm" variant="secondary">
+              <ui-button
+                asLink
+                :to="`/tournaments/archive/${item.id}`"
+                size="sm"
+                variant="secondary"
+              >
                 View archive
               </ui-button>
             </template>
@@ -40,9 +49,9 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed } from 'vue'
-import { useTournamentArchive } from '@/api/queries/tournaments'
+import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 
-const { data, isLoading } = useTournamentArchive()
+const { data, isLoading } = useListTournamentArchive()
 const items = computed(() => data.value ?? [])
 </script>
 

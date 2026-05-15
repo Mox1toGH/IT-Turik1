@@ -116,53 +116,47 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
 import { RouterLink } from 'vue-router'
-import { parseApiError } from '@/api/errors'
-import {
-  useRegisteredTeams,
-  useTournamentInfo,
-  useUpdateRegistration,
-} from '@/api/queries/tournaments'
-import { useProfile } from '@/api/queries/accounts'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
-import type { GetRegisteredTeamsResponse } from '@/api/services/tournaments/types'
 import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
 import AddTeamIcon from '@/icons/AddTeamIcon.vue'
 import { truncateText } from '@/lib/utils'
 import CrossIcon from '@/icons/CrossIcon.vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import { evaluationKeys, tournamentsKeys } from '@/api/queries/keys'
+import {
+  useDisqualifyTeamFromTournament,
+  useGetTournament,
+  useListTournamentTeams,
+} from '@/api/tournaments/tournaments'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { TournamentTeamRegistrationList } from '@/api/.ts.schemas'
+import { useNotification } from '@/composables/useNotification'
 
 interface Props {
   tournamentId: number
 }
 
-type Team = GetRegisteredTeamsResponse[number]
-
 const props = defineProps<Props>()
 const search = ref('')
 
-const queryClient = useQueryClient()
-
-const { data: tournament } = useTournamentInfo({ id: props.tournamentId })
+const { data: tournament } = useGetTournament(props.tournamentId)
 const {
   data: activeTeams,
   isLoading: isActiveTeamsLoading,
   error: activeTeamsError,
   isError: isActiveTeamsError,
-} = useRegisteredTeams({ id: props.tournamentId, status: 'all' })
+} = useListTournamentTeams(props.tournamentId, { status: 'all' })
 const {
   data: teams,
   isLoading: isTeamsLoading,
   error: disqualifiedTeamsError,
   isError: isDisqualifiedTeamsError,
-} = useRegisteredTeams({ id: props.tournamentId, status: 'disqualified' })
+} = useListTournamentTeams(props.tournamentId, { status: 'disqualified' })
 const isError = computed(() => isActiveTeamsError.value || isDisqualifiedTeamsError.value)
-const error = computed(() => parseApiError(activeTeamsError.value || disqualifiedTeamsError.value))
+const error = computed(() => activeTeamsError.value || disqualifiedTeamsError.value)
 
 const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 
 const showConfirmModal = ref(false)
@@ -171,11 +165,16 @@ const confirmModalConfirmText = ref('')
 const confirmModalConfirmMessage = ref<string | undefined>()
 const confirmModalVariant = ref<'default' | 'danger'>('default')
 const disqualificationReason = ref('')
-const pendingAction = ref<{ team: Team; action: 'activated' | 'disqualified' } | null>(null)
+const pendingAction = ref<{
+  team: TournamentTeamRegistrationList
+  action: 'activated' | 'disqualified'
+} | null>(null)
 
-const { mutate: updateRegistration, isPending: isUpdating } = useUpdateRegistration()
+const { mutate: updateRegistration, isPending: isUpdating } = useDisqualifyTeamFromTournament()
 
-const openDisqualifyModal = (team: Team) => {
+const { showNotification } = useNotification()
+
+const openDisqualifyModal = (team: TournamentTeamRegistrationList) => {
   pendingAction.value = { team, action: 'disqualified' }
   disqualificationReason.value = ''
   confirmModalTitle.value = `Disqualify ${truncateText(team.name, 10)}`
@@ -184,7 +183,7 @@ const openDisqualifyModal = (team: Team) => {
   showConfirmModal.value = true
 }
 
-const openReactivateModal = (team: Team) => {
+const openReactivateModal = (team: TournamentTeamRegistrationList) => {
   pendingAction.value = { team, action: 'activated' }
   confirmModalTitle.value = `Reactivate ${truncateText(team.name, 10)}`
   confirmModalConfirmText.value = 'Reactivate'
@@ -200,9 +199,9 @@ const handleConfirmAction = () => {
 
   updateRegistration(
     {
-      tournamentId: props.tournamentId,
-      registrationId: pendingAction.value.team.registration_id,
-      body: {
+      id: props.tournamentId,
+      registrationPk: pendingAction.value.team.registration_id,
+      data: {
         action: isDisqualifying ? 'disqualify' : 'reactivate',
         disqualification_reason: isDisqualifying ? disqualificationReason.value : '',
       },
@@ -212,18 +211,12 @@ const handleConfirmAction = () => {
         showConfirmModal.value = false
         pendingAction.value = null
         disqualificationReason.value = ''
-
-        queryClient.invalidateQueries({
-          queryKey: [
-            evaluationKeys.tournamentLeaderboard(props.tournamentId),
-            evaluationKeys.roundLeaderboard(props.tournamentId),
-            tournamentsKeys.submissions(props.tournamentId),
-          ],
-        })
       },
-      onError: () => {
+      onError: (error) => {
         showConfirmModal.value = false
         pendingAction.value = null
+
+        showNotification(error.message, 'error')
       },
     },
   )

@@ -160,23 +160,15 @@ import { type JSONContent } from '@tiptap/vue-3'
 import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
-import { parseApiError } from '@/api/errors'
-import { useEditRound } from '@/api/queries/tournaments'
-import type { Round } from '@/api/dbTypes'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
+import type { Criterion, Round } from '@/api/.ts.schemas'
+import { useUpdateRound } from '@/api/tournaments/tournaments'
+import EditorModal from '../../create-round/modals/EditorModal.vue'
 
 interface Props {
   modelValue: boolean
   round: Round
-}
-
-interface RoundCriteriaItem {
-  id: string
-  name: string
-  description: string
-  max_score: number
 }
 
 interface Form {
@@ -185,7 +177,7 @@ interface Form {
   tech_requirements: JSONContent | null
   description: JSONContent | null
   must_have_requirements: JSONContent | null
-  criteria: RoundCriteriaItem[]
+  criteria: Criterion[]
   start_date: Date
   start_time: string
   end_date: Date
@@ -203,11 +195,11 @@ const startDate = new Date(props.round.start_date)
 const endDate = new Date(props.round.end_date)
 
 const form = useForm<Form>(EditRoundSchema, {
-  name: props.round.name,
-  passing_count: props.round.passing_count,
-  description: props.round.description,
-  tech_requirements: props.round.tech_requirements,
-  must_have_requirements: props.round.must_have_requirements,
+  name: props.round.name ?? '',
+  passing_count: props.round.passing_count ?? 1,
+  description: props.round.description ?? '',
+  tech_requirements: props.round.tech_requirements ?? {},
+  must_have_requirements: props.round.must_have_requirements ?? {},
   criteria: props.round.criteria,
   start_date: startDate,
   start_time: `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`,
@@ -215,19 +207,19 @@ const form = useForm<Form>(EditRoundSchema, {
   end_time: `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`,
 })
 
-const { mutate: createRound, isPending } = useEditRound()
+const { mutate: editRound, isPending } = useUpdateRound()
 
 function handleSubmit() {
   if (!form.validate()) return
   const { start_time, end_time, ...rest } = form.fields.value
 
-  createRound(
+  editRound(
     {
       id: props.round.id,
-      body: {
+      data: {
         ...rest,
-        start_date: combineDateAndTime(form.fields.value.start_date, start_time),
-        end_date: combineDateAndTime(form.fields.value.end_date, end_time),
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
     {
@@ -236,11 +228,10 @@ function handleSubmit() {
         showNotification('Successfully changed round info', 'success')
       },
       onError(error) {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -280,8 +271,8 @@ const toggleClose = () => {
 }
 
 .must-have-field {
-  grid-column: 2;
-  grid-row: 5;
+  grid-column: 1;
+  grid-row: 4;
 }
 
 .start-date-field {
@@ -291,12 +282,12 @@ const toggleClose = () => {
 
 .end-date-field {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
 }
 
 .start-time-field {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
 }
 
 .end-time-field {

@@ -138,13 +138,12 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useProfile, useUpdateProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import ChangePasswordModal from '../components/profile/modals/ChangePasswordModal.vue'
-import { parseApiError } from '@/api/errors'
 import { useForm } from '@/composables/useForm'
 import { EditProfileSchema } from '@/schemas/profile.schema'
+import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
 
 interface ProfileForm {
   username: string
@@ -153,7 +152,7 @@ interface ProfileForm {
   city: string
 }
 
-const { data: user, isLoading, isLoadingError } = useProfile()
+const { data: user, isLoading, isLoadingError } = useGetUserProfile()
 
 const form = useForm(EditProfileSchema, {
   username: '',
@@ -165,25 +164,24 @@ const form = useForm(EditProfileSchema, {
 const router = useRouter()
 const { showNotification } = useNotification()
 
-const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile()
+const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateUserProfile()
 
 const handleSubmit = () => {
   if (!form.validate()) return
 
   updateProfile(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
       onSuccess: () => {
         showNotification('Profile updated successfully.', 'success')
         router.push('/profile')
       },
-      onError: (err) => {
-        const parsedError = parseApiError(err)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+      onError: (error) => {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof ProfileForm, errors?.[0] ?? 'Invalid value')
         }
 
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )

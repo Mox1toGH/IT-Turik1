@@ -24,8 +24,8 @@
         @mouseleave="hovered = null"
         @click="$emit('select', point.label)"
       />
-      <text v-if="hovered !== null" :x="normalized[hovered].x" :y="normalized[hovered].y - 10" class="axis-text" text-anchor="middle">
-        {{ normalized[hovered].label }}: {{ points[hovered].value.toFixed(2) }}
+      <text v-if="hoveredData" :x="hoveredData.x" :y="hoveredData.y - 10" class="axis-text" text-anchor="middle">
+        {{ hoveredData.label }}: {{ hoveredData.value.toFixed(2) }}
       </text>
     </svg>
   </div>
@@ -66,5 +66,13 @@ const areaPoints = computed(() => {
   const body = normalized.value.map((p) => `${p.x},${p.y}`).join(' ')
   const tail = `${minX + width},${baseY}`
   return `${head} ${body} ${tail}`
+})
+
+const hoveredData = computed(() => {
+  if (hovered.value === null) return null
+  const n = normalized.value[hovered.value]
+  const p = props.points[hovered.value]
+  if (!n || !p) return null
+  return { ...n, value: p.value }
 })
 </script>

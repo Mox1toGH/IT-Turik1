@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { accountsService } from '@/api/services/accounts'
 import NotFoundView from '@/features/not-found-page/NotFoundPage.vue'
 import { authRoutes } from '@/features/auth/routes'
 import { profileRoutes } from '@/features/profile/routes'
@@ -12,6 +11,8 @@ import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
 import { statsRoutes } from '@/features/stats/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
+import { getUserProfile } from '@/api/accounts/accounts'
+import { shopRoutes } from '@/features/shop/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,7 @@ const router = createRouter({
     ...evaluationRoutes,
     ...statsRoutes,
     ...calendarRoutes,
+    ...shopRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
@@ -65,7 +67,7 @@ router.beforeEach(async (to, _from, next) => {
 
   if (to.meta.requiresAdmin) {
     try {
-      const profile = await accountsService.getProfile()
+      const profile = await getUserProfile()
       if (profile.role !== 'admin') {
         next('/')
         return

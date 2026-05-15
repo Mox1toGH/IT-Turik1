@@ -287,6 +287,60 @@ class TournamentApiTests(APITestCase):
         response = self.client.post(url, round_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_registered_team_member_sees_draft_rounds_in_rounds_list(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        draft_round = Round.objects.create(
+            tournament=tournament,
+            name='Draft Round',
+            status=Round.STATUS_DRAFT,
+            start_date=tournament.start_date,
+            end_date=tournament.start_date + timezone.timedelta(days=1),
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        self.client.force_authenticate(user=self.captain)
+        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], draft_round.id)
+
+    def test_unregistered_user_does_not_see_draft_rounds_in_rounds_list(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        Round.objects.create(
+            tournament=tournament,
+            name='Draft Round',
+            status=Round.STATUS_DRAFT,
+            start_date=tournament.start_date,
+            end_date=tournament.start_date + timezone.timedelta(days=1),
+        )
+
+        unregistered_user = User.objects.create_user(
+            username='not-registered-rounds',
+            email='not-registered-rounds@example.com',
+            password='StrongPass123!',
+        )
+        self.client.force_authenticate(user=unregistered_user)
+        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
     def test_submission_creation(self):
         tournament = Tournament.objects.create(
             created_by=self.admin,
@@ -1089,7 +1143,7 @@ class TournamentApiTests(APITestCase):
 
         self.client.force_authenticate(user=self.captain)
         url = reverse('tournament_teams', kwargs={'pk': tournament.id})
-        response = self.client.get(url, {'include_inactive': 'true'})
+        response = self.client.get(url, {'status': 'all'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)

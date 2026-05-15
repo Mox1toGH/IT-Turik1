@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { renderGoogleButton, type GoogleCredentialResponse } from '@/lib/googleAuth'
-import { useGoogleLogin } from '@/api/queries/accounts'
+import { useGoogleAuth } from '@/api/accounts/accounts'
 
 interface Props {
   dividerLabel?: string
@@ -29,7 +29,7 @@ const googleButtonRef = ref<HTMLDivElement | null>(null)
 const errorMessage = ref('')
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
-const { mutate: googleLogin } = useGoogleLogin()
+const { mutate: googleLogin } = useGoogleAuth()
 
 const handleGoogleCredential = (response: GoogleCredentialResponse) => {
   if (!response?.credential) {
@@ -40,15 +40,13 @@ const handleGoogleCredential = (response: GoogleCredentialResponse) => {
   errorMessage.value = ''
 
   googleLogin(
-    { body: { credential: response.credential } },
+    { data: { id_token: response.credential } },
     {
       onSuccess: (data) => {
         emit('success', data)
       },
-      onError: (err) => {
-        errorMessage.value = err.response
-          ? 'Google authentication failed.'
-          : 'Network error during Google authentication.'
+      onError: (error) => {
+        errorMessage.value = error.message
       },
     },
   )

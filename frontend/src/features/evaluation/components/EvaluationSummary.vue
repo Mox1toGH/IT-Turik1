@@ -3,7 +3,11 @@
     <div class="scores">
       <div v-for="item in normalizedScores" :key="item.criterion_id" class="score-row">
         <span class="criterion">
-          <span class="criterion-dot" :style="{ backgroundColor: item.color }" aria-hidden="true"></span>
+          <span
+            class="criterion-dot"
+            :style="{ backgroundColor: item.color }"
+            aria-hidden="true"
+          ></span>
           {{ item.criterion_name }}
         </span>
         <span class="value">{{ item.score }} / {{ item.max }}</span>
@@ -27,31 +31,22 @@
         aria-label="Total score by criteria"
       />
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EvaluationData, RoundCriterion } from '@/api/services/evaluation/types'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
+import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
 
 interface Props {
-  evaluation: EvaluationData
-  criteria: RoundCriterion[]
+  evaluation: JuryAssignment['evaluation']
+  criteria: Criterion[]
 }
 
 const props = defineProps<Props>()
 
-const palette = [
-  '#3b82f6',
-  '#22c55e',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#14b8a6',
-  '#f97316',
-]
+const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316']
 
 const minScore = 0
 const maxScore = computed(() =>

@@ -31,7 +31,7 @@
 
       <ui-card v-if="isError">
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching rounds (code: {{ error?.code }})</p>
+          <p>Error while fetching rounds (code: {{ roundsError?.code }})</p>
         </div>
       </ui-card>
 
@@ -47,7 +47,7 @@
         <ui-card v-for="round in rounds" :key="round.id" class="round-card">
           <template #header>
             <div class="round-header">
-              <h4>{{ truncateText(round.name, 70) }}</h4>
+              <h4>{{ truncateText(round.name ?? '-', 70) }}</h4>
 
               <div class="header-right">
                 <ui-badge :variant="badgeVariant(round.status)">{{
@@ -119,7 +119,6 @@
 </template>
 
 <script setup lang="ts">
-import { parseApiError } from '@/api/errors'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -129,34 +128,27 @@ import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
-import { useProfile } from '@/api/queries/accounts'
 import RoundDetailsModal from './modals/RoundDetailsModal.vue'
-import { useTeamSubmissions, useTournamentRounds } from '@/api/queries/tournaments'
-import type { GetRoundsResponse } from '@/api/services/tournaments/types'
 import SubmitModal from './modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
 import EditRoundModal from './modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
+import type { Round } from '@/api/.ts.schemas'
 
 interface Props {
   tournamentId: number
 }
-type Round = GetRoundsResponse[number]
 
 const props = defineProps<Props>()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 const router = useRouter()
 const route = useRoute()
 
-const {
-  data,
-  isLoading,
-  error: roundsError,
-  isError,
-} = useTournamentRounds({ id: props.tournamentId })
-const { data: submissions } = useTeamSubmissions({ tournamentId: props.tournamentId })
+const { data, isLoading, error: roundsError, isError } = useListRounds(props.tournamentId)
+const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
-const error = computed(() => parseApiError(roundsError.value))
 const rounds = computed(() => data.value ?? [])
 const submittedRoundIds = computed(
   () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
