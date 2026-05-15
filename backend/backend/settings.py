@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'shop',
     'inventory',
     'drf_spectacular',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 DATABASES = {
     'default': {

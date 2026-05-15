@@ -6,6 +6,7 @@ requests
 google-auth
 python-dotenv
 drf-spectacular
+channels
 
 Pillow
 WeasyPrint

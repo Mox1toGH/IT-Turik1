@@ -1,107 +1,113 @@
 # Notifications API Cheat Sheet
 
-This document outlines the API endpoints for the notification system, including retrieval, management, and personal settings.
+This document describes notifications over REST and WebSocket.
 
----
+## 1. REST (Source of Truth)
 
-### 1. Notification Management
-
-| Action | Method | Path | Access |
-| :--- | :--- | :--- | :--- |
-| **List Notifications** | GET | `/api/notifications/` | Authenticated |
-| **Mark as Read** | POST | `/api/notifications/{id}/read/` | Recipient |
-| **Mark All as Read** | POST | `/api/notifications/read-all/` | Authenticated |
-| **Unread Count** | GET | `/api/notifications/unread-count/` | Authenticated |
-
-#### Get Notifications — `GET /api/notifications/`
-Returns a list of notifications for the current user, ordered by newest first.
-```json
-[
-  {
-    "id": 12,
-    "event_type": "team_invitation",
-    "title": "New Team Invitation",
-    "message": "Admin has invited you to join Test Team",
-    "is_read": false,
-    "created_at": "2026-04-30T10:00:00Z"
-  }
-]
-```
-
-#### Mark All as Read — `POST /api/notifications/read-all/`
-Response:
-```json
-{
-  "marked": 5
-}
-```
-
-#### Unread Count — `GET /api/notifications/unread-count/`
-Response:
-```json
-{
-  "unread_count": 3
-}
-```
-
----
-
-### 2. Personal Notification Settings
-
-Every user can customize which notifications they receive and through which channels.
+REST/OpenAPI remains the source of truth for CRUD and initial loading.
 
 | Action | Method | Path | Access |
 | :--- | :--- | :--- | :--- |
-| **Get My Settings** | GET | `/api/notifications/settings/` | Authenticated |
-| **Update Event Config** | POST | `/api/notifications/settings/config/update/` | Authenticated |
-| **Update Global Email** | POST | `/api/notifications/settings/global/update/` | Authenticated |
+| List Notifications | GET | `/api/notifications/` | Authenticated |
+| Mark as Read | POST | `/api/notifications/{id}/read/` | Recipient |
+| Mark All as Read | POST | `/api/notifications/read-all/` | Authenticated |
+| Delete Notification | DELETE | `/api/notifications/{id}/` | Recipient |
+| Delete All Notifications | DELETE | `/api/notifications/delete-all/` | Authenticated |
+| Unread Count | GET | `/api/notifications/unread-count/` | Authenticated |
 
-#### Get My Settings — `GET /api/notifications/settings/`
-Returns available event types and the user's personal configuration for each.
+## 2. WebSocket (Realtime Events Only)
+
+WebSocket is only for realtime updates and does not replace REST.
+
+### Socket URL
+
+- `ws://localhost:8000/ws/notifications/?token=<JWT_ACCESS_TOKEN>`
+- Use `wss://` in HTTPS environments.
+
+### Authentication
+
+- JWT access token in query parameter `token`.
+- Unauthenticated/invalid token connections are closed (`4401`).
+- Each connection is bound to one authenticated user.
+
+### User Isolation
+
+- Events are sent to per-user groups (`notifications.user.<user_id>`).
+- A user receives only their own notification events.
+
+### Event Envelope
+
+All messages follow:
+
 ```json
 {
-  "event_types": [
-    { "key": "team_invitation", "title": "Team Invitation" },
-    { "key": "tournament_start", "title": "Tournament Start" }
-  ],
-  "configs": [
-    {
-      "event_type": "team_invitation",
-      "is_system_enabled": true,
-      "is_email_enabled": true
+  "event": "notification.created",
+  "payload": {}
+}
+```
+
+### Event Names and Payloads
+
+1. `notification.created`
+
+```json
+{
+  "event": "notification.created",
+  "payload": {
+    "notification": {
+      "id": 12,
+      "event_type": "team_invitation_received",
+      "title": "New Team Invitation",
+      "message": "...",
+      "is_read": false,
+      "created_at": "2026-05-15T12:00:00Z"
     }
-  ],
-  "global_config": {
-    "emails_disabled_globally": false
   }
 }
 ```
 
-#### Update Event Config — `POST /api/notifications/settings/config/update/`
-Enables or disables a specific channel for a specific event type.
-**Request Body:**
+2. `notification.unread_count_updated`
+
 ```json
 {
-  "event_type": "team_invitation",
-  "is_system_enabled": true,
-  "is_email_enabled": false
+  "event": "notification.unread_count_updated",
+  "payload": {
+    "unread_count": 3
+  }
 }
 ```
 
-#### Update Global Email Toggle — `POST /api/notifications/settings/global/update/`
-The "Master Switch" to disable all notification emails for your account.
-**Request Body:**
+3. `notification.read_status_changed`
+
 ```json
 {
-  "emails_disabled_globally": true
+  "event": "notification.read_status_changed",
+  "payload": {
+    "notification_ids": [12, 11],
+    "is_read": true
+  }
 }
 ```
 
----
+4. `notification.deleted`
 
-### 3. Implementation Notes
-- **Personalization**: Users only have access to their own settings. Even Admins cannot modify notification preferences for other users.
-- **Auto-Initialization**: When a user first accesses the settings, the system automatically creates their default configuration based on the system defaults.
-- **Channels**:
-    - **System**: Visible in the in-app notification center.
-    - **Email**: Sent to the user's registered email address (can be disabled globally or per event).
+```json
+{
+  "event": "notification.deleted",
+  "payload": {
+    "notification_ids": [10]
+  }
+}
+```
+
+## 3. Reconnect Behavior
+
+- Frontend reconnects automatically with exponential backoff.
+- Reconnect attempts stop when user logs out or token is removed.
+- After reconnect, realtime updates resume from new events; REST can still be used to refresh state if needed.
+
+## 4. Implementation Notes
+
+- Multiple tabs stay synchronized through shared backend events.
+- Read/unread counters update instantly via `notification.unread_count_updated`.
+- Keep using OpenAPI-generated REST client for initial list loading and CRUD operations.
