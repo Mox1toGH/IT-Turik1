@@ -38,6 +38,7 @@ import type {
   JuryAssignmentItemRequest,
   ListAvailableJuryParams,
   ListJuryAssignmentsParams,
+  PaginatedJuryAssignmentList,
   PatchedSubmissionEvaluationRequest,
   RoundLeaderboardResponse,
   RoundPassingStatusResponse,
@@ -60,7 +61,7 @@ export const listJuryAssignments = (
 ) => {
       params = unref(params);
       
-      return customInstance<JuryAssignment[]>(
+      return customInstance<PaginatedJuryAssignmentList>(
       {url: `http://localhost:8000/api/evaluation/assignments/`, method: 'GET',
         params: unref(params), signal
     },

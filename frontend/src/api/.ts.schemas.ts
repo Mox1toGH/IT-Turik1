@@ -593,6 +593,15 @@ export interface PaginatedDigitalInventoryItemList {
   results: DigitalInventoryItem[];
 }
 
+export interface PaginatedJuryAssignmentList {
+  count: number;
+  /** @nullable */
+  next?: string | null;
+  /** @nullable */
+  previous?: string | null;
+  results: JuryAssignment[];
+}
+
 export interface PaginatedNewsArticleList {
   count: number;
   /** @nullable */
@@ -1083,8 +1092,8 @@ export interface RoleActivationCodeGenerateResponse {
 
 /**
  * * `jury` - jury
-* `admin` - admin
 * `organizer` - organizer
+* `admin` - admin
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
@@ -1092,8 +1101,8 @@ export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenera
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
   jury: 'jury',
-  admin: 'admin',
   organizer: 'organizer',
+  admin: 'admin',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1927,6 +1936,14 @@ page_size?: number;
 
 export type ListJuryAssignmentsParams = {
 /**
+ * A page number within the paginated result set.
+ */
+page?: number;
+/**
+ * Number of results to return per page.
+ */
+page_size?: number;
+/**
  * Filter by round ID
  */
 round_id?: number;
@@ -2084,7 +2101,6 @@ export const SchemaRetrieveLang = {
   hi: 'hi',
   hr: 'hr',
   hsb: 'hsb',
-  ht: 'ht',
   hu: 'hu',
   hy: 'hy',
   ia: 'ia',

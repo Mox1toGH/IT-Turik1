@@ -121,14 +121,7 @@ const {
   })),
 )
 
-const assignments = computed(() => {
-  const raw = assignmentsResponse.value
-  if (Array.isArray(raw)) return raw
-  if (raw && typeof raw === 'object' && 'results' in raw && Array.isArray(raw.results)) {
-    return raw.results
-  }
-  return []
-})
+const assignments = computed(() => assignmentsResponse.value?.results ?? [])
 const tournaments = computed(() => tournamentsResponse.value?.data ?? [])
 
 const evaluationStatusOptions = [
