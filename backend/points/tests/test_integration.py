@@ -27,16 +27,18 @@ class TournamentPointsIntegrationTests(TestCase):
         )
 
     def test_tournament_completion_awards_points(self):
-        # This is a hypothetical integration test.
-        # If the system automatically awards points when a tournament is finished:
+        from points.services import award_tournament_points
+        from points.models import UserPointsBalance, PointsTransaction
+
         self.tournament.status = Tournament.STATUS_FINISHED
         self.tournament.save()
-        
-        # Trigger the service or signal that handles completion
-        # from tournaments.services import finish_tournament
-        # finish_tournament(self.tournament)
-        
-        # Then check if points were awarded
-        # points_awarded = PointTransaction.objects.filter(user=self.user1).exists()
-        # self.assertTrue(points_awarded)
-        pass
+
+        award_tournament_points(tournament=self.tournament)
+
+        balance = UserPointsBalance.objects.filter(user=self.user1).first()
+        self.assertIsNotNone(balance)
+        self.assertEqual(balance.balance, 10)
+
+        transaction = PointsTransaction.objects.filter(user=self.user1, reason__contains='Tournament participation').first()
+        self.assertIsNotNone(transaction)
+        self.assertEqual(transaction.amount, 10)
