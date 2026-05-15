@@ -1,241 +1,93 @@
-# IT-Turik1
+# 🏆 TournamentOS — Programming Tournament Platform
 
-Коротка інструкція з запуску проєкту, тестів та налаштування `.env`.
+---
 
-## 1. Що потрібно встановити
+## 📖 Project Overview
 
-- Python 3.11+
-- Node.js 20.19+ або 22.12+
-- npm
+**TournamentOS** is a comprehensive web platform for organizing and running programming tournaments. The system supports the full lifecycle of a competition — from team registration and task evaluation to real-time leaderboards and prize distribution.
 
-## 2. Налаштування `.env`
+The platform is built with a modern decoupled architecture: a **Django REST Framework** backend with WebSocket support and a **Vue.js** SPA frontend.
 
-### Backend
+### Key Capabilities
 
-1. Скопіюй приклад:
+- Role-based access control: **Admin**, **Organizer**, **Jury**, **Team**
+- Real-time notifications and leaderboard updates via **WebSockets**
+- Task submission and evaluation workflow
+- **Google Calendar** integration — automatic sync of tournament events and rounds
+- **Google OAuth** — one-click sign-in
+- Export results to **Google Sheets**
+- Built-in **Shop** — physical merch (t-shirts, bottles, bags) and digital items (avatar frames)
+- Points system — earn points through competition, spend in the shop
+- Auto-generated API client via **OpenAPI & Orval**
 
-```powershell
-Copy-Item backend\.env.example backend\.env
+---
+
+## 🛠️ Technologies Used
+
+| Technology | Description | Usage in Project |
+|------------|-------------|-----------------|
+| ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&style=flat-square) | Main backend language | Server logic, models, business rules |
+| ![Django](https://img.shields.io/badge/Django-5.x-green?logo=django&style=flat-square) | Python web framework | ORM, routing, auth, signals |
+| ![DRF](https://img.shields.io/badge/DRF-3.x-red?logo=django&style=flat-square) | REST API framework | API endpoints, serializers, permissions |
+| ![Daphne](https://img.shields.io/badge/Daphne-ASGI-blueviolet?logo=django&style=flat-square) | ASGI server | WebSocket support, real-time events |
+| ![Vue.js](https://img.shields.io/badge/Vue.js-3.x-brightgreen?logo=vue.js&style=flat-square) | Frontend SPA framework | UI, routing, state management |
+| ![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&style=flat-square) | Frontend build tool | Dev server, bundling |
+| ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql&style=flat-square) | Relational database | Persistent data storage |
+| ![WebSockets](https://img.shields.io/badge/WebSockets-Django--Channels-orange?logo=socket.io&style=flat-square) | Real-time protocol | Live notifications, leaderboard updates |
+| ![OpenAPI](https://img.shields.io/badge/OpenAPI-Orval-brightgreen?logo=openapiinitiative&style=flat-square) | API schema & codegen | Auto-generated frontend API hooks |
+| ![JWT](https://img.shields.io/badge/JWT-SimpleJWT-yellow?logo=jsonwebtokens&style=flat-square) | Authentication | Stateless token-based auth |
+| ![Google OAuth](https://img.shields.io/badge/Google-OAuth2-red?logo=google&style=flat-square) | Social login | One-click sign-in via Google |
+| ![Google Calendar](https://img.shields.io/badge/Google-Calendar_API-blue?logo=googlecalendar&style=flat-square) | Calendar integration | Auto-sync of events and rounds |
+| ![Google Sheets](https://img.shields.io/badge/Google-Sheets_API-green?logo=googlesheets&style=flat-square) | Spreadsheet export | Export tournament results |
+| ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&style=flat-square) | Containerization | One-command local setup |
+
+---
+
+## 🏗️ Architecture
+
+The project follows a **decoupled SPA + REST API** architecture:
+
+```
+frontend/          ← Vue.js SPA (Vite)
+backend/
+├── accounts/      ← user auth, roles, Google OAuth
+├── teams/         ← team management
+├── tournaments/   ← tournament and round logic
+├── evaluation/    ← jury scoring and submission review
+├── notifications/ ← WebSocket real-time notifications
+└── shop/          ← points system, merch and digital items
 ```
 
-2. Заповни `backend/.env`:
+- **REST API** — all communication via DRF endpoints
+- **WebSockets** — real-time updates through Django Channels + Daphne
+- **OpenAPI schema** — auto-generated and consumed by Orval to produce typed Vue hooks
+- **Role-based permissions** — each role has scoped access across all modules
 
-```env
-DJANGO_SECRET_KEY=replace-me
-DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:5173
+---
 
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+## 🧩 Design Patterns Implemented
 
-GOOGLE_OAUTH_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
-GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:5173/calendar/google-callback
-```
+- **JWT Authentication** — stateless, secure token-based auth
+- **Custom Exception Handler** — unified error response format across all endpoints
+- **Signal-driven side effects** — Google Calendar sync on `post_save`
+- **Permission classes** — role-scoped access per view
+- **Serializer-level validation** — clean separation of input validation from business logic
+- **DRY via shared base classes** — reusable serializers, views, and mixins
 
-Як отримати значення:
+---
 
-- `DJANGO_SECRET_KEY`: згенеруй командою
+## 👥 Team
 
-```powershell
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
+| # | GitHub | Role | Main Area |
+|---|--------|------|-----------|
+| 1 | [@Mykhailo-Tr](https://github.com/Mykhailo-Tr) | Team Lead / Architect | Management + Architecture + Backend |
+| 2 | [@Mox1toGH](https://github.com/Mox1toGH) | Tech Lead (DRF) | API + Backend / Frontend |
+| 3 | [@lliyussha](https://github.com/lliyussha) | Project Manager / Support Developer | Documentation + Task Management |
+| 4 | [@Lastto0](https://github.com/Lastto0) | Frontend Lead (Vue.js) | SPA Architecture |
+| 5 | [@janekdev](https://github.com/janekdev) | Full-Stack Developer | Frontend Development + Backend Feature Support + UI Logic |
 
-- `DJANGO_DEBUG`: `True` для локальної розробки, `False` для продакшну.
-- `DJANGO_ALLOWED_HOSTS`: список хостів через кому (локально: `localhost,127.0.0.1`).
-- `CORS_ALLOWED_ORIGINS`: адреса фронтенду (локально: `http://localhost:5173`).
-- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`: для Gmail залиш як у прикладі.
-- `EMAIL_HOST_USER`: твоя Gmail-адреса.
-- `EMAIL_HOST_PASSWORD`: App Password у Google Account:
-  1. Увімкни 2FA у Google Account.
-  2. Відкрий `Security -> App passwords`.
-  3. Створи пароль застосунку та встав у `.env`.
-- `GOOGLE_OAUTH_CLIENT_ID`: у Google Cloud Console:
-  1. `APIs & Services -> Credentials`.
-  2. `Create Credentials -> OAuth client ID -> Web application`.
-  3. Додай `http://localhost:5173` у `Authorized JavaScript origins`.
-  4. Скопіюй `Client ID`.
-- `GOOGLE_OAUTH_CLIENT_SECRET`: секрет OAuth-клієнта, доступний у тих же Credentials.
-- `GOOGLE_CALENDAR_REDIRECT_URI`: URI для OAuth callback (за замовчуванням `http://localhost:5173/calendar/google-callback`). Додай цю адресу як **Authorized redirect URI** у Google Cloud Console.
+---
 
-### Google Calendar Integration
+## 🚀 Getting Started
 
-Для роботи інтеграції з Google Calendar додатково потрібно:
-
-1. Увімкнути **Google Calendar API** у Google Cloud Console (`APIs & Services -> Library`).
-2. Додати `http://localhost:5173/calendar/google-callback` до **Authorized redirect URIs** в OAuth client.
-3. Заповнити `GOOGLE_OAUTH_CLIENT_SECRET` та `GOOGLE_CALENDAR_REDIRECT_URI` у `backend/.env`.
-
-**Можливості:**
-- Підключення Google Calendar з профілю у розділі Calendar.
-- Автоматична синхронізація всіх існуючих подій при підключенні.
-- Автоматичне додавання нових подій та раундів у Google Calendar (`post_save` сигнали).
-- Ручний експорт окремих подій через кнопку "Add to GCal".
-
-### Frontend
-
-1. Скопіюй приклад:
-
-```powershell
-Copy-Item frontend\.env.example frontend\.env
-```
-
-2. Перевір значення:
-
-```env
-VITE_GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-`VITE_GOOGLE_CLIENT_ID` має збігатися зі значенням `GOOGLE_OAUTH_CLIENT_ID` на backend.
-
-## 3. Запуск проєкту
-
-### Backend
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py migrate
-```
-
-#### Варіант A: з WebSocket (ASGI, рекомендовано для realtime notifications)
-
-```powershell
-daphne -b 0.0.0.0 -p 8000 backend.asgi:application
-```
-
-Використовуй цей режим, якщо потрібні realtime події через `/ws/notifications/`.
-
-#### Варіант B: без WebSocket (класичний Django runserver)
-
-```powershell
-python manage.py runserver
-```
-
-Використовуй цей режим для REST/OpenAPI. WebSocket-нотифікації в цьому режимі недоступні.
-
-Backend буде доступний на `http://localhost:8000`.
-
-### Frontend (в новому терміналі)
-
-```powershell
-cd frontend
-nvm use
-npm install
-npm run dev
-```
-
-Frontend буде доступний на `http://localhost:5173`.
-
-## 4. Тести
-
-### Backend
-
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-python manage.py test
-```
-
-### Frontend
-
-Окремі unit/integration тести наразі не налаштовані. Для перевірки коду використовуй:
-
-```powershell
-cd frontend
-npm run lint
-```
-
-
-
-## 5. Генерація API (OpenAPI & Orval)
-
-Якщо ви змінили або додали нові ендпоінти в бекенді (views/serializers), потрібно оновити згенерований API-клієнт на фронтенді.
-Оскільки Orval налаштований на отримання схеми з працюючого бекенду, переконайтеся, що Django сервер запущений (`python manage.py runserver`).
-
-### Оновити хуки на фронтенді
-```powershell
-cd frontend
-nvm use
-npm run generate-api
-```
-
-Після цього оновлені хуки (наприклад, `useGetUserPoints`) з'являться в `frontend/src/api/`.
-
-## 6. Правила розробки
-
-- Не генерувати описи комітів за допомогою ШІ.
-- Генерувати код за допомогою ШІ можна, але перед комітом код має бути обов'язково прочитаний і перевірений розробником.
-- Під час розробки дотримуватися наявної структури та архітектури проєкту.
-- Змінювати структуру або архітектуру можна, але притримуватися цілісності проекту, щоб код не виглядав різнобійним.
-
-## 7. Git Workflow 
-
-### Гілки
-
-- `main` — стабільний код (продакшн), напряму не пушимо.
-- `dev` — основна гілка розробки.
-- `feature/*` — гілки для нових задач.
-- `bugfix/*` — гілки для виправлень.
-
-### Початок роботи
-
-```bash
-git checkout dev
-git pull
-git checkout -b feature/task-name
-```
-
-### Робота над задачею
-
-```bash
-git add .
-git commit -m "feat: короткий опис"
-git push origin feature/task-name
-```
-
-### Оновлення гілки
-
-```bash
-git checkout dev
-git pull
-
-git checkout feature/task-name
-git pull origin dev
-```
-
-### Pull Request
-
-- Створити PR: `feature/*` -> `dev`.
-- Пройти code review.
-- Після approval виконати merge.
-
-### Заборонено
-
-- Пушити напряму в `main` або `dev`.
-- Працювати кільком людям в одній гілці.
-- Робити великі неперевірені коміти.
-
-### Правила
-
-- 1 задача = 1 гілка.
-- Робити часті невеликі коміти.
-- Використовувати зрозумілі повідомлення (просто порада і не є обов'язковою):
-  - `feat:` новий функціонал
-  - `fix:` виправлення
-  - `refactor:` рефакторинг
-  - `add:` додавання нового функціоналу
-  - `update:` оновлення
-  - `remove:` видалення
-  - `docs:` оновлення документації
-
-### Реліз
-
-- Merge `dev` -> `main` через Pull Request.
+See [SETUP.md](./SETUP.md) for full setup instructions — manual and Docker variants, tests, and superuser creation.
