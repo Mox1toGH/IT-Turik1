@@ -15,6 +15,11 @@ export const profileRoutes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/users/:id/tournaments-history',
+    component: () => import('@/features/profile/pages/UserTournamentHistoryPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/profile/edit',
     component: () => import('./pages/EditProfilePage.vue'),
     meta: { requiresAuth: true },
@@ -42,6 +47,11 @@ export const profileRoutes = [
   {
     path: '/profile/points',
     component: () => import('./pages/TransactionHistoryPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/tournaments-history',
+    component: () => import('./pages/UserTournamentHistoryPage.vue'),
     meta: { requiresAuth: true },
   },
 ]

@@ -1183,18 +1183,18 @@ export interface RoleActivationCodeGenerateResponse {
 }
 
 /**
- * * `jury` - jury
+ * * `admin` - admin
 * `organizer` - organizer
-* `admin` - admin
+* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const RoleActivationCodeGenerateRoleEnum = {
-  jury: 'jury',
-  organizer: 'organizer',
   admin: 'admin',
+  organizer: 'organizer',
+  jury: 'jury',
 } as const;
 
 export interface RoleActivationCodeListResponse {
@@ -1888,6 +1888,11 @@ export interface UnreadCountResponse {
   unread_count: number;
 }
 
+/**
+ * @nullable
+ */
+export type UserActiveTournamentProperty = UserActiveTournament | null;
+
 export interface User {
   readonly id: number;
   /**
@@ -1912,6 +1917,38 @@ export interface User {
   readonly created_at: string;
   readonly needs_onboarding: boolean;
   readonly teams: readonly UserTeam[];
+  /** @nullable */
+  readonly active_tournament: UserActiveTournamentProperty;
+}
+
+/**
+ * @nullable
+ */
+export type UserActiveTournamentCurrentRound = UserActiveTournamentRound | null;
+
+export interface UserActiveTournament {
+  id: number;
+  name: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  team: UserActiveTournamentTeam;
+  team_registration_status: string;
+  /** @nullable */
+  current_round: UserActiveTournamentCurrentRound;
+}
+
+export interface UserActiveTournamentRound {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+}
+
+export interface UserActiveTournamentTeam {
+  id: number;
+  name: string;
 }
 
 export interface UserAvatarUpdate {
@@ -1961,6 +1998,23 @@ export interface UserTeam {
   name: string;
   contact_telegram: string;
   contact_discord: string;
+}
+
+export interface UserTournamentHistoryItem {
+  tournament_id: number;
+  tournament_name: string;
+  tournament_status: string;
+  start_date: string;
+  end_date: string;
+  team: UserActiveTournamentTeam;
+  team_registration_status: string;
+  /** @nullable */
+  final_rank: number | null;
+  /**
+   * @nullable
+   * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+   */
+  final_score: string | null;
 }
 
 export interface UserUpdateRequest {

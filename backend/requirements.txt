@@ -13,3 +13,5 @@ WeasyPrint
 qrcode[pil]
 google-api-python-client
 google-auth-oauthlib
+
+daphne
