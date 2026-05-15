@@ -1,4 +1,5 @@
 import { MutationCache, QueryClient } from '@tanstack/vue-query'
+import { connectNotificationSocket } from '@/lib/notificationSocket'
 
 import {
   getListTeamsQueryKey,
@@ -421,6 +422,14 @@ export const queryClient = new QueryClient({
     onSuccess: (data, vars, _ctx, mutation) => {
       const key = mutation.options.mutationKey?.[0] as string | undefined
       if (!key) return
+
+      // Зберегти токен ДО інвалідації
+      if ((key === 'login' || key === 'googleAuth') && data) {
+        const d = data as { access?: string; refresh?: string }
+        if (d.access) localStorage.setItem('access', d.access)
+        if (d.refresh) localStorage.setItem('refresh', d.refresh)
+        connectNotificationSocket(queryClient)
+      }
 
       const entries = MUTATION_INVALIDATION_MAP[key] ?? []
       const ctx: Ctx = {

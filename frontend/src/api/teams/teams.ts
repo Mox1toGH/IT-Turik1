@@ -409,7 +409,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const updateTeamBanner2 = (
+    export const teamBannerUpdate = (
     id: MaybeRef<number>,
     teamBannerRequest: MaybeRef<TeamBannerRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -430,11 +430,11 @@ if(teamBannerRequest.banner !== undefined && teamBannerRequest.banner !== null) 
   
 
 
-export const getUpdateTeamBanner2MutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner2>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner2>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext> => {
+export const getTeamBannerUpdateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerUpdate>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof teamBannerUpdate>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext> => {
 
-const mutationKey = ['updateTeamBanner2'];
+const mutationKey = ['teamBannerUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -444,10 +444,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTeamBanner2>>, {id: number;data: BodyType<TeamBannerRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof teamBannerUpdate>>, {id: number;data: BodyType<TeamBannerRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateTeamBanner2(id,data,requestOptions)
+          return  teamBannerUpdate(id,data,requestOptions)
         }
 
         
@@ -455,24 +455,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateTeamBanner2MutationResult = NonNullable<Awaited<ReturnType<typeof updateTeamBanner2>>>
-    export type UpdateTeamBanner2MutationBody = BodyType<TeamBannerRequest>
-    export type UpdateTeamBanner2MutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+    export type TeamBannerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof teamBannerUpdate>>>
+    export type TeamBannerUpdateMutationBody = BodyType<TeamBannerRequest>
+    export type TeamBannerUpdateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateTeamBanner2 = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner2>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useTeamBannerUpdate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerUpdate>>, TError,{id: number;data: BodyType<TeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof updateTeamBanner2>>,
+        Awaited<ReturnType<typeof teamBannerUpdate>>,
         TError,
         {id: number;data: BodyType<TeamBannerRequest>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateTeamBanner2MutationOptions(options);
+      const mutationOptions = getTeamBannerUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    export const updateTeamBanner = (
+    export const teamBannerPartialUpdate = (
     id: MaybeRef<number>,
     patchedTeamBannerRequest: MaybeRef<PatchedTeamBannerRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -493,11 +493,11 @@ if(patchedTeamBannerRequest.banner !== undefined && patchedTeamBannerRequest.ban
   
 
 
-export const getUpdateTeamBannerMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext> => {
+export const getTeamBannerPartialUpdateMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext> => {
 
-const mutationKey = ['updateTeamBanner'];
+const mutationKey = ['teamBannerPartialUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -507,10 +507,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTeamBanner>>, {id: number;data: BodyType<PatchedTeamBannerRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, {id: number;data: BodyType<PatchedTeamBannerRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateTeamBanner(id,data,requestOptions)
+          return  teamBannerPartialUpdate(id,data,requestOptions)
         }
 
         
@@ -518,20 +518,20 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateTeamBannerMutationResult = NonNullable<Awaited<ReturnType<typeof updateTeamBanner>>>
-    export type UpdateTeamBannerMutationBody = BodyType<PatchedTeamBannerRequest>
-    export type UpdateTeamBannerMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+    export type TeamBannerPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof teamBannerPartialUpdate>>>
+    export type TeamBannerPartialUpdateMutationBody = BodyType<PatchedTeamBannerRequest>
+    export type TeamBannerPartialUpdateMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
-    export const useUpdateTeamBanner = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeamBanner>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useTeamBannerPartialUpdate = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{id: number;data: BodyType<PatchedTeamBannerRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof updateTeamBanner>>,
+        Awaited<ReturnType<typeof teamBannerPartialUpdate>>,
         TError,
         {id: number;data: BodyType<PatchedTeamBannerRequest>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateTeamBannerMutationOptions(options);
+      const mutationOptions = getTeamBannerPartialUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -2,7 +2,7 @@
   <div class="chart-wrap">
     <svg viewBox="0 0 220 170" width="100%" height="100%">
       <g transform="translate(110,85)">
-        <circle r="52" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="16" />
+        <circle r="52" fill="none" stroke="var(--stats-track)" stroke-width="16" />
         <circle
           r="52"
           fill="none"
@@ -34,14 +34,14 @@
           v-if="hover === 'wins'"
           r="60"
           fill="none"
-          stroke="rgba(255,255,255,0.12)"
+          stroke="var(--stats-track)"
           stroke-width="1"
         />
         <circle
           v-if="hover === 'losses'"
           r="45"
           fill="none"
-          stroke="rgba(255,255,255,0.12)"
+          stroke="var(--stats-track)"
           stroke-width="1"
         />
       </g>

@@ -251,6 +251,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Extra Round',
             'start_date': self.tournament_data['start_date'],
             'end_date': self.tournament_data['end_date'],
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.post(url, round_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -267,6 +268,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Organizer Round',
             'start_date': self.tournament_data['start_date'],
             'end_date': self.tournament_data['end_date'],
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.post(url, round_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -1417,11 +1419,11 @@ class TournamentApiTests(APITestCase):
             )
 
         url = reverse('tournaments')
-        response = self.client.get(url, {'page': '1', 'pageSize': '5'})
+        response = self.client.get(url, {'page': '1', 'page_size': '5'})
         self.assertEqual(response.data['total'], 15)
         self.assertEqual(len(response.data['data']), 5)
 
-        response2 = self.client.get(url, {'page': '3', 'pageSize': '5'})
+        response2 = self.client.get(url, {'page': '3', 'page_size': '5'})
         self.assertEqual(len(response2.data['data']), 5)
 
     def test_tournament_list_pagination_max_page_size(self):
@@ -1436,7 +1438,7 @@ class TournamentApiTests(APITestCase):
             )
 
         url = reverse('tournaments')
-        response = self.client.get(url, {'page': '1', 'pageSize': '9999'})
+        response = self.client.get(url, {'page': '1', 'page_size': '9999'})
         self.assertEqual(response.data['total'], 150)
         self.assertEqual(len(response.data['data']), 100)
 
@@ -1624,6 +1626,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Invalid Round',
             'start_date': tournament.start_date - timezone.timedelta(days=1),
             'end_date': tournament.end_date,
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.post(url, round_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1652,6 +1655,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Round 2',
             'start_date': (tournament.start_date + timezone.timedelta(days=2)).isoformat(),
             'end_date': (tournament.start_date + timezone.timedelta(days=5)).isoformat(),
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.post(url, round2_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1663,6 +1667,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Round 3',
             'start_date': (tournament.start_date - timezone.timedelta(days=1)).isoformat(),
             'end_date': (tournament.start_date + timezone.timedelta(days=1)).isoformat(),
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.post(url, round3_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1698,6 +1703,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Round 2 Updated',
             'start_date': (tournament.start_date + timezone.timedelta(days=1)).isoformat(),
             'end_date': (tournament.start_date + timezone.timedelta(days=4)).isoformat(),
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.put(url, update_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -1731,6 +1737,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Round 1',
             'start_date': tournament.start_date.isoformat(),
             'end_date': (tournament.start_date + timezone.timedelta(days=4)).isoformat(),
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
 
         response = self.client.put(url, update_data, format='json')
@@ -1768,6 +1775,7 @@ class TournamentApiTests(APITestCase):
             'name': 'Round 2 Updated',
             'start_date': tournament.start_date + timezone.timedelta(hours=1),
             'end_date': tournament.start_date + timezone.timedelta(hours=4),
+            'criteria': [{'id': 'c1', 'name': 'Criteria 1', 'description': 'Criteria description', 'max_score': 10}],
         }
         response = self.client.put(url, update_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

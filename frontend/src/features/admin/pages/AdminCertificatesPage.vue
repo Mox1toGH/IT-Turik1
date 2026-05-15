@@ -10,8 +10,8 @@
               Create certificates for users, manage template library, and verify certificate codes.
             </p>
           </div>
-          <ui-button as-link to="/admin/role-codes" variant="secondary"
-            >Back to admin panel</ui-button
+          <ui-button as-link to="/admin" variant="secondary"
+            >Back to Admin hub</ui-button
           >
         </div>
       </template>

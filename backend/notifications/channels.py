@@ -7,6 +7,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from .models import Notification
+from .realtime import emit_notification_created, emit_unread_count_updated
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,18 @@ EVENT_TYPE_LABELS = {
     'team_member_removed': 'Membership Update',
     'team_member_left': 'Membership Update',
     'news_published': 'News',
+    'certificate_received': 'Certificate',
+    'tournament_team_registered': 'Tournament',
+    'tournament_team_unregistered': 'Tournament',
+    'tournament_team_disqualified': 'Tournament',
+    'tournament_team_reactivated': 'Tournament',
+    'tournament_round_started': 'Tournament',
+    'tournament_round_submissions_closed': 'Tournament',
+    'tournament_round_evaluated': 'Tournament',
+    'tournament_finished': 'Tournament',
+    'jury_assignment_received': 'Evaluation',
+    'shop_order_status_changed': 'Shop',
+    'points_balance_changed': 'Points',
 }
 
 # Events that go to /teams (general) — cannot link to a specific team
@@ -39,6 +52,18 @@ EVENT_ACTION_LABELS = {
     'team_member_removed':        'Browse Teams',
     'team_member_left':           'View Team',
     'news_published':             'View News',
+    'certificate_received':       'View Certificates',
+    'tournament_team_registered': 'View Tournaments',
+    'tournament_team_unregistered': 'View Tournaments',
+    'tournament_team_disqualified': 'View Tournaments',
+    'tournament_team_reactivated': 'View Tournaments',
+    'tournament_round_started': 'View Tournaments',
+    'tournament_round_submissions_closed': 'View Tournaments',
+    'tournament_round_evaluated': 'View Tournaments',
+    'tournament_finished': 'View Archive',
+    'jury_assignment_received': 'View Evaluation',
+    'shop_order_status_changed': 'View Orders',
+    'points_balance_changed': 'View Transactions',
 }
 
 
@@ -55,6 +80,14 @@ def _get_action(event_type: str, message: str) -> tuple[str, str]:
         return label, '/teams'
     if event_type == 'news_published':
         return label, '/news'
+    if event_type == 'certificate_received':
+        return label, '/profile/certificates'
+    if event_type.startswith('tournament_') or event_type == 'jury_assignment_received':
+        return label, '/tournaments'
+    if event_type == 'shop_order_status_changed':
+        return label, '/shop/orders'
+    if event_type == 'points_balance_changed':
+        return label, '/profile/transaction-history'
 
     # Try to extract team_id from [team:id:name:visibility] tag
     match = re.search(r'\[team:(\d+):', message)
@@ -93,12 +126,15 @@ class SystemChannel(NotificationChannel):
     """Saves a Notification record in the database (in-site notification)."""
 
     def send(self, *, recipient, title, message, event_type, email_subject=None):
-        Notification.objects.create(
+        notification = Notification.objects.create(
             recipient=recipient,
             event_type=event_type,
             title=title,
             message=message,
         )
+        emit_notification_created(notification)
+        unread_count = Notification.objects.filter(recipient=recipient, is_read=False).count()
+        emit_unread_count_updated(recipient.id, unread_count)
 
 
 class EmailChannel(NotificationChannel):

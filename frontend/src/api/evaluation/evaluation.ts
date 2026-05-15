@@ -34,15 +34,16 @@ import type {
   ErrorResponseNotFound,
   ErrorResponsePermissionDenied,
   ErrorResponseValidationError,
+  EvaluationSubmissionEvaluation,
+  EvaluationSubmissionEvaluationRequest,
   JuryAssignment,
   JuryAssignmentItemRequest,
   ListAvailableJuryParams,
   ListJuryAssignmentsParams,
-  PatchedSubmissionEvaluationRequest,
+  PaginatedJuryAssignmentList,
+  PatchedEvaluationSubmissionEvaluationRequest,
   RoundLeaderboardResponse,
   RoundPassingStatusResponse,
-  SubmissionEvaluation,
-  SubmissionEvaluationRequest,
   TournamentLeaderboardResponse
 } from '../.ts.schemas';
 
@@ -60,7 +61,7 @@ export const listJuryAssignments = (
 ) => {
       params = unref(params);
       
-      return customInstance<JuryAssignment[]>(
+      return customInstance<PaginatedJuryAssignmentList>(
       {url: `http://localhost:8000/api/evaluation/assignments/`, method: 'GET',
         params: unref(params), signal
     },
@@ -180,15 +181,15 @@ export function useGetJuryAssignment<TData = Awaited<ReturnType<typeof getJuryAs
 
 
 export const createJuryEvaluation = (
-    submissionEvaluationRequest: MaybeRef<SubmissionEvaluationRequest>,
+    evaluationSubmissionEvaluationRequest: MaybeRef<EvaluationSubmissionEvaluationRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      submissionEvaluationRequest = unref(submissionEvaluationRequest);
+      evaluationSubmissionEvaluationRequest = unref(evaluationSubmissionEvaluationRequest);
       
-      return customInstance<SubmissionEvaluation>(
+      return customInstance<EvaluationSubmissionEvaluation>(
       {url: `http://localhost:8000/api/evaluation/evaluate/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: submissionEvaluationRequest, signal
+      data: evaluationSubmissionEvaluationRequest, signal
     },
       options);
     }
@@ -196,8 +197,8 @@ export const createJuryEvaluation = (
 
 
 export const getCreateJuryEvaluationMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<SubmissionEvaluationRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext> => {
 
 const mutationKey = ['createJuryEvaluation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -209,7 +210,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJuryEvaluation>>, {data: BodyType<SubmissionEvaluationRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJuryEvaluation>>, {data: BodyType<EvaluationSubmissionEvaluationRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  createJuryEvaluation(data,requestOptions)
@@ -221,15 +222,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CreateJuryEvaluationMutationResult = NonNullable<Awaited<ReturnType<typeof createJuryEvaluation>>>
-    export type CreateJuryEvaluationMutationBody = BodyType<SubmissionEvaluationRequest>
+    export type CreateJuryEvaluationMutationBody = BodyType<EvaluationSubmissionEvaluationRequest>
     export type CreateJuryEvaluationMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>
 
     export const useCreateJuryEvaluation = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJuryEvaluation>>, TError,{data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createJuryEvaluation>>,
         TError,
-        {data: BodyType<SubmissionEvaluationRequest>},
+        {data: BodyType<EvaluationSubmissionEvaluationRequest>},
         TContext
       > => {
 
@@ -243,7 +244,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 ) => {
       id = unref(id);
       
-      return customInstance<SubmissionEvaluation>(
+      return customInstance<EvaluationSubmissionEvaluation>(
       {url: `http://localhost:8000/api/evaluation/evaluate/${id}/`, method: 'GET', signal
     },
       options);
@@ -301,15 +302,15 @@ export function useGetJuryEvaluation<TData = Awaited<ReturnType<typeof getJuryEv
 
 export const replaceJuryEvaluation = (
     id: MaybeRef<number>,
-    submissionEvaluationRequest: MaybeRef<SubmissionEvaluationRequest>,
+    evaluationSubmissionEvaluationRequest: MaybeRef<EvaluationSubmissionEvaluationRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-submissionEvaluationRequest = unref(submissionEvaluationRequest);
+evaluationSubmissionEvaluationRequest = unref(evaluationSubmissionEvaluationRequest);
       
-      return customInstance<SubmissionEvaluation>(
+      return customInstance<EvaluationSubmissionEvaluation>(
       {url: `http://localhost:8000/api/evaluation/evaluate/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: submissionEvaluationRequest
+      data: evaluationSubmissionEvaluationRequest
     },
       options);
     }
@@ -317,8 +318,8 @@ submissionEvaluationRequest = unref(submissionEvaluationRequest);
 
 
 export const getReplaceJuryEvaluationMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<SubmissionEvaluationRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext> => {
 
 const mutationKey = ['replaceJuryEvaluation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -330,7 +331,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceJuryEvaluation>>, {id: number;data: BodyType<SubmissionEvaluationRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceJuryEvaluation>>, {id: number;data: BodyType<EvaluationSubmissionEvaluationRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  replaceJuryEvaluation(id,data,requestOptions)
@@ -342,15 +343,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ReplaceJuryEvaluationMutationResult = NonNullable<Awaited<ReturnType<typeof replaceJuryEvaluation>>>
-    export type ReplaceJuryEvaluationMutationBody = BodyType<SubmissionEvaluationRequest>
+    export type ReplaceJuryEvaluationMutationBody = BodyType<EvaluationSubmissionEvaluationRequest>
     export type ReplaceJuryEvaluationMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useReplaceJuryEvaluation = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{id: number;data: BodyType<EvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof replaceJuryEvaluation>>,
         TError,
-        {id: number;data: BodyType<SubmissionEvaluationRequest>},
+        {id: number;data: BodyType<EvaluationSubmissionEvaluationRequest>},
         TContext
       > => {
 
@@ -360,15 +361,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
     export const updateJuryEvaluation = (
     id: MaybeRef<number>,
-    patchedSubmissionEvaluationRequest: MaybeRef<PatchedSubmissionEvaluationRequest>,
+    patchedEvaluationSubmissionEvaluationRequest: MaybeRef<PatchedEvaluationSubmissionEvaluationRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       id = unref(id);
-patchedSubmissionEvaluationRequest = unref(patchedSubmissionEvaluationRequest);
+patchedEvaluationSubmissionEvaluationRequest = unref(patchedEvaluationSubmissionEvaluationRequest);
       
-      return customInstance<SubmissionEvaluation>(
+      return customInstance<EvaluationSubmissionEvaluation>(
       {url: `http://localhost:8000/api/evaluation/evaluate/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: patchedSubmissionEvaluationRequest
+      data: patchedEvaluationSubmissionEvaluationRequest
     },
       options);
     }
@@ -376,8 +377,8 @@ patchedSubmissionEvaluationRequest = unref(patchedSubmissionEvaluationRequest);
 
 
 export const getUpdateJuryEvaluationMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedSubmissionEvaluationRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedEvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedEvaluationSubmissionEvaluationRequest>}, TContext> => {
 
 const mutationKey = ['updateJuryEvaluation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -389,7 +390,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJuryEvaluation>>, {id: number;data: BodyType<PatchedSubmissionEvaluationRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJuryEvaluation>>, {id: number;data: BodyType<PatchedEvaluationSubmissionEvaluationRequest>}> = (props) => {
           const {id,data} = props ?? {};
 
           return  updateJuryEvaluation(id,data,requestOptions)
@@ -401,15 +402,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateJuryEvaluationMutationResult = NonNullable<Awaited<ReturnType<typeof updateJuryEvaluation>>>
-    export type UpdateJuryEvaluationMutationBody = BodyType<PatchedSubmissionEvaluationRequest>
+    export type UpdateJuryEvaluationMutationBody = BodyType<PatchedEvaluationSubmissionEvaluationRequest>
     export type UpdateJuryEvaluationMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
 
     export const useUpdateJuryEvaluation = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJuryEvaluation>>, TError,{id: number;data: BodyType<PatchedEvaluationSubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateJuryEvaluation>>,
         TError,
-        {id: number;data: BodyType<PatchedSubmissionEvaluationRequest>},
+        {id: number;data: BodyType<PatchedEvaluationSubmissionEvaluationRequest>},
         TContext
       > => {
 

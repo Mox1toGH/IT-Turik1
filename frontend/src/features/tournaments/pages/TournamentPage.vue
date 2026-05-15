@@ -224,7 +224,7 @@ type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderb
 
 const route = useRoute()
 const router = useRouter()
-const id = Number(route.params.id) || 1
+const id = Number(route.params.id)
 
 const { data: user } = useGetUserProfile()
 const { data: tournament } = useGetTournament(id)
@@ -440,7 +440,11 @@ watch(
 }
 
 .section-title {
-  color: white;
+  color: var(--foreground);
+}
+
+.hero-card--with-banner .section-title {
+  color: #fff;
 }
 
 .hero-card--with-banner :deep(.ui-card-body),

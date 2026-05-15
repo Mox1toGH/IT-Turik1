@@ -28,7 +28,7 @@ class NewsArticleSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('created_by', 'created_by_name', 'created_at', 'updated_at')
 
-    def get_created_by_name(self, obj):
+    def get_created_by_name(self, obj) -> str:
         if not obj.created_by:
             return ''
         return obj.created_by.full_name or obj.created_by.username

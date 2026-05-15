@@ -13,7 +13,7 @@ from accounts.models import User
 class GoogleAuthViewTests(APITestCase):
     url = reverse('google_login')
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_creates_user_and_returns_jwt(self, mocked_verify):
         mocked_verify.return_value = {
             'iss': 'https://accounts.google.com',
@@ -30,7 +30,7 @@ class GoogleAuthViewTests(APITestCase):
         self.assertTrue(created_user.is_active)
         self.assertEqual(created_user.full_name, 'New User')
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_activates_existing_user(self, mocked_verify):
         existing = User.objects.create_user(
             username='existing', email='existing@example.com', password='StrongPass123!', is_active=False,
@@ -47,7 +47,7 @@ class GoogleAuthViewTests(APITestCase):
         existing.refresh_from_db()
         self.assertTrue(existing.is_active)
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_rejects_unverified_email(self, mocked_verify):
         mocked_verify.return_value = {
             'iss': 'https://accounts.google.com',
@@ -78,10 +78,26 @@ class PasswordResetFlowTests(APITestCase):
         response = self.client.post(self.request_url, {'email': user.email}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].content_subtype, 'html')
+        self.assertIn('Reset your password', mail.outbox[0].body)
+        self.assertIn('TournamentOS', mail.outbox[0].body)
 
     def test_password_reset_request_rejects_nonexistent_email(self):
         response = self.client.post(self.request_url, {'email': 'missing@example.com'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_reset_request_uses_authenticated_user_email_when_email_not_provided(self):
+        user = User.objects.create_user(
+            username='auth-reset-user',
+            email='auth-reset-user@example.com',
+            password='StrongPass123!',
+            is_active=True,
+        )
+        self.client.force_authenticate(user=user)
+        response = self.client.post(self.request_url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Reset your password', mail.outbox[0].body)
 
     def test_password_reset_confirm_get_rejects_invalid_or_expired_link(self):
         user = User.objects.create_user(username='invalid-link-user', email='i@e.com', password='P', is_active=True)

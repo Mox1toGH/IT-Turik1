@@ -38,6 +38,8 @@ import type {
   ErrorResponseValidationError,
   Event,
   EventRequest,
+  ExportToGoogleCalendarRequestRequest,
+  ExportToGoogleCalendarResponse,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
   Icon,
@@ -762,7 +764,125 @@ export function useListTournamentTeams<TData = Awaited<ReturnType<typeof listTou
 
 
 
-export const listRounds = (
+export const getTournamentCertificateDeliveryStatus = (
+    tournamentId: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      tournamentId = unref(tournamentId);
+      
+      return customInstance<void>(
+      {url: `http://localhost:8000/api/tournaments/${tournamentId}/certificates/delivery-status/`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetTournamentCertificateDeliveryStatusQueryKey = (tournamentId?: MaybeRef<number>,) => {
+    return [
+    'http:','localhost:8000','api','tournaments',tournamentId,'certificates','delivery-status'
+    ] as const;
+    }
+
+    
+export const getGetTournamentCertificateDeliveryStatusQueryOptions = <TData = Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(tournamentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  getGetTournamentCertificateDeliveryStatusQueryKey(tournamentId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>> = ({ signal }) => getTournamentCertificateDeliveryStatus(tournamentId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: computed(() => !!(unref(tournamentId))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData> 
+}
+
+export type GetTournamentCertificateDeliveryStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>>
+export type GetTournamentCertificateDeliveryStatusQueryError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+
+
+
+export function useGetTournamentCertificateDeliveryStatus<TData = Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError = ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>>(
+ tournamentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTournamentCertificateDeliveryStatusQueryOptions(tournamentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
+
+  return query;
+}
+
+
+
+
+export const sendTournamentCertificates = (
+    tournamentId: MaybeRef<number>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      tournamentId = unref(tournamentId);
+      
+      return customInstance<void>(
+      {url: `http://localhost:8000/api/tournaments/${tournamentId}/send-certificates/`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getSendTournamentCertificatesMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number}, TContext> => {
+
+const mutationKey = ['sendTournamentCertificates'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendTournamentCertificates>>, {tournamentId: number}> = (props) => {
+          const {tournamentId} = props ?? {};
+
+          return  sendTournamentCertificates(tournamentId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendTournamentCertificatesMutationResult = NonNullable<Awaited<ReturnType<typeof sendTournamentCertificates>>>
+    
+    export type SendTournamentCertificatesMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>
+
+    export const useSendTournamentCertificates = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied | ErrorResponseNotFound>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof sendTournamentCertificates>>,
+        TError,
+        {tournamentId: number},
+        TContext
+      > => {
+
+      const mutationOptions = getSendTournamentCertificatesMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listRounds = (
     tournamentPk: MaybeRef<number>,
     params?: MaybeRef<ListRoundsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -2097,7 +2217,65 @@ export function useGetMyCalendar<TData = Awaited<ReturnType<typeof getMyCalendar
 
 
 
-export const getRound = (
+export const exportToGoogleCalendar = (
+    exportToGoogleCalendarRequestRequest: MaybeRef<ExportToGoogleCalendarRequestRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      exportToGoogleCalendarRequestRequest = unref(exportToGoogleCalendarRequestRequest);
+      
+      return customInstance<ExportToGoogleCalendarResponse>(
+      {url: `http://localhost:8000/api/tournaments/my-calendar/export-to-google/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: exportToGoogleCalendarRequestRequest, signal
+    },
+      options);
+    }
+  
+
+
+export const getExportToGoogleCalendarMutationOptions = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext> => {
+
+const mutationKey = ['exportToGoogleCalendar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exportToGoogleCalendar>>, {data: BodyType<ExportToGoogleCalendarRequestRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  exportToGoogleCalendar(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExportToGoogleCalendarMutationResult = NonNullable<Awaited<ReturnType<typeof exportToGoogleCalendar>>>
+    export type ExportToGoogleCalendarMutationBody = BodyType<ExportToGoogleCalendarRequestRequest>
+    export type ExportToGoogleCalendarMutationError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>
+
+    export const useExportToGoogleCalendar = <TError = ErrorType<ErrorResponseValidationError | ErrorResponseNotAuthenticated>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportToGoogleCalendar>>, TError,{data: BodyType<ExportToGoogleCalendarRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationReturnType<
+        Awaited<ReturnType<typeof exportToGoogleCalendar>>,
+        TError,
+        {data: BodyType<ExportToGoogleCalendarRequestRequest>},
+        TContext
+      > => {
+
+      const mutationOptions = getExportToGoogleCalendarMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const getRound = (
     id: MaybeRef<number>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {

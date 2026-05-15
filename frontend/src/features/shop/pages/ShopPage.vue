@@ -49,7 +49,9 @@
           >
             <template #header>
               <div class="card-head">
-                <strong :title="product.name">{{ truncateText(product.name, 100) }}</strong>
+                <strong class="product-title" :title="product.name">{{
+                  truncateText(product.name, 100)
+                }}</strong>
                 <ui-badge :variant="product.is_available ? 'green' : 'gray'">{{
                   product.is_available ? 'Available' : 'Out of stock'
                 }}</ui-badge>
@@ -574,6 +576,11 @@ const deleteCategory = (id: number) => {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+}
+.product-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .thumb {
   width: 100%;

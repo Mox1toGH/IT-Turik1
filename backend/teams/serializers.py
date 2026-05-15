@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from django.utils import timezone
 from rest_framework import serializers
@@ -93,7 +94,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
 
-    def get_avatar_frame_url(self, obj):
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
         from inventory.models import UserInventory
 
         equipped_item = (

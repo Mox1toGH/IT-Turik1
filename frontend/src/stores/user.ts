@@ -1,6 +1,7 @@
 import { getGetUserProfileQueryKey } from '@/api/accounts/accounts'
 import { useQueryClient } from '@tanstack/vue-query'
 import { defineStore } from 'pinia'
+import { disconnectNotificationSocket } from '@/lib/notificationSocket'
 
 export const useUserStore = defineStore('user', () => {
   const queryClient = useQueryClient()
@@ -28,6 +29,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('access')
     localStorage.removeItem('refresh')
     localStorage.removeItem('needs_onboarding')
+    disconnectNotificationSocket()
   }
 
   function logout() {

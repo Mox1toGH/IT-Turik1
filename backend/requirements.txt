@@ -6,7 +6,12 @@ requests
 google-auth
 python-dotenv
 drf-spectacular
+channels
 
 Pillow
 WeasyPrint
 qrcode[pil]
+google-api-python-client
+google-auth-oauthlib
+
+daphne

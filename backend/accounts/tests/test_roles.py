@@ -1,3 +1,5 @@
+from django.core import mail
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -59,6 +61,7 @@ class UserDetailViewTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class RoleRegistrationTests(APITestCase):
     register_url = reverse('register')
     role_codes_url = reverse('role_codes_admin')
@@ -66,6 +69,10 @@ class RoleRegistrationTests(APITestCase):
     def test_team_member_registration_does_not_require_code(self):
         response = self.client.post(self.register_url, {'username': 'u', 'email': 'u@e.com', 'password': 'Pass123!', 'role': 'team'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].content_subtype, 'html')
+        self.assertIn('Activate your account', mail.outbox[0].body)
+        self.assertIn('TournamentOS', mail.outbox[0].body)
 
     def test_restricted_role_registration_requires_redeem_code(self):
         response = self.client.post(self.register_url, {'username': 'j', 'email': 'j@e.com', 'password': 'Pass123!', 'role': 'jury'}, format='json')

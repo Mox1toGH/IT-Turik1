@@ -49,6 +49,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
             'created_at',
         )
         read_only_fields = ('total_score', 'final_score', 'created_at')
+        ref_name = 'EvaluationSubmissionEvaluation'
 
     def validate_assignment(self, value):
         request = self.context.get('request')
@@ -121,11 +122,12 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
 
 
 class RoundShortSerializer(serializers.ModelSerializer):
-    criteria = extend_schema_field(CriterionSerializer(many=True))(serializers.JSONField())
+    criteria = CriterionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Round
         fields = ('id', 'name', 'start_date', 'end_date', 'status', 'criteria', 'tournament')
+        ref_name = 'EvaluationRoundShort'
 
 
 class JuryAssignmentSerializer(serializers.ModelSerializer):

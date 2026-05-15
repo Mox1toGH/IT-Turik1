@@ -7,36 +7,36 @@
   >
     <template #title>
       <h2>
-        {{ mode === 'edit' ? 'Редагування товару' : 'Створення товару' }}
+        {{ mode === 'edit' ? 'Edit Product' : 'Create Product' }}
       </h2>
     </template>
 
     <form class="editor" @submit.prevent="handleSubmit">
       <section class="panel form-panel">
         <label class="field">
-          <span class="label">Назва</span>
-          <ui-input v-model.trim="form.name" placeholder="Напр. Mechanical Keyboard" />
+          <span class="label">Name</span>
+          <ui-input v-model.trim="form.name" placeholder="e.g. Mechanical Keyboard" />
           <small v-if="errors.name" class="error">{{ errors.name }}</small>
         </label>
 
         <label class="field">
-          <span class="label">Опис</span>
+          <span class="label">Description</span>
           <ui-text-area
             v-model.trim="form.description"
             rows="4"
-            placeholder="Короткий опис товару"
+            placeholder="Short product description"
           />
         </label>
 
         <div class="row two">
           <label class="field">
-            <span class="label">Ціна (points)</span>
+            <span class="label">Price (points)</span>
             <ui-input v-model.number="form.price" type="number" min="0" />
             <small v-if="errors.price" class="error">{{ errors.price }}</small>
           </label>
 
           <label class="field">
-            <span class="label">Кількість на складі</span>
+            <span class="label">Stock Quantity</span>
             <ui-input type="number" v-model.number="form.stock_quantity" min="0" />
             <small v-if="errors.stock_quantity" class="error">{{ errors.stock_quantity }}</small>
           </label>
@@ -44,7 +44,7 @@
 
         <div class="row two">
           <label class="field">
-            <span class="label">Категорія</span>
+            <span class="label">Category</span>
             <select v-model.number="form.category_id" class="native-select">
               <option v-for="category in categories" :key="category.id" :value="category.id">
                 {{ category.name }}
@@ -54,7 +54,7 @@
           </label>
 
           <label class="field">
-            <span class="label">Тип товару</span>
+            <span class="label">Product Type</span>
             <select v-model="form.product_type" class="native-select">
               <option value="physical">Physical</option>
               <option value="digital">Digital</option>
@@ -64,9 +64,9 @@
 
         <div v-if="form.product_type === 'digital'" class="row" :class="{ two: mode === 'edit' }">
           <label v-if="mode === 'edit'" class="field">
-            <span class="label">Рамка аватара (існуюча)</span>
+            <span class="label">Avatar Frame (existing)</span>
             <select v-model.number="form.avatar_frame_id" class="native-select">
-              <option :value="undefined">Не вибрано</option>
+              <option :value="undefined">Not selected</option>
               <option v-for="frame in avatarFrames" :key="frame.id" :value="frame.id">
                 {{ frame.name }}
               </option>
@@ -76,7 +76,7 @@
 
           <label class="field">
             <span class="label">{{
-              mode === 'create' ? 'Завантажити файл рамки (.svg)' : 'Або завантажити нову (.svg)'
+              mode === 'create' ? 'Upload frame file (.svg)' : 'Or upload a new one (.svg)'
             }}</span>
             <input class="native-file" type="file" accept=".svg" @change="onPickFrameFile" />
             <small v-if="frameFileName" class="file-name">{{ frameFileName }}</small>
@@ -85,11 +85,11 @@
 
         <label class="switcher">
           <ui-switch v-model="form.is_active" />
-          <span>Активний у каталозі</span>
+          <span>Active in catalog</span>
         </label>
 
         <label class="upload-block">
-          <span class="label">Зображення (можна декілька)</span>
+          <span class="label">Images (multiple allowed)</span>
           <input
             ref="fileInput"
             class="native-file"
@@ -98,12 +98,12 @@
             multiple
             @change="onPickFiles"
           />
-          <span class="upload-note">PNG, JPG, WEBP. Перший файл буде обкладинкою.</span>
+          <span class="upload-note">PNG, JPG, WEBP. The first file will be used as cover.</span>
         </label>
 
         <div v-if="newPreviews.length" class="preview-grid">
           <article v-for="(url, i) in newPreviews" :key="url" class="preview-tile">
-            <img :src="url" alt="Нове зображення" @click="openImagePreview(url)" />
+            <img :src="url" alt="New image" @click="openImagePreview(url)" />
             <ui-button size="sm" variant="danger" class="remove-btn" @click="removePicked(i)"
               >Remove</ui-button
             >
@@ -129,16 +129,16 @@
             <p class="mock-meta">{{ selectedCategoryName }} | {{ form.product_type }}</p>
             <p class="mock-price">{{ form.price || 0 }} pts</p>
             <p class="mock-desc" :title="form.description">
-              {{ truncateText(form.description || 'Опис товару з’явиться тут.', 150) }}
+              {{ truncateText(form.description || 'Product description will appear here.', 150) }}
             </p>
           </div>
         </article>
 
         <div class="summary">
-          <p><strong>Склад:</strong> {{ form.stock_quantity || 0 }}</p>
-          <p><strong>Статус:</strong> {{ form.is_active ? 'Active' : 'Inactive' }}</p>
+          <p><strong>Stock:</strong> {{ form.stock_quantity || 0 }}</p>
+          <p><strong>Status:</strong> {{ form.is_active ? 'Active' : 'Inactive' }}</p>
           <p>
-            <strong>Доступність:</strong>
+            <strong>Availability:</strong>
             {{ isAvailable ? 'Available' : 'Out of stock' }}
           </p>
         </div>
@@ -305,10 +305,10 @@ const isAvailable = computed(() => Number(form.value.stock_quantity || 0) > 0)
 
 const validate = () => {
   const next: Record<string, string> = {}
-  if (!form.value.name.trim()) next.name = 'Вкажіть назву товару.'
-  if (Number(form.value.price) < 0) next.price = 'Ціна не може бути від’ємною.'
-  if (Number(form.value.stock_quantity) < 0) next.stock_quantity = 'Склад не може бути від’ємним.'
-  if (!Number(form.value.category_id)) next.category_id = 'Оберіть категорію.'
+  if (!form.value.name.trim()) next.name = 'Please enter a product name.'
+  if (Number(form.value.price) < 0) next.price = 'Price cannot be negative.'
+  if (Number(form.value.stock_quantity) < 0) next.stock_quantity = 'Stock cannot be negative.'
+  if (!Number(form.value.category_id)) next.category_id = 'Please select a category.'
   if (
     form.value.product_type === 'digital' &&
     !form.value.avatar_frame_id &&
@@ -317,7 +317,7 @@ const validate = () => {
     pickedFiles.value.length === 0
   ) {
     next.avatar_frame_id =
-      'Оберіть рамку аватара або вкажіть URL цифрового активу, або додайте зображення.'
+      'Select an avatar frame, provide a digital asset URL, or upload an image.'
   }
   errors.value = next
   return Object.keys(next).length === 0

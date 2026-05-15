@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.utils import timezone
 from news.models import NewsArticle
 from accounts.models import User
 
@@ -42,7 +43,8 @@ class NewsModelTests(TestCase):
     def test_news_article_meta_ordering(self):
         a1 = NewsArticle.objects.create(title='A1', content={}, created_by=self.user)
         a2 = NewsArticle.objects.create(title='A2', content={}, created_by=self.user)
-        # Assuming ordering is -created_at
+        NewsArticle.objects.filter(pk=a1.pk).update(created_at=timezone.now() - timezone.timedelta(minutes=1))
+        NewsArticle.objects.filter(pk=a2.pk).update(created_at=timezone.now())
         articles = NewsArticle.objects.all()
         self.assertEqual(articles[0], a2)
 

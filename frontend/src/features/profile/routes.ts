@@ -1,3 +1,23 @@
+import { getUser } from '@/api/accounts/accounts'
+
+const parsePositiveId = (rawId: unknown): number | null => {
+  const value = Number(rawId)
+  if (!Number.isInteger(value) || value <= 0) return null
+  return value
+}
+
+const ensureUserExists = async (rawId: unknown) => {
+  const id = parsePositiveId(rawId)
+  if (!id) return { name: 'not-found' as const }
+
+  try {
+    await getUser(id)
+    return true
+  } catch {
+    return { name: 'not-found' as const }
+  }
+}
+
 export const profileRoutes = [
   {
     path: '/profile',
@@ -8,11 +28,19 @@ export const profileRoutes = [
     path: '/users/:id',
     component: () => import('@/features/profile/pages/UserProfilePage.vue'),
     meta: { requiresAuth: true },
+    beforeEnter: (to) => ensureUserExists(to.params.id),
   },
   {
     path: '/users/:id/points',
     component: () => import('@/features/profile/pages/TransactionHistoryPage.vue'),
     meta: { requiresAuth: true },
+    beforeEnter: (to) => ensureUserExists(to.params.id),
+  },
+  {
+    path: '/users/:id/tournaments-history',
+    component: () => import('@/features/profile/pages/UserTournamentHistoryPage.vue'),
+    meta: { requiresAuth: true },
+    beforeEnter: (to) => ensureUserExists(to.params.id),
   },
   {
     path: '/profile/edit',
@@ -42,6 +70,11 @@ export const profileRoutes = [
   {
     path: '/profile/points',
     component: () => import('./pages/TransactionHistoryPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/tournaments-history',
+    component: () => import('./pages/UserTournamentHistoryPage.vue'),
     meta: { requiresAuth: true },
   },
 ]

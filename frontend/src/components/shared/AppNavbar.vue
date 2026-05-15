@@ -42,7 +42,7 @@
               />
             </router-link>
 
-            <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
+            <router-link v-if="isAdmin" to="/admin" :class="navItemClass('admin')"
               >Admin</router-link
             >
 
@@ -174,6 +174,7 @@ import { useRoute } from 'vue-router'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
+import UiButton from '@/components/ui/UiButton.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetUnreadNotificationCount } from '@/api/notifications/notifications'
 

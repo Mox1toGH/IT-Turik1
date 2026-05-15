@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,7 @@ from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from tournaments.permissions import CanManageAssignments, CanSetResults
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
 from .leaderboard_service import compute_leaderboard, get_leaderboard, get_tournament_leaderboard
+from .realtime import emit_tournament_leaderboard_updated
 
 from .models import JuryAssignment, SubmissionEvaluation
 from .serializers import (
@@ -29,7 +31,11 @@ from .serializers import (
 @extend_schema(
     operation_id='listJuryAssignments',
     parameters=[
-        OpenApiParameter('round_id', int, description='Filter by round ID'),
+        OpenApiParameter('round_id', int, required=False, description='Filter by single round ID'),
+        OpenApiParameter('round_ids', str, required=False, description='Comma-separated round IDs'),
+        OpenApiParameter('tournament_ids', str, required=False, description='Comma-separated tournament IDs'),
+        OpenApiParameter('evaluation_status', str, required=False,
+                         description='all | evaluated | not_evaluated (default: all)'),
     ],
     responses={
         200: JuryAssignmentSerializer(many=True),
@@ -40,15 +46,76 @@ from .serializers import (
 class JuryAssignmentListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = JuryAssignmentSerializer
+    pagination_class = None
+
+    class JuryAssignmentPagination(PageNumberPagination):
+        page_size = 8
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = JuryAssignmentPagination
+
+    @staticmethod
+    def _parse_int_list(value, field_name):
+        if not value:
+            return []
+
+        items = [item.strip() for item in value.split(',') if item.strip()]
+        if not items:
+            return []
+
+        parsed = []
+        for item in items:
+            if not item.isdigit():
+                raise ValidationError({field_name: 'Expected comma-separated positive integers.'})
+            parsed.append(int(item))
+        return parsed
 
     def get_queryset(self):
         qs = JuryAssignment.objects.filter(jury=self.request.user).select_related(
-            'submission', 'submission__team', 'submission__round', 'submission__round__tournament'
+            'submission',
+            'submission__team',
+            'submission__round',
+            'submission__round__tournament',
+            'evaluation',
         )
+
         round_id = self.request.query_params.get('round_id')
         if round_id:
             qs = qs.filter(submission__round_id=round_id)
+
+        round_ids = self._parse_int_list(self.request.query_params.get('round_ids'), 'round_ids')
+        if round_ids:
+            qs = qs.filter(submission__round_id__in=round_ids)
+
+        tournament_ids = self._parse_int_list(
+            self.request.query_params.get('tournament_ids'),
+            'tournament_ids',
+        )
+        if tournament_ids:
+            qs = qs.filter(submission__round__tournament_id__in=tournament_ids)
+
+        evaluation_status = self.request.query_params.get('evaluation_status', 'all')
+        if evaluation_status == 'evaluated':
+            qs = qs.filter(evaluation__isnull=False)
+        elif evaluation_status == 'not_evaluated':
+            qs = qs.filter(evaluation__isnull=True)
+        elif evaluation_status != 'all':
+            raise ValidationError(
+                {'evaluation_status': 'Expected one of: all, evaluated, not_evaluated.'}
+            )
+
         return qs
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        evaluated_count = queryset.filter(evaluation__isnull=False).count()
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        response = self.get_paginated_response(serializer.data)
+        response.data['evaluated_count'] = evaluated_count
+        return response
 
 
 @extend_schema(operation_id='getJuryAssignment', responses={
@@ -84,8 +151,17 @@ class JuryEvaluationCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
-        round_obj = serializer.instance.assignment.submission.round
+        evaluation = serializer.instance
+        submission = evaluation.assignment.submission
+        round_obj = submission.round
         try_auto_evaluate_round(round_obj)
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_created',
+            submission_id=submission.id,
+            evaluation_id=evaluation.id,
+        )
 
 
 @extend_schema(methods=['GET'], operation_id='getJuryEvaluation', responses={
@@ -124,8 +200,30 @@ class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         serializer.save()
-        round_obj = serializer.instance.assignment.submission.round
+        evaluation = serializer.instance
+        submission = evaluation.assignment.submission
+        round_obj = submission.round
         try_auto_evaluate_round(round_obj)
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_updated',
+            submission_id=submission.id,
+            evaluation_id=evaluation.id,
+        )
+
+    def perform_destroy(self, instance):
+        submission = instance.assignment.submission
+        round_obj = submission.round
+        evaluation_id = instance.id
+        instance.delete()
+        emit_tournament_leaderboard_updated(
+            tournament_id=round_obj.tournament_id,
+            round_id=round_obj.id,
+            reason='evaluation_deleted',
+            submission_id=submission.id,
+            evaluation_id=evaluation_id,
+        )
 
 
 @extend_schema(

@@ -145,3 +145,81 @@
   - per-round snapshot записи (`round = конкретний round_id`)
   - tournament-level snapshot записи (`round = null`) з `rounds_breakdown`
 - Функція idempotent: повторний виклик не створює дублікати.
+
+---
+
+## 7. Realtime WebSocket (Leaderboard Sync)
+
+WebSocket використовується тільки для realtime-синхронізації.
+CRUD, initial load і повні дані leaderboard залишаються в REST (`/api/evaluation/.../leaderboard/`).
+
+### Socket endpoint
+
+- `ws://<host>:8000/ws/leaderboards/?token=<JWT>`
+- для HTTPS: `wss://<host>:8000/ws/leaderboards/?token=<JWT>`
+
+### Authentication
+
+- JWT передається в query-параметрі `token`.
+- неавторизований клієнт отримує закриття сокета з кодом `4401`.
+
+### Subscription flow
+
+1. Відкрити сокет.
+2. Відправити subscribe-команду:
+
+```json
+{
+  "action": "subscribe",
+  "tournament_id": 2
+}
+```
+
+3. Отримати підтвердження:
+
+```json
+{
+  "event": "leaderboard.subscribed",
+  "payload": {
+    "tournament_id": 2
+  }
+}
+```
+
+4. Для відписки:
+
+```json
+{
+  "action": "unsubscribe",
+  "tournament_id": 2
+}
+```
+
+### Events
+
+- `leaderboard.updated`
+  - broadcast у tournament-specific room
+  - тригериться при зміні evaluation (create/update/delete), що впливає на live rankings
+- `leaderboard.subscribed`
+- `leaderboard.unsubscribed`
+- `leaderboard.error` (invalid client payload)
+
+### Event payload structure
+
+```json
+{
+  "event": "leaderboard.updated",
+  "payload": {
+    "tournament_id": 2,
+    "round_id": 5,
+    "reason": "evaluation_updated",
+    "submission_id": 81,
+    "evaluation_id": 34
+  }
+}
+```
+
+`reason` може бути:
+- `evaluation_created`
+- `evaluation_updated`
+- `evaluation_deleted`

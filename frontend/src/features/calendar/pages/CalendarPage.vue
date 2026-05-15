@@ -11,6 +11,29 @@
           Events, consultations, deadlines and round milestones across your tournaments.
         </p>
       </div>
+      <div class="gcal-actions">
+        <template v-if="gcalLoading">
+          <ui-button size="sm" variant="secondary" disabled>
+            <loading-icon class="gcal-icon spin" />
+            Loading…
+          </ui-button>
+        </template>
+        <template v-else-if="gcalConnected">
+          <ui-button size="sm" variant="ghost" @click="exportAll" :disabled="isExporting || !hasItems">
+            <google-calendar-icon class="gcal-icon" />
+            {{ isExporting ? 'Exporting…' : 'Export All to Google' }}
+          </ui-button>
+          <ui-button size="sm" variant="danger" @click="disconnectGcal">
+            Disconnect
+          </ui-button>
+        </template>
+        <template v-else>
+          <ui-button size="sm" variant="secondary" @click="connectGcal">
+            <google-calendar-icon class="gcal-icon" />
+            Connect Google Calendar
+          </ui-button>
+        </template>
+      </div>
     </ui-card>
 
     <ui-card>
@@ -44,7 +67,14 @@
           <p class="text-muted">Join a tournament to see its schedule here</p>
         </div>
 
-        <schedule-calendar v-else :events="events" :rounds="rounds" />
+        <schedule-calendar
+          v-else
+          :events="events"
+          :rounds="rounds"
+          :gcal-connected="gcalConnected"
+          @export-event="exportEvent"
+          @export-round="exportRound"
+        />
       </ui-skeleton-loader>
     </ui-card>
   </section>
@@ -52,19 +82,94 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
 import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
+import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
-import { computed } from 'vue'
-import { useGetMyCalendar } from '@/api/tournaments/tournaments'
+import { computed, onMounted, ref } from 'vue'
+import {
+  connectGoogleCalendar,
+  disconnectGoogleCalendar,
+  getGoogleCalendarStatus,
+} from '@/api/accounts/accounts'
+import { exportToGoogleCalendar, useGetMyCalendar } from '@/api/tournaments/tournaments'
+import type { Event, Round } from '@/api/.ts.schemas'
 
 const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
 
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])
 const hasItems = computed(() => events.value.length > 0 || rounds.value.length > 0)
+
+const gcalConnected = ref(false)
+const gcalLoading = ref(true)
+const isExporting = ref(false)
+
+onMounted(async () => {
+  try {
+    const status = await getGoogleCalendarStatus()
+    gcalConnected.value = status.connected
+  } catch {
+    gcalConnected.value = false
+  } finally {
+    gcalLoading.value = false
+  }
+})
+
+async function connectGcal() {
+  try {
+    const { auth_url } = await connectGoogleCalendar()
+    window.location.href = auth_url
+  } catch (e) {
+    console.error('Failed to get Google Calendar auth URL', e)
+  }
+}
+
+async function disconnectGcal() {
+  try {
+    await disconnectGoogleCalendar()
+    gcalConnected.value = false
+  } catch (e) {
+    console.error('Failed to disconnect Google Calendar', e)
+  }
+}
+
+async function exportAll() {
+  if (isExporting.value) return
+  isExporting.value = true
+  try {
+    const eventIds = (events.value as Event[]).map((event) => event.id)
+    const roundIds = (rounds.value as Round[]).map((round) => round.id)
+    await exportToGoogleCalendar({
+      event_ids: eventIds,
+      round_ids: roundIds,
+    })
+  } catch (e) {
+    console.error('Export failed', e)
+  } finally {
+    isExporting.value = false
+  }
+}
+
+async function exportEvent(eventId: number) {
+  try {
+    await exportToGoogleCalendar({ event_ids: [eventId] })
+  } catch (e) {
+    console.error('Export event failed', e)
+  }
+}
+
+async function exportRound(roundId: number) {
+  try {
+    await exportToGoogleCalendar({ round_ids: [roundId] })
+  } catch (e) {
+    console.error('Export round failed', e)
+  }
+}
 </script>
 
 <style scoped>
@@ -80,6 +185,31 @@ const hasItems = computed(() => events.value.length > 0 || rounds.value.length >
     linear-gradient(45deg, rgba(249, 115, 22, 0.2), transparent);
   color: white;
   border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.gcal-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gcal-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .eyebrow {

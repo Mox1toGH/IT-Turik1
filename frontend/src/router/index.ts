@@ -32,7 +32,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   const store = useUserStore()
   const tokens = store.getTokens()
 
@@ -40,19 +40,16 @@ router.beforeEach(async (to, _from, next) => {
   const needsOnboarding = !!tokens.needsOnboarding
 
   if (isAuthenticated && needsOnboarding && to.path !== '/complete-profile') {
-    next('/complete-profile')
-    return
+    return '/complete-profile'
   }
 
   if (isAuthenticated && !needsOnboarding && to.path === '/complete-profile') {
-    next('/')
-    return
+    return '/'
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     store.logout()
-    next('/login')
-    return
+    return '/login'
   }
 
   if (
@@ -61,24 +58,19 @@ router.beforeEach(async (to, _from, next) => {
     !to.path.startsWith('/activate/') &&
     !to.path.startsWith('/reset-password/')
   ) {
-    next('/')
-    return
+    return '/'
   }
 
   if (to.meta.requiresAdmin) {
     try {
       const profile = await getUserProfile()
       if (profile.role !== 'admin') {
-        next('/')
-        return
+        return '/'
       }
     } catch {
-      next('/')
-      return
+      return '/'
     }
   }
-
-  next()
 })
 
 export default router

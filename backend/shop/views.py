@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParamet
 from backend.openapi import _400, _401, _403, _404
 
 from backend.permissions import is_platform_admin
+from notifications.services import NotificationService
 
 from .models import AvatarFrame, Category, Order, Product
 from .serializers import (
@@ -140,7 +141,7 @@ class MyOrderHistoryView(generics.ListAPIView):
 class MyOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelMyOrder', responses={
+    @extend_schema(operation_id='cancelMyOrder', request=None, responses={
         200: OrderSerializer,
         400: _400,
         401: _401,
@@ -340,19 +341,28 @@ class AdminOrderStatusUpdateView(APIView):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can change order status.')
 
-        order = get_object_or_404(Order, pk=order_id)
+        order = get_object_or_404(Order.objects.select_related('user', 'product'), pk=order_id)
         serializer = AdminOrderStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         order.status = serializer.validated_data['status']
         order.save(update_fields=['status', 'updated_at'])
+        NotificationService.notify(
+            recipients=[order.user],
+            event_type='shop_order_status_changed',
+            context={
+                'order_id': order.id,
+                'product_name': order.product.name,
+                'order_status': order.status,
+            },
+        )
         return Response(OrderSerializer(order, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
 class AdminOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelAdminOrder', responses={
+    @extend_schema(operation_id='cancelAdminOrder', request=None, responses={
         200: OrderSerializer,
         400: _400,
         401: _401,
@@ -363,8 +373,17 @@ class AdminOrderCancelView(APIView):
         if not is_platform_admin(request.user):
             raise PermissionDenied('Only admins can cancel orders.')
 
-        order = get_object_or_404(Order, pk=order_id)
+        order = get_object_or_404(Order.objects.select_related('user', 'product'), pk=order_id)
         cancelled = cancel_order(order=order, cancelled_by=request.user)
+        NotificationService.notify(
+            recipients=[cancelled.user],
+            event_type='shop_order_status_changed',
+            context={
+                'order_id': cancelled.id,
+                'product_name': cancelled.product.name,
+                'order_status': cancelled.status,
+            },
+        )
         return Response(OrderSerializer(cancelled, context={'request': request}).data, status=status.HTTP_200_OK)
 
 

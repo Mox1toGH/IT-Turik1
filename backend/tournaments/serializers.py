@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from typing import Any
 from rest_framework import serializers
 
 from evaluation.models import JuryAssignment
@@ -509,7 +510,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             'disqualification_reason',
         )
  
-    def get_members_count(self, obj):
+    def get_members_count(self, obj) -> int:
         return len(self._get_unique_team_users(obj))
 
     def _get_unique_team_users(self, obj):
@@ -526,7 +527,7 @@ class TournamentTeamRegistrationListSerializer(serializers.ModelSerializer):
             unique_users.append(user)
         return unique_users
 
-    def get_members(self, obj):
+    def get_members(self, obj) -> list[dict[str, Any]]:
         return TeamMemberSerializer(self._get_unique_team_users(obj), many=True).data
 
 
@@ -778,3 +779,35 @@ class EligibleTeamSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     members_count = serializers.IntegerField()
+
+
+class ExportToGoogleCalendarRequestSerializer(serializers.Serializer):
+    event_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        default=list,
+    )
+    round_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        default=list,
+    )
+
+
+class ExportedCalendarItemSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=['event', 'round'])
+    id = serializers.IntegerField()
+    google_event_id = serializers.CharField(required=False)
+    google_event_ids = serializers.ListField(child=serializers.CharField(), required=False)
+    html_link = serializers.URLField(required=False)
+
+
+class CalendarExportErrorSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=['event', 'round'])
+    id = serializers.IntegerField()
+    error = serializers.CharField()
+
+
+class ExportToGoogleCalendarResponseSerializer(serializers.Serializer):
+    created = ExportedCalendarItemSerializer(many=True)
+    errors = CalendarExportErrorSerializer(many=True)

@@ -16,13 +16,33 @@
 
             <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
           </ui-skeleton-loader>
-          <ui-button
-            @click="handleAssignJury"
-            class="assign-btn"
-            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
-          >
-            <loading-icon v-if="isPending" />Assign
-          </ui-button>
+          <div class="header-actions">
+            <ui-select
+              multiple
+              v-model="assignJuryForAll"
+              :options="juryOptions"
+              placeholder="Assign jury to all"
+              class="jury-select jury-select-all"
+              :is-error="isFailedToFetchJury"
+              :error="juryFetchError?.message"
+              :is-loading="isFetchingJury"
+              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+            />
+            <ui-button
+              variant="secondary"
+              @click="applyJuryToAllSubmissions"
+              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+            >
+              Apply to all
+            </ui-button>
+            <ui-button
+              @click="handleAssignJury"
+              class="assign-btn"
+              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+            >
+              <loading-icon v-if="isPending" />Assign
+            </ui-button>
+          </div>
         </div>
       </template>
 
@@ -111,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSelect, { type SelectOption } from '@/components/ui/UiSelect.vue'
 import { formatDate } from '@/lib/date'
@@ -199,6 +219,7 @@ const juryOptions = computed<SelectOption[]>(
     })) ?? [],
 )
 
+const assignJuryForAll = ref<number[]>([])
 const assignedJury = reactive<Record<number, number[]>>({})
 watch(
   submissions,
@@ -216,6 +237,15 @@ watch(
 )
 
 const { mutate: assign, isPending } = useAssignJuryToRound()
+
+const applyJuryToAllSubmissions = () => {
+  if (!submissions.value?.length) return
+  const nextAssigned = Array.from(new Set(assignJuryForAll.value))
+  submissions.value.forEach((submission) => {
+    assignedJury[submission.id] = [...nextAssigned]
+  })
+}
+
 const handleAssignJury = () => {
   if (!closedRound.value) return
   const payload = submissions.value?.map((submission) => {
@@ -257,9 +287,18 @@ const teamAbbr = (teamName: string) =>
 .submissions-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
   padding-bottom: 1rem;
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .jury-assign-shell {
@@ -366,6 +405,10 @@ const teamAbbr = (teamName: string) =>
 
 .jury-select {
   min-width: 220px;
+}
+
+.jury-select-all {
+  min-width: 260px;
 }
 
 @media (max-width: 820px) {

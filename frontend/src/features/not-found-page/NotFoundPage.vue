@@ -5,15 +5,22 @@
       <p class="text">The page you’re looking for doesn’t exist or was moved.</p>
       <div class="actions">
         <ui-button asLink to="/">Go home</ui-button>
-        <ui-button variant="secondary" asLink to="/tournaments">Browse tournaments</ui-button>
+        <ui-button variant="secondary" @click="goBack">Go back</ui-button>
       </div>
     </div>
   </ui-card>
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+
+const router = useRouter()
+
+const goBack = () => {
+  router.back()
+}
 </script>
 
 <style scoped>

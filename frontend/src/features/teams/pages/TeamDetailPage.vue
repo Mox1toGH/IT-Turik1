@@ -232,7 +232,7 @@ import {
   toObjectPosition,
   writeImagePosition,
 } from '@/lib/imagePosition'
-import { useGetTeam, useDeleteTeamBanner, useUpdateTeamBanner } from '@/api/teams/teams'
+import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 
@@ -263,7 +263,7 @@ const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
 const { showNotification } = useNotification()
 
-const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTeamBanner()
+const { mutate: updateBanner, isPending: isUpdatingBanner } = useTeamBannerUpdate()
 const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useDeleteTeamBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 
@@ -404,9 +404,22 @@ watch(
   z-index: 2;
 }
 
+.section-title {
+  color: var(--foreground);
+}
+
+.contact-pill {
+  color: var(--foreground);
+}
+
 .hero-card--with-banner :deep(.ui-card-body),
 .hero-card--with-banner :deep(.ui-card-header),
 .hero-card--with-banner :deep(.ui-card-footer) {
+  color: #fff;
+}
+
+.hero-card--with-banner .section-title,
+.hero-card--with-banner .contact-pill {
   color: #fff;
 }
 

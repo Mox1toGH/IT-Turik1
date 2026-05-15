@@ -1,6 +1,7 @@
 import re
 import secrets
 import string
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
@@ -8,19 +9,35 @@ from django.contrib.auth.tokens import default_token_generator
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.db import transaction
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
+from teams.models import Team, TeamMember
+from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from .models import RoleActivationCode, User
 from drf_spectacular.utils import extend_schema_field
 
 
 RESTRICTED_ROLES = {'jury', 'organizer', 'admin'}
 MAX_ACTIVE_CODES_PER_ROLE = 10
+
+
+def send_html_email(subject: str, template_name: str, context: dict, recipient: str) -> None:
+    html_message = render_to_string(template_name, context)
+    email = EmailMessage(
+        subject=subject,
+        body=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.content_subtype = 'html'
+    email.send()
 
 
 def validate_strong_password(password, user=None, field_name='password'):
@@ -133,11 +150,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             token = default_token_generator.make_token(user)
 
             activation_link = f"http://localhost:5173/activate/{uid}/{token}"
-            send_mail(
+            send_html_email(
                 subject='Account activation',
-                message=f'Open this link to activate your account: {activation_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+                template_name='accounts/account_activation_email.html',
+                context={
+                    'subject': 'Account activation',
+                    'title': 'Activate your account',
+                    'username': user.username,
+                    'action_url': activation_link,
+                    'action_label': 'Activate account',
+                    'secondary_message': 'If you did not create this account, you can safely ignore this email.',
+                },
+                recipient=user.email,
             )
             return user
 
@@ -151,11 +175,48 @@ class UserTeamSerializer(serializers.Serializer):
     contact_telegram = serializers.CharField()
     contact_discord = serializers.CharField()
 
+
+class UserActiveTournamentTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class UserActiveTournamentRoundSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    status = serializers.CharField()
+
+
+class UserActiveTournamentSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    current_round = UserActiveTournamentRoundSerializer(allow_null=True)
+
+
+class UserTournamentHistoryItemSerializer(serializers.Serializer):
+    tournament_id = serializers.IntegerField()
+    tournament_name = serializers.CharField()
+    tournament_status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    final_rank = serializers.IntegerField(allow_null=True)
+    final_score = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
+
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
     avatar = serializers.ImageField(read_only=True)
     avatar_frame_url = serializers.SerializerMethodField()
+    active_tournament = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -173,11 +234,20 @@ class UserSerializer(serializers.ModelSerializer):
             'created_at',
             'needs_onboarding',
             'teams',
+            'active_tournament',
         )
-        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams', 'is_staff')
+        read_only_fields = (
+            'id',
+            'email',
+            'created_at',
+            'needs_onboarding',
+            'teams',
+            'is_staff',
+            'active_tournament',
+        )
 
     @extend_schema_field(serializers.URLField(allow_null=True))
-    def get_avatar_frame_url(self, obj):
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
         from inventory.models import UserInventory
 
         equipped_item = (
@@ -208,6 +278,90 @@ class UserSerializer(serializers.ModelSerializer):
             }
             for team in obj.teams.all()
         ]
+
+    @staticmethod
+    def _team_registration_status(registration: TournamentTeamRegistration) -> str:
+        if registration.is_disqualified:
+            return 'disqualified'
+        if registration.is_active:
+            return 'active'
+        return 'inactive'
+
+    @extend_schema_field(UserActiveTournamentSerializer(allow_null=True))
+    def get_active_tournament(self, obj):
+        team_ids = set(TeamMember.objects.filter(user=obj).values_list('team_id', flat=True)) | set(
+            Team.objects.filter(captain=obj).values_list('id', flat=True)
+        )
+        if not team_ids:
+            return None
+
+        registration = (
+            TournamentTeamRegistration.objects.select_related('tournament', 'team')
+            .filter(
+                team_id__in=team_ids,
+                tournament__status__in=[
+                    Tournament.STATUS_REGISTRATION,
+                    Tournament.STATUS_RUNNING,
+                ],
+            )
+            .filter(Q(is_active=True) | Q(is_disqualified=True))
+            .annotate(
+                tournament_status_priority=Case(
+                    When(tournament__status=Tournament.STATUS_RUNNING, then=Value(0)),
+                    When(tournament__status=Tournament.STATUS_REGISTRATION, then=Value(1)),
+                    default=Value(2),
+                    output_field=IntegerField(),
+                ),
+                registration_status_priority=Case(
+                    When(is_disqualified=True, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            .order_by(
+                'tournament_status_priority',
+                'registration_status_priority',
+                'tournament__start_date',
+                'id',
+            )
+            .first()
+        )
+
+        if registration is None:
+            return None
+
+        current_round = (
+            Round.objects.filter(
+                tournament_id=registration.tournament_id,
+                status=Round.STATUS_ACTIVE,
+            )
+            .order_by('start_date', 'id')
+            .first()
+        )
+
+        return {
+            'id': registration.tournament.id,
+            'name': registration.tournament.name,
+            'status': registration.tournament.status,
+            'start_date': registration.tournament.start_date,
+            'end_date': registration.tournament.end_date,
+            'team': {
+                'id': registration.team.id,
+                'name': registration.team.name,
+            },
+            'team_registration_status': self._team_registration_status(registration),
+            'current_round': (
+                {
+                    'id': current_round.id,
+                    'name': current_round.name,
+                    'start_date': current_round.start_date,
+                    'end_date': current_round.end_date,
+                    'status': current_round.status,
+                }
+                if current_round is not None
+                else None
+            ),
+        }
     
 class GoogleAuthResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
@@ -305,7 +459,7 @@ class TeamUserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
 
-    def get_avatar_frame_url(self, obj):
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
         from inventory.models import UserInventory
 
         equipped_item = (
@@ -436,26 +590,38 @@ class UserAvatarUpdateSerializer(serializers.ModelSerializer):
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError('No account found with this email address.')
-        return value
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def save(self):
-        email = self.validated_data['email']
-        user = User.objects.get(email=email)
+        email = self.validated_data.get('email')
+        request = self.context.get('request')
+
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                raise serializers.ValidationError({'email': 'No account found with this email address.'})
+        elif request and request.user and request.user.is_authenticated:
+            user = request.user
+            if not user.email:
+                raise serializers.ValidationError({'email': 'Your account does not have an email address.'})
+        else:
+            raise serializers.ValidationError({'email': 'Email is required for unauthenticated requests.'})
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         reset_link = f"http://localhost:5173/reset-password/{uid}/{token}"
-
-        send_mail(
+        send_html_email(
             subject='Password reset',
-            message=f'Open this link to reset your password: {reset_link}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            template_name='accounts/password_reset_email.html',
+            context={
+                'subject': 'Password reset',
+                'title': 'Reset your password',
+                'username': user.username,
+                'action_url': reset_link,
+                'action_label': 'Reset password',
+                'secondary_message': 'If you did not request a password reset, you can safely ignore this email.',
+            },
+            recipient=user.email,
         )
 
         return user
@@ -578,3 +744,15 @@ class RoleActivationCodeListResponseSerializer(serializers.Serializer):
 class RoleActivationCodeGenerateResponseSerializer(serializers.Serializer):
     created = RoleActivationCodeSerializer(many=True)
     active_counts = ActiveCountsSerializer()
+
+
+class GoogleCalendarStatusSerializer(serializers.Serializer):
+    connected = serializers.BooleanField()
+
+
+class GoogleCalendarConnectResponseSerializer(serializers.Serializer):
+    auth_url = serializers.URLField()
+
+
+class GoogleCalendarCallbackRequestSerializer(serializers.Serializer):
+    code = serializers.CharField()
