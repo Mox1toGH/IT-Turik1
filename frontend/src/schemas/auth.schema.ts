@@ -1,4 +1,4 @@
-import type { User } from '@/api/dbTypes'
+import type { RoleB96Enum } from '@/api/.ts.schemas'
 import * as v from 'valibot'
 
 export const PasswordSchema = v.pipe(
@@ -23,7 +23,7 @@ export const RegisterSchema = v.object({
   full_name: v.pipe(v.string(), v.minLength(1, 'Fullname cannot be empty')),
   email: v.pipe(v.string(), v.email('Invalid email')),
   password: PasswordSchema,
-  role: v.picklist<User['role'][]>(['admin', 'jury', 'organizer', 'team']),
+  role: v.picklist<RoleB96Enum[]>(['admin', 'jury', 'organizer', 'team']),
   phone: v.pipe(
     v.string(),
     v.trim(),

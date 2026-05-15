@@ -22,7 +22,7 @@
         </template>
 
         <p v-if="isLoadingError && !isNotFoundError" class="text-muted">
-          Failed to load certificates (code: {{ apiError?.code ?? 'unknown' }})
+          Failed to load certificates (code: {{ error?.code ?? 'unknown' }})
         </p>
 
         <p v-else-if="!certificates?.results?.length || isNotFoundError" class="text-muted">
@@ -43,17 +43,29 @@
               <p><strong>Placement:</strong> {{ item.placement || '-' }}</p>
               <p><strong>Team:</strong> {{ item.team_name || '-' }}</p>
               <p><strong>Date:</strong> {{ formatDate(item.created_at) }}</p>
-              <p class="verification-code"><strong>Verification code:</strong> {{ item.unique_code }}</p>
+              <p class="verification-code">
+                <strong>Verification code:</strong> {{ item.unique_code }}
+              </p>
             </div>
 
             <div class="actions">
-              <a :href="item.certificate_url" target="_blank" rel="noopener noreferrer" class="link-btn">
+              <a
+                :href="item.certificate_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="link-btn"
+              >
                 View PDF
               </a>
               <button
                 type="button"
                 class="link-btn secondary"
-                @click="downloadCertificate(item.certificate_url, item.certificate_number || item.unique_code)"
+                @click="
+                  downloadCertificate(
+                    item.certificate_url,
+                    item.certificate_number || item.unique_code,
+                  )
+                "
               >
                 Download PDF
               </button>
@@ -61,9 +73,13 @@
           </ui-card>
 
           <div v-if="totalPages > 1" class="pagination">
-            <ui-button variant="secondary" :disabled="currentPage === 1" @click="prevPage">Prev</ui-button>
+            <ui-button variant="secondary" :disabled="currentPage === 1" @click="prevPage"
+              >Prev</ui-button
+            >
             <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
-            <ui-button variant="secondary" :disabled="currentPage === totalPages" @click="nextPage">Next</ui-button>
+            <ui-button variant="secondary" :disabled="currentPage === totalPages" @click="nextPage"
+              >Next</ui-button
+            >
           </div>
         </div>
       </ui-skeleton-loader>
@@ -78,19 +94,23 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { useMyCertificates } from '@/api/queries/certificates'
-import { parseApiError } from '@/api/errors'
-import { apiClient } from '@/api/client'
-
+import { useListCertificates } from '@/api/certificates/certificates'
+import { AXIOS_INSTANCE } from '@/lib/apiClient'
 const router = useRouter()
 const currentPage = ref(1)
 const pageSize = 6
-const { data: certificates, isLoading, isLoadingError, error } = useMyCertificates({
-  page: currentPage,
-  pageSize,
-})
-const apiError = computed(() => parseApiError(error.value))
-const isNotFoundError = computed(() => String(apiError.value?.code || '') === '404')
+const {
+  data: certificates,
+  isLoading,
+  isLoadingError,
+  error,
+} = useListCertificates(
+  computed(() => ({
+    page: currentPage.value,
+    pageSize,
+  })),
+)
+const isNotFoundError = computed(() => String(error.value?.code || '') === '404')
 
 const totalPages = computed(() => {
   const total = certificates.value?.count || 0
@@ -111,7 +131,7 @@ const formatDate = (date: string) => {
 }
 
 const downloadCertificate = async (url: string, code: string) => {
-  const response = await apiClient.get(url, { responseType: 'blob' })
+  const response = await AXIOS_INSTANCE.get(url, { responseType: 'blob' })
   const blobUrl = window.URL.createObjectURL(response.data)
   const link = document.createElement('a')
   link.href = blobUrl
@@ -210,7 +230,10 @@ const nextPage = () => {
   color: var(--foreground);
   background: var(--background);
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .link-btn.secondary {

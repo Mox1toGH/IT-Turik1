@@ -21,6 +21,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'EXCEPTION_HANDLER': 'backend.exceptions.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'CAMELIZE_NAMES': True,
+    'OPERATION_ID_GENERATOR': 'drf_spectacular.generators.CamelCaseOperationIDGenerator',
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 SIMPLE_JWT = {
@@ -64,6 +71,7 @@ INSTALLED_APPS = [
     'points',
     'shop',
     'inventory',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [

@@ -100,10 +100,10 @@
         <label class="form-item">
           <p class="form-label">Add initial members</p>
           <ui-select
-            v-model="form.fields.value.member_ids"
+            v-model="form.fields.value.member_ids!"
             :isLoading="isLoadingUsers"
             :isError="isLoadingError || !!form.errors.value.member_ids"
-            :error="`Error while fetching users (code: ${getUsersError?.code})`"
+            :error="`Error while fetching users (code: ${usersError?.code})`"
             :multiple="true"
             :options="
               createCandidateUsers?.map((u) => ({
@@ -133,22 +133,20 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { useNotification } from '@/composables/useNotification'
-import type { CreateTeamBody } from '@/api/services/teams/types'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useCreateTeam } from '@/api/queries/teams'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useProfile, useUsers } from '@/api/queries/accounts'
 import UiSelect from '@/components/ui/UiSelect.vue'
-import { parseApiError } from '@/api/errors'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateTeamSchema } from '@/schemas/teams.schema'
+import { useCreateTeam, type CreateTeamMutationBody } from '@/api/teams/teams'
+import { useGetUserProfile, useListUsers } from '@/api/accounts/accounts'
 
 const router = useRouter()
 const { showNotification } = useNotification()
 
-type Form = CreateTeamBody
+type Form = CreateTeamMutationBody
 
 const form = useForm<Form>(CreateTeamSchema, {
   name: '',
@@ -164,7 +162,7 @@ const resetForm = () => {
   form.reset()
 }
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const createCandidateUsers = computed(() => {
   return users.value?.filter((u) => {
@@ -173,16 +171,14 @@ const createCandidateUsers = computed(() => {
   })
 })
 
-const { data: users, isLoading: isLoadingUsers, error: usersError, isLoadingError } = useUsers()
-const getUsersError = computed(() => parseApiError(usersError.value))
-
+const { data: users, isLoading: isLoadingUsers, error: usersError, isLoadingError } = useListUsers()
 const { mutate: createTeam, isPending: isCreatingTeam } = useCreateTeam()
 
 const handleFormSubmit = () => {
   if (!form.validate()) return
 
   createTeam(
-    { body: form.fields.value },
+    { data: form.fields.value },
     {
       onSuccess: (data) => {
         showNotification('Team created successfully.', 'success')
@@ -191,10 +187,11 @@ const handleFormSubmit = () => {
         router.push(`/teams/${data.id}`)
       },
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
+
+        showNotification(error.message, 'error')
       },
     },
   )

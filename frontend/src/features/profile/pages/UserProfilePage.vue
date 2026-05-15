@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ error?.code }})</p>
+          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
         </div>
       </template>
 
@@ -114,7 +114,9 @@
               <ui-skeleton variant="rect" width="100%" />
             </template>
 
-            <strong class="item-value value-wrap">{{ isAdmin ? adminPointsBalance?.balance ?? 0 : '-' }}</strong>
+            <strong class="item-value value-wrap">{{
+              isAdmin ? (adminPointsBalance?.balance ?? 0) : '-'
+            }}</strong>
           </ui-skeleton-loader>
         </ui-card>
         <ui-card class="field-card">
@@ -171,17 +173,16 @@
           </label>
         </div>
         <div class="manage-actions">
-          <ui-button
-            :disabled="isSubmitting || !reason.trim()"
-            @click="submitPointsUpdate"
-          >
+          <ui-button :disabled="isSubmitting || !reason.trim()" @click="submitPointsUpdate">
             Apply
           </ui-button>
         </div>
       </ui-card>
 
       <div class="actions">
-        <ui-button v-if="isAdmin" :disabled="isLoading" @click="goToTransactions">Transaction History</ui-button>
+        <ui-button v-if="isAdmin" :disabled="isLoading" @click="goToTransactions"
+          >Transaction History</ui-button
+        >
         <ui-button :disabled="isLoading" @click="goBack">Back</ui-button>
       </div>
     </ui-card>
@@ -196,28 +197,19 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
-import { useProfile, useUserById } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { parseApiError } from '@/api/errors'
-import {
-  useAdminModifyUserPoints,
-  useAdminUserPointsBalance,
-} from '@/api/queries/points'
+import { useGetUser, useGetUserProfile } from '@/api/accounts/accounts'
 import { useNotification } from '@/composables/useNotification'
+import { formatDate } from '@/lib/date'
+import { useGetAdminUserPointsBalance, useModifyUserPointsBalance } from '@/api/points/points'
 
 const route = useRoute()
 const router = useRouter()
 const userId = computed(() => Number(route.params.id))
-const {
-  data: user,
-  isLoading,
-  isLoadingError,
-  error: profileError,
-} = useUserById(userId)
-const error = computed(() => parseApiError(profileError.value))
-const { data: viewer } = useProfile()
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUser(userId)
+const { data: viewer } = useGetUserProfile()
 const isAdmin = computed(() => viewer.value?.role === 'admin')
 const { showNotification } = useNotification()
 
@@ -225,9 +217,9 @@ const {
   data: adminPointsBalance,
   isLoading: isAdminPointsLoading,
   refetch: refetchAdminBalance,
-} = useAdminUserPointsBalance(userId, { enabled: isAdmin })
+} = useGetAdminUserPointsBalance(userId, { query: { enabled: isAdmin } })
 
-const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useAdminModifyUserPoints()
+const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useModifyUserPointsBalance()
 const operation = ref<'add' | 'subtract' | 'set' | 'reset'>('add')
 const amount = ref<number>(0)
 const reason = ref('')
@@ -252,25 +244,19 @@ const submitPointsUpdate = async () => {
   try {
     await modifyUserPoints({
       userId: userId.value,
-      body: {
+      data: {
         operation: operation.value,
-        amount: operation.value === 'reset' ? undefined : Number(amount.value),
-        reason: reason.value.trim(),
+        amount: amount.value,
+        reason: reason.value,
       },
     })
     await refetchAdminBalance()
     reason.value = ''
     amount.value = 0
     showNotification('Points balance updated.', 'success')
-  } catch (err) {
-    const apiError = parseApiError(err as any)
-    showNotification(apiError?.message || 'Failed to update points balance.', 'error')
+  } catch (error) {
+    showNotification((error as Error)?.message || 'Failed to update points balance.', 'error')
   }
-}
-
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
 }
 </script>
 

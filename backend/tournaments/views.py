@@ -1,12 +1,15 @@
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
+from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
+from backend.openapi import _400, _401, _403, _404
 from teams.models import Team
 from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.permissions import Permission, has_permission as user_has_permission
@@ -28,12 +31,15 @@ from .serializers import (
     TournamentArchiveListSerializer,
     ActiveTournamentSerializer,
     CurrentTaskSerializer,
+    DisqualificationResponseSerializer,
+    EligibleTeamSerializer,
     EventSerializer,
     IconSerializer,
     OwnSubmissionSerializer,
     RoundSerializer,
     SubmissionSerializer,
     TournamentAdminSerializer,
+    TournamentListResponseSerializer,
     TournamentPublicSerializer,
     TournamentTeamRegistrationCreateSerializer,
     TournamentTeamLeaveSerializer,
@@ -77,8 +83,25 @@ class SyncStatusesMixin:
         return super().initial(request, *args, **kwargs)
 
 
-class TournamentListView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='listTournaments',
+    parameters=[
+        OpenApiParameter('page', OpenApiTypes.INT, default=1),
+        OpenApiParameter('page_size', OpenApiTypes.INT, default=20),
+        OpenApiParameter('searchQuery', OpenApiTypes.STR, required=False),
+        OpenApiParameter('status', OpenApiTypes.STR, required=False, description='Comma-separated statuses'),
+        OpenApiParameter('startAt', OpenApiTypes.DATE, required=False),
+        OpenApiParameter('endAt', OpenApiTypes.DATE, required=False),
+        OpenApiParameter('createdAt', OpenApiTypes.DATE, required=False),
+    ],
+    responses={
+        200: TournamentListResponseSerializer,
+        400: _400,
+    },
+)
+class TournamentListView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = TournamentPublicSerializer
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
 
@@ -142,22 +165,29 @@ class TournamentListView(SyncStatusesMixin, APIView):
         page = self._parse_positive_int(request.query_params.get('page', 1), 'page')
         page_size = min(
             self._parse_positive_int(
-                request.query_params.get('pageSize', self.DEFAULT_PAGE_SIZE),
-                'pageSize',
+                request.query_params.get('page_size', self.DEFAULT_PAGE_SIZE),
+                'page_size',
             ),
             self.MAX_PAGE_SIZE,
         )
         offset = (page - 1) * page_size
         page_queryset = queryset[offset:offset + page_size]
 
-        serializer = TournamentPublicSerializer(
-            page_queryset,
-            many=True,
-            context={'request': request},
+        return Response(
+            TournamentListResponseSerializer(
+                {'data': page_queryset, 'total': total},
+                context={'request': request},  # ← додати це
+            ).data,
         )
-        return Response({'data': serializer.data, 'total': total})
 
 
+@extend_schema(
+    operation_id='getTournament',
+    responses={
+        200: TournamentPublicSerializer,
+        404: _404,
+    },
+)
 class TournamentDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
     queryset = get_tournament_queryset()
     permission_classes = [AllowAny]
@@ -177,6 +207,15 @@ class TournamentDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
         return base_queryset.filter(published_filter)
 
 
+@extend_schema(
+    operation_id='createTournament',
+    responses={
+        201: TournamentPublicSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+    },
+)
 class TournamentCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated, CanCreateTournament]
     serializer_class = TournamentAdminSerializer
@@ -191,6 +230,32 @@ class TournamentCreateView(generics.CreateAPIView):
         )
 
 
+@extend_schema(methods=['GET'], operation_id='getTournamentForUpdate', responses={
+    200: TournamentAdminSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceTournament', responses={
+    200: TournamentPublicSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateTournament', responses={
+    200: TournamentPublicSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteTournament', responses={
+    204: OpenApiResponse(description='Tournament deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Tournament.objects.all()
     serializer_class = TournamentAdminSerializer
@@ -221,7 +286,19 @@ class TournamentUpdateView(generics.RetrieveUpdateDestroyAPIView):
         tournament.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
+@extend_schema(methods=['PATCH'], operation_id='updateTournamentBanner', responses={
+    200: TournamentPublicSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteTournamentBanner', responses={
+    200: TournamentPublicSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class TournamentBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Tournament.objects.all()
     permission_classes = [IsAuthenticated, CanEditTournament]
@@ -243,8 +320,20 @@ class TournamentBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
         )
 
 
-class TournamentStartRegistrationView(APIView):
+@extend_schema(
+    operation_id='startTournamentRegistration',
+    request=None,
+    responses={
+        200: TournamentPublicSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentStartRegistrationView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanEditTournament]
+    serializer_class = TournamentPublicSerializer
 
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
@@ -255,12 +344,23 @@ class TournamentStartRegistrationView(APIView):
         )
 
 
-class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='registerTeamForTournament',
+    responses={
+        201: TournamentTeamRegistrationSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentTeamRegistrationCreateView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
+    serializer_class = TournamentTeamRegistrationCreateSerializer
 
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
-        serializer = TournamentTeamRegistrationCreateSerializer(
+        serializer = self.get_serializer(
             data=request.data,
             context={'request': request, 'tournament': tournament},
         )
@@ -269,12 +369,23 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, APIView):
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
 
 
-class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='unregisterTeamFromTournament',
+    responses={
+        200: TournamentTeamRegistrationSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentTeamLeaveView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanRegisterTeamForTournament]
+    serializer_class = TournamentTeamLeaveSerializer
 
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
-        serializer = TournamentTeamLeaveSerializer(
+        serializer = self.get_serializer(
             data=request.data,
             context={'request': request, 'tournament': tournament},
         )
@@ -283,8 +394,18 @@ class TournamentTeamLeaveView(SyncStatusesMixin, APIView):
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    operation_id='getTournamentTeamRegistration',
+    responses={
+        200: TournamentTeamRegistrationSerializer,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class TournamentTeamRegistrationDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, CanManageParticipants]
+    serializer_class = TournamentTeamRegistrationSerializer
 
     def get_queryset(self):
         return TournamentTeamRegistration.objects.filter(
@@ -295,58 +416,86 @@ class TournamentTeamRegistrationDetailView(generics.RetrieveAPIView):
         queryset = self.get_queryset()
         return get_object_or_404(queryset, pk=self.kwargs['registration_pk'])
 
-    serializer_class = TournamentTeamRegistrationSerializer
 
-
-class TournamentTeamRegistrationDisqualificationView(APIView):
+@extend_schema(
+    operation_id='disqualifyTeamFromTournament',
+    responses={
+        200: DisqualificationResponseSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentTeamRegistrationDisqualificationView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageParticipants]
+    serializer_class = TournamentTeamRegistrationDisqualificationSerializer
 
     def patch(self, request, pk, registration_pk):
         registration = get_object_or_404(
             TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team'),
             pk=registration_pk,
         )
-        serializer = TournamentTeamRegistrationDisqualificationSerializer(
-            registration,
-            data=request.data,
-        )
+        serializer = self.get_serializer(registration, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         action = 'activated' if registration.is_active else 'disqualified'
 
-        return Response({
-            'id': registration.id,
-            'team_id': registration.team_id,
-            'team_name': registration.team.name,
-            'tournament_id': registration.tournament_id,
-            'is_active': registration.is_active,
-            'action': action,
-        })
+        return Response(
+            DisqualificationResponseSerializer({
+                'id': registration.id,
+                'team_id': registration.team_id,
+                'team_name': registration.team.name,
+                'tournament_id': registration.tournament_id,
+                'is_active': registration.is_active,
+                'action': action,
+            }).data,
+        )
 
 
-class TournamentEligibleTeamsView(APIView):
+@extend_schema(
+    operation_id='listEligibleTeamsForTournament',
+    responses={
+        200: EligibleTeamSerializer(many=True),
+        401: _401,
+        404: _404,
+    },
+)
+class TournamentEligibleTeamsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = EligibleTeamSerializer
 
     def get(self, request, pk):
         get_object_or_404(Tournament, pk=pk)
         teams = (
             Team.objects.filter(captain_id=request.user.id)
-            .annotate(
-                members_count=Count('team_members', distinct=True)
-            )
+            .annotate(members_count=Count('team_members', distinct=True))
             .values('id', 'name', 'members_count')
             .order_by('id')
         )
-        return Response(list(teams), status=status.HTTP_200_OK)
+        return Response(EligibleTeamSerializer(list(teams), many=True).data, status=status.HTTP_200_OK)
 
 
-class TournamentTeamsView(APIView):
+@extend_schema(
+    operation_id='listTournamentTeams',
+    parameters=[
+        OpenApiParameter('status', OpenApiTypes.STR, required=False, description='all | disqualified | active (default)'),
+    ],
+    responses={
+        200: TournamentTeamRegistrationListSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentTeamsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
- 
+    serializer_class = TournamentTeamRegistrationListSerializer
+
     def get(self, request, pk):
         get_object_or_404(Tournament, pk=pk)
- 
+
         queryset = TournamentTeamRegistration.objects.filter(
             tournament_id=pk,
         ).select_related('team', 'team__captain').prefetch_related('team__members')
@@ -357,14 +506,28 @@ class TournamentTeamsView(APIView):
         elif status_filter == 'all':
             pass
         else:
-            # Default: return only active teams (active=True, disqualified=False)
             queryset = queryset.filter(is_active=True)
- 
-        serializer = TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class TeamActiveTournamentView(APIView):
+        return Response(
+            TournamentTeamRegistrationListSerializer(queryset.order_by('id'), many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    operation_id='getTeamActiveTournament',
+    parameters=[
+        OpenApiParameter('team_id', OpenApiTypes.INT, required=True),
+    ],
+    responses={
+        200: ActiveTournamentSerializer,
+        401: _401,
+        404: _404,
+    },
+)
+class TeamActiveTournamentView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ActiveTournamentSerializer
 
     def get(self, request):
         team_id = request.query_params.get('team_id')
@@ -383,10 +546,30 @@ class TeamActiveTournamentView(APIView):
         if registration is None:
             raise NotFound('Active tournament not found for this team.')
 
-        serializer = ActiveTournamentSerializer(registration.tournament)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            ActiveTournamentSerializer(registration.tournament).data,
+            status=status.HTTP_200_OK,
+        )
 
 
+@extend_schema(methods=['GET'], operation_id='listRounds',
+    parameters=[
+        OpenApiParameter('status', OpenApiTypes.STR, required=False, description='Comma-separated statuses'),
+    ],
+    responses={
+        200: RoundSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+@extend_schema(methods=['POST'], operation_id='createRound', responses={
+    201: RoundSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class RoundListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, CanManageRoundsOrReadOnly]
     serializer_class = RoundSerializer
@@ -402,7 +585,16 @@ class RoundListCreateView(generics.ListCreateAPIView):
         queryset = get_round_queryset().filter(tournament_id=tournament.id)
         user = self.request.user
 
-        if not user_has_permission(user, Permission.VIEW_TOURNAMENT):
+        can_view_draft = user_has_permission(user, Permission.VIEW_TOURNAMENT)
+        if not can_view_draft:
+            can_view_draft = TournamentTeamRegistration.objects.filter(
+                tournament_id=tournament.id,
+                is_active=True,
+            ).filter(
+                Q(team__captain_id=user.id) | Q(team__team_members__user_id=user.id),
+            ).exists()
+
+        if not can_view_draft:
             queryset = queryset.exclude(status=Round.STATUS_DRAFT)
 
         status_param = self.request.query_params.get('status')
@@ -435,6 +627,32 @@ class RoundListCreateView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+@extend_schema(methods=['GET'], operation_id='getRound', responses={
+    200: RoundSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceRound', responses={
+    200: RoundSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateRound', responses={
+    200: RoundSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteRound', responses={
+    204: OpenApiResponse(description='Round deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class RoundDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, CanManageRoundsOrReadOnly]
     serializer_class = RoundSerializer
@@ -454,8 +672,20 @@ class RoundDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class RoundStartView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='startRound',
+    request=None,
+    responses={
+        200: RoundSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class RoundStartView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageRounds]
+    serializer_class = RoundSerializer
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
@@ -464,8 +694,20 @@ class RoundStartView(SyncStatusesMixin, APIView):
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
-class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='markRoundEvaluated',
+    request=None,
+    responses={
+        200: RoundSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class RoundMarkEvaluatedView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
+    serializer_class = RoundSerializer
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
@@ -474,6 +716,14 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, APIView):
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    operation_id='listTournamentSubmissions',
+    responses={
+        200: SubmissionSerializer(many=True),
+        401: _401,
+        404: _404,
+    },
+)
 class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
     permission_classes = [IsAuthenticated]
@@ -484,11 +734,22 @@ class TournamentSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
             Submission.objects.select_related('team', 'round', 'round__tournament')
             .prefetch_related('jury_assignments__jury', 'jury_assignments__evaluation')
             .filter(round__tournament=tournament)
-            .exclude(team__tournament_registrations__tournament=tournament, team__tournament_registrations__is_disqualified=True)
+            .exclude(
+                team__tournament_registrations__tournament=tournament,
+                team__tournament_registrations__is_disqualified=True,
+            )
             .order_by('-updated_at')
         )
 
 
+@extend_schema(
+    operation_id='listMyTeamSubmissions',
+    responses={
+        200: SubmissionSerializer(many=True),
+        401: _401,
+        404: _404,
+    },
+)
 class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
     permission_classes = [IsAuthenticated]
@@ -522,6 +783,15 @@ class TournamentMyTeamSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         )
 
 
+@extend_schema(
+    operation_id='listRoundSubmissions',
+    responses={
+        200: SubmissionSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
     permission_classes = [IsAuthenticated, CanSetResults]
@@ -539,8 +809,21 @@ class RoundSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
             .order_by('-updated_at')
         )
 
-class RoundCloseSubmissionsView(SyncStatusesMixin, APIView):
+
+@extend_schema(
+    operation_id='closeRoundSubmissions',
+    request=None,
+    responses={
+        200: RoundSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class RoundCloseSubmissionsView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageRounds]
+    serializer_class = RoundSerializer
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
@@ -549,6 +832,15 @@ class RoundCloseSubmissionsView(SyncStatusesMixin, APIView):
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
+@extend_schema(methods=['GET'], operation_id='listSubmissions', responses={
+    200: OwnSubmissionSerializer(many=True),
+    401: _401,
+})
+@extend_schema(methods=['POST'], operation_id='createSubmission', responses={
+    201: SubmissionSerializer,
+    400: _400,
+    401: _401,
+})
 class SubmissionListCreateView(SyncStatusesMixin, generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -561,6 +853,25 @@ class SubmissionListCreateView(SyncStatusesMixin, generics.ListCreateAPIView):
         return get_own_submissions_queryset(self.request.user)
 
 
+@extend_schema(methods=['GET'], operation_id='getSubmission', responses={
+    200: OwnSubmissionSerializer,
+    401: _401,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceSubmission', responses={
+    200: SubmissionSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateSubmission', responses={
+    200: SubmissionSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class SubmissionDetailView(SyncStatusesMixin, generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -573,8 +884,21 @@ class SubmissionDetailView(SyncStatusesMixin, generics.RetrieveUpdateAPIView):
         return get_own_submissions_queryset(self.request.user)
 
 
-class CurrentTaskView(SyncStatusesMixin, APIView):
+@extend_schema(
+    operation_id='getCurrentTask',
+    parameters=[
+        OpenApiParameter('tournament_id', OpenApiTypes.INT, required=False),
+    ],
+    responses={
+        200: CurrentTaskSerializer,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class CurrentTaskView(SyncStatusesMixin, generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsPlatformAdminOrTeamMemberPermission]
+    serializer_class = CurrentTaskSerializer
 
     def get(self, request):
         queryset = (
@@ -602,6 +926,57 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [CanManageRoundsOrReadOnly]
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
+    @extend_schema(
+        operation_id='listEvents',
+        parameters=[
+            OpenApiParameter('tournament', OpenApiTypes.INT, required=False),
+        ],
+        responses={
+            200: EventSerializer(many=True),
+            401: _401,
+            403: _403,
+        },
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(operation_id='createEvent', responses={
+        201: EventSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+    })
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(operation_id='getEvent', responses={
+        200: EventSerializer,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(operation_id='updateEvent', responses={
+        200: EventSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    })
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(operation_id='deleteEvent', responses={
+        204: OpenApiResponse(description='Event deleted successfully.'),
+        401: _401,
+        403: _403,
+        404: _404,
+    })
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
     def get_queryset(self):
         queryset = Event.objects.select_related('icon', 'tournament').order_by('start_datetime')
         tournament_id = self.request.query_params.get('tournament')
@@ -609,7 +984,19 @@ class EventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(tournament_id=tournament_id)
         return queryset
 
-
+@extend_schema(
+    operation_id='getMyCalendar',
+    responses={
+        200: inline_serializer(
+            name='MyCalendarResponse',
+            fields={
+                'events': EventSerializer(many=True),
+                'rounds': RoundSerializer(many=True),
+            }
+        ),
+        401: _401,
+    },
+)
 class MyCalendarView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -642,13 +1029,23 @@ class MyCalendarView(APIView):
             'rounds': RoundSerializer(rounds, many=True).data,
         })
 
-
+@extend_schema(
+    operation_id='listIcons',
+    responses={
+        200: IconSerializer(many=True),
+    },
+)
 class IconListView(generics.ListAPIView):
     queryset = Icon.objects.all()
     serializer_class = IconSerializer
     permission_classes = [AllowAny]
 
-
+@extend_schema(
+    operation_id='listTournamentArchive',
+    responses={
+        200: TournamentArchiveListSerializer(many=True),
+    },
+)
 class TournamentArchiveListView(SyncStatusesMixin, generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = TournamentArchiveListSerializer
@@ -664,7 +1061,13 @@ class TournamentArchiveListView(SyncStatusesMixin, generics.ListAPIView):
             .order_by('-end_date', '-created_at')
         )
 
-
+@extend_schema(
+    operation_id='getTournamentArchive',
+    responses={
+        200: TournamentArchiveDetailSerializer,
+        404: _404,
+    },
+)
 class TournamentArchiveDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = TournamentArchiveDetailSerializer
@@ -679,7 +1082,14 @@ class TournamentArchiveDetailView(SyncStatusesMixin, generics.RetrieveAPIView):
             )
         )
 
-
+@extend_schema(
+    operation_id='listTournamentArchiveSubmissions',
+    responses={
+        200: SubmissionSerializer(many=True),
+        401: _401,
+        404: _404,
+    },
+)
 class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
     serializer_class = SubmissionSerializer
     permission_classes = [IsAuthenticated]

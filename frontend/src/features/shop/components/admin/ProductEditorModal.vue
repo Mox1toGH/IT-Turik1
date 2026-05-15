@@ -3,28 +3,26 @@
     :model-value="modelValue"
     @update:model-value="emit('update:modelValue', $event)"
     maxWidth="980px"
+    scrollable
   >
     <template #title>
-      {{ mode === 'edit' ? 'Редагування товару' : 'Створення товару' }}
+      <h2>
+        {{ mode === 'edit' ? 'Редагування товару' : 'Створення товару' }}
+      </h2>
     </template>
 
     <form class="editor" @submit.prevent="handleSubmit">
       <section class="panel form-panel">
         <label class="field">
           <span class="label">Назва</span>
-          <input
-            v-model.trim="form.name"
-            class="native-input"
-            placeholder="Напр. Mechanical Keyboard"
-          />
+          <ui-input v-model.trim="form.name" placeholder="Напр. Mechanical Keyboard" />
           <small v-if="errors.name" class="error">{{ errors.name }}</small>
         </label>
 
         <label class="field">
           <span class="label">Опис</span>
-          <textarea
+          <ui-text-area
             v-model.trim="form.description"
-            class="native-textarea"
             rows="4"
             placeholder="Короткий опис товару"
           />
@@ -33,25 +31,13 @@
         <div class="row two">
           <label class="field">
             <span class="label">Ціна (points)</span>
-            <input
-              v-model.number="form.price"
-              class="native-input"
-              type="number"
-              min="0"
-              step="1"
-            />
+            <ui-input v-model.number="form.price" type="number" min="0" />
             <small v-if="errors.price" class="error">{{ errors.price }}</small>
           </label>
 
           <label class="field">
             <span class="label">Кількість на складі</span>
-            <input
-              v-model.number="form.stock_quantity"
-              class="native-input"
-              type="number"
-              min="0"
-              step="1"
-            />
+            <ui-input type="number" v-model.number="form.stock_quantity" min="0" />
             <small v-if="errors.stock_quantity" class="error">{{ errors.stock_quantity }}</small>
           </label>
         </div>
@@ -89,19 +75,16 @@
           </label>
 
           <label class="field">
-            <span class="label">{{ mode === 'create' ? 'Завантажити файл рамки (.svg)' : 'Або завантажити нову (.svg)' }}</span>
-            <input
-              class="native-file"
-              type="file"
-              accept=".svg"
-              @change="onPickFrameFile"
-            />
+            <span class="label">{{
+              mode === 'create' ? 'Завантажити файл рамки (.svg)' : 'Або завантажити нову (.svg)'
+            }}</span>
+            <input class="native-file" type="file" accept=".svg" @change="onPickFrameFile" />
             <small v-if="frameFileName" class="file-name">{{ frameFileName }}</small>
           </label>
         </div>
 
         <label class="switcher">
-          <input v-model="form.is_active" type="checkbox" />
+          <ui-switch v-model="form.is_active" />
           <span>Активний у каталозі</span>
         </label>
 
@@ -115,17 +98,15 @@
             multiple
             @change="onPickFiles"
           />
-          <span class="upload-note"
-            >PNG, JPG, WEBP. Перший файл буде обкладинкою.</span
-          >
+          <span class="upload-note">PNG, JPG, WEBP. Перший файл буде обкладинкою.</span>
         </label>
 
         <div v-if="newPreviews.length" class="preview-grid">
           <article v-for="(url, i) in newPreviews" :key="url" class="preview-tile">
             <img :src="url" alt="Нове зображення" @click="openImagePreview(url)" />
-            <button type="button" class="remove-btn" @click="removePicked(i)">
-              Remove
-            </button>
+            <ui-button size="sm" variant="danger" class="remove-btn" @click="removePicked(i)"
+              >Remove</ui-button
+            >
           </article>
         </div>
       </section>
@@ -133,13 +114,23 @@
       <section class="panel preview-panel">
         <p class="preview-title">Live Preview</p>
         <article class="mock-card" :class="{ inactive: !form.is_active || !isAvailable }">
-          <img v-if="cover" :src="cover" alt="cover" class="cover" @click="openImagePreview(cover)" />
+          <img
+            v-if="cover"
+            :src="cover"
+            alt="cover"
+            class="cover"
+            @click="openImagePreview(cover)"
+          />
           <div v-else class="cover cover-empty">No image</div>
           <div class="mock-content">
-            <strong>{{ form.name || 'Product name' }}</strong>
+            <strong class="mock-name" :title="form.name">{{
+              truncateText(form.name, 100) || 'Product name'
+            }}</strong>
             <p class="mock-meta">{{ selectedCategoryName }} | {{ form.product_type }}</p>
             <p class="mock-price">{{ form.price || 0 }} pts</p>
-            <p class="mock-desc">{{ form.description || 'Опис товару з’явиться тут.' }}</p>
+            <p class="mock-desc" :title="form.description">
+              {{ truncateText(form.description || 'Опис товару з’явиться тут.', 150) }}
+            </p>
           </div>
         </article>
 
@@ -160,20 +151,20 @@
           variant="secondary"
           :disabled="submitting"
           @click="emit('update:modelValue', false)"
-          >Скасувати</ui-button
+          >Cancel</ui-button
         >
         <ui-button :disabled="submitting" @click="handleSubmit">{{
-          submitting
-            ? 'Збереження...'
-            : mode === 'edit'
-              ? 'Зберегти зміни'
-              : 'Створити товар'
+          submitting ? 'Saving...' : mode === 'edit' ? 'Save changes' : 'Create product'
         }}</ui-button>
       </div>
     </template>
   </ui-modal>
 
-  <ui-modal :model-value="isImagePreviewOpen" @update:model-value="isImagePreviewOpen = $event" maxWidth="min(96vw, 1200px)">
+  <ui-modal
+    :model-value="isImagePreviewOpen"
+    @update:model-value="isImagePreviewOpen = $event"
+    maxWidth="min(96vw, 1200px)"
+  >
     <template #title>Image Preview</template>
     <div class="image-preview-wrap">
       <img v-if="previewImageUrl" :src="previewImageUrl" class="image-preview-full" alt="Preview" />
@@ -185,14 +176,20 @@
 import { computed, ref, watch } from 'vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import type { ShopAvatarFrame, ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
+import type { ShopCategory } from '@/api/services/shop/types'
+import type { AvatarFrame, Product } from '@/api/.ts.schemas'
+import type { CreateAdminProductMutationBody } from '@/api/shop/shop'
+import UiInput from '@/components/ui/UiInput.vue'
+import UiTextArea from '@/components/ui/UiTextArea.vue'
+import UiSwitch from '@/components/ui/UiSwitch.vue'
+import { truncateText } from '@/lib/utils'
 
 interface Props {
   modelValue: boolean
   mode: 'create' | 'edit'
-  product?: ShopProduct | null
+  product?: Product | null
   categories: ShopCategory[]
-  avatarFrames: ShopAvatarFrame[]
+  avatarFrames: AvatarFrame[]
   submitting?: boolean
 }
 
@@ -203,7 +200,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', value: UpsertProductBody): void
+  (e: 'submit', value: CreateAdminProductMutationBody): void
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -212,7 +209,7 @@ const newPreviews = ref<string[]>([])
 const isImagePreviewOpen = ref(false)
 const previewImageUrl = ref('')
 
-const form = ref<UpsertProductBody>({
+const form = ref<CreateAdminProductMutationBody>({
   name: '',
   description: '',
   price: 0,
@@ -221,7 +218,7 @@ const form = ref<UpsertProductBody>({
   product_type: 'physical',
   avatar_frame_id: undefined,
   avatar_frame_file: undefined,
-  digital_asset_url: '', // kept for backward compatibility
+  digital_asset_url: '',
   is_active: true,
   uploaded_images: [],
 })
@@ -310,8 +307,7 @@ const validate = () => {
   const next: Record<string, string> = {}
   if (!form.value.name.trim()) next.name = 'Вкажіть назву товару.'
   if (Number(form.value.price) < 0) next.price = 'Ціна не може бути від’ємною.'
-  if (Number(form.value.stock_quantity) < 0)
-    next.stock_quantity = 'Склад не може бути від’ємним.'
+  if (Number(form.value.stock_quantity) < 0) next.stock_quantity = 'Склад не може бути від’ємним.'
   if (!Number(form.value.category_id)) next.category_id = 'Оберіть категорію.'
   if (
     form.value.product_type === 'digital' &&
@@ -320,7 +316,8 @@ const validate = () => {
     !form.value.digital_asset_url?.trim() &&
     pickedFiles.value.length === 0
   ) {
-    next.avatar_frame_id = 'Оберіть рамку аватара або вкажіть URL цифрового активу, або додайте зображення.'
+    next.avatar_frame_id =
+      'Оберіть рамку аватара або вкажіть URL цифрового активу, або додайте зображення.'
   }
   errors.value = next
   return Object.keys(next).length === 0
@@ -328,7 +325,7 @@ const validate = () => {
 
 const handleSubmit = () => {
   if (!validate()) return
-  const payload: UpsertProductBody = {
+  const payload: CreateAdminProductMutationBody = {
     ...form.value,
   }
 
@@ -374,9 +371,7 @@ const handleSubmit = () => {
   color: var(--muted-foreground);
 }
 
-.native-input,
 .native-select,
-.native-textarea,
 .native-file {
   width: 100%;
   border: 1px solid var(--border);
@@ -385,10 +380,6 @@ const handleSubmit = () => {
   color: var(--foreground);
   padding: 10px 12px;
   font: inherit;
-}
-
-.native-textarea {
-  resize: vertical;
 }
 
 .row.two {
@@ -437,12 +428,6 @@ const handleSubmit = () => {
 .remove-btn {
   margin-top: 4px;
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--background);
-  color: var(--destructive);
-  padding: 4px;
-  cursor: pointer;
 }
 
 .preview-title {
@@ -477,6 +462,10 @@ const handleSubmit = () => {
   background: color-mix(in srgb, var(--muted) 90%, transparent);
 }
 
+.mock-name {
+  word-break: break-word;
+}
+
 .mock-content {
   padding: 10px;
   display: grid;
@@ -497,6 +486,7 @@ const handleSubmit = () => {
 .mock-desc {
   margin: 0;
   font-size: 0.9rem;
+  word-break: break-word;
 }
 
 .summary {

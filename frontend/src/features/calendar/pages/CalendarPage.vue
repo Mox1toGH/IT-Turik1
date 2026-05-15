@@ -7,14 +7,16 @@
           <calendar-title-icon class="title-icon" />
           <h1>Calendar</h1>
         </div>
-        <p class="sub">Events, consultations, deadlines and round milestones across your tournaments.</p>
+        <p class="sub">
+          Events, consultations, deadlines and round milestones across your tournaments.
+        </p>
       </div>
     </ui-card>
 
     <ui-card>
       <template #error>
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Failed to load calendar data (code: {{ error?.code }})</p>
+          <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
         </div>
       </template>
 
@@ -42,11 +44,7 @@
           <p class="text-muted">Join a tournament to see its schedule here</p>
         </div>
 
-        <schedule-calendar
-          v-else
-          :events="events"
-          :rounds="rounds"
-        />
+        <schedule-calendar v-else :events="events" :rounds="rounds" />
       </ui-skeleton-loader>
     </ui-card>
   </section>
@@ -59,12 +57,10 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
 import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
-import { useMyCalendar } from '@/api/queries/tournaments'
-import { parseApiError } from '@/api/errors'
 import { computed } from 'vue'
+import { useGetMyCalendar } from '@/api/tournaments/tournaments'
 
-const { data, isLoading, isError, error: calendarError } = useMyCalendar()
-const error = computed(() => parseApiError(calendarError.value))
+const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
 
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])

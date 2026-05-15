@@ -70,10 +70,9 @@ import UiButton from '@/components/ui/UiButton.vue'
 import { useForm } from '@/composables/useForm'
 import { AddEventSchema } from '@/schemas/tournaments.schema'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
-import { useCreateEvent } from '@/api/queries/tournaments'
 import { combineDateAndTime } from '@/lib/date'
 import { useNotification } from '@/composables/useNotification'
-import { parseApiError } from '@/api/errors'
+import { useCreateEvent } from '@/api/tournaments/tournaments'
 
 interface Props {
   modelValue: boolean
@@ -98,6 +97,7 @@ const form = useForm<Form>(AddEventSchema, {
   start_date: new Date(),
   start_time: '00:00',
 })
+
 const { showNotification } = useNotification()
 
 const { mutate: create, isPending } = useCreateEvent()
@@ -106,7 +106,7 @@ const createEvent = () => {
 
   create(
     {
-      body: {
+      data: {
         tournament: props.tournamentId,
         type: 'event',
         title: form.fields.value.title,
@@ -115,17 +115,15 @@ const createEvent = () => {
         start_datetime: combineDateAndTime(
           form.fields.value.start_date,
           form.fields.value.start_time,
-        ),
+        ).toISOString(),
       },
     },
     {
-      onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
-      },
-
       onSuccess: () => {
         handleClose()
+      },
+      onError: (error) => {
+        showNotification(error?.message, 'error')
       },
     },
   )

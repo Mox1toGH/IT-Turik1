@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ error?.code }})</p>
+          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
         </div>
       </template>
 
@@ -150,12 +150,18 @@
       </div>
 
       <div class="stats-link-row">
-        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary">My Statistics</ui-button>
+        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
+          >My Statistics</ui-button
+        >
         <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
           Transaction History
         </ui-button>
-        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary">My Shop Orders</ui-button>
-        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary">Digital Inventory</ui-button>
+        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary"
+          >My Shop Orders</ui-button
+        >
+        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary"
+          >Digital Inventory</ui-button
+        >
       </div>
 
       <div class="actions">
@@ -177,25 +183,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import AvatarModal from '../components/profile/modals/AvatarModal.vue'
-import { useProfile } from '@/api/queries/accounts'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { parseApiError } from '@/api/errors'
-import { useMyPointsBalance } from '@/api/queries/points'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { formatDate } from '@/lib/date'
+import { useGetMyPointsBalance } from '@/api/points/points'
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
-const error = computed(() => parseApiError(profileError.value))
-const { data: pointsBalance, isLoading: isPointsLoading } = useMyPointsBalance()
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
+const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
 
 const router = useRouter()
 const isDeleting = ref(false)
@@ -216,12 +221,6 @@ const goToNotifications = () => {
 const goToCertificates = () => {
   router.push('/profile/certificates')
 }
-
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
-}
-
 </script>
 
 <style scoped>
@@ -244,6 +243,7 @@ const formatDate = (date: Date) => {
 .avatar-row {
   margin-top: 0.8rem;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
   gap: 0.9rem;
 }

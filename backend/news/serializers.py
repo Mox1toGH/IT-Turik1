@@ -6,10 +6,13 @@ from accounts.models import User
 from notifications.services import NotificationService
 from .models import NewsArticle
 
+from drf_spectacular.utils import extend_schema_field, inline_serializer
+from drf_spectacular.types import OpenApiTypes
 
 class NewsArticleSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     send_notification = serializers.BooleanField(write_only=True, required=False, default=False)
+    content = serializers.DictField(required=True)
 
     class Meta:
         model = NewsArticle

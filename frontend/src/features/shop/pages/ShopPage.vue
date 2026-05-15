@@ -36,7 +36,7 @@
         </template>
 
         <p v-if="isLoadingError" class="text-muted">
-          Failed to load products ({{ parsedError?.message || parsedError?.code }})
+          Failed to load products ({{ error?.message || error?.code }})
         </p>
         <p v-else-if="!products.length" class="text-muted">No products found.</p>
 
@@ -49,7 +49,7 @@
           >
             <template #header>
               <div class="card-head">
-                <strong>{{ product.name }}</strong>
+                <strong :title="product.name">{{ truncateText(product.name, 100) }}</strong>
                 <ui-badge :variant="product.is_available ? 'green' : 'gray'">{{
                   product.is_available ? 'Available' : 'Out of stock'
                 }}</ui-badge>
@@ -57,16 +57,32 @@
             </template>
 
             <img
-              v-if="product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url"
-              :src="product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url"
+              v-if="
+                product.images[0]?.image ||
+                product.avatar_frame?.svg_file ||
+                product.digital_asset_url
+              "
+              :src="
+                product.images[0]?.image ||
+                product.avatar_frame?.svg_file ||
+                product.digital_asset_url
+              "
               class="thumb"
               alt="Product image"
-              @click="openImagePreview(product.images[0]?.image || product.avatar_frame?.svg_file || product.digital_asset_url || '')"
+              @click="
+                openImagePreview(
+                  product.images[0]?.image ||
+                    product.avatar_frame?.svg_file ||
+                    product.digital_asset_url ||
+                    '',
+                )
+              "
             />
             <p class="price">{{ product.price }} pts</p>
             <p class="meta">{{ product.category.name }} | {{ product.product_type }}</p>
-            <p class="desc">{{ product.description || 'No description' }}</p>
-
+            <p class="desc" :title="product.description">
+              {{ truncateText(product.description || 'No description', 150) }}
+            </p>
             <div class="card-actions">
               <ui-button size="sm" variant="secondary" @click="openProductDetail(product)"
                 >View</ui-button
@@ -98,7 +114,7 @@
       </div>
     </ui-card>
 
-    <ui-modal v-model="isDetailOpen" maxWidth="760px">
+    <ui-modal v-model="isDetailOpen" maxWidth="760px" scrollable>
       <template #title>{{ activeProduct?.name }}</template>
       <div v-if="activeProduct" class="detail-body">
         <div class="image-row" v-if="activeProduct.images.length">
@@ -111,12 +127,19 @@
             @click="openImagePreview(image.image)"
           />
         </div>
-        <div class="image-row" v-else-if="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url">
+        <div
+          class="image-row"
+          v-else-if="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url"
+        >
           <img
             :src="activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url"
             class="detail-image"
             alt="Product image"
-            @click="openImagePreview(activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url)"
+            @click="
+              openImagePreview(
+                activeProduct.avatar_frame?.svg_file || activeProduct.digital_asset_url || '',
+              )
+            "
           />
         </div>
         <p>{{ activeProduct.description || 'No description' }}</p>
@@ -131,7 +154,7 @@
               v-model="purchaseQty"
               type="number"
               :min="1"
-              :max="Math.max(1, activeProduct.stock_quantity)"
+              :max="Math.max(1, activeProduct.stock_quantity || 0)"
             />
           </label>
           <p><strong>Will deduct:</strong> {{ (purchaseQty || 1) * activeProduct.price }} points</p>
@@ -140,7 +163,6 @@
             @click="handlePurchase"
             >Buy</ui-button
           >
-          <p v-if="purchaseResult" class="purchase-result">{{ purchaseResult }}</p>
         </div>
       </div>
     </ui-modal>
@@ -209,7 +231,9 @@
               </template>
               <template v-else>
                 <button class="action-btn edit" @click="startEditCategory(category)">Edit</button>
-                <button class="action-btn delete" @click="deleteCategory(category.id)">Delete</button>
+                <button class="action-btn delete" @click="deleteCategory(category.id)">
+                  Delete
+                </button>
               </template>
             </div>
           </article>
@@ -239,7 +263,12 @@
     <ui-modal v-model="isImagePreviewOpen" maxWidth="min(96vw, 1200px)">
       <template #title>Image Preview</template>
       <div class="image-preview-wrap">
-        <img v-if="previewImageUrl" :src="previewImageUrl" class="image-preview-full" alt="Preview" />
+        <img
+          v-if="previewImageUrl"
+          :src="previewImageUrl"
+          class="image-preview-full"
+          alt="Preview"
+        />
       </div>
     </ui-modal>
   </section>
@@ -257,26 +286,28 @@ import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import ProductEditorModal from '@/features/shop/components/admin/ProductEditorModal.vue'
-import { parseApiError } from '@/api/errors'
-import { useProfile } from '@/api/queries/accounts'
-import { useMyPointsBalance } from '@/api/queries/points'
-import {
-  useAdminCreateCategory,
-  useAdminCreateProduct,
-  useAdminDeleteCategory,
-  useAdminDeleteProduct,
-  useAdminShopCategories,
-  useAdminUpdateCategory,
-  useAdminUpdateProduct,
-  useAvatarFrames,
-  useShopProducts,
-  useShopPurchase,
-} from '@/api/queries/shop'
 import { useNotification } from '@/composables/useNotification'
-import type { ShopCategory, ShopProduct, UpsertProductBody } from '@/api/services/shop/types'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useCreateAdminCategory,
+  useCreateAdminProduct,
+  useDeleteAdminCategory,
+  useDeleteAdminProduct,
+  useListAdminCategories,
+  useListAvatarFrames,
+  useListProducts,
+  usePurchaseProduct,
+  useUpdateAdminCategory,
+  useUpdateAdminProduct,
+  type CreateAdminProductMutationBody,
+} from '@/api/shop/shop'
+import type { ShopCategory } from '@/api/services/shop/types'
+import { useGetMyPointsBalance } from '@/api/points/points'
+import type { Product } from '@/api/.ts.schemas'
+import { truncateText } from '@/lib/utils'
 
 const { showNotification } = useNotification()
-const { data: profile } = useProfile()
+const { data: profile } = useGetUserProfile()
 const isAdmin = computed(() => profile.value?.role === 'admin')
 
 const currentPage = ref(1)
@@ -286,21 +317,20 @@ const selectedCategory = ref('all')
 const selectedType = ref<'physical' | 'digital' | 'all'>('all')
 const selectedOrdering = ref<'name' | '-name' | 'price' | '-price'>('name')
 
-const { data, isLoading, isLoadingError, error } = useShopProducts({
-  page: currentPage,
-  pageSize,
-  search,
-  category: computed(() =>
-    selectedCategory.value === 'all' ? null : Number(selectedCategory.value),
-  ),
-  productType: selectedType,
-  ordering: selectedOrdering,
-})
-const parsedError = computed(() => parseApiError(error.value))
+const { data, isLoading, isLoadingError, error } = useListProducts(
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    search: search.value,
+    category: selectedCategory.value === 'all' ? undefined : Number(selectedCategory.value),
+    product_type: selectedType.value === 'all' ? undefined : selectedType.value,
+    ordering: selectedOrdering.value,
+  })),
+)
 const products = computed(() => data.value?.results ?? [])
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / pageSize.value)))
 
-const { data: avatarFramesData } = useAvatarFrames()
+const { data: avatarFramesData } = useListAvatarFrames()
 const avatarFrames = computed(() => avatarFramesData.value?.results ?? [])
 
 watch([search, selectedCategory, selectedType, selectedOrdering], () => {
@@ -330,15 +360,15 @@ const orderingOptions = [
 ]
 
 const isDetailOpen = ref(false)
-const activeProduct = ref<ShopProduct | null>(null)
+const activeProduct = ref<Product | null>(null)
 const purchaseQty = ref(1)
 const purchaseResult = ref('')
 const isImagePreviewOpen = ref(false)
 const previewImageUrl = ref('')
-const { data: pointsBalance } = useMyPointsBalance()
-const { mutate: purchase, isPending: isPurchasePending } = useShopPurchase()
+const { data: pointsBalance } = useGetMyPointsBalance()
+const { mutate: purchase, isPending: isPurchasePending } = usePurchaseProduct()
 
-const openProductDetail = (product: ShopProduct) => {
+const openProductDetail = (product: Product) => {
   activeProduct.value = product
   purchaseQty.value = 1
   purchaseResult.value = ''
@@ -353,72 +383,70 @@ const openImagePreview = (url: string) => {
 const handlePurchase = () => {
   if (!activeProduct.value) return
   purchase(
-    { productId: activeProduct.value.id, quantity: Number(purchaseQty.value || 1) },
+    { data: { product_id: activeProduct.value.id, quantity: Number(purchaseQty.value || 1) } },
     {
-      onSuccess: (res: any) => {
-        if (res.id) {
-          purchaseResult.value = `Success: order #${res.id} created, status ${res.status}.`
-        } else {
-          purchaseResult.value = res.message || 'Purchase successful.'
-        }
+      onSuccess: (res) => {
+        purchaseResult.value = `Success: order #${res.id} created, status ${res.status}.`
         showNotification('Purchase successful.', 'success')
       },
-      onError: (e) => {
-        const parsed = parseApiError(e)
-        purchaseResult.value = parsed?.message || 'Purchase failed.'
-        showNotification(parsed?.message, 'error')
+      onError: (error) => {
+        purchaseResult.value = error?.message || 'Purchase failed.'
+        showNotification(error?.message, 'error')
       },
     },
   )
 }
 
-const { data: adminCategoryData } = useAdminShopCategories({}, { enabled: isAdmin })
+const { data: adminCategoryData } = useListAdminCategories(void 0, { query: { enabled: isAdmin } })
 const adminCategories = computed(() => adminCategoryData.value?.results ?? [])
 const isProductFormOpen = ref(false)
-const editingProduct = ref<ShopProduct | null>(null)
+const editingProduct = ref<Product | null>(null)
 const isProductDeleteOpen = ref(false)
-const deletingProduct = ref<ShopProduct | null>(null)
+const deletingProduct = ref<Product | null>(null)
 
 const openProductCreate = () => {
   editingProduct.value = null
   isProductFormOpen.value = true
 }
 
-const openProductEdit = (product: ShopProduct) => {
+const openProductEdit = (product: Product) => {
   editingProduct.value = product
   isProductFormOpen.value = true
 }
 
-const openProductDelete = (product: ShopProduct) => {
+const openProductDelete = (product: Product) => {
   deletingProduct.value = product
   isProductDeleteOpen.value = true
 }
 
-const { mutate: createProduct, isPending: isCreatingProduct } = useAdminCreateProduct()
-const { mutate: updateProduct, isPending: isUpdatingProduct } = useAdminUpdateProduct()
-const { mutate: deleteProduct, isPending: isDeletingProduct } = useAdminDeleteProduct()
+const { mutate: createProduct, isPending: isCreatingProduct } = useCreateAdminProduct()
+const { mutate: updateProduct, isPending: isUpdatingProduct } = useUpdateAdminProduct()
+const { mutate: deleteProduct, isPending: isDeletingProduct } = useDeleteAdminProduct()
 const isSavingProduct = computed(() => isCreatingProduct.value || isUpdatingProduct.value)
 
-const submitProductForm = (body: UpsertProductBody) => {
+const submitProductForm = (body: CreateAdminProductMutationBody) => {
   if (!editingProduct.value) {
-    createProduct(body, {
-      onSuccess: () => {
-        isProductFormOpen.value = false
-        showNotification('Product created.', 'success')
+    createProduct(
+      { data: body },
+      {
+        onSuccess: () => {
+          isProductFormOpen.value = false
+          showNotification('Product created.', 'success')
+        },
+        onError: (error) => showNotification(error?.message, 'error'),
       },
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
-    })
+    )
     return
   }
 
   updateProduct(
-    { id: editingProduct.value.id, body },
+    { id: editingProduct.value.id, data: body },
     {
       onSuccess: () => {
         isProductFormOpen.value = false
         showNotification('Product updated.', 'success')
       },
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
@@ -433,7 +461,7 @@ const confirmProductDelete = () => {
         deletingProduct.value = null
         showNotification('Product deleted.', 'success')
       },
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
@@ -464,31 +492,34 @@ const cancelCategoryEdit = () => {
   categoryForm.value = { name: '' }
 }
 
-const { mutate: createCategory } = useAdminCreateCategory()
-const { mutate: updateCategory } = useAdminUpdateCategory()
-const { mutate: removeCategory } = useAdminDeleteCategory()
+const { mutate: createCategory } = useCreateAdminCategory()
+const { mutate: updateCategory } = useUpdateAdminCategory()
+const { mutate: removeCategory } = useDeleteAdminCategory()
 
 const submitCategoryForm = () => {
   if (!editingCategoryId.value) {
-    createCategory(categoryForm.value, {
-      onSuccess: () => {
-        categoryForm.value = { name: '' }
-        showNotification('Category created.', 'success')
+    createCategory(
+      { data: categoryForm.value },
+      {
+        onSuccess: () => {
+          categoryForm.value = { name: '' }
+          showNotification('Category created.', 'success')
+        },
+        onError: (error) => showNotification(error?.message, 'error'),
       },
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
-    })
+    )
     return
   }
 
   updateCategory(
-    { id: editingCategoryId.value, body: categoryForm.value },
+    { id: editingCategoryId.value, data: categoryForm.value },
     {
       onSuccess: () => {
         editingCategoryId.value = null
         categoryForm.value = { name: '' }
         showNotification('Category updated.', 'success')
       },
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
@@ -498,7 +529,7 @@ const deleteCategory = (id: number) => {
     { id },
     {
       onSuccess: () => showNotification('Category deleted.', 'success'),
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
@@ -568,7 +599,7 @@ const deleteCategory = (id: number) => {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: auto;
 }
 .pagination {
   margin-top: 12px;
@@ -666,7 +697,6 @@ const deleteCategory = (id: number) => {
 .categories-list {
   max-height: 320px;
   overflow: auto;
-  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   border-radius: 14px;
   padding: 8px;
   display: grid;

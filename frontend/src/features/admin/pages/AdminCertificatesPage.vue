@@ -10,7 +10,9 @@
               Create certificates for users, manage template library, and verify certificate codes.
             </p>
           </div>
-          <ui-button as-link to="/admin/role-codes" variant="secondary">Back to admin panel</ui-button>
+          <ui-button as-link to="/admin/role-codes" variant="secondary"
+            >Back to admin panel</ui-button
+          >
         </div>
       </template>
 
@@ -111,20 +113,6 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
-import { useUsers } from '@/api/queries/accounts'
-import { useTeams } from '@/api/queries/teams'
-import { useTournaments } from '@/api/queries/tournaments'
-import {
-  useCertificateTemplates,
-  useCertificates,
-  useCreateCertificate,
-  useUploadCertificateTemplate,
-  useUpdateCertificateTemplate,
-  useDeleteCertificateTemplate,
-  useUpdateCertificate,
-  useDeleteCertificate,
-} from '@/api/queries/certificates'
-import { $api } from '@/api/services'
 import { useNotification } from '@/composables/useNotification'
 import AdminCreateCertificateCard from '@/features/admin/components/certificates/AdminCreateCertificateCard.vue'
 import TemplateLibraryCard from '@/features/admin/components/certificates/TemplateLibraryCard.vue'
@@ -132,17 +120,34 @@ import CertificateVerifyCard from '@/features/admin/components/certificates/Cert
 import IssuedCertificatesCard from '@/features/admin/components/certificates/IssuedCertificatesCard.vue'
 import EditTemplateModal from '@/features/admin/components/certificates/EditTemplateModal.vue'
 import EditCertificateModal from '@/features/admin/components/certificates/EditCertificateModal.vue'
+import { useListUsers } from '@/api/accounts/accounts'
+import { useListTeams } from '@/api/teams/teams'
+import { useListTournaments } from '@/api/tournaments/tournaments'
+import {
+  useUpdateCertificateTemplate,
+  useCertificatesUpdate,
+  useCreateCertificate,
+  useCreateCertificateTemplate,
+  useDeleteCertificate,
+  useDeleteCertificateTemplate,
+  useListCertificates,
+  useListCertificateTemplates,
+  verifyCertificate,
+  type VerifyCertificateQueryResult,
+} from '@/api/certificates/certificates'
+import type { Certificate, CertificateTemplate } from '@/api/.ts.schemas'
 
 const { showNotification } = useNotification()
 
-const { data: users } = useUsers()
-const { data: teams } = useTeams()
-const { data: tournamentsResponse } = useTournaments({
-  page: 1,
-  pageSize: 200,
-  searchQuery: '',
-  status: undefined as any,
-})
+const { data: users } = useListUsers()
+const { data: teams } = useListTeams()
+const { data: tournamentsResponse, isLoading: isTournamentsLoading } = useListTournaments(
+  computed(() => ({
+    page: 1,
+    page_size: 200,
+    searchQuery: '',
+  })),
+)
 
 const templatesPage = ref(1)
 const templatesPageSize = 8
@@ -151,7 +156,9 @@ const {
   data: paginatedTemplatesResponse,
   isLoading: isTemplatesLoading,
   isLoadingError: isTemplatesError,
-} = useCertificateTemplates({ page: templatesPage, pageSize: templatesPageSize })
+} = useListCertificateTemplates(
+  computed(() => ({ page: templatesPage.value, pageSize: templatesPageSize })),
+)
 
 const paginatedTemplates = computed(() => paginatedTemplatesResponse.value?.results || [])
 const totalTemplatePages = computed(() => {
@@ -167,10 +174,10 @@ const nextTemplatePage = () => {
   if (templatesPage.value < totalTemplatePages.value) templatesPage.value += 1
 }
 
-const { data: allTemplatesResponse } = useCertificateTemplates({ nopage: true })
+const { data: allTemplatesResponse } = useListCertificateTemplates({ nopage: 'true' })
 
 const { mutateAsync: createCertificate, isPending: isCreating } = useCreateCertificate()
-const { mutateAsync: uploadTemplate, isPending: isUploading } = useUploadCertificateTemplate()
+const { mutateAsync: uploadTemplate, isPending: isUploading } = useCreateCertificateTemplate()
 const { mutateAsync: updateTemplate, isPending: isUpdating } = useUpdateCertificateTemplate()
 const { mutateAsync: deleteTemplate, isPending: isDeleting } = useDeleteCertificateTemplate()
 
@@ -195,9 +202,11 @@ const {
   data: certsResponse,
   isLoading: isCertsLoading,
   isLoadingError: isCertsError,
-} = useCertificates({ page: certsPage, pageSize: certsPageSize, search: certsSearch })
+} = useListCertificates(
+  computed(() => ({ page: certsPage.value, pageSize: certsPageSize, search: certsSearch.value })),
+)
 
-const { mutateAsync: updateCert, isPending: isUpdatingCert } = useUpdateCertificate()
+const { mutateAsync: updateCert, isPending: isUpdatingCert } = useCertificatesUpdate()
 const { mutateAsync: deleteCert, isPending: isDeletingCert } = useDeleteCertificate()
 
 const isDeleteCertModalOpen = ref(false)
@@ -230,14 +239,21 @@ const createForm = ref({
 
 const templateForm = ref({ name: '', file: null as File | null, is_default: false })
 const verifyCode = ref('')
-const verifyResult = ref<any>(null)
+type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: string }
+const verifyResult = ref<Result | null>(null)
 
 const userOptions = computed(() =>
-  (users.value || []).map((u) => ({ value: u.id, label: `${u.full_name || u.username} (#${u.id})` })),
+  (users.value || []).map((u) => ({
+    value: u.id,
+    label: `${u.full_name || u.username} (#${u.id})`,
+  })),
 )
 
 const tournamentOptions = computed(() =>
-  (tournamentsResponse.value?.data || []).map((t) => ({ value: t.id, label: `${t.name} (#${t.id})` })),
+  (tournamentsResponse.value?.data || []).map((t) => ({
+    value: t.id,
+    label: `${t.name} (#${t.id})`,
+  })),
 )
 
 const teamOptions = computed(() => [
@@ -266,12 +282,14 @@ const handleCreateCertificate = async () => {
 
   try {
     await createCertificate({
-      user: createForm.value.user,
-      tournament: createForm.value.tournament,
-      team: createForm.value.team || null,
-      template: createForm.value.template || null,
-      placement: createForm.value.placement,
-      certificate_number: createForm.value.certificate_number.trim() || undefined,
+      data: {
+        user: createForm.value.user,
+        tournament: createForm.value.tournament,
+        team: createForm.value.team || null,
+        template: createForm.value.template || null,
+        placement: createForm.value.placement,
+        certificate_number: createForm.value.certificate_number.trim() || undefined,
+      },
     })
 
     showNotification('Certificate created successfully.', 'success')
@@ -290,9 +308,11 @@ const handleUploadTemplate = async () => {
 
   try {
     await uploadTemplate({
-      name: templateForm.value.name,
-      image: templateForm.value.file,
-      is_default: templateForm.value.is_default,
+      data: {
+        name: templateForm.value.name,
+        image: templateForm.value.file,
+        is_default: templateForm.value.is_default,
+      },
     })
 
     templateForm.value = { name: '', file: null, is_default: false }
@@ -305,9 +325,9 @@ const handleUploadTemplate = async () => {
 
 const handleVerify = async () => {
   try {
-    verifyResult.value = await $api.certificates.verifyByCode(verifyCode.value)
+    verifyResult.value = await verifyCertificate(verifyCode.value)
   } catch {
-    verifyResult.value = { is_valid: false, message: 'Verification failed.' }
+    verifyResult.value = { is_valid: false, message: 'Verification failed.' } as Result
   }
 }
 
@@ -320,7 +340,7 @@ const onDeleteConfirm = async () => {
   if (templateToDeleteId.value === null) return
 
   try {
-    await deleteTemplate(templateToDeleteId.value)
+    await deleteTemplate({ id: templateToDeleteId.value })
     showNotification('Template deleted successfully.', 'success')
     isDeleteModalOpen.value = false
   } catch {
@@ -328,9 +348,9 @@ const onDeleteConfirm = async () => {
   }
 }
 
-const openEdit = (tpl: any) => {
+const openEdit = (tpl: CertificateTemplate) => {
   templateToEditId.value = tpl.id
-  editForm.value = { name: tpl.name, file: null, is_default: tpl.is_default }
+  editForm.value = { name: tpl.name, file: null, is_default: tpl.is_default ?? false }
   isEditModalOpen.value = true
 }
 
@@ -368,7 +388,7 @@ const onDeleteCertConfirm = async () => {
   if (!certToDeleteCode.value) return
 
   try {
-    await deleteCert(certToDeleteCode.value)
+    await deleteCert({ uniqueCode: certToDeleteCode.value })
     showNotification('Certificate deleted successfully.', 'success')
     isDeleteCertModalOpen.value = false
   } catch {
@@ -376,11 +396,11 @@ const onDeleteCertConfirm = async () => {
   }
 }
 
-const openEditCert = (cert: any) => {
+const openEditCert = (cert: Certificate) => {
   certToEditCode.value = cert.unique_code
   editCertForm.value = {
-    user: cert.user,
-    tournament: cert.tournament,
+    user: cert.user || 0,
+    tournament: cert.tournament || 0,
     team: cert.team || 0,
     template: cert.template || 0,
     placement: cert.placement,

@@ -27,7 +27,13 @@
     </Transition>
 
     <main class="page-content">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <div :key="$route.path">
+            <component :is="Component" />
+          </div>
+        </transition>
+      </router-view>
     </main>
   </div>
 </template>
@@ -56,6 +62,28 @@ applyTheme()
 </script>
 
 <style scoped>
+.page-enter-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.page-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .app-shell {
   --nav-offset: 76px;
   position: relative;

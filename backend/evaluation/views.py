@@ -4,6 +4,9 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+
+from backend.openapi import _400, _401, _403, _404
 
 from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from tournaments.permissions import CanManageAssignments, CanSetResults
@@ -16,9 +19,24 @@ from .serializers import (
     JuryAssignmentItemSerializer,
     JuryAssignmentSerializer,
     SubmissionEvaluationSerializer,
+    AssignJuryResponseSerializer,
+    RoundLeaderboardResponseSerializer,
+    TournamentLeaderboardResponseSerializer,
+    RoundPassingStatusResponseSerializer,
 )
 
 
+@extend_schema(
+    operation_id='listJuryAssignments',
+    parameters=[
+        OpenApiParameter('round_id', int, description='Filter by round ID'),
+    ],
+    responses={
+        200: JuryAssignmentSerializer(many=True),
+        401: _401,
+        403: _403,
+    }
+)
 class JuryAssignmentListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = JuryAssignmentSerializer
@@ -33,6 +51,12 @@ class JuryAssignmentListView(generics.ListAPIView):
         return qs
 
 
+@extend_schema(operation_id='getJuryAssignment', responses={
+    200: JuryAssignmentSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class JuryAssignmentDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = JuryAssignmentSerializer
@@ -48,6 +72,12 @@ class JuryAssignmentDetailView(generics.RetrieveAPIView):
         ).prefetch_related('evaluation')
 
 
+@extend_schema(operation_id='createJuryEvaluation', responses={
+    201: SubmissionEvaluationSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
 class JuryEvaluationCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = SubmissionEvaluationSerializer
@@ -58,6 +88,32 @@ class JuryEvaluationCreateView(generics.CreateAPIView):
         try_auto_evaluate_round(round_obj)
 
 
+@extend_schema(methods=['GET'], operation_id='getJuryEvaluation', responses={
+    200: SubmissionEvaluationSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceJuryEvaluation', responses={
+    200: SubmissionEvaluationSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateJuryEvaluation', responses={
+    200: SubmissionEvaluationSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteJuryEvaluation', responses={
+    204: OpenApiResponse(description='Evaluation deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, CanSetResults]
     serializer_class = SubmissionEvaluationSerializer
@@ -72,22 +128,51 @@ class JuryEvaluationDetailView(generics.RetrieveUpdateDestroyAPIView):
         try_auto_evaluate_round(round_obj)
 
 
-class AdminRoundAssignmentView(APIView):
+@extend_schema(
+    operation_id='assignJuryToRound',
+    request=JuryAssignmentItemSerializer(many=True),
+    responses={
+        201: AssignJuryResponseSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    }
+)
+class AdminRoundAssignmentView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageAssignments]
+    serializer_class = JuryAssignmentItemSerializer
 
     def post(self, request, pk):
         round_obj = get_object_or_404(Round, pk=pk)
-        serializer = JuryAssignmentItemSerializer(data=request.data, many=True, context={'request': request})
+        serializer = self.get_serializer(data=request.data, many=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         created_count = replace_round_jury_assignments(round_obj, serializer.validated_data)
         return Response(
-            {'status': 'Assignments replaced.', 'created_assignments': created_count},
+            AssignJuryResponseSerializer({
+                'status': 'Assignments replaced.',
+                'created_assignments': created_count,
+            }).data,
             status=status.HTTP_201_CREATED,
         )
 
 
-class AvailableJuryListView(APIView):
+@extend_schema(
+    operation_id='listAvailableJury',
+    parameters=[
+        OpenApiParameter('include_assigned', bool, description='Include jurors already assigned to this round'),
+    ],
+    responses={
+        200: AvailableJurySerializer(many=True),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    }
+)
+class AvailableJuryListView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageAssignments]
+    serializer_class = AvailableJurySerializer
 
     def get(self, request, pk):
         round_obj = get_object_or_404(Round, pk=pk)
@@ -97,11 +182,20 @@ class AvailableJuryListView(APIView):
 
         include_assigned = include_assigned_param == 'true'
         jury_queryset = get_available_jury(round_obj=round_obj, include_assigned=include_assigned)
-        return Response(AvailableJurySerializer(jury_queryset, many=True).data, status=status.HTTP_200_OK)
+        return Response(
+            AvailableJurySerializer(jury_queryset, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
-class RoundLeaderboardView(APIView):
+@extend_schema(operation_id='getRoundLeaderboard', responses={
+    200: RoundLeaderboardResponseSerializer,
+    401: _401,
+    404: _404,
+})
+class RoundLeaderboardView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = RoundLeaderboardResponseSerializer
 
     def get(self, request, round_id):
         round_obj = Round.objects.select_related('tournament').filter(id=round_id).first()
@@ -112,17 +206,22 @@ class RoundLeaderboardView(APIView):
         is_snapshot = round_obj.tournament.status == Tournament.STATUS_FINISHED
 
         return Response(
-            {
+            RoundLeaderboardResponseSerializer({
                 'round_id': round_id,
                 'is_snapshot': is_snapshot,
                 'rankings': rankings,
-            },
+            }).data,
             status=status.HTTP_200_OK,
         )
 
-
-class TournamentLeaderboardView(APIView):
+@extend_schema(operation_id='getTournamentLeaderboard', responses={
+    200: TournamentLeaderboardResponseSerializer,
+    401: _401,
+    404: _404,
+})
+class TournamentLeaderboardView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TournamentLeaderboardResponseSerializer
 
     def get(self, request, tournament_id):
         tournament = Tournament.objects.filter(id=tournament_id).first()
@@ -137,17 +236,25 @@ class TournamentLeaderboardView(APIView):
         is_snapshot = tournament.status == Tournament.STATUS_FINISHED
 
         return Response(
-            {
+            TournamentLeaderboardResponseSerializer({
                 'tournament_id': tournament_id,
                 'is_snapshot': is_snapshot,
                 'rankings': rankings,
-            },
+            }).data,
             status=status.HTTP_200_OK,
         )
 
 
-class RoundPassingStatusView(APIView):
+@extend_schema(operation_id='getRoundPassingStatus', responses={
+    200: RoundPassingStatusResponseSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+class RoundPassingStatusView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, CanManageAssignments]
+    serializer_class = RoundPassingStatusResponseSerializer
 
     def get(self, request, pk):
         round_obj = get_object_or_404(Round.objects.select_related('tournament'), pk=pk)
@@ -167,15 +274,10 @@ class RoundPassingStatusView(APIView):
         }
 
         passing_count = round_obj.passing_count
-
         results_list = []
         for row in result:
-            passed = (
-                passing_count is None
-                or row['rank'] <= passing_count
-            )
+            passed = passing_count is None or row['rank'] <= passing_count
             reg = registrations.get(row['team_id'])
-
             results_list.append({
                 'rank': row['rank'],
                 'team_id': row['team_id'],
@@ -188,10 +290,12 @@ class RoundPassingStatusView(APIView):
                 'registration_id': reg.id if reg else None,
             })
 
-        return Response({
-            'round_id': round_obj.id,
-            'round_name': round_obj.name,
-            'passing_count': passing_count,
-            'total_teams': len(result),
-            'results': results_list,
-        })
+        return Response(
+            RoundPassingStatusResponseSerializer({
+                'round_id': round_obj.id,
+                'round_name': round_obj.name,
+                'passing_count': passing_count,
+                'total_teams': len(result),
+                'results': results_list,
+            }).data,
+        )

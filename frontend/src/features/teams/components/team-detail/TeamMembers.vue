@@ -80,8 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GetProfileResponse } from '@/api/services/accounts/types'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
+import type { Team, User } from '@/api/.ts.schemas'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
@@ -90,8 +89,8 @@ import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
 
 interface Props {
-  team?: GetTeamInfoResponse
-  user?: GetProfileResponse
+  team?: Team
+  user?: User
   loading: boolean
   loadingError?: boolean
   searchFilter?: string

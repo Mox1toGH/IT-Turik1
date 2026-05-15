@@ -220,33 +220,38 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useRemoveTeamBanner, useTeamInfo, useUpdateTeamBanner } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { truncateText } from '@/lib/utils'
-import { useActiveTeamTournament } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
 import { useNotification } from '@/composables/useNotification'
-import { clearImagePosition, readImagePosition, toObjectPosition, writeImagePosition } from '@/lib/imagePosition'
+import {
+  clearImagePosition,
+  readImagePosition,
+  toObjectPosition,
+  writeImagePosition,
+} from '@/lib/imagePosition'
+import { useGetTeam, useDeleteTeamBanner, useUpdateTeamBanner } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 
 const router = useRouter()
 const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
-const { data: user, isLoading: isProfileLoading } = useProfile()
+const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
 const {
   data: team,
   isLoading: isInfoLoading,
   isLoadingError: isInfoLoadingError,
-} = useTeamInfo({ id: teamId })
+} = useGetTeam(teamId)
 
-const { data: activeTournament } = useActiveTeamTournament(
-  { id: teamId },
+const { data: activeTournament } = useGetTeamActiveTournament(
+  { team_id: teamId },
   {
-    enabled: team.value?.is_in_active_tournament,
+    query: { enabled: team.value?.is_in_active_tournament },
   },
 )
 
@@ -259,7 +264,7 @@ const bannerPositionY = ref(50)
 const { showNotification } = useNotification()
 
 const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTeamBanner()
-const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useRemoveTeamBanner()
+const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useDeleteTeamBanner()
 const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
 
 const bannerPreviewUrl = computed(() => {
@@ -302,16 +307,19 @@ const onBannerChange = (event: Event) => {
 
 const saveBanner = () => {
   if (!selectedBanner.value) return
-  writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
+  writeImagePosition(bannerPositionKey.value, {
+    x: bannerPositionX.value,
+    y: bannerPositionY.value,
+  })
   updateBanner(
-    { teamId, file: selectedBanner.value },
+    { id: teamId, data: { banner: selectedBanner.value } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to update banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -319,15 +327,15 @@ const saveBanner = () => {
 
 const removeBanner = () => {
   removeTeamBanner(
-    { teamId },
+    { id: teamId },
     {
       onSuccess: () => {
         clearImagePosition(bannerPositionKey.value)
         showNotification('Banner removed.', 'success')
         resetBannerState()
       },
-      onError: () => {
-        showNotification('Failed to remove banner.', 'error')
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -350,7 +358,10 @@ const onBannerPreviewPointerDown = (event: PointerEvent) => {
   const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
   const handleUp = (pointerEvent: PointerEvent) => {
     applyPositionFromPointer(pointerEvent)
-    writeImagePosition(bannerPositionKey.value, { x: bannerPositionX.value, y: bannerPositionY.value })
+    writeImagePosition(bannerPositionKey.value, {
+      x: bannerPositionX.value,
+      y: bannerPositionY.value,
+    })
     target.removeEventListener('pointermove', handleMove)
     target.removeEventListener('pointerup', handleUp)
     target.removeEventListener('pointercancel', handleUp)
@@ -431,7 +442,7 @@ watch(
   height: 2.1rem;
   border-radius: 999px;
   border: 1px solid var(--line-soft);
-  background: #ffffff;
+  background: var(--secondary);
   color: var(--color-gray-700);
   display: inline-flex;
   align-items: center;

@@ -21,7 +21,9 @@
         <div v-for="item in cards" :key="item.label" class="preview-item">
           <p class="label">{{ item.label }}</p>
           <p class="value">
-            <RouterLink v-if="item.to" :to="item.to" class="value-link">{{ item.value }}</RouterLink>
+            <RouterLink v-if="item.to" :to="item.to" class="value-link">{{
+              item.value
+            }}</RouterLink>
             <span v-else>{{ item.value }}</span>
           </p>
         </div>
@@ -41,14 +43,15 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { apiClient } from '@/api/client'
+import type { RoleB96Enum } from '@/api/.ts.schemas'
+import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
 
-type UserRole = 'admin' | 'team' | 'jury' | 'organizer'
+type UserRole = RoleB96Enum
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
   role?: UserRole
   is_staff?: boolean
-  teams?: TeamRef[]
+  readonly teams?: readonly TeamRef[]
 }
 
 type PlayerStatsResponse = {
@@ -84,19 +87,44 @@ const cards = computed(() => {
   if (props.user?.is_staff) {
     return [
       { label: 'Total users', value: String(adminStats.value?.total_users ?? 0), to: undefined },
-      { label: 'Total tournaments', value: String(adminStats.value?.total_tournaments ?? 0), to: undefined },
-      { label: 'Active tournaments', value: String(adminStats.value?.active_tournaments ?? 0), to: undefined },
-      { label: 'New this week', value: String(adminStats.value?.new_registrations_last_7_days ?? 0), to: undefined },
+      {
+        label: 'Total tournaments',
+        value: String(adminStats.value?.total_tournaments ?? 0),
+        to: undefined,
+      },
+      {
+        label: 'Active tournaments',
+        value: String(adminStats.value?.active_tournaments ?? 0),
+        to: undefined,
+      },
+      {
+        label: 'New this week',
+        value: String(adminStats.value?.new_registrations_last_7_days ?? 0),
+        to: undefined,
+      },
     ]
   }
 
   const currentTeamName = playerStats.value?.current_team_name
-  const currentTeam = props.user?.teams?.find((team) => team.name === currentTeamName) ?? props.user?.teams?.[0]
+  const currentTeam =
+    props.user?.teams?.find((team) => team.name === currentTeamName) ?? props.user?.teams?.[0]
 
   const base = [
-    { label: 'Win rate', value: `${(playerStats.value?.win_rate ?? 0).toFixed(2)}%`, to: undefined },
-    { label: 'Total tournaments', value: String(playerStats.value?.total_tournaments ?? 0), to: undefined },
-    { label: 'Average score', value: (playerStats.value?.average_evaluation_score ?? 0).toFixed(2), to: undefined },
+    {
+      label: 'Win rate',
+      value: `${(playerStats.value?.win_rate ?? 0).toFixed(2)}%`,
+      to: undefined,
+    },
+    {
+      label: 'Total tournaments',
+      value: String(playerStats.value?.total_tournaments ?? 0),
+      to: undefined,
+    },
+    {
+      label: 'Average score',
+      value: (playerStats.value?.average_evaluation_score ?? 0).toFixed(2),
+      to: undefined,
+    },
     {
       label: 'Current team',
       value: playerStats.value?.current_team_name || 'No team',
@@ -105,7 +133,14 @@ const cards = computed(() => {
   ]
 
   if (props.user?.role === 'team') {
-    return [...base, { label: 'Active members', value: String(teamStats.value?.active_members_count ?? 0), to: undefined }]
+    return [
+      ...base,
+      {
+        label: 'Active members',
+        value: String(teamStats.value?.active_members_count ?? 0),
+        to: undefined,
+      },
+    ]
   }
 
   return base
@@ -121,17 +156,17 @@ const loadStats = async () => {
 
   try {
     if (props.user.is_staff) {
-      const { data } = await apiClient.get<AdminStatsResponse>('/api/stats/admin/')
+      const data = await getAdminStats()
       adminStats.value = data
       return
     }
 
-    const { data } = await apiClient.get<PlayerStatsResponse>('/api/stats/player/')
+    const data = await getPlayerStats()
     playerStats.value = data
 
     if (props.user.role === 'team' && props.user.teams?.[0]?.id) {
-      const teamRes = await apiClient.get<TeamStatsResponse>(`/api/stats/team/${props.user.teams[0].id}/`)
-      teamStats.value = teamRes.data
+      const data = await getTeamStats(props.user.teams[0].id)
+      teamStats.value = data
     }
   } catch {
     isError.value = true
@@ -200,7 +235,7 @@ onMounted(() => {
 }
 
 .preview-actions {
-  margin-top: 0.2rem;
+  margin-top: 1rem;
 }
 
 .preview-error {

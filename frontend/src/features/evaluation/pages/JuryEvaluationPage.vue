@@ -86,27 +86,27 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useAssignments } from '@/api/queries/evaluation'
-import { useTournaments } from '@/api/queries/tournaments'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
+import { useListJuryAssignments } from '@/api/evaluation/evaluation'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const selectedRounds = ref<string[]>([])
 const selectedTournamentIds = ref<string[]>([])
 const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
 
-const { data: assignments, isLoading, isError, refetch } = useAssignments()
+const { data: assignments, isLoading, isError, refetch } = useListJuryAssignments()
 const {
   data: tournamentsResponse,
   isLoading: isTournamentsLoading,
   isError: isTournamentsError,
-} = useTournaments({
+} = useListTournaments(computed(() => ({
   page: 1,
-  pageSize: 200,
-})
+  page_size: 200,
+})))
 
 const evaluationStatusOptions = [
   { value: 'all', label: 'All evaluations' },
@@ -116,8 +116,9 @@ const evaluationStatusOptions = [
 
 const roundOptions = computed(() => {
   const unique = new Map<string, string>()
-  ;(assignments.value ?? []).forEach((assignment) => {
-    unique.set(String(assignment.round_details.id), assignment.round_details.name)
+
+  assignments.value?.forEach((assignment) => {
+    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? '')
   })
 
   return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
@@ -129,7 +130,6 @@ const tournamentOptions = computed(() => {
   ;(tournamentsResponse.value?.data ?? []).forEach((tournament) => {
     byId.set(String(tournament.id), tournament.name)
   })
-
   ;(assignments.value ?? []).forEach((assignment) => {
     const id = assignment.round_details.tournament
     if (id == null) return
@@ -144,7 +144,9 @@ const filteredAssignments = computed(() => {
   let list = assignments.value ?? []
 
   if (selectedRounds.value.length) {
-    list = list.filter((assignment) => selectedRounds.value.includes(String(assignment.round_details.id)))
+    list = list.filter((assignment) =>
+      selectedRounds.value.includes(String(assignment.round_details.id)),
+    )
   }
 
   if (selectedTournamentIds.value.length) {

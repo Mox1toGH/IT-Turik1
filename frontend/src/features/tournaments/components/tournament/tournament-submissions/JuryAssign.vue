@@ -19,7 +19,7 @@
           <ui-button
             @click="handleAssignJury"
             class="assign-btn"
-            :disabled="isLoading || noClosedRound"
+            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
           >
             <loading-icon v-if="isPending" />Assign
           </ui-button>
@@ -99,7 +99,7 @@
                 placeholder="Assign jury"
                 class="jury-select"
                 :is-error="isFailedToFetchJury"
-                :error="parsedJuryError?.message"
+                :error="juryFetchError?.message"
                 :is-loading="isFetchingJury"
               />
             </div>
@@ -116,24 +116,26 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSelect, { type SelectOption } from '@/components/ui/UiSelect.vue'
 import { formatDate } from '@/lib/date'
 import UiCard from '@/components/ui/UiCard.vue'
-import type { TournamentId } from '@/api/dbTypes'
-import { useRoundSubmissions, useTournamentInfo } from '@/api/queries/tournaments'
 import { truncateText } from '@/lib/utils'
-import { useAssignJury, useAvailableJury } from '@/api/queries/evaluation'
-import type { AssignJuryBody } from '@/api/services/evaluation/types'
 import UiButton from '@/components/ui/UiButton.vue'
 import { useNotification } from '@/composables/useNotification'
-import { parseApiError } from '@/api/errors'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
+import {
+  useAssignJuryToRound,
+  useListAvailableJury,
+  type AssignJuryToRoundMutationBody,
+} from '@/api/evaluation/evaluation'
+import type { StatusD67Enum } from '@/api/.ts.schemas'
 
 interface Props {
-  tournamentId: TournamentId
+  tournamentId: number
+  tournamentStatus: StatusD67Enum
 }
 
 const props = defineProps<Props>()
-
 const { showNotification } = useNotification()
 
 const {
@@ -141,7 +143,7 @@ const {
   isLoading: tournamentLoading,
   isError: tournamentError,
   error: tournamentErrorData,
-} = useTournamentInfo({ id: props.tournamentId })
+} = useGetTournament(props.tournamentId)
 
 const closedRound = computed(() =>
   tournament.value?.rounds.find((round) => round.status === 'submission_closed'),
@@ -152,12 +154,11 @@ const {
   isLoading: submissionsLoading,
   isLoadingError: submissionsError,
   error: submissionsErrorData,
-} = useRoundSubmissions(
+} = useListRoundSubmissions(
+  computed(() => closedRound.value?.id ?? 0),
+
   {
-    roundId: computed(() => closedRound.value?.id ?? 0),
-  },
-  {
-    enabled: computed(() => !!closedRound.value),
+    query: { enabled: computed(() => !!closedRound.value) },
   },
 )
 
@@ -166,15 +167,13 @@ const {
   isLoading: isFetchingJury,
   isError: isFailedToFetchJury,
   error: juryFetchError,
-} = useAvailableJury(
+} = useListAvailableJury(
+  computed(() => closedRound.value?.id ?? 0),
+  undefined,
   {
-    roundId: computed(() => closedRound.value?.id ?? 0),
-  },
-  {
-    enabled: computed(() => !!closedRound.value),
+    query: { enabled: computed(() => !!closedRound.value) },
   },
 )
-const parsedJuryError = computed(() => parseApiError(juryFetchError.value))
 
 const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
 const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
@@ -185,14 +184,11 @@ const error = computed(() => {
   if (noClosedRound.value) {
     return { message: 'No finished round available' }
   }
-
   if (tournamentError.value) {
-    return (
-      parseApiError(tournamentErrorData.value) ?? { message: 'Failed to fetch tournament info' }
-    )
+    return tournamentErrorData.value ?? { message: 'Failed to fetch tournament info' }
   }
 
-  return parseApiError(submissionsErrorData.value) ?? { message: 'Failed to fetch submissions' }
+  return submissionsErrorData.value ?? { message: 'Failed to fetch submissions' }
 })
 
 const juryOptions = computed<SelectOption[]>(
@@ -219,7 +215,7 @@ watch(
   { immediate: true },
 )
 
-const { mutate: assign, isPending } = useAssignJury()
+const { mutate: assign, isPending } = useAssignJuryToRound()
 const handleAssignJury = () => {
   if (!closedRound.value) return
   const payload = submissions.value?.map((submission) => {
@@ -231,13 +227,12 @@ const handleAssignJury = () => {
 
   assign(
     {
-      roundId: closedRound.value?.id,
-      body: payload as unknown as AssignJuryBody,
+      id: closedRound.value?.id,
+      data: payload as unknown as AssignJuryToRoundMutationBody,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
       onSuccess: () => {
         showNotification('Assigment was sucessfully replaced', 'success')

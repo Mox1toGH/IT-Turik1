@@ -71,33 +71,36 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { useEquipInventoryItem, useMyInventory, useUnequipInventoryItem } from '@/api/queries/inventory'
 import { useNotification } from '@/composables/useNotification'
-import { parseApiError } from '@/api/errors'
+import {
+  useEquipDigitalInventoryItem,
+  useListMyDigitalInventory,
+  useUnequipDigitalInventoryItem,
+} from '@/api/inventory/inventory'
 
 const { showNotification } = useNotification()
-const { data, isLoading, isLoadingError } = useMyInventory()
-const { mutate: equipItem, isPending: isEquipping } = useEquipInventoryItem()
-const { mutate: unequipItem, isPending: isUnequipping } = useUnequipInventoryItem()
+const { data, isLoading, isLoadingError } = useListMyDigitalInventory()
+const { mutate: equipItem, isPending: isEquipping } = useEquipDigitalInventoryItem()
+const { mutate: unequipItem, isPending: isUnequipping } = useUnequipDigitalInventoryItem()
 
 const items = computed(() => data.value?.results ?? [])
 
 const equip = (inventoryId: number) => {
   equipItem(
-    { inventoryId },
+    { data: { inventory_id: inventoryId } },
     {
       onSuccess: () => showNotification('Avatar frame equipped.', 'success'),
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
 
 const unequip = (inventoryId: number) => {
   unequipItem(
-    { inventoryId },
+    { data: { inventory_id: inventoryId } },
     {
       onSuccess: () => showNotification('Avatar frame removed.', 'success'),
-      onError: (e) => showNotification(parseApiError(e)?.message, 'error'),
+      onError: (error) => showNotification(error?.message, 'error'),
     },
   )
 }
@@ -106,13 +109,49 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 </script>
 
 <style scoped>
-.head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-.item-card { background: var(--muted); }
-.item-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-.asset-preview { width: 100%; height: 180px; object-fit: contain; border-radius: 10px; background: var(--background); }
-.desc { margin: 8px 0 4px; }
-.meta { margin: 0 0 10px; color: var(--muted-foreground); font-size: 0.85rem; }
-.button-group { display: flex; gap: 8px; }
-@media (max-width: 760px) { .head { flex-direction: column; align-items: flex-start; } }
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.item-card {
+  background: var(--muted);
+}
+.item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.asset-preview {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--background);
+}
+.desc {
+  margin: 8px 0 4px;
+}
+.meta {
+  margin: 0 0 10px;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+@media (max-width: 760px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>

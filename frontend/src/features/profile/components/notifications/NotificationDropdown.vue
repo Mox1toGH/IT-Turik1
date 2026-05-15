@@ -11,17 +11,17 @@
       <div class="dropdown-header">
         <h4>Notifications</h4>
         <div class="header-actions">
-          <button 
-            v-if="hasUnread" 
-            class="action-link" 
+          <button
+            v-if="hasUnread"
+            class="action-link"
             @click="handleMarkAllRead"
             :disabled="isMarkingAll"
           >
             Mark read
           </button>
-          <button 
-            v-if="hasNotifications" 
-            class="action-link danger" 
+          <button
+            v-if="hasNotifications"
+            class="action-link danger"
             @click="handleDeleteAll"
             :disabled="isDeletingAll"
           >
@@ -36,67 +36,89 @@
         <div v-else-if="unreadNotifications.length === 0" class="state-message">
           There are currently no new notifications
         </div>
-          <div v-else class="notifications-list">
-            <div 
-              v-for="notification in unreadNotifications" 
-              :key="notification.id"
-              class="notification-item is-unread"
-              @click="markAsRead(notification.id)"
-            >
-              <div class="item-content">
-                <div class="item-title-row">
-                  <span v-if="!notification.is_read" class="unread-dot"></span>
-                  <span class="item-title">{{ notification.title }}</span>
-                  <button 
-                    v-if="getRedirectUrl(notification)"
-                    class="redirect-btn-mini" 
-                    @click.stop="handleNotificationClick(notification, $event)"
-                    title="Go to page"
-                  >
-                    <external-link-icon class="icon" />
-                  </button>
-                  <button 
-                    class="delete-btn-mini" 
-                    @click.stop="handleDelete(notification.id)"
-                    title="Delete notification"
-                  >
-                    <trash-icon class="icon" />
-                  </button>
-                </div>
-                <span class="item-message">
-                  <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                    <a 
-                      v-if="part.type === 'user'" 
-                      :href="`/users/${part.id}`" 
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </a>
-                    <router-link 
-                      v-else-if="part.type === 'team'" 
-                      :to="`/teams/${part.id}`" 
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <router-link
-                      v-else-if="part.type === 'news'"
-                      :to="`/news#news-${part.id}`"
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <span v-else>{{ part.text }}</span>
-                  </template>
-                </span>
-                <span class="item-date">{{ formatDate(notification.created_at) }}</span>
+        <div v-else class="notifications-list">
+          <div
+            v-for="notification in unreadNotifications"
+            :key="notification.id"
+            class="notification-item is-unread"
+            @click="markAsRead({ id: notification.id })"
+          >
+            <div class="item-content">
+              <div class="item-title-row">
+                <span v-if="!notification.is_read" class="unread-dot"></span>
+                <span class="item-title">{{ notification.title }}</span>
+                <button
+                  v-if="getRedirectUrl(notification)"
+                  class="redirect-btn-mini"
+                  @click.stop="handleNotificationClick(notification)"
+                  title="Go to page"
+                >
+                  <external-link-icon class="icon" />
+                </button>
+                <button
+                  class="delete-btn-mini"
+                  @click.stop="handleDelete(notification.id)"
+                  title="Delete notification"
+                >
+                  <trash-icon class="icon" />
+                </button>
               </div>
+              <span class="item-message">
+                <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
+                  <a
+                    v-if="part.type === 'user'"
+                    :href="`/users/${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </a>
+                  <router-link
+                    v-else-if="part.type === 'team'"
+                    :to="`/teams/${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </router-link>
+                  <router-link
+                    v-else-if="part.type === 'news'"
+                    :to="`/news#news-${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </router-link>
+                  <span v-else>{{ part.text }}</span>
+                </template>
+              </span>
+              <span class="item-date">{{ formatDate(notification.created_at) }}</span>
             </div>
+            <span class="item-message">
+              <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
+                <a
+                  v-if="part.type === 'user'"
+                  :href="`/users/${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </a>
+                <router-link
+                  v-else-if="part.type === 'team'"
+                  :to="`/teams/${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </router-link>
+                <span v-else>{{ part.text }}</span>
+              </template>
+            </span>
+            <span class="item-date">{{ formatDate(notification.created_at) }}</span>
           </div>
         </div>
+      </div>
 
       <div class="dropdown-footer">
         <ui-button size="sm" variant="secondary" style="width: 100%" @click="goToAllNotifications">
@@ -104,16 +126,16 @@
         </ui-button>
       </div>
     </div>
-
-    <ui-confirm-modal
-      v-model="isConfirmModalOpen"
-      :title="confirmModalConfig.title"
-      :message="confirmModalConfig.message"
-      :confirm-variant="confirmModalConfig.confirmVariant"
-      :loading="isDeletingAll"
-      @confirm="confirmModalConfig.onConfirm"
-    />
   </div>
+
+  <ui-confirm-modal
+    v-model="isConfirmModalOpen"
+    :title="confirmModalConfig.title"
+    :message="confirmModalConfig.message"
+    :confirm-variant="confirmModalConfig.confirmVariant"
+    :loading="isDeletingAll"
+    @confirm="confirmModalConfig.onConfirm"
+  />
 </template>
 
 <script setup lang="ts">
@@ -125,24 +147,25 @@ import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
-import { 
-  useNotifications, 
-  useUnreadCount, 
-  useMarkAsRead, 
-  useMarkAllAsRead,
+import {
+  useDeleteAllNotifications,
   useDeleteNotification,
-  useDeleteAllNotifications
-} from '@/api/queries/notifications'
-import type { Notification } from '@/api/services/notifications/types'
+  useGetUnreadNotificationCount,
+  useListNotifications,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+} from '@/api/notifications/notifications'
+import type { Notification } from '@/api/.ts.schemas'
+import { useNotification } from '@/composables/useNotification'
 
 const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
 
-const { data: notifications, isLoading, error } = useNotifications(1, 100)
-const { data: unreadCount } = useUnreadCount()
-const { mutate: markAsRead } = useMarkAsRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
+const { data: notifications, isLoading, error } = useListNotifications()
+const { data: unreadCount } = useGetUnreadNotificationCount()
+const { mutate: markAsRead } = useMarkNotificationRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 
@@ -152,8 +175,10 @@ const confirmModalConfig = ref({
   title: '',
   message: '',
   onConfirm: () => {},
-  confirmVariant: 'danger' as const
+  confirmVariant: 'danger' as const,
 })
+
+const { showNotification } = useNotification()
 
 const unreadNotifications = computed(() => {
   return notifications.value?.results?.filter((n) => !n.is_read) || []
@@ -173,7 +198,7 @@ const closeDropdown = (e: MouseEvent) => {
 }
 
 const handleMarkAllRead = () => {
-  markAllAsRead()
+  markAllAsRead(void 0, {})
 }
 
 const handleDelete = (id: number) => {
@@ -182,15 +207,15 @@ const handleDelete = (id: number) => {
     message: 'Delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(id, {
-        onSuccess: () => {
-          isConfirmModalOpen.value = false
+      deleteNotification(
+        { id },
+        {
+          onSuccess: () => {
+            isConfirmModalOpen.value = false
+          },
         },
-        onError: (err) => {
-          console.error('Failed to delete notification from dropdown:', err)
-        },
-      })
-    }
+      )
+    },
   }
   isConfirmModalOpen.value = true
 }
@@ -205,18 +230,18 @@ const handleDeleteAll = () => {
         onSuccess: () => {
           isConfirmModalOpen.value = false
         },
-        onError: (err) => {
-          console.error('Failed to delete all notifications from dropdown:', err)
+        onError: (error) => {
+          showNotification(error.message, 'error')
         },
       })
-    }
+    },
   }
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: any, event: Event) => {
+const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
-    markAsRead(notification.id)
+    markAsRead({ id: notification.id })
   }
 
   const url = getRedirectUrl(notification)
@@ -226,7 +251,7 @@ const handleNotificationClick = (notification: any, event: Event) => {
   }
 }
 
-const getRedirectUrl = (notification: any) => {
+const getRedirectUrl = (notification: Notification) => {
   const type = notification.event_type
 
   // Only invitations go to /teams — recipient hasn't joined yet
@@ -277,7 +302,6 @@ const parseMessage = (message: string) => {
 
   return parts.length > 0 ? parts : [{ type: 'text', text: message }]
 }
-
 
 const goToAllNotifications = () => {
   isOpen.value = false
@@ -539,6 +563,7 @@ onUnmounted(() => {
   font-size: 0.8rem;
   color: var(--foreground);
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;

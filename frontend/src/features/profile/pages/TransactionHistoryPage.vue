@@ -6,7 +6,11 @@
           <div>
             <p class="section-eyebrow">Transactions</p>
             <h1 class="section-title">
-              {{ isAdminUserView ? `User #${targetUserId} transaction history` : 'My transaction history' }}
+              {{
+                isAdminUserView
+                  ? `User #${targetUserId} transaction history`
+                  : 'My transaction history'
+              }}
             </h1>
           </div>
           <div class="head-actions">
@@ -30,7 +34,7 @@
         </template>
 
         <p v-if="isLoadingError" class="text-muted">
-          Failed to load transactions ({{ error?.message || error?.code || 'unknown' }}).
+          Failed to load transactions ({{ rawError?.message || rawError?.code || 'unknown' }}).
         </p>
 
         <p v-else-if="!transactions?.results?.length" class="text-muted">No transactions yet.</p>
@@ -50,9 +54,13 @@
           </ui-card>
 
           <div v-if="totalPages > 1" class="pagination">
-            <ui-button variant="secondary" :disabled="currentPage === 1" @click="prevPage">Prev</ui-button>
+            <ui-button variant="secondary" :disabled="currentPage === 1" @click="prevPage"
+              >Prev</ui-button
+            >
             <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
-            <ui-button variant="secondary" :disabled="currentPage === totalPages" @click="nextPage">Next</ui-button>
+            <ui-button variant="secondary" :disabled="currentPage === totalPages" @click="nextPage"
+              >Next</ui-button
+            >
           </div>
         </div>
       </ui-skeleton-loader>
@@ -69,14 +77,16 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { parseApiError } from '@/api/errors'
-import { useProfile } from '@/api/queries/accounts'
-import { useAdminUserPointsTransactions, useMyPointsTransactions } from '@/api/queries/points'
 import type { PointsOrdering } from '@/api/services/points/types'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useListAdminUserPointsTransactions,
+  useListMyPointsTransactions,
+} from '@/api/points/points'
 
 const route = useRoute()
 const router = useRouter()
-const { data: viewer } = useProfile()
+const { data: viewer } = useGetUserProfile()
 
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -85,23 +95,34 @@ const ordering = ref<PointsOrdering>('-created_at')
 const targetUserId = computed(() => Number(route.params.id || 0))
 const isAdminUserView = computed(() => viewer.value?.role === 'admin' && !!targetUserId.value)
 
-const myQuery = useMyPointsTransactions(
-  { page: currentPage, pageSize, ordering },
-  { enabled: computed(() => !isAdminUserView.value) },
+const myQuery = useListMyPointsTransactions(
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    ordering: ordering.value,
+  })),
+  { query: { enabled: computed(() => !isAdminUserView.value) } },
 )
 
-const adminQuery = useAdminUserPointsTransactions(
+const adminQuery = useListAdminUserPointsTransactions(
   targetUserId,
-  { page: currentPage, pageSize, ordering },
-  { enabled: isAdminUserView },
+  computed(() => ({
+    page: currentPage.value,
+    page_size: pageSize.value,
+    ordering: ordering.value,
+  })),
+  { query: { enabled: isAdminUserView } },
 )
 
-const isLoading = computed(() => (isAdminUserView.value ? adminQuery.isLoading.value : myQuery.isLoading.value))
+const isLoading = computed(() =>
+  isAdminUserView.value ? adminQuery.isLoading.value : myQuery.isLoading.value,
+)
 const isLoadingError = computed(() =>
   isAdminUserView.value ? adminQuery.isLoadingError.value : myQuery.isLoadingError.value,
 )
-const rawError = computed(() => (isAdminUserView.value ? adminQuery.error.value : myQuery.error.value))
-const error = computed(() => parseApiError(rawError.value))
+const rawError = computed(() =>
+  isAdminUserView.value ? adminQuery.error.value : myQuery.error.value,
+)
 const transactions = computed(() =>
   isAdminUserView.value ? adminQuery.data.value : myQuery.data.value,
 )

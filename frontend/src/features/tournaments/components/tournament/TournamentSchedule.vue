@@ -1,5 +1,5 @@
 <template>
-  <div class="top-actions" v-if="user?.role === 'admin'">
+  <div class="top-actions" v-if="user?.role === 'admin' && props.tournamentStatus !== 'finished'">
     <ui-button @click="isAddOpen = true">Add event</ui-button>
     <AddEventModal v-model="isAddOpen" :tournament-id="props.tournamentId" />
   </div>
@@ -49,12 +49,12 @@
                 <LargeTextModal
                   v-model="isDescriptionOpen"
                   title="Event description"
-                  :text="event.description"
+                  :text="event.description ?? '-'"
                   max-length="100"
                 >
                   <template #trigger="{ toggleOpen }">
                     <p class="event-description" @click="toggleOpen">
-                      {{ truncateText(event.description, 100) }}
+                      {{ truncateText(event.description ?? '-', 100) }}
                     </p>
                   </template>
                 </LargeTextModal>
@@ -75,10 +75,10 @@
               :event-id="event.id"
               :tournament-id="props.tournamentId"
               :title="event.title"
-              :description="event.description"
+              :description="event.description ?? '-'"
               :start-date="event.start_datetime"
               :event-type="event.type"
-              :link="event.link"
+              :link="event.link ?? ''"
             />
 
             <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
@@ -102,21 +102,24 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
 import EditEventModal from './modals/EditEventModal.vue'
-import { useProfile } from '@/api/queries/accounts'
 import DeleteEventModal from './modals/DeleteEventModal.vue'
 import AddEventModal from './modals/AddEventModal.vue'
-import { useTournamentEvents } from '@/api/queries/tournaments'
 import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+
+import { useListEvents } from '@/api/tournaments/tournaments'
+import type { StatusD67Enum } from '@/api/.ts.schemas'
 
 interface Props {
   tournamentId: number
+  tournamentStatus: StatusD67Enum
 }
 
 const props = defineProps<Props>()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
@@ -127,7 +130,7 @@ const {
   data: events,
   isLoading: isEventsLoading,
   isError: isEventsError,
-} = useTournamentEvents({ tournamentId: props.tournamentId })
+} = useListEvents({ tournament: props.tournamentId })
 </script>
 
 <style scoped>
@@ -196,6 +199,7 @@ const {
   display: flex;
   gap: 0.6rem;
   justify-content: end;
+  margin-bottom: 1rem;
 }
 
 .event-actions {

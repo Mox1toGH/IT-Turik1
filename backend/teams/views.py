@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -7,19 +9,22 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from rest_framework import serializers as drf_serializers
 
 from backend.permissions import is_platform_admin
+from backend.openapi import _400, _401, _403, _404
 from accounts.models import User
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from .serializers import (
     clear_invitation_states_for_member,
     clear_join_request_states_for_member,
+    TeamDetailResponseSerializer,
     TeamInvitationInboxSerializer,
     TeamInvitationSerializer,
     TeamJoinRequestSerializer,
     TeamBannerSerializer,
-    TeamMemberSerializer,
     TeamSerializer,
     invite_user_to_team,
 )
@@ -59,6 +64,16 @@ def is_team_member(team, user):
     return any(member.id == user.id for member in team.members.all())
 
 
+@extend_schema(methods=['GET'], operation_id='listTeams', responses={
+    200: TeamSerializer(many=True),
+    401: _401,
+})
+@extend_schema(methods=['POST'], operation_id='createTeam', responses={
+    201: TeamSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+})
 class TeamListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamSerializer
@@ -88,6 +103,32 @@ class TeamListCreateView(generics.ListCreateAPIView):
         serializer.save(captain=self.request.user)
 
 
+@extend_schema(methods=['GET'], operation_id='getTeam', responses={
+    200: TeamSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PUT'], operation_id='replaceTeam', responses={
+    200: TeamSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['PATCH'], operation_id='updateTeam', responses={
+    200: TeamSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteTeam', responses={
+    204: OpenApiResponse(description='Team deleted successfully.'),
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
     serializer_class = TeamSerializer
@@ -135,7 +176,19 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             return denied
         return super().destroy(request, *args, **kwargs)
 
-
+@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', responses={
+    200: TeamBannerSerializer,
+    400: _400,
+    401: _401,
+    403: _403,
+    404: _404,
+})
+@extend_schema(methods=['DELETE'], operation_id='deleteTeamBanner', responses={
+    200: TeamBannerSerializer,
+    401: _401,
+    403: _403,
+    404: _404,
+})
 class TeamBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
     serializer_class = TeamBannerSerializer
@@ -175,8 +228,21 @@ class TeamBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TeamMemberManageView(APIView):
+@extend_schema(
+    operation_id='inviteMemberToTeam',
+    request=inline_serializer("InviteMemberRequest", fields={"user_id": drf_serializers.IntegerField()}),
+    responses={
+        200: TeamSerializer,
+        201: TeamSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TeamMemberInviteView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TeamSerializer
 
     @staticmethod
     def _get_team(pk):
@@ -207,11 +273,27 @@ class TeamMemberManageView(APIView):
         invitation_received.send(sender=self.__class__, invitation=invitation)
 
         team.refresh_from_db()
-        serializer = TeamSerializer(team, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(
+            TeamSerializer(team, context={'request': request}).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    operation_id='removeMemberFromTeam',
+    responses={
+        204: OpenApiResponse(description='Member removed successfully.'),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TeamMemberRemoveView(generics.GenericAPIView):
+    serializer_class = TeamSerializer
 
     def delete(self, request, pk, user_id):
-        team = self._get_team(pk)
+        team = get_object_or_404(get_team_queryset(), pk=pk)
         if team.captain_id != request.user.id:
             raise PermissionDenied('Only captain can manage members.')
 
@@ -232,8 +314,19 @@ class TeamMemberManageView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TeamLeaveView(APIView):
+@extend_schema(
+    operation_id='leaveTeam',
+    request=None,
+    responses={
+        200: TeamDetailResponseSerializer,
+        400: _400,
+        401: _401,
+        404: _404,
+    },
+)
+class TeamLeaveView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TeamDetailResponseSerializer
 
     @staticmethod
     def _get_team(pk):
@@ -255,9 +348,19 @@ class TeamLeaveView(APIView):
 
         clear_invitation_states_for_member(team=team, user=request.user)
         clear_join_request_states_for_member(team=team, user=request.user)
-        return Response({'detail': 'You left the team.'}, status=status.HTTP_200_OK)
+        return Response(
+            TeamDetailResponseSerializer({'detail': 'You left the team.'}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
+@extend_schema(
+    operation_id='listTeamInvitations',
+    responses={
+        200: TeamInvitationInboxSerializer(many=True),
+        401: _401,
+    },
+)
 class TeamInvitationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamInvitationInboxSerializer
@@ -271,8 +374,9 @@ class TeamInvitationListView(generics.ListAPIView):
         )
 
 
-class TeamInvitationRespondView(APIView):
+class TeamInvitationRespondView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TeamSerializer
     new_status = None
 
     def post(self, request, invitation_id):
@@ -310,20 +414,53 @@ class TeamInvitationRespondView(APIView):
             invitation_responded.send(sender=self.__class__, invitation=invitation)
 
         team = get_object_or_404(get_team_queryset(), pk=invitation.team_id)
-        serializer = TeamSerializer(team, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            TeamSerializer(team, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
+@extend_schema(
+    operation_id='acceptTeamInvitation',
+    request=None,
+    responses={
+        200: TeamSerializer,
+        400: _400,
+        401: _401,
+        404: _404,
+    },
+)
 class TeamInvitationAcceptView(TeamInvitationRespondView):
     new_status = TeamInvitation.STATUS_ACCEPTED
 
 
+@extend_schema(
+    operation_id='declineTeamInvitation',
+    request=None,
+    responses={
+        200: TeamSerializer,
+        400: _400,
+        401: _401,
+        404: _404,
+    },
+)
 class TeamInvitationDeclineView(TeamInvitationRespondView):
     new_status = TeamInvitation.STATUS_DECLINED
 
 
-class TeamJoinRequestCreateView(APIView):
+@extend_schema(
+    operation_id='createTeamJoinRequest',
+    responses={
+        200: TeamDetailResponseSerializer,
+        201: TeamDetailResponseSerializer,
+        400: _400,
+        401: _401,
+        404: _404,
+    },
+)
+class TeamJoinRequestCreateView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TeamDetailResponseSerializer
 
     @staticmethod
     def _get_team(pk):
@@ -354,7 +491,10 @@ class TeamJoinRequestCreateView(APIView):
 
         if not created:
             if join_request.status == TeamJoinRequest.STATUS_PENDING:
-                return Response({'detail': 'Join request already sent.'}, status=status.HTTP_200_OK)
+                return Response(
+                    TeamDetailResponseSerializer({'detail': 'Join request already sent.'}).data,
+                    status=status.HTTP_200_OK,
+                )
             join_request.status = TeamJoinRequest.STATUS_PENDING
             join_request.reviewed_by = None
             join_request.reviewed_at = None
@@ -362,11 +502,15 @@ class TeamJoinRequestCreateView(APIView):
 
         join_request_received.send(sender=self.__class__, join_request=join_request)
 
-        return Response({'detail': 'Join request sent.'}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(
+            TeamDetailResponseSerializer({'detail': 'Join request sent.'}).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
-class TeamJoinRequestReviewView(APIView):
+class TeamJoinRequestReviewView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = TeamSerializer
     new_status = None
 
     @staticmethod
@@ -398,18 +542,51 @@ class TeamJoinRequestReviewView(APIView):
         join_request_responded.send(sender=self.__class__, join_request=join_request)
 
         team.refresh_from_db()
-        serializer = TeamSerializer(team, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            TeamSerializer(team, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
+@extend_schema(
+    operation_id='acceptTeamJoinRequest',
+    request=None,
+    responses={
+        200: TeamSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class TeamJoinRequestAcceptView(TeamJoinRequestReviewView):
     new_status = TeamJoinRequest.STATUS_ACCEPTED
 
 
+@extend_schema(
+    operation_id='declineTeamJoinRequest',
+    request=None,
+    responses={
+        200: TeamSerializer,
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class TeamJoinRequestDeclineView(TeamJoinRequestReviewView):
     new_status = TeamJoinRequest.STATUS_DECLINED
 
 
+@extend_schema(
+    operation_id='listTeamInvitationsByTeam',
+    responses={
+        200: TeamInvitationSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class TeamInvitationListByTeamView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamInvitationSerializer
@@ -417,15 +594,13 @@ class TeamInvitationListByTeamView(generics.ListAPIView):
     def get_queryset(self):
         team_id = self.kwargs.get('pk')
         team = get_object_or_404(get_team_queryset(), pk=team_id)
-        
-        # Only captain or admin can see invitations
+
         if team.captain_id != self.request.user.id and not is_platform_admin(self.request.user):
             raise PermissionDenied('Only captain or admin can view team invitations.')
-        
-        # Exclude invitations for users already in the team
+
         member_ids = {member.id for member in team.members.all()}
         member_ids.add(team.captain_id)
-        
+
         return (
             TeamInvitation.objects
             .filter(team=team)
@@ -435,6 +610,15 @@ class TeamInvitationListByTeamView(generics.ListAPIView):
         )
 
 
+@extend_schema(
+    operation_id='listTeamJoinRequestsByTeam',
+    responses={
+        200: TeamJoinRequestSerializer(many=True),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
 class TeamJoinRequestListByTeamView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TeamJoinRequestSerializer
@@ -442,16 +626,13 @@ class TeamJoinRequestListByTeamView(generics.ListAPIView):
     def get_queryset(self):
         team_id = self.kwargs.get('pk')
         team = get_object_or_404(get_team_queryset(), pk=team_id)
-        
-        # Only captain or admin can see join requests
+
         if team.captain_id != self.request.user.id and not is_platform_admin(self.request.user):
             raise PermissionDenied('Only captain or admin can view team join requests.')
-        
+
         return (
             TeamJoinRequest.objects
             .filter(team=team)
             .select_related('user', 'reviewed_by')
             .order_by('-created_at')
         )
-
-
