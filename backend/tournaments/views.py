@@ -174,10 +174,10 @@ class TournamentListView(SyncStatusesMixin, generics.GenericAPIView):
         page_queryset = queryset[offset:offset + page_size]
 
         return Response(
-            TournamentListResponseSerializer({
-                'data': page_queryset,
-                'total': total,
-            }).data,
+            TournamentListResponseSerializer(
+                {'data': page_queryset, 'total': total},
+                context={'request': request},  # ← додати це
+            ).data,
         )
 
 
