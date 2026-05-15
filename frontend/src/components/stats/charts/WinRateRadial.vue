@@ -2,7 +2,7 @@
   <div class="chart-wrap">
     <svg viewBox="0 0 220 170" width="100%" height="100%">
       <g transform="translate(110,85)">
-        <circle r="50" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="12" />
+        <circle r="50" fill="none" stroke="var(--stats-track)" stroke-width="12" />
         <circle
           r="50"
           fill="none"
