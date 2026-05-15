@@ -226,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -243,6 +243,8 @@ import {
 } from '@/api/evaluation/evaluation'
 import { useGetTournament, useListRounds } from '@/api/tournaments/tournaments'
 import { customInstance } from '@/lib/apiClient'
+import { queryClient } from '@/lib/queryClient'
+import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
 import { useNotification } from '@/composables/useNotification'
 
 interface Props {
@@ -273,6 +275,7 @@ function getHttpStatus(error: unknown): number | null {
 }
 
 const props = defineProps<Props>()
+let unsubscribeLeaderboardSocket: (() => void) | null = null
 const tableWrapRef = ref<HTMLElement | null>(null)
 const isCreatingGoogleSheet = ref(false)
 const isSendCertificatesModalOpen = ref(false)
@@ -363,6 +366,15 @@ const errorMessage = computed(() =>
 const isExportDisabled = computed(
   () => isLoading.value || isError.value || rankings.value.length === 0,
 )
+
+onMounted(() => {
+  unsubscribeLeaderboardSocket = subscribeTournamentLeaderboard(queryClient, props.tournamentId)
+})
+
+onBeforeUnmount(() => {
+  unsubscribeLeaderboardSocket?.()
+  unsubscribeLeaderboardSocket = null
+})
 
 function getRoundScore(entry: TournamentEntry, roundId: number) {
   const round = getRoundBreakdown(entry, roundId)
