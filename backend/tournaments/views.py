@@ -13,6 +13,8 @@ from backend.openapi import _400, _401, _403, _404
 from teams.models import Team
 from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.permissions import Permission, has_permission as user_has_permission
+from certificates.models import Certificate, CertificateTemplate
+from evaluation.leaderboard_service import get_tournament_leaderboard
 
 from .permissions import (
     CanCreateTournament,
@@ -1108,4 +1110,167 @@ class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
                 team__tournament_registrations__is_disqualified=True,
             )
             .order_by('-updated_at')
+        )
+
+
+@extend_schema(
+    operation_id='getTournamentCertificateDeliveryStatus',
+    responses={
+        200: inline_serializer(
+            name='TournamentCertificateDeliveryStatusResponse',
+            fields={
+                'existing_count': OpenApiTypes.INT,
+                'missing_count': OpenApiTypes.INT,
+            },
+        ),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentCertificateDeliveryStatusView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, tournament_id: int):
+        if not user_has_permission(request.user, Permission.MANAGE_PARTICIPANTS):
+            return Response({'detail': 'Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        registrations = (
+            TournamentTeamRegistration.objects
+            .filter(tournament=tournament, is_active=True, is_disqualified=False)
+            .select_related('team__captain')
+            .prefetch_related('team__team_members__user')
+        )
+
+        participant_user_ids = set()
+        for registration in registrations:
+            if registration.team.captain_id:
+                participant_user_ids.add(registration.team.captain_id)
+            participant_user_ids.update(
+                registration.team.team_members.values_list('user_id', flat=True)
+            )
+
+        if not participant_user_ids:
+            return Response({'existing_count': 0, 'missing_count': 0}, status=status.HTTP_200_OK)
+
+        existing_user_ids = set(
+            Certificate.objects.filter(
+                tournament=tournament,
+                user_id__in=participant_user_ids,
+            ).values_list('user_id', flat=True)
+        )
+        existing_count = len(existing_user_ids)
+        missing_count = len(participant_user_ids - existing_user_ids)
+
+        return Response(
+            {
+                'existing_count': existing_count,
+                'missing_count': missing_count,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    operation_id='sendTournamentCertificates',
+    request=inline_serializer(
+        name='SendTournamentCertificatesRequest',
+        fields={
+            'template_id': OpenApiTypes.INT,
+            'mode': OpenApiTypes.STR,
+        },
+    ),
+    responses={
+        200: inline_serializer(
+            name='SendTournamentCertificatesResponse',
+            fields={
+                'created_count': OpenApiTypes.INT,
+                'skipped_count': OpenApiTypes.INT,
+            },
+        ),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentSendCertificatesView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, tournament_id: int):
+        if not user_has_permission(request.user, Permission.MANAGE_PARTICIPANTS):
+            return Response({'detail': 'Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+
+        if tournament.status != Tournament.STATUS_FINISHED:
+            return Response(
+                {'message': 'Certificates can be sent only after tournament is finished.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        template_id = request.data.get('template_id')
+        mode = (request.data.get('mode') or 'missing').strip().lower()
+
+        if not template_id:
+            return Response({'message': 'template_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if mode not in {'missing', 'resend'}:
+            return Response({'message': 'mode must be "missing" or "resend".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        template = get_object_or_404(CertificateTemplate, id=template_id)
+
+        registrations = (
+            TournamentTeamRegistration.objects
+            .filter(tournament=tournament, is_active=True, is_disqualified=False)
+            .select_related('team__captain')
+            .prefetch_related('team__team_members__user')
+        )
+
+        leaderboard_rank_by_team = {
+            row.get('team_id'): row.get('rank')
+            for row in get_tournament_leaderboard(tournament.id, request.user)
+        }
+
+        created_count = 0
+        skipped_count = 0
+        seen_participants: set[int] = set()
+
+        for registration in registrations:
+            team = registration.team
+            team_user_ids = set(team.team_members.values_list('user_id', flat=True))
+            if team.captain_id:
+                team_user_ids.add(team.captain_id)
+
+            for user_id in team_user_ids:
+                if not user_id or user_id in seen_participants:
+                    continue
+                seen_participants.add(user_id)
+
+                if mode == 'missing':
+                    already_exists = Certificate.objects.filter(
+                        tournament=tournament,
+                        user_id=user_id,
+                    ).exists()
+                    if already_exists:
+                        skipped_count += 1
+                        continue
+
+                rank = leaderboard_rank_by_team.get(team.id)
+                placement = f'Rank #{rank}' if rank else 'Participant'
+                Certificate.objects.create(
+                    user_id=user_id,
+                    team=team,
+                    tournament=tournament,
+                    placement=placement,
+                    template=template,
+                )
+                created_count += 1
+
+        return Response(
+            {
+                'created_count': created_count,
+                'skipped_count': skipped_count,
+            },
+            status=status.HTTP_200_OK,
         )

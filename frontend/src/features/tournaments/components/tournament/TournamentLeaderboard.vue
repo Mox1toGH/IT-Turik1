@@ -13,7 +13,7 @@
               v-if="canSendCertificates"
               size="sm"
               variant="secondary"
-              :disabled="!isTournamentFinished || isSendingCertificates"
+              :disabled="isSendingCertificates"
               @click="isSendCertificatesModalOpen = true"
             >
               {{
@@ -151,6 +151,9 @@
         <p class="text-muted">
           Select a certificate template. 4 templates are visible, scroll down for more.
         </p>
+        <p v-if="!isTournamentFinished" class="text-muted">
+          Sending is available after tournament finish. You can preselect template now.
+        </p>
 
         <div v-if="isTemplatesLoading" class="templates-loading">
           <ui-skeleton variant="rect" height="180px" />
@@ -188,7 +191,12 @@
           >Cancel</ui-button
         >
         <ui-button
-          :disabled="!selectedTemplateId || isSendingCertificates || templateOptions.length === 0"
+          :disabled="
+            !isTournamentFinished ||
+            !selectedTemplateId ||
+            isSendingCertificates ||
+            templateOptions.length === 0
+          "
           @click="handleSendCertificates"
         >
           {{ isSendingCertificates ? 'Sending...' : 'Send' }}
@@ -203,11 +211,13 @@
         <ui-button variant="secondary" @click="isDeliveryModeModalOpen = false">Cancel</ui-button>
         <ui-button
           variant="secondary"
-          :disabled="isSendingCertificates"
+          :disabled="isSendingCertificates || !isTournamentFinished"
           @click="submitCertificates('missing')"
           >Send Missing</ui-button
         >
-        <ui-button :disabled="isSendingCertificates" @click="submitCertificates('resend')"
+        <ui-button
+          :disabled="isSendingCertificates || !isTournamentFinished"
+          @click="submitCertificates('resend')"
           >Send Again</ui-button
         >
       </template>
@@ -249,6 +259,15 @@ function parseApiError(error: unknown): ParsedApiError | null {
   const withMessage = error as { message?: unknown }
   if (typeof withMessage.message === 'string') return { message: withMessage.message }
   return null
+}
+
+function getHttpStatus(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null
+  const maybeAxios = error as {
+    _axiosError?: { response?: { status?: number } }
+    status?: number
+  }
+  return maybeAxios._axiosError?.response?.status ?? maybeAxios.status ?? null
 }
 
 const props = defineProps<Props>()
@@ -461,6 +480,10 @@ function handleDownloadCsv() {
 }
 
 function handleSendCertificates() {
+  if (!isTournamentFinished.value) {
+    showNotification('Certificates can be sent only after tournament finish.', 'error')
+    return
+  }
   if (!selectedTemplateId.value) {
     showNotification('Please select a template first.', 'error')
     return
@@ -479,12 +502,19 @@ async function decideDeliveryModeAndSend() {
     }
     submitCertificates('missing')
   } catch (apiError) {
+    const status = getHttpStatus(apiError)
+    if (status === 404) {
+      // Backend may not yet expose delivery-status endpoint in partial environments.
+      submitCertificates('missing')
+      return
+    }
     const parsedError = parseApiError(apiError as Parameters<typeof parseApiError>[0])
     showNotification(parsedError?.message || 'Failed to check certificate status.', 'error')
   }
 }
 
 function submitCertificates(mode: 'missing' | 'resend') {
+  if (!isTournamentFinished.value) return
   if (!selectedTemplateId.value) return
   void sendCertificates(mode)
 }
@@ -512,6 +542,11 @@ async function sendCertificates(mode: 'missing' | 'resend') {
     isSendCertificatesModalOpen.value = false
     isDeliveryModeModalOpen.value = false
   } catch (apiError) {
+    const status = getHttpStatus(apiError)
+    if (status === 404) {
+      showNotification('Certificates sending endpoint is not available yet on backend.', 'error')
+      return
+    }
     const parsedError = parseApiError(apiError)
     showNotification(parsedError?.message || 'Failed to send certificates.', 'error')
   } finally {
