@@ -66,18 +66,25 @@
         </template>
 
         <template #default>
-          <ui-card v-if="filteredAssignments.length === 0" class="empty-card">
-            <p class="empty-text">No assignments found for selected round filters</p>
+          <ui-card v-if="pagedAssignments.length === 0" class="empty-card">
+            <p class="empty-text">No assignments found for selected filters</p>
           </ui-card>
 
           <div v-else class="assignments-grid">
             <evaluation-assignment-card
-              v-for="assignment in filteredAssignments"
+              v-for="assignment in pagedAssignments"
               :key="assignment.id"
               :assignment="assignment"
               @evaluated="refetch"
             />
           </div>
+
+          <ui-pagination
+            v-if="totalCount > pageSize"
+            v-model="currentPage"
+            :total-items="totalCount"
+            :page-size="pageSize"
+          />
         </template>
       </ui-skeleton-loader>
     </ui-card>
@@ -85,28 +92,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useListJuryAssignments } from '@/api/evaluation/evaluation'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
-import { useListJuryAssignments } from '@/api/evaluation/evaluation'
-import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const selectedRounds = ref<string[]>([])
 const selectedTournamentIds = ref<string[]>([])
 const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
+const currentPage = ref(1)
+const pageSize = 10
 
-const { data: assignments, isLoading, isError, refetch } = useListJuryAssignments()
+const { data: assignmentsResponse, isLoading, isError, refetch } = useListJuryAssignments()
+
 const {
   data: tournamentsResponse,
   isLoading: isTournamentsLoading,
   isError: isTournamentsError,
-} = useListTournaments(computed(() => ({
-  page: 1,
-  page_size: 200,
-})))
+} = useListTournaments(
+  computed(() => ({
+    page: 1,
+    page_size: 200,
+  })),
+)
+
+const assignments = computed(() => assignmentsResponse.value?.results ?? [])
+const tournaments = computed(() => tournamentsResponse.value?.data ?? [])
 
 const evaluationStatusOptions = [
   { value: 'all', label: 'All evaluations' },
@@ -117,8 +133,15 @@ const evaluationStatusOptions = [
 const roundOptions = computed(() => {
   const unique = new Map<string, string>()
 
-  assignments.value?.forEach((assignment) => {
-    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? '')
+  assignments.value.forEach((assignment) => {
+    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? `Round #${assignment.round_details.id}`)
+  })
+
+  tournaments.value.forEach((tournament) => {
+    const rounds = Array.isArray(tournament.rounds) ? tournament.rounds : []
+    rounds.forEach((round) => {
+      unique.set(String(round.id), round.name ?? `Round #${round.id}`)
+    })
   })
 
   return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
@@ -127,10 +150,11 @@ const roundOptions = computed(() => {
 const tournamentOptions = computed(() => {
   const byId = new Map<string, string>()
 
-  ;(tournamentsResponse.value?.data ?? []).forEach((tournament) => {
+  tournaments.value.forEach((tournament) => {
     byId.set(String(tournament.id), tournament.name)
   })
-  ;(assignments.value ?? []).forEach((assignment) => {
+
+  assignments.value.forEach((assignment) => {
     const id = assignment.round_details.tournament
     if (id == null) return
     const key = String(id)
@@ -141,12 +165,10 @@ const tournamentOptions = computed(() => {
 })
 
 const filteredAssignments = computed(() => {
-  let list = assignments.value ?? []
+  let list = assignments.value
 
   if (selectedRounds.value.length) {
-    list = list.filter((assignment) =>
-      selectedRounds.value.includes(String(assignment.round_details.id)),
-    )
+    list = list.filter((assignment) => selectedRounds.value.includes(String(assignment.round_details.id)))
   }
 
   if (selectedTournamentIds.value.length) {
@@ -164,13 +186,21 @@ const filteredAssignments = computed(() => {
   return list
 })
 
+const pagedAssignments = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return filteredAssignments.value.slice(start, end)
+})
+
 const totalCount = computed(() => filteredAssignments.value.length)
-const evaluatedCount = computed(
-  () => filteredAssignments.value.filter((item) => item.is_evaluated).length,
-)
+const evaluatedCount = computed(() => filteredAssignments.value.filter((item) => item.is_evaluated).length)
 const progressPercent = computed(() =>
   totalCount.value ? Math.round((evaluatedCount.value / totalCount.value) * 100) : 0,
 )
+
+watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
+  currentPage.value = 1
+})
 </script>
 
 <style scoped>
