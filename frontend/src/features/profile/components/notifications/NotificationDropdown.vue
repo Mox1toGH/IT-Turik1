@@ -274,6 +274,18 @@ const getRedirectUrl = (notification: Notification) => {
     }
     return '/news'
   }
+  if (type.startsWith('tournament_')) {
+    return '/tournaments'
+  }
+  if (type === 'jury_assignment_received') {
+    return '/evaluation'
+  }
+  if (type === 'shop_order_status_changed') {
+    return '/shop/orders'
+  }
+  if (type === 'points_balance_changed') {
+    return '/profile/transaction-history'
+  }
   return null
 }
 

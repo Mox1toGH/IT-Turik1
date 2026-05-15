@@ -32,7 +32,9 @@ from .views import (
     TournamentArchiveDetailView,
     TournamentArchiveListView,
     TournamentArchiveSubmissionsView,
+    TournamentCertificateDeliveryStatusView,
     MyCalendarView,
+    TournamentSendCertificatesView,
     ExportToGoogleCalendarView,
 )
 
@@ -81,6 +83,16 @@ urlpatterns = [
     path('submissions/<int:pk>/', SubmissionDetailView.as_view(), name='submission_detail'),
     path('<int:pk>/submissions/', TournamentSubmissionsView.as_view(), name='tournament_submissions'),
     path('<int:pk>/my-submissions/', TournamentMyTeamSubmissionsView.as_view(), name='tournament_my_submissions'),
+    path(
+        '<int:tournament_id>/certificates/delivery-status/',
+        TournamentCertificateDeliveryStatusView.as_view(),
+        name='tournament_certificate_delivery_status',
+    ),
+    path(
+        '<int:tournament_id>/send-certificates/',
+        TournamentSendCertificatesView.as_view(),
+        name='tournament_send_certificates',
+    ),
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
     path('my-calendar/', MyCalendarView.as_view(), name='my_calendar'),

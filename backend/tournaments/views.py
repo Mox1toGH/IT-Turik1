@@ -15,6 +15,9 @@ from backend.openapi import _400, _401, _403, _404
 from teams.models import Team
 from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.permissions import Permission, has_permission as user_has_permission
+from certificates.models import Certificate, CertificateTemplate
+from evaluation.leaderboard_service import get_tournament_leaderboard
+from notifications.services import NotificationService
 
 from .permissions import (
     CanCreateTournament,
@@ -80,6 +83,26 @@ def get_own_submissions_queryset(user):
         .distinct()
         .order_by('-updated_at')
     )
+
+
+def _get_team_participants(team):
+    user_map = {team.captain_id: team.captain} if team.captain_id else {}
+    for member in team.members.all():
+        user_map[member.id] = member
+    return list(user_map.values())
+
+
+def _get_tournament_participants(tournament):
+    registrations = (
+        TournamentTeamRegistration.objects.filter(tournament=tournament, is_active=True)
+        .select_related('team__captain')
+        .prefetch_related('team__members')
+    )
+    user_map = {}
+    for registration in registrations:
+        for user in _get_team_participants(registration.team):
+            user_map[user.id] = user
+    return list(user_map.values())
 
 
 class SyncStatusesMixin:
@@ -371,6 +394,19 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, generics.GenericAP
         )
         serializer.is_valid(raise_exception=True)
         registration = serializer.save()
+        registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .prefetch_related('team__members')
+            .get(pk=registration.pk)
+        )
+        NotificationService.notify(
+            recipients=_get_team_participants(registration.team),
+            event_type='tournament_team_registered',
+            context={
+                'team_name': registration.team.name,
+                'tournament_name': tournament.name,
+            },
+        )
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
 
 
@@ -396,6 +432,20 @@ class TournamentTeamLeaveView(SyncStatusesMixin, generics.GenericAPIView):
         )
         serializer.is_valid(raise_exception=True)
         registration = serializer.save()
+        registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .prefetch_related('team__members')
+            .get(pk=registration.pk)
+        )
+        recipients = [u for u in _get_team_participants(registration.team) if u.id != request.user.id]
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_team_unregistered',
+            context={
+                'team_name': registration.team.name,
+                'tournament_name': tournament.name,
+            },
+        )
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
 
 
@@ -438,14 +488,33 @@ class TournamentTeamRegistrationDisqualificationView(generics.GenericAPIView):
 
     def patch(self, request, pk, registration_pk):
         registration = get_object_or_404(
-            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team'),
+            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team', 'tournament'),
             pk=registration_pk,
         )
+        registration = TournamentTeamRegistration.objects.select_related(
+            'team__captain', 'tournament'
+        ).prefetch_related('team__members').get(pk=registration.pk)
         serializer = self.get_serializer(registration, data=request.data)
         serializer.is_valid(raise_exception=True)
+        previous_is_active = registration.is_active
         serializer.save()
 
         action = 'activated' if registration.is_active else 'disqualified'
+        event_type = None
+        if registration.is_active and not previous_is_active:
+            event_type = 'tournament_team_reactivated'
+        elif not registration.is_active:
+            event_type = 'tournament_team_disqualified'
+        if event_type:
+            NotificationService.notify(
+                recipients=_get_team_participants(registration.team),
+                event_type=event_type,
+                context={
+                    'team_name': registration.team.name,
+                    'tournament_name': registration.tournament.name,
+                    'reason': registration.disqualification_reason or 'No reason provided',
+                },
+            )
 
         return Response(
             DisqualificationResponseSerializer({
@@ -696,6 +765,14 @@ class RoundStartView(SyncStatusesMixin, generics.GenericAPIView):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
         start_round(round_obj)
         round_obj.refresh_from_db()
+        NotificationService.notify(
+            recipients=_get_tournament_participants(round_obj.tournament),
+            event_type='tournament_round_started',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': round_obj.tournament.name,
+            },
+        )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
@@ -716,8 +793,24 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, generics.GenericAPIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
+        tournament_name = round_obj.tournament.name
         mark_round_evaluated(round_obj)
         round_obj.refresh_from_db()
+        recipients = _get_tournament_participants(round_obj.tournament)
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_round_evaluated',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': tournament_name,
+            },
+        )
+        if round_obj.tournament.status == Tournament.STATUS_FINISHED:
+            NotificationService.notify(
+                recipients=recipients,
+                event_type='tournament_finished',
+                context={'tournament_name': tournament_name},
+            )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
@@ -834,6 +927,14 @@ class RoundCloseSubmissionsView(SyncStatusesMixin, generics.GenericAPIView):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
         close_submissions_on_round(round_obj)
         round_obj.refresh_from_db()
+        NotificationService.notify(
+            recipients=_get_tournament_participants(round_obj.tournament),
+            event_type='tournament_round_submissions_closed',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': round_obj.tournament.name,
+            },
+        )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
@@ -1116,6 +1217,166 @@ class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         )
 
 
+@extend_schema(
+    operation_id='getTournamentCertificateDeliveryStatus',
+    responses={
+        200: inline_serializer(
+            name='TournamentCertificateDeliveryStatusResponse',
+            fields={
+                'existing_count': OpenApiTypes.INT,
+                'missing_count': OpenApiTypes.INT,
+            },
+        ),
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentCertificateDeliveryStatusView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, tournament_id: int):
+        if not user_has_permission(request.user, Permission.MANAGE_PARTICIPANTS):
+            return Response({'detail': 'Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        registrations = (
+            TournamentTeamRegistration.objects
+            .filter(tournament=tournament, is_active=True, is_disqualified=False)
+            .select_related('team__captain')
+            .prefetch_related('team__team_members__user')
+        )
+
+        participant_user_ids = set()
+        for registration in registrations:
+            if registration.team.captain_id:
+                participant_user_ids.add(registration.team.captain_id)
+            participant_user_ids.update(
+                registration.team.team_members.values_list('user_id', flat=True)
+            )
+
+        if not participant_user_ids:
+            return Response({'existing_count': 0, 'missing_count': 0}, status=status.HTTP_200_OK)
+
+        existing_user_ids = set(
+            Certificate.objects.filter(
+                tournament=tournament,
+                user_id__in=participant_user_ids,
+            ).values_list('user_id', flat=True)
+        )
+        existing_count = len(existing_user_ids)
+        missing_count = len(participant_user_ids - existing_user_ids)
+
+        return Response(
+            {
+                'existing_count': existing_count,
+                'missing_count': missing_count,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    operation_id='sendTournamentCertificates',
+    request=inline_serializer(
+        name='SendTournamentCertificatesRequest',
+        fields={
+            'template_id': OpenApiTypes.INT,
+            'mode': OpenApiTypes.STR,
+        },
+    ),
+    responses={
+        200: inline_serializer(
+            name='SendTournamentCertificatesResponse',
+            fields={
+                'created_count': OpenApiTypes.INT,
+                'skipped_count': OpenApiTypes.INT,
+            },
+        ),
+        400: _400,
+        401: _401,
+        403: _403,
+        404: _404,
+    },
+)
+class TournamentSendCertificatesView(SyncStatusesMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, tournament_id: int):
+        if not user_has_permission(request.user, Permission.MANAGE_PARTICIPANTS):
+            return Response({'detail': 'Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+
+        if tournament.status != Tournament.STATUS_FINISHED:
+            return Response(
+                {'message': 'Certificates can be sent only after tournament is finished.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        template_id = request.data.get('template_id')
+        mode = (request.data.get('mode') or 'missing').strip().lower()
+
+        if not template_id:
+            return Response({'message': 'template_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if mode not in {'missing', 'resend'}:
+            return Response({'message': 'mode must be "missing" or "resend".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        template = get_object_or_404(CertificateTemplate, id=template_id)
+
+        registrations = (
+            TournamentTeamRegistration.objects
+            .filter(tournament=tournament, is_active=True, is_disqualified=False)
+            .select_related('team__captain')
+            .prefetch_related('team__team_members__user')
+        )
+
+        leaderboard_rank_by_team = {
+            row.get('team_id'): row.get('rank')
+            for row in get_tournament_leaderboard(tournament.id, request.user)
+        }
+
+        created_count = 0
+        skipped_count = 0
+        seen_participants: set[int] = set()
+
+        for registration in registrations:
+            team = registration.team
+            team_user_ids = set(team.team_members.values_list('user_id', flat=True))
+            if team.captain_id:
+                team_user_ids.add(team.captain_id)
+
+            for user_id in team_user_ids:
+                if not user_id or user_id in seen_participants:
+                    continue
+                seen_participants.add(user_id)
+
+                if mode == 'missing':
+                    already_exists = Certificate.objects.filter(
+                        tournament=tournament,
+                        user_id=user_id,
+                    ).exists()
+                    if already_exists:
+                        skipped_count += 1
+                        continue
+
+                rank = leaderboard_rank_by_team.get(team.id)
+                placement = f'Rank #{rank}' if rank else 'Participant'
+                Certificate.objects.create(
+                    user_id=user_id,
+                    team=team,
+                    tournament=tournament,
+                    placement=placement,
+                    template=template,
+                )
+                created_count += 1
+
+        return Response(
+            {
+                'created_count': created_count,
+                'skipped_count': skipped_count,
+            },
+            status=status.HTTP_200_OK,
 class ExportToGoogleCalendarView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ExportToGoogleCalendarRequestSerializer
