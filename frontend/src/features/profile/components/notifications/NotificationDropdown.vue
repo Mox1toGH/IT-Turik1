@@ -94,28 +94,6 @@
               </span>
               <span class="item-date">{{ formatDate(notification.created_at) }}</span>
             </div>
-            <span class="item-message">
-              <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                <a
-                  v-if="part.type === 'user'"
-                  :href="`/users/${part.id}`"
-                  class="user-link"
-                  @click.stop
-                >
-                  {{ part.text }}
-                </a>
-                <router-link
-                  v-else-if="part.type === 'team'"
-                  :to="`/teams/${part.id}`"
-                  class="user-link"
-                  @click.stop
-                >
-                  {{ part.text }}
-                </router-link>
-                <span v-else>{{ part.text }}</span>
-              </template>
-            </span>
-            <span class="item-date">{{ formatDate(notification.created_at) }}</span>
           </div>
         </div>
       </div>
