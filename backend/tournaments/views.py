@@ -1377,6 +1377,8 @@ class TournamentSendCertificatesView(SyncStatusesMixin, APIView):
                 'skipped_count': skipped_count,
             },
             status=status.HTTP_200_OK,
+        )
+    
 class ExportToGoogleCalendarView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ExportToGoogleCalendarRequestSerializer
