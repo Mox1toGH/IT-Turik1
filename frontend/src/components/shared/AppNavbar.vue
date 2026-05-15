@@ -42,7 +42,7 @@
               />
             </router-link>
 
-            <router-link v-if="isAdmin" to="/admin/role-codes" :class="navItemClass('admin')"
+            <router-link v-if="isAdmin" to="/admin" :class="navItemClass('admin')"
               >Admin</router-link
             >
 
