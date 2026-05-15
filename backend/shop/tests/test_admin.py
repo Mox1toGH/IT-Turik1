@@ -58,7 +58,6 @@ class ShopAdminTests(APITestCase):
                 'product_type': Product.TYPE_PHYSICAL,
                 'is_active': True,
             },
-            format='json',
         )
         self.assertEqual(create_product.status_code, status.HTTP_201_CREATED)
 
@@ -79,7 +78,6 @@ class ShopAdminTests(APITestCase):
                 'avatar_frame_id': self.avatar_frame.id,
                 'is_active': True,
             },
-            format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 

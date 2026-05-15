@@ -13,7 +13,7 @@ from accounts.models import User
 class GoogleAuthViewTests(APITestCase):
     url = reverse('google_login')
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_creates_user_and_returns_jwt(self, mocked_verify):
         mocked_verify.return_value = {
             'iss': 'https://accounts.google.com',
@@ -30,7 +30,7 @@ class GoogleAuthViewTests(APITestCase):
         self.assertTrue(created_user.is_active)
         self.assertEqual(created_user.full_name, 'New User')
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_activates_existing_user(self, mocked_verify):
         existing = User.objects.create_user(
             username='existing', email='existing@example.com', password='StrongPass123!', is_active=False,
@@ -47,7 +47,7 @@ class GoogleAuthViewTests(APITestCase):
         existing.refresh_from_db()
         self.assertTrue(existing.is_active)
 
-    @patch('accounts.views.id_token.verify_oauth2_token')
+    @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_rejects_unverified_email(self, mocked_verify):
         mocked_verify.return_value = {
             'iss': 'https://accounts.google.com',

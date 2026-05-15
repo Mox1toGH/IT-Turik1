@@ -86,7 +86,7 @@ class PointsModelTests(TestCase):
         # Transaction ordering check
         t1 = PointsTransaction.objects.create(user=self.user, amount=1, reason='1')
         t2 = PointsTransaction.objects.create(user=self.user, amount=2, reason='2')
-        txs = PointsTransaction.objects.filter(user=self.user).order_by('created_at')
+        txs = PointsTransaction.objects.filter(user=self.user).order_by('created_at', 'id')
         self.assertEqual(txs[0], t1)
         self.assertEqual(txs[1], t2)
 

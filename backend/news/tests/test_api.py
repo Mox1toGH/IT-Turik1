@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from accounts.models import User
-from notifications.models import Notification
+from notifications.models import NotificationDeliveryTask
 from news.models import NewsArticle
 
 class NewsApiTests(APITestCase):
@@ -138,4 +138,4 @@ class NewsApiTests(APITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertGreater(Notification.objects.filter(event_type='news_published').count(), 0)
+        self.assertGreater(NotificationDeliveryTask.objects.filter(event_type='news_published').count(), 0)

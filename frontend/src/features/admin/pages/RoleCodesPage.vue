@@ -2,15 +2,15 @@
   <section class="page-shell">
     <ui-card>
       <template #header>
-        <div>
-          <p class="section-eyebrow">Admin</p>
-          <h1 class="section-title">Activation Codes</h1>
-          <p class="section-subtitle">
-            Generate and monitor one-time registration codes for restricted roles.
-          </p>
-          <p class="admin-nav-link">
-            <router-link to="/admin/certificates">Go to Certificates Admin</router-link>
-          </p>
+        <div class="head">
+          <div>
+            <p class="section-eyebrow">Admin</p>
+            <h1 class="section-title">Activation Codes</h1>
+            <p class="section-subtitle">
+              Generate and monitor one-time registration codes for restricted roles.
+            </p>
+          </div>
+          <ui-button as-link to="/admin" variant="secondary">Back to Admin hub</ui-button>
         </div>
       </template>
 
@@ -182,7 +182,11 @@ const {
   isLoading,
   isLoadingError,
   error: getRoleCodesError,
-} = useListRoleActivationCodes(computed(() => ({ role: selectedRoleFilter.value })))
+} = useListRoleActivationCodes(
+  computed(() => ({
+    ...(selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {}),
+  })),
+)
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)
@@ -229,6 +233,13 @@ const formatDateTime = (value: string | number | Date) => {
 </script>
 
 <style scoped>
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
 .counts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -286,17 +297,12 @@ const formatDateTime = (value: string | number | Date) => {
   text-align: center;
 }
 
-.admin-nav-link {
-  margin: 0.4rem 0 0;
-}
-
-.admin-nav-link a {
-  font-weight: 700;
-  color: var(--brand-700);
-  text-decoration: none;
-}
-
 @media (max-width: 900px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .counts {
     grid-template-columns: 1fr;
   }
@@ -306,4 +312,3 @@ const formatDateTime = (value: string | number | Date) => {
   }
 }
 </style>
-
