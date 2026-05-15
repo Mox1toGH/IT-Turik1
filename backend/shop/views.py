@@ -140,7 +140,7 @@ class MyOrderHistoryView(generics.ListAPIView):
 class MyOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelMyOrder', responses={
+    @extend_schema(operation_id='cancelMyOrder', request=None, responses={
         200: OrderSerializer,
         400: _400,
         401: _401,
@@ -352,7 +352,7 @@ class AdminOrderStatusUpdateView(APIView):
 class AdminOrderCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(operation_id='cancelAdminOrder', responses={
+    @extend_schema(operation_id='cancelAdminOrder', request=None, responses={
         200: OrderSerializer,
         400: _400,
         401: _401,

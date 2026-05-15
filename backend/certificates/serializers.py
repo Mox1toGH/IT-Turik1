@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from typing import Optional
 from .models import Certificate, CertificateTemplate
 from drf_spectacular.utils import extend_schema_field
 from drf_spectacular.types import OpenApiTypes
@@ -12,7 +13,7 @@ class CertificateTemplateSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'is_default', 'image_url', 'created_at']
         read_only_fields = ['id', 'created_at']
 
-    def get_image_url(self, obj):
+    def get_image_url(self, obj) -> Optional[str]:
         request = self.context.get('request')
         if obj.image and request:
             return request.build_absolute_uri(obj.image.url)

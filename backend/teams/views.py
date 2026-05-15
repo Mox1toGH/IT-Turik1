@@ -9,7 +9,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, inline_serializer
 from rest_framework import serializers as drf_serializers
 
 from backend.permissions import is_platform_admin
@@ -176,19 +176,37 @@ class TeamDetailView(generics.RetrieveUpdateDestroyAPIView):
             return denied
         return super().destroy(request, *args, **kwargs)
 
-@extend_schema(methods=['PUT', 'PATCH'], operation_id='updateTeamBanner', responses={
-    200: TeamBannerSerializer,
-    400: _400,
-    401: _401,
-    403: _403,
-    404: _404,
-})
-@extend_schema(methods=['DELETE'], operation_id='deleteTeamBanner', responses={
-    200: TeamBannerSerializer,
-    401: _401,
-    403: _403,
-    404: _404,
-})
+@extend_schema_view(
+    put=extend_schema(
+        operation_id='teamBannerUpdate',
+        responses={
+            200: TeamBannerSerializer,
+            400: _400,
+            401: _401,
+            403: _403,
+            404: _404,
+        },
+    ),
+    patch=extend_schema(
+        operation_id='teamBannerPartialUpdate',
+        responses={
+            200: TeamBannerSerializer,
+            400: _400,
+            401: _401,
+            403: _403,
+            404: _404,
+        },
+    ),
+    delete=extend_schema(
+        operation_id='deleteTeamBanner',
+        responses={
+            200: TeamBannerSerializer,
+            401: _401,
+            403: _403,
+            404: _404,
+        },
+    ),
+)
 class TeamBannerView(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAuthenticated, IsNotPlatformAdminOrReadOnly]
     serializer_class = TeamBannerSerializer

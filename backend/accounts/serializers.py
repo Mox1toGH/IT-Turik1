@@ -1,6 +1,7 @@
 import re
 import secrets
 import string
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
@@ -177,7 +178,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams', 'is_staff')
 
     @extend_schema_field(serializers.URLField(allow_null=True))
-    def get_avatar_frame_url(self, obj):
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
         from inventory.models import UserInventory
 
         equipped_item = (
@@ -305,7 +306,7 @@ class TeamUserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
 
-    def get_avatar_frame_url(self, obj):
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
         from inventory.models import UserInventory
 
         equipped_item = (
