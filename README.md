@@ -103,8 +103,23 @@ python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
+```
+
+#### Варіант A: з WebSocket (ASGI, рекомендовано для realtime notifications)
+
+```powershell
+daphne -b 0.0.0.0 -p 8000 backend.asgi:application
+```
+
+Використовуй цей режим, якщо потрібні realtime події через `/ws/notifications/`.
+
+#### Варіант B: без WebSocket (класичний Django runserver)
+
+```powershell
 python manage.py runserver
 ```
+
+Використовуй цей режим для REST/OpenAPI. WebSocket-нотифікації в цьому режимі недоступні.
 
 Backend буде доступний на `http://localhost:8000`.
 
@@ -138,7 +153,7 @@ cd frontend
 npm run lint
 ```
 
-```
+
 
 ## 5. Генерація API (OpenAPI & Orval)
 

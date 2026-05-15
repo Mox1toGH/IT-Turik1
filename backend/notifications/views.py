@@ -13,6 +13,11 @@ from backend.openapi import _400, _401, _404
 from .models import Notification, NotificationConfig, UserNotificationSettings
 from .serializers import NotificationSerializer
 from .config import EVENTS
+from .realtime import (
+    emit_read_status_changed,
+    emit_unread_count_updated,
+    emit_notifications_deleted,
+)
 
 from .serializers import (
     NotificationSerializer,
@@ -66,15 +71,21 @@ class NotificationMarkReadView(generics.GenericAPIView):
     serializer_class = DetailResponseSerializer
 
     def post(self, request, pk):
-        updated = Notification.objects.filter(
+        notification = Notification.objects.filter(
             id=pk, recipient=request.user, is_read=False,
-        ).update(is_read=True)
+        ).first()
 
-        if updated == 0:
+        if notification is None:
             return Response(
                 DetailResponseSerializer({'detail': 'Notification not found or already read.'}).data,
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+        emit_read_status_changed(request.user.id, [notification.id], True)
+        count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        emit_unread_count_updated(request.user.id, count)
         return Response(DetailResponseSerializer({'detail': 'Marked as read.'}).data, status=status.HTTP_200_OK)
 
 
@@ -91,7 +102,13 @@ class NotificationMarkAllReadView(generics.GenericAPIView):
     serializer_class = MarkedCountResponseSerializer
 
     def post(self, request):
-        count = Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        unread_qs = Notification.objects.filter(recipient=request.user, is_read=False)
+        notification_ids = list(unread_qs.values_list('id', flat=True))
+        count = unread_qs.update(is_read=True)
+        if notification_ids:
+            emit_read_status_changed(request.user.id, notification_ids, True)
+        unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        emit_unread_count_updated(request.user.id, unread_count)
         return Response(MarkedCountResponseSerializer({'marked': count}).data, status=status.HTTP_200_OK)
 
 
@@ -126,12 +143,17 @@ class NotificationDeleteView(generics.GenericAPIView):
     serializer_class = DetailResponseSerializer
 
     def delete(self, request, pk):
-        deleted_count, _ = Notification.objects.filter(id=pk, recipient=request.user).delete()
-        if deleted_count == 0:
+        deleted_notification = Notification.objects.filter(id=pk, recipient=request.user).first()
+        if deleted_notification is None:
             return Response(
                 DetailResponseSerializer({'detail': 'Notification not found.'}).data,
                 status=status.HTTP_404_NOT_FOUND,
             )
+        deleted_id = deleted_notification.id
+        deleted_notification.delete()
+        emit_notifications_deleted(request.user.id, [deleted_id])
+        unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        emit_unread_count_updated(request.user.id, unread_count)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -148,7 +170,13 @@ class NotificationDeleteAllView(generics.GenericAPIView):
     serializer_class = DeletedCountResponseSerializer
 
     def delete(self, request):
-        deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
+        notifications_qs = Notification.objects.filter(recipient=request.user)
+        deleted_ids = list(notifications_qs.values_list('id', flat=True))
+        deleted_count, _ = notifications_qs.delete()
+        if deleted_ids:
+            emit_notifications_deleted(request.user.id, deleted_ids)
+        unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        emit_unread_count_updated(request.user.id, unread_count)
         return Response(DeletedCountResponseSerializer({'deleted': deleted_count}).data, status=status.HTTP_200_OK)
 
 
