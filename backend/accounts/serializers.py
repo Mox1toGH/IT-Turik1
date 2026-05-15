@@ -579,3 +579,15 @@ class RoleActivationCodeListResponseSerializer(serializers.Serializer):
 class RoleActivationCodeGenerateResponseSerializer(serializers.Serializer):
     created = RoleActivationCodeSerializer(many=True)
     active_counts = ActiveCountsSerializer()
+
+
+class GoogleCalendarStatusSerializer(serializers.Serializer):
+    connected = serializers.BooleanField()
+
+
+class GoogleCalendarConnectResponseSerializer(serializers.Serializer):
+    auth_url = serializers.URLField()
+
+
+class GoogleCalendarCallbackRequestSerializer(serializers.Serializer):
+    code = serializers.CharField()

@@ -45,6 +45,11 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '')
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '')
+GOOGLE_CALENDAR_REDIRECT_URI = os.getenv(
+    'GOOGLE_CALENDAR_REDIRECT_URI',
+    'http://localhost:5173/calendar/google-callback',
+)
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-please-override-this-in-env')
 DEBUG = env_bool('DJANGO_DEBUG', True)
