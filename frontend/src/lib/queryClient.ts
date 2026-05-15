@@ -1,4 +1,5 @@
 import { MutationCache, QueryClient } from '@tanstack/vue-query'
+import { connectNotificationSocket } from '@/lib/notificationSocket'
 
 import {
   getListTeamsQueryKey,
@@ -427,6 +428,7 @@ export const queryClient = new QueryClient({
         const d = data as { access?: string; refresh?: string }
         if (d.access) localStorage.setItem('access', d.access)
         if (d.refresh) localStorage.setItem('refresh', d.refresh)
+        connectNotificationSocket(queryClient)
       }
 
       const entries = MUTATION_INVALIDATION_MAP[key] ?? []

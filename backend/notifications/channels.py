@@ -7,6 +7,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 
 from .models import Notification
+from .realtime import emit_notification_created, emit_unread_count_updated
 
 logger = logging.getLogger(__name__)
 
@@ -125,12 +126,15 @@ class SystemChannel(NotificationChannel):
     """Saves a Notification record in the database (in-site notification)."""
 
     def send(self, *, recipient, title, message, event_type, email_subject=None):
-        Notification.objects.create(
+        notification = Notification.objects.create(
             recipient=recipient,
             event_type=event_type,
             title=title,
             message=message,
         )
+        emit_notification_created(notification)
+        unread_count = Notification.objects.filter(recipient=recipient, is_read=False).count()
+        emit_unread_count_updated(recipient.id, unread_count)
 
 
 class EmailChannel(NotificationChannel):
