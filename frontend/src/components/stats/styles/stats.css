@@ -1,15 +1,32 @@
-:root {
-  --stats-bg: #1a1a1a;
-  --stats-card: #2a2a2a;
-  --stats-border: rgba(255, 255, 255, 0.08);
+:root,
+:root[data-theme='light'] {
+  --stats-bg: color-mix(in srgb, var(--card) 94%, var(--secondary));
+  --stats-card: var(--card);
+  --stats-border: var(--line-soft);
   --stats-accent: #4caf50;
   --stats-accent-soft: rgba(76, 175, 80, 0.2);
-  --stats-secondary: #444444;
-  --stats-title: #ffffff;
-  --stats-text: #f5f5f5;
-  --stats-muted: #aaaaaa;
-  --stats-axis: #888888;
-  --stats-grid-line: rgba(255, 255, 255, 0.06);
+  --stats-secondary: var(--secondary);
+  --stats-title: var(--foreground);
+  --stats-text: var(--card-foreground);
+  --stats-muted: var(--muted-foreground);
+  --stats-axis: color-mix(in srgb, var(--muted-foreground) 88%, var(--foreground));
+  --stats-grid-line: color-mix(in srgb, var(--line-soft) 85%, transparent);
+  --stats-track: color-mix(in srgb, var(--muted-foreground) 20%, transparent);
+  --stats-marker-stroke: var(--card);
+}
+
+:root[data-theme='dark'] {
+  --stats-bg: color-mix(in srgb, var(--card) 88%, #000);
+  --stats-card: color-mix(in srgb, var(--card) 92%, #000);
+  --stats-border: var(--line-soft);
+  --stats-secondary: var(--secondary);
+  --stats-title: var(--foreground);
+  --stats-text: var(--card-foreground);
+  --stats-muted: var(--muted-foreground);
+  --stats-axis: color-mix(in srgb, var(--muted-foreground) 86%, white);
+  --stats-grid-line: color-mix(in srgb, var(--line-soft) 80%, transparent);
+  --stats-track: color-mix(in srgb, white 14%, transparent);
+  --stats-marker-stroke: color-mix(in srgb, var(--card) 80%, white);
 }
 
 .stats-shell {

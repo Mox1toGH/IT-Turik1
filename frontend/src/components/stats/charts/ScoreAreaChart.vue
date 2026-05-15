@@ -17,7 +17,7 @@
         :cy="point.y"
         :r="hovered === idx ? 5 : 3.5"
         fill="var(--stats-accent)"
-        stroke="white"
+        stroke="var(--stats-marker-stroke)"
         :stroke-width="hovered === idx ? 1.6 : 0"
         style="cursor: pointer"
         @mouseenter="hovered = idx"
