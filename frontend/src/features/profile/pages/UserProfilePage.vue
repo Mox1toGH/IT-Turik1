@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ error?.code }})</p>
+          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
         </div>
       </template>
 
@@ -17,6 +17,14 @@
           </div>
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
         </div>
+        <user-avatar
+          :avatar="user?.avatar"
+          :avatar-frame-url="user?.avatar_frame_url"
+          :username="user?.username || 'user'"
+          :full-name="user?.full_name || ''"
+          :size="108"
+          :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+        />
       </template>
 
       <div class="details">
@@ -99,6 +107,20 @@
         </ui-card>
         <ui-card class="field-card">
           <template #header>
+            <span class="card-text-title">Points balance</span>
+          </template>
+          <ui-skeleton-loader :loading="isAdminPointsLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" />
+            </template>
+
+            <strong class="item-value value-wrap">{{
+              isAdmin ? (adminPointsBalance?.balance ?? 0) : '-'
+            }}</strong>
+          </ui-skeleton-loader>
+        </ui-card>
+        <ui-card class="field-card">
+          <template #header>
             <span class="card-text-title">Teams</span>
           </template>
 
@@ -127,7 +149,40 @@
         </ui-card>
       </div>
 
+      <ui-card v-if="isAdmin" class="manage-card">
+        <template #header>
+          <span class="card-text-title">Manage points balance</span>
+        </template>
+        <div class="manage-grid">
+          <label class="field">
+            <span class="field-label">Action</span>
+            <ui-select
+              v-model="operation"
+              :options="operationOptions"
+              placeholder="Select action"
+              min-width="100%"
+            />
+          </label>
+          <label class="field" v-if="operation !== 'reset'">
+            <span class="field-label">Amount</span>
+            <ui-input v-model="amount" type="number" min="0" />
+          </label>
+          <label class="field reason-field">
+            <span class="field-label">Reason</span>
+            <ui-input v-model="reason" />
+          </label>
+        </div>
+        <div class="manage-actions">
+          <ui-button :disabled="isSubmitting || !reason.trim()" @click="submitPointsUpdate">
+            Apply
+          </ui-button>
+        </div>
+      </ui-card>
+
       <div class="actions">
+        <ui-button v-if="isAdmin" :disabled="isLoading" @click="goToTransactions"
+          >Transaction History</ui-button
+        >
         <ui-button :disabled="isLoading" @click="goBack">Back</ui-button>
       </div>
     </ui-card>
@@ -135,33 +190,73 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useUserById } from '@/api/queries/accounts'
+import UiInput from '@/components/ui/UiInput.vue'
+import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { parseApiError } from '@/api/errors'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useGetUser, useGetUserProfile } from '@/api/accounts/accounts'
+import { useNotification } from '@/composables/useNotification'
+import { formatDate } from '@/lib/date'
+import { useGetAdminUserPointsBalance, useModifyUserPointsBalance } from '@/api/points/points'
 
 const route = useRoute()
 const router = useRouter()
+const userId = computed(() => Number(route.params.id))
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUser(userId)
+const { data: viewer } = useGetUserProfile()
+const isAdmin = computed(() => viewer.value?.role === 'admin')
+const { showNotification } = useNotification()
+
 const {
-  data: user,
-  isLoading,
-  isLoadingError,
-  error: profileError,
-} = useUserById(computed(() => Number(route.params.id)))
-const error = computed(() => parseApiError(profileError.value))
+  data: adminPointsBalance,
+  isLoading: isAdminPointsLoading,
+  refetch: refetchAdminBalance,
+} = useGetAdminUserPointsBalance(userId, { query: { enabled: isAdmin } })
+
+const { mutateAsync: modifyUserPoints, isPending: isSubmitting } = useModifyUserPointsBalance()
+const operation = ref<'add' | 'subtract' | 'set' | 'reset'>('add')
+const amount = ref<number>(0)
+const reason = ref('')
+const operationOptions: Array<{ value: 'add' | 'subtract' | 'set' | 'reset'; label: string }> = [
+  { value: 'add', label: 'Add points' },
+  { value: 'subtract', label: 'Subtract points' },
+  { value: 'set', label: 'Set exact balance' },
+  { value: 'reset', label: 'Reset to zero' },
+]
 
 const goBack = () => {
   router.back()
 }
 
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
+const goToTransactions = () => {
+  router.push(`/users/${userId.value}/points`)
+}
+
+const submitPointsUpdate = async () => {
+  if (!isAdmin.value || !userId.value) return
+
+  try {
+    await modifyUserPoints({
+      userId: userId.value,
+      data: {
+        operation: operation.value,
+        amount: amount.value,
+        reason: reason.value,
+      },
+    })
+    await refetchAdminBalance()
+    reason.value = ''
+    amount.value = 0
+    showNotification('Points balance updated.', 'success')
+  } catch (error) {
+    showNotification((error as Error)?.message || 'Failed to update points balance.', 'error')
+  }
 }
 </script>
 
@@ -248,6 +343,37 @@ const formatDate = (date: Date) => {
   flex-wrap: wrap;
 }
 
+.manage-card {
+  margin-top: 1rem;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.manage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  color: var(--color-gray-500);
+  font-weight: 600;
+}
+
+.reason-field {
+  grid-column: 1 / -1;
+}
+
+.manage-actions {
+  margin-top: 0.8rem;
+}
+
 .danger-zone {
   margin-top: 1.4rem;
   padding-top: 1rem;
@@ -288,6 +414,10 @@ const formatDate = (date: Date) => {
 
   .actions {
     flex-direction: column;
+  }
+
+  .manage-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

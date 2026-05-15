@@ -1,12 +1,11 @@
-import type { LoginResponse } from '@/api/services/accounts/types'
-import { accountKeys } from '@/api/queries/keys'
+import { getGetUserProfileQueryKey } from '@/api/accounts/accounts'
 import { useQueryClient } from '@tanstack/vue-query'
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', () => {
   const queryClient = useQueryClient()
 
-  function setTokens(data: LoginResponse) {
+  function setTokens(data: { access: string; refresh: string; onboarding_required?: boolean }) {
     localStorage.setItem('access', data.access)
     localStorage.setItem('refresh', data.refresh)
 
@@ -33,7 +32,7 @@ export const useUserStore = defineStore('user', () => {
 
   function logout() {
     removeTokens()
-    queryClient.resetQueries({ queryKey: accountKeys.profile() })
+    queryClient.resetQueries({ queryKey: getGetUserProfileQueryKey() })
   }
 
   return {

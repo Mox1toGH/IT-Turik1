@@ -2,7 +2,7 @@
   <ui-card :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 200px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ error?.code }})</p>
+        <p>Error while fetching invitations (code: {{ teamsError?.code }})</p>
       </div>
     </template>
 
@@ -62,9 +62,9 @@
           <template #footer>
             <div class="actions">
               <ui-button
+                v-if="team.can_request_to_join && user?.role === 'team'"
                 size="sm"
                 variant="secondary"
-                v-if="team.can_request_to_join"
                 style="width: 100%"
                 :disabled="loadingIds.has(team.id)"
                 @click="sendJoinRequest(team.id)"
@@ -110,34 +110,36 @@
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useNotification } from '@/composables/useNotification'
-import type { TeamId } from '@/api/dbTypes'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { computed, ref } from 'vue'
-import { useSendJoinRequest, useTeams } from '@/api/queries/teams'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { useProfile } from '@/api/queries/accounts'
-import { parseApiError } from '@/api/errors'
 import { truncateText } from '@/lib/utils'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useCreateTeamJoinRequest,
+  useListTeams,
+  type ListTeamsQueryResult,
+} from '@/api/teams/teams'
 
 const OTHER_TEAMS_PER_PAGE = 8
 
-const { data: user } = useProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useTeams()
-const error = computed(() => parseApiError(teamsError.value))
+type Team = ListTeamsQueryResult[number]
+
+const { data: user } = useGetUserProfile()
+const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useListTeams()
 
 const { showNotification } = useNotification()
 
 const otherPage = ref(1)
-const loadingIds = ref<Set<TeamId>>(new Set())
+const loadingIds = ref<Set<number>>(new Set())
 
-const isCaptain = (team: GetTeamInfoResponse) => team.captain_id === user.value?.id
-const captainName = (team: GetTeamInfoResponse) => {
+const isCaptain = (team: Team) => team.captain_id === user.value?.id
+const captainName = (team: Team) => {
   const captain = team.members.find((member) => member.id === team.captain_id)
   return captain?.username || `User #${team.captain_id}`
 }
-const isAcceptedMember = (team: GetTeamInfoResponse) => team.is_member || isCaptain(team)
+const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 
 const otherTeams = computed(() => teams.value?.filter((team) => !isAcceptedMember(team)))
 const otherPages = computed(() =>
@@ -148,21 +150,18 @@ const otherTeamsPageItems = computed(() => {
   return otherTeams.value?.slice(from, from + OTHER_TEAMS_PER_PAGE)
 })
 
-const { mutate: sendJoinRequestMutate } = useSendJoinRequest()
+const { mutate: sendJoinRequestMutate } = useCreateTeamJoinRequest()
 
-const sendJoinRequest = (teamId: TeamId) => {
+const sendJoinRequest = (teamId: number) => {
   loadingIds.value.add(teamId)
   sendJoinRequestMutate(
-    { id: teamId },
+    { id: teamId, data: { detail: '' } },
     {
       onSuccess: () => {
         showNotification('Join request sent.', 'success')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to send join request.' : 'Unable to connect to server.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
       onSettled: () => {
         loadingIds.value.delete(teamId)

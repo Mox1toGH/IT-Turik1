@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f2ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0062ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Outer Frame -->
+  <rect x="5" y="5" width="190" height="190" rx="20" stroke="url(#neonGradient)" stroke-width="8" filter="url(#glow)" />
+  <!-- Corner Accents -->
+  <path d="M5 40V25C5 13.9543 13.9543 5 25 5H40" stroke="#00f2ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M160 5H175C186.046 5 195 13.9543 195 25V40" stroke="#00f2ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M195 160V175C195 186.046 186.046 195 175 195H160" stroke="#0062ff" stroke-width="4" stroke-linecap="round" />
+  <path d="M40 195H25C13.9543 195 5 186.046 5 175V160" stroke="#0062ff" stroke-width="4" stroke-linecap="round" />
+</svg>

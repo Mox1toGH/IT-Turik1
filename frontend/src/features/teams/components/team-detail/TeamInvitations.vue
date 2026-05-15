@@ -59,13 +59,22 @@
             :key="`invitation-pending-${invitation.id}`"
             class="card-item"
           >
-            <div>
+            <div class="team-invitations-user">
+              <user-avatar
+                :avatar="invitation.user.avatar"
+                :avatar-frame-url="invitation.user.avatar_frame_url"
+                :username="invitation.user.username"
+                :full-name="invitation.user.full_name"
+                :size="40"
+              />
+              <div>
               <div style="display: flex; justify-content: space-between">
                 <p class="team-invitations-name">{{ invitation.user.username }}</p>
                 <ui-badge class>invited</ui-badge>
               </div>
 
               <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
+              </div>
             </div>
           </ui-card>
 
@@ -75,12 +84,23 @@
             class="card-item"
           >
             <template #header>
-              <div style="display: flex; justify-content: space-between">
-                <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
-                <div v-else style="display: flex; gap: 4px">
-                  <ui-badge variant="red">Declined</ui-badge>
-                  <ui-badge>Invatation</ui-badge>
+              <div class="team-invitations-user">
+                <user-avatar
+                  :avatar="invitation.user.avatar"
+                  :avatar-frame-url="invitation.user.avatar_frame_url"
+                  :username="invitation.user.username"
+                  :full-name="invitation.user.full_name"
+                  :size="40"
+                />
+                <div style="flex: 1">
+                  <div style="display: flex; justify-content: space-between">
+                    <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                    <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
+                    <div v-else style="display: flex; gap: 4px">
+                      <ui-badge variant="red">Declined</ui-badge>
+                      <ui-badge>Invatation</ui-badge>
+                    </div>
+                  </div>
                 </div>
               </div>
             </template>
@@ -108,40 +128,35 @@
 </template>
 
 <script setup lang="ts">
-import type { Invitation, TeamId, UserId } from '@/api/dbTypes'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useResendInvitation, useTeamInvitations } from '@/api/queries/teams'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { parseApiError } from '@/api/errors'
+import { useInviteMemberToTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
+import type { Team, TeamInvitation } from '@/api/.ts.schemas'
 
 interface Props {
-  teamId: TeamId
+  teamId: number
   searchFilter?: string
   isCaptain?: boolean
 }
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: GetTeamInfoResponse): void
+  (e: 'updateTeam', newTeamValue: Team): void
 }>()
 
 const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
-const {
-  data: invitations,
-  isLoading,
-  isLoadingError,
-} = useTeamInvitations({ teamId: props.teamId })
+const { data: invitations, isLoading, isLoadingError } = useListTeamInvitationsByTeam(props.teamId)
 
 const uniqueInvitations = computed(() => {
-  const byUserId = new Map<UserId, Invitation>()
+  const byUserId = new Map<number, TeamInvitation>()
   for (const inv of invitations.value ?? []) {
     const uid = inv.user.id
 
@@ -171,21 +186,20 @@ const filteredDeclinedInvitations = computed(() =>
     .filter((i) => matches([i.user.username, i.user.email, i.user.full_name])),
 )
 
-const loadingInvitationIds = ref<Set<UserId>>(new Set())
-const { mutate: resendInvitationMutate } = useResendInvitation()
+const loadingInvitationIds = ref<Set<number>>(new Set())
+const { mutate: resendInvitationMutate } = useInviteMemberToTeam()
 
-const resendInvitation = (userId: UserId) => {
+const resendInvitation = (userId: number) => {
   loadingInvitationIds.value.add(userId)
 
   resendInvitationMutate(
-    { teamId: props.teamId, body: { user_id: userId } },
+    { id: props.teamId, data: { user_id: userId } },
     {
       onSuccess: (data) => {
         emit('updateTeam', data)
       },
-      onError: (err) => {
-        const parsedError = parseApiError(err)
-        showNotification(parsedError?.message, 'error')
+      onError: (error) => {
+        showNotification(error?.message, 'error')
       },
       onSettled: () => {
         loadingInvitationIds.value.delete(userId)
@@ -226,11 +240,19 @@ const resendInvitation = (userId: UserId) => {
 }
 
 .team-invitations-name {
+  margin: 0;
   font-weight: 700;
 }
 
 .team-invitations-email {
+  margin: 0;
   font-size: 0.84rem;
+}
+
+.team-invitations-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .row-actions {

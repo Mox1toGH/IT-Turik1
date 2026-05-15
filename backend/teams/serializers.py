@@ -9,6 +9,7 @@ from accounts.models import User
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from .services import assert_team_not_in_active_tournament, get_active_tournament_registration
 
+from drf_spectacular.utils import extend_schema_field
 
 def clear_invitation_states_for_member(*, team, user=None, user_id=None):
     target_user_id = user_id or getattr(user, 'id', None)
@@ -86,9 +87,31 @@ def get_user_join_request_status(*, team, user):
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj):
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+
+        url = equipped_item.product.effective_digital_asset_url
+        if not url:
+            return None
+
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
@@ -133,7 +156,6 @@ class TeamSerializer(serializers.ModelSerializer):
     )
     members = TeamMemberSerializer(many=True, read_only=True)
     is_member = serializers.SerializerMethodField()
-    is_captain = serializers.SerializerMethodField()
     can_request_to_join = serializers.SerializerMethodField()
     is_in_active_tournament = serializers.SerializerMethodField()
 
@@ -148,13 +170,18 @@ class TeamSerializer(serializers.ModelSerializer):
             'organization',
             'contact_telegram',
             'contact_discord',
+            'banner',
             'members',
             'is_member',
-            'is_captain',
             'can_request_to_join',
             'is_in_active_tournament',
             'member_ids',
         )
+        read_only_fields = ('banner',)
+        extra_kwargs = {
+            'contact_telegram': {'required': False, 'allow_blank': True},
+            'contact_discord': {'required': False, 'allow_blank': True},
+        }
 
     def _request_user(self):
         request = self.context.get('request')
@@ -167,16 +194,19 @@ class TeamSerializer(serializers.ModelSerializer):
             return False
         return any(member.id == user.id for member in obj.members.all())
 
+    @extend_schema_field(bool)
     def get_is_member(self, obj):
         user = self._request_user()
         if not user:
             return False
         return self._is_member_for_user(obj, user)
-
+    
+    @extend_schema_field(bool)
     def get_is_captain(self, obj):
         user = self._request_user()
         return bool(user) and obj.captain_id == user.id
 
+    @extend_schema_field(bool)
     def get_can_request_to_join(self, obj):
         user = self._request_user()
         if not user or not obj.is_public:
@@ -191,6 +221,7 @@ class TeamSerializer(serializers.ModelSerializer):
         join_request_status = get_user_join_request_status(team=obj, user=user)
         return join_request_status != TeamJoinRequest.STATUS_PENDING
 
+    @extend_schema_field(bool)
     def get_is_in_active_tournament(self, obj):
         return get_active_tournament_registration(obj) is not None
 
@@ -255,3 +286,16 @@ class TeamSerializer(serializers.ModelSerializer):
                 invite_user_to_team(team=instance, user=user, invited_by=request_user)
 
         return instance
+
+class TeamBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ('banner',)
+
+class TeamDetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class JoinRequestDetailResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+

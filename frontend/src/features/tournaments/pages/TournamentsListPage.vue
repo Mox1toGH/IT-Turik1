@@ -3,21 +3,29 @@
     <ui-card :is-error="isError">
       <template #header>
         <div class="tournaments-header">
-          <h1 class="tournaments-title">Tournaments list</h1>
-          <ui-button
-            v-if="user?.role === 'admin'"
-            size="sm"
-            asLink
-            to="/tournaments/create"
-            class="create-new-btn"
-            >Create new</ui-button
-          >
+          <div class="title-row">
+            <tournaments-list-title-icon class="title-icon" />
+            <h1 class="tournaments-title">Tournaments list</h1>
+          </div>
+          <div class="header-actions">
+            <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary"
+              >Archive</ui-button
+            >
+            <ui-button
+              v-if="user?.role === 'admin'"
+              size="sm"
+              asLink
+              to="/tournaments/create"
+              class="create-new-btn"
+              >Create new</ui-button
+            >
+          </div>
         </div>
       </template>
 
       <template #error>
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching tournaments (code: {{ error?.code }})</p>
+          <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
         </div>
       </template>
 
@@ -87,17 +95,27 @@
                   :key="tournament.id"
                   class="tournament-card"
                 >
-                  <template #header>
+                  <div
+                    class="tournament-top"
+                    :class="{ 'tournament-top--with-banner': Boolean(tournament.banner) }"
+                    :style="
+                      tournament.banner
+                        ? {
+                            backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})`,
+                          }
+                        : {}
+                    "
+                  >
                     <h3 class="tounament-title" :title="tournament.name">
                       {{ truncateText(tournament.name, 80) }}
                     </h3>
-                  </template>
 
-                  <div class="tournament-info">
                     <p class="tournaments-description" :title="tournament.description">
                       {{ truncateText(tournament.description, 200) }}
                     </p>
+                  </div>
 
+                  <div class="tournament-info">
                     <div class="tournaments-meta">
                       <div class="tournaments-date">
                         <p>Start date:</p>
@@ -165,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -174,13 +192,12 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
-import { parseApiError } from '@/api/errors'
+import TournamentsListTitleIcon from '@/icons/TournamentsListTitleIcon.vue'
 import { truncateText } from '@/lib/utils'
-import { useProfile } from '@/api/queries/accounts'
-import { useTournaments } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
-import type { GetTournamentsArgs } from '@/api/services/tournaments/types'
-import type { TournamentStatus } from '@/api/dbTypes'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { ListTournamentsParams, StatusD67Enum } from '@/api/.ts.schemas'
+import { useListTournaments } from '@/api/tournaments/tournaments'
 
 const statusOptions = computed(() => {
   const base = [
@@ -198,26 +215,28 @@ const pageSize = 12
 const currentPage = ref(1)
 const searchInput = ref('')
 const searchQuery = ref('')
-const statusFilter = ref<NonNullable<GetTournamentsArgs['status']>>([])
+const statusFilter = ref<NonNullable<StatusD67Enum[]>>([])
 
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
+const params = computed(() => ({
+  page: currentPage.value,
+  searchQuery: searchQuery.value,
+  pageSize,
+  status: statusFilter.value,
+})) as unknown as Ref<ListTournamentsParams>
 const {
   data,
   isLoading,
   isFetching,
   error: tournamentsError,
   isError,
-} = useTournaments(
-  { page: currentPage, searchQuery, pageSize, status: statusFilter },
-  {
-    staleTime: 1000 * 60 * 5,
-  },
-)
-const error = computed(() => parseApiError(tournamentsError.value))
+} = useListTournaments(params, {
+  query: { staleTime: 1000 * 60 * 5 },
+})
 
 const pageItems = computed(() => data.value?.data ?? [])
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / pageSize))
-const statusBadgeVariant = (status: TournamentStatus) => {
+const statusBadgeVariant = (status?: StatusD67Enum) => {
   if (status === 'draft') return 'gray'
   if (status === 'finished') return 'gray'
   if (status === 'running') return 'green'
@@ -269,6 +288,23 @@ const onStatusChange = () => {
   align-items: center;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.title-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  opacity: 0.86;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .filters-wrapper {
   margin-bottom: 1rem;
   display: flex;
@@ -302,6 +338,22 @@ const onStatusChange = () => {
   word-break: break-word;
 }
 
+.tournament-top {
+  border-radius: 12px;
+  padding: 12px;
+  margin: -4px -4px 12px;
+  background: color-mix(in srgb, var(--muted) 90%, #000 10%);
+  background-size: cover;
+  background-position: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tournament-top--with-banner {
+  color: #fff;
+}
+
 .tournament-info {
   display: flex;
   flex-direction: column;
@@ -310,7 +362,7 @@ const onStatusChange = () => {
 
 .tournaments-description {
   flex: 1;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   line-height: 1.5;
   word-break: break-word;
 }

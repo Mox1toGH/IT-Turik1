@@ -1,0 +1,82 @@
+
+> test@0.0.0 type-check
+> vue-tsc --build
+
+src/components/shared/AppNavbar.vue(37,18): error TS2322: Type 'readonly UserTeam[]' is not assignable to type 'string'.
+src/components/stats/charts/ScoreAreaChart.vue(27,41): error TS2532: Object is possibly 'undefined'.
+src/components/stats/charts/ScoreAreaChart.vue(27,68): error TS2532: Object is possibly 'undefined'.
+src/components/stats/charts/ScoreAreaChart.vue(28,12): error TS2532: Object is possibly 'undefined'.
+src/components/stats/charts/ScoreAreaChart.vue(28,45): error TS2532: Object is possibly 'undefined'.
+src/features/home/pages/HomePage.vue(21,20): error TS2322: Type 'User | undefined' is not assignable to type 'ProfileLike | null | undefined'.
+  Type 'User' is not assignable to type 'ProfileLike'.
+    Types of property 'teams' are incompatible.
+      Type 'string' is not assignable to type 'readonly TeamRef[]'.
+src/features/home/pages/HomePage.vue(177,60): error TS2339: Property 'map' does not exist on type 'string | never[]'.
+  Property 'map' does not exist on type 'string'.
+src/features/home/pages/HomePage.vue(177,65): error TS7006: Parameter 'team' implicitly has an 'any' type.
+src/features/home/pages/HomePage.vue(179,68): error TS2339: Property 'map' does not exist on type 'string | never[]'.
+  Property 'map' does not exist on type 'string'.
+src/features/home/pages/HomePage.vue(179,73): error TS7006: Parameter 'team' implicitly has an 'any' type.
+src/features/profile/pages/ProfilePage.vue(22,16): error TS2322: Type 'readonly UserTeam[] | undefined' is not assignable to type 'string | null | undefined'.
+  Type 'readonly UserTeam[]' is not assignable to type 'string'.
+src/features/profile/pages/ProfilePage.vue(138,30): error TS2339: Property 'id' does not exist on type 'string'.
+src/features/profile/pages/ProfilePage.vue(139,39): error TS2339: Property 'id' does not exist on type 'string'.
+src/features/profile/pages/ProfilePage.vue(142,27): error TS2339: Property 'name' does not exist on type 'string'.
+src/features/profile/pages/TransactionHistoryPage.vue(89,5): error TS2322: Type 'Ref<number, number>' is not assignable to type 'number'.
+src/features/profile/pages/TransactionHistoryPage.vue(95,5): error TS2322: Type 'Ref<number, number>' is not assignable to type 'number'.
+src/features/profile/pages/UserProfilePage.vue(22,12): error TS2322: Type 'readonly UserTeam[] | undefined' is not assignable to type 'string | null | undefined'.
+  Type 'readonly UserTeam[]' is not assignable to type 'string'.
+src/features/profile/pages/UserProfilePage.vue(138,30): error TS2339: Property 'id' does not exist on type 'string'.
+src/features/profile/pages/UserProfilePage.vue(139,39): error TS2339: Property 'id' does not exist on type 'string'.
+src/features/profile/pages/UserProfilePage.vue(142,27): error TS2339: Property 'name' does not exist on type 'string'.
+src/features/profile/pages/UserProfilePage.vue(220,41): error TS2353: Object literal may only specify known properties, and 'enabled' does not exist in type '{ query?: Partial<UseQueryOptions<UserPointsBalance, ErrorType<ErrorResponseNotAuthenticated | ErrorResponseNotFound | ErrorResponsePermissionDenied>, UserPointsBalance>> | undefined; request?: AxiosRequestConfig<...> | undefined; }'.
+src/features/profile/pages/UserProfilePage.vue(253,29): error TS2339: Property 'message' does not exist on type '{}'.
+src/features/shop/pages/ShopAdminOrdersPage.vue(89,10): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminCancelOrder'.
+src/features/shop/pages/ShopAdminOrdersPage.vue(89,51): error TS2724: '"@/api/queries/shop"' has no exported member named 'useAdminUpdateOrderStatus'. Did you mean 'useUpdateAdminOrderStatus'?
+src/features/shop/pages/ShopAdminOrdersPage.vue(102,3): error TS2322: Type 'Ref<number, number>' is not assignable to type 'number'.
+src/features/shop/pages/ShopAdminOrdersPage.vue(137,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopAdminOrdersPage.vue(147,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopInventoryPage.vue(87,5): error TS2345: Argument of type '{ inventoryId: number; }' is not assignable to parameter of type 'void'.
+src/features/shop/pages/ShopInventoryPage.vue(97,5): error TS2345: Argument of type '{ inventoryId: number; }' is not assignable to parameter of type 'void'.
+src/features/shop/pages/ShopOrderHistoryPage.vue(78,70): error TS2322: Type 'Ref<number, number>' is not assignable to type 'number'.
+src/features/shop/pages/ShopOrderHistoryPage.vue(79,61): error TS2353: Object literal may only specify known properties, and 'pageSize' does not exist in type 'MaybeRef<ListMyPointsTransactionsParams>'.
+src/features/shop/pages/ShopPage.vue(71,82): error TS2345: Argument of type 'Product' is not assignable to parameter of type 'ShopProduct'.
+  Types of property 'description' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/shop/pages/ShopPage.vue(74,75): error TS2345: Argument of type 'Product' is not assignable to parameter of type 'ShopProduct'.
+  Types of property 'description' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/shop/pages/ShopPage.vue(79,43): error TS2345: Argument of type 'Product' is not assignable to parameter of type 'ShopProduct'.
+  Types of property 'description' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/features/shop/pages/ShopPage.vue(119,38): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/shop/pages/ShopPage.vue(153,8): error TS2322: Type 'AvatarFrame[]' is not assignable to type 'ShopAvatarFrame[]'.
+  Type 'AvatarFrame' is not assignable to type 'ShopAvatarFrame'.
+    Types of property 'is_active' are incompatible.
+      Type 'boolean | undefined' is not assignable to type 'boolean'.
+        Type 'undefined' is not assignable to type 'boolean'.
+src/features/shop/pages/ShopPage.vue(264,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminCreateCategory'.
+src/features/shop/pages/ShopPage.vue(265,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminCreateProduct'.
+src/features/shop/pages/ShopPage.vue(266,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminDeleteCategory'.
+src/features/shop/pages/ShopPage.vue(267,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminDeleteProduct'.
+src/features/shop/pages/ShopPage.vue(269,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminUpdateCategory'.
+src/features/shop/pages/ShopPage.vue(270,3): error TS2305: Module '"@/api/queries/shop"' has no exported member 'useAdminUpdateProduct'.
+src/features/shop/pages/ShopPage.vue(290,3): error TS2322: Type 'Ref<number, number>' is not assignable to type 'number'.
+src/features/shop/pages/ShopPage.vue(356,5): error TS2345: Argument of type '{ productId: number; quantity: number; }' is not assignable to parameter of type 'void'.
+src/features/shop/pages/ShopPage.vue(375,66): error TS2353: Object literal may only specify known properties, and 'enabled' does not exist in type '{ query?: Partial<UseQueryOptions<PaginatedCategoryList, ErrorType<ErrorResponseNotAuthenticated | ErrorResponsePermissionDenied>, PaginatedCategoryList>> | undefined; request?: AxiosRequestConfig<...> | undefined; }'.
+src/features/shop/pages/ShopPage.vue(409,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopPage.vue(421,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopPage.vue(436,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopPage.vue(478,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopPage.vue(491,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/shop/pages/ShopPage.vue(501,17): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/features/stats/pages/StatsPage.vue(3,20): error TS2322: Type 'User | undefined' is not assignable to type 'ProfileLike | null | undefined'.
+  Type 'User' is not assignable to type 'ProfileLike'.
+    Types of property 'teams' are incompatible.
+      Type 'string' is not assignable to type 'readonly TeamRef[]'.
+src/features/tournaments/components/tournament/TournamentSubmissions.vue(119,37): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

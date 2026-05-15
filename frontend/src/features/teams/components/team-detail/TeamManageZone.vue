@@ -62,7 +62,6 @@
 </template>
 
 <script setup lang="ts">
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import DeleteTeamModal from './modals/DeleteTeamModal.vue'
 import TeamVisibilityModal from './modals/TeamVisibilityModal.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -70,9 +69,10 @@ import DangerIcon from '@/icons/DangerIcon.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import { useRouter } from 'vue-router'
+import type { Team } from '@/api/.ts.schemas'
 
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
   loading: boolean
   isCaptain: boolean
 }
@@ -81,7 +81,7 @@ const props = defineProps<Props>()
 const router = useRouter()
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: GetTeamInfoResponse): void
+  (e: 'updateTeam', newTeamValue: Team): void
 }>()
 </script>
 

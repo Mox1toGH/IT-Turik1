@@ -17,10 +17,10 @@
             >
               Mark all read
             </ui-button>
-            <ui-button 
-              variant="danger" 
-              size="sm" 
-              @click="handleDeleteAll" 
+            <ui-button
+              variant="danger"
+              size="sm"
+              @click="handleDeleteAll"
               :disabled="!hasNotifications || isDeletingAll"
             >
               Delete all
@@ -57,13 +57,13 @@
               <button
                 v-if="getRedirectUrl(notification)"
                 class="redirect-btn"
-                @click.stop="handleNotificationClick(notification, $event)"
+                @click.stop="handleNotificationClick(notification)"
                 title="Go to page"
               >
                 <external-link-icon class="icon" />
               </button>
-              <button 
-                class="delete-btn" 
+              <button
+                class="delete-btn"
                 @click.stop="handleDelete(notification.id)"
                 title="Delete notification"
               >
@@ -85,6 +85,14 @@
                 <router-link
                   v-else-if="part.type === 'team'"
                   :to="`/teams/${part.id}`"
+                  class="user-link"
+                  @click.stop
+                >
+                  {{ part.text }}
+                </router-link>
+                <router-link
+                  v-else-if="part.type === 'news'"
+                  :to="`/news#news-${part.id}`"
                   class="user-link"
                   @click.stop
                 >
@@ -131,22 +139,27 @@ import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal.vue'
-import { 
-  useNotifications, 
-  useMarkAsRead, 
-  useMarkAllAsRead,
-  useDeleteNotification,
-  useDeleteAllNotifications
-} from '@/api/queries/notifications'
 import { useNotification } from '@/composables/useNotification'
+import {
+  useDeleteAllNotifications,
+  useDeleteNotification,
+  useListNotifications,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+} from '@/api/notifications/notifications'
+import type { Notification } from '@/api/.ts.schemas'
 
 const isSettingsModalOpen = ref(false)
 const page = ref(1)
 const router = useRouter()
 
-const { data: notificationsData, isLoading, error } = useNotifications(page)
-const { mutate: markAsRead } = useMarkAsRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
+const {
+  data: notificationsData,
+  isLoading,
+  error,
+} = useListNotifications(computed(() => ({ page: page.value })))
+const { mutate: markAsRead } = useMarkNotificationRead()
+const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
 const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 const { showNotification } = useNotification()
@@ -157,7 +170,7 @@ const confirmModalConfig = ref({
   title: '',
   message: '',
   onConfirm: () => {},
-  confirmVariant: 'danger' as const
+  confirmVariant: 'danger' as const,
 })
 
 const hasUnread = computed(() => {
@@ -182,13 +195,13 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead(id)
+  markAsRead({ id })
 }
 
 const handleMarkAllRead = () => {
-  markAllAsRead(undefined, {
+  markAllAsRead(void 0, {
     onSuccess: () => showNotification('All notifications marked as read', 'success'),
-    onError: () => showNotification('Failed to mark notifications as read', 'error'),
+    onError: (error) => showNotification(error.message, 'error'),
   })
 }
 
@@ -198,17 +211,16 @@ const handleDelete = (id: number) => {
     message: 'Are you sure you want to delete this notification?',
     confirmVariant: 'danger',
     onConfirm: () => {
-      deleteNotification(id, {
-        onSuccess: () => {
-          showNotification('Notification deleted', 'success')
-          isConfirmModalOpen.value = false
+      deleteNotification(
+        { id },
+        {
+          onSuccess: () => {
+            showNotification('Notification deleted', 'success')
+            isConfirmModalOpen.value = false
+          },
         },
-        onError: (err) => {
-          console.error('Failed to delete notification:', err)
-          showNotification('Failed to delete notification', 'error')
-        }
-      })
-    }
+      )
+    },
   }
   isConfirmModalOpen.value = true
 }
@@ -224,17 +236,16 @@ const handleDeleteAll = () => {
           showNotification('All notifications deleted', 'success')
           isConfirmModalOpen.value = false
         },
-        onError: (err) => {
-          console.error('Failed to delete all notifications:', err)
-          showNotification('Failed to delete notifications', 'error')
-        }
+        onError: (error) => {
+          showNotification(error.message, 'error')
+        },
       })
-    }
+    },
   }
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: any, event: Event) => {
+const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
     handleMarkRead(notification.id)
   }
@@ -245,9 +256,9 @@ const handleNotificationClick = (notification: any, event: Event) => {
   }
 }
 
-const getRedirectUrl = (notification: any) => {
+const getRedirectUrl = (notification: Notification) => {
   const type = notification.event_type
-  
+
   // Only invitations go to /teams — recipient hasn't joined yet
   if (type === 'team_invitation_received') {
     return '/teams'
@@ -261,13 +272,20 @@ const getRedirectUrl = (notification: any) => {
     }
     return '/teams'
   }
+  if (type === 'news_published') {
+    const match = notification.message.match(/\[news:(\d+):.+?\]/)
+    if (match) {
+      return `/news#news-${match[1]}`
+    }
+    return '/news'
+  }
   return null
 }
 
 const parseMessage = (message: string) => {
   const parts = []
-  // Matches [user:id:name] or [team:id:name]
-  const regex = /\[(user|team):(\d+):(.+?)\]/g
+  // Matches [user:id:name], [team:id:name], or [news:id:title]
+  const regex = /\[(user|team|news):(\d+):(.+?)\]/g
   let lastIndex = 0
   let match
 

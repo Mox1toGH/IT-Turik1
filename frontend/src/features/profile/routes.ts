@@ -10,8 +10,18 @@ export const profileRoutes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/users/:id/points',
+    component: () => import('@/features/profile/pages/TransactionHistoryPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/profile/edit',
     component: () => import('./pages/EditProfilePage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/certificates',
+    component: () => import('./pages/CertificatesPage.vue'),
     meta: { requiresAuth: true },
   },
   {
@@ -27,6 +37,11 @@ export const profileRoutes = [
   {
     path: '/profile/notifications',
     component: () => import('./pages/NotificationsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/profile/points',
+    component: () => import('./pages/TransactionHistoryPage.vue'),
     meta: { requiresAuth: true },
   },
 ]

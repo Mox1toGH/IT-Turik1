@@ -42,6 +42,8 @@ export const CreateTournamentSchema = v.pipe(
   ),
 )
 
+export const EditTournamentSchema = CreateTournamentSchema
+
 function tiptapJsonMinLength(min: number, message: string) {
   return v.pipe(
     v.unknown(),
@@ -78,18 +80,24 @@ export const CreateRoundSchema = v.pipe(
     ),
 
     start_date: v.date(),
+    start_time: TimeSchema,
     end_date: v.date(),
+    end_time: TimeSchema,
   }),
 
   v.forward(
     v.partialCheck(
-      [['start_date'], ['end_date']],
-      (input) => input.end_date > input.start_date,
-      'End date must be after start date',
+      [['start_date'], ['start_time'], ['end_date'], ['end_time']],
+      (input) =>
+        combineDateAndTime(input.end_date, input.end_time) >
+        combineDateAndTime(input.start_date, input.start_time),
+      'End date/time must be after start date/time',
     ),
     ['end_date'],
   ),
 )
+
+export const EditRoundSchema = CreateRoundSchema
 
 export const SubmitRoundSchema = v.object({
   github_url: v.pipe(
@@ -121,9 +129,13 @@ export const EditEventSchema = v.object({
     v.minLength(3, 'Title must be at least 3 characters long'),
     v.maxLength(100, 'Title must not exceed 100 characters'),
   ),
-
+  description: v.pipe(
+    v.string('Description is required'),
+    v.nonEmpty('Description cannot be empty'),
+    v.minLength(10, 'Description must be at least 10 characters long'),
+    v.maxLength(500, 'Description must not exceed 500 characters'),
+  ),
   startDate: v.pipe(v.date('Start date is required')),
-
   startTime: v.pipe(
     TimeSchema,
     v.custom((value) => value != null, 'Start time is required'),
@@ -143,14 +155,6 @@ export const AddEventSchema = v.object({
     v.nonEmpty('Description cannot be empty'),
     v.minLength(5, 'Description must be at least 5 characters long'),
     v.maxLength(500, 'Description must not exceed 500 characters'),
-  ),
-
-  link: v.optional(
-    v.pipe(
-      v.string('Link must be a string'),
-      v.nonEmpty('Link cannot be empty'),
-      v.url('Invalid URL format'),
-    ),
   ),
 
   start_date: v.pipe(v.date('Start date is required')),

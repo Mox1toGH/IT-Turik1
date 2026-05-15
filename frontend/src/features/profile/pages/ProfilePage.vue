@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ error?.code }})</p>
+          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
         </div>
       </template>
 
@@ -14,6 +14,30 @@
             <h1 class="section-title profile-title">My profile</h1>
           </div>
           <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
+        </div>
+        <div class="avatar-row">
+          <div class="avatar-box">
+            <user-avatar
+              :avatar="user?.avatar"
+              :avatar-frame-url="user?.avatar_frame_url"
+              :username="user?.username || 'user'"
+              :full-name="user?.full_name || ''"
+              :size="108"
+              :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+            />
+            <avatar-modal :user="user" :disabled="isLoading" />
+          </div>
+          <ui-card class="balance-card">
+            <template #header>
+              <span class="card-text-title">Points balance</span>
+            </template>
+            <ui-skeleton-loader :loading="isPointsLoading">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="100%" />
+              </template>
+              <p class="balance-value">{{ pointsBalance?.balance ?? 0 }}</p>
+            </ui-skeleton-loader>
+          </ui-card>
         </div>
       </template>
 
@@ -125,10 +149,26 @@
         </ui-card>
       </div>
 
+      <div class="stats-link-row">
+        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
+          >My Statistics</ui-button
+        >
+        <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
+          Transaction History
+        </ui-button>
+        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary"
+          >My Shop Orders</ui-button
+        >
+        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary"
+          >Digital Inventory</ui-button
+        >
+      </div>
+
       <div class="actions">
         <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
         <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
-        <ui-button variant="secondary" :disabled="isLoading || isDeleting" @click="logout">
+        <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
+        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
           Log Out
         </ui-button>
       </div>
@@ -143,21 +183,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
-import { useProfile } from '@/api/queries/accounts'
+import AvatarModal from '../components/profile/modals/AvatarModal.vue'
 import { useUserStore } from '@/stores/user'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { parseApiError } from '@/api/errors'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { formatDate } from '@/lib/date'
+import { useGetMyPointsBalance } from '@/api/points/points'
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError, error: profileError } = useProfile()
-const error = computed(() => parseApiError(profileError.value))
+const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
+const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
 
 const router = useRouter()
 const isDeleting = ref(false)
@@ -175,9 +218,8 @@ const goToNotifications = () => {
   router.push('/profile/notifications')
 }
 
-const formatDate = (date: Date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('uk-UA')
+const goToCertificates = () => {
+  router.push('/profile/certificates')
 }
 </script>
 
@@ -196,6 +238,34 @@ const formatDate = (date: Date) => {
 .meta {
   margin: 0;
   font-size: 0.86rem;
+}
+
+.avatar-row {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+}
+
+.avatar-box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.balance-card {
+  min-width: 220px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, var(--muted));
+}
+
+.balance-value {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--primary);
 }
 
 .details {
@@ -264,6 +334,13 @@ const formatDate = (date: Date) => {
   flex-wrap: wrap;
 }
 
+.stats-link-row {
+  margin-top: 0.9rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .danger-zone {
   margin-top: 1.4rem;
   padding-top: 1rem;
@@ -296,6 +373,16 @@ const formatDate = (date: Date) => {
   .head {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .avatar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .balance-card {
+    min-width: 0;
+    width: 100%;
   }
 
   .details {

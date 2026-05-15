@@ -106,6 +106,9 @@ def mark_round_evaluated(round_obj):
     round_obj.status = Round.STATUS_EVALUATED
     round_obj.save(update_fields=['status', 'updated_at'])
 
+    from evaluation.services import apply_passing_count
+    apply_passing_count(round_obj)
+
     _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
 
     return round_obj
@@ -154,7 +157,11 @@ def register_team_for_tournament(*, tournament, team, actor):
     if team.captain_id != actor.id:
         raise ValidationError({'team': 'Only the team owner can register this team for a tournament.'})
 
-    if TournamentTeamRegistration.objects.filter(tournament=tournament, team=team).exists():
+    existing_registration = TournamentTeamRegistration.objects.filter(
+        tournament=tournament,
+        team=team,
+    ).first()
+    if existing_registration and existing_registration.is_active:
         raise ValidationError({'team': 'This team is already registered for the tournament.'})
 
     participant_ids = get_team_participant_ids(team=team)
@@ -165,7 +172,10 @@ def register_team_for_tournament(*, tournament, team, actor):
         )
 
     if tournament.max_teams is not None:
-        current_registered_count = TournamentTeamRegistration.objects.filter(tournament=tournament).count()
+        current_registered_count = TournamentTeamRegistration.objects.filter(
+            tournament=tournament,
+            is_active=True,
+        ).count()
         if current_registered_count >= tournament.max_teams:
             raise ValidationError({'tournament': 'Tournament registration limit has been reached.'})
 
@@ -201,11 +211,31 @@ def register_team_for_tournament(*, tournament, team, actor):
             'team': f'Cannot register. The following members are already participating in another tournament: {emails}'
         })
 
-    return TournamentTeamRegistration.objects.create(
+    if existing_registration:
+        existing_registration.is_active = True
+        existing_registration.created_by = actor
+        existing_registration.save(update_fields=['is_active', 'created_by'])
+        return existing_registration
+
+    return TournamentTeamRegistration.objects.create(tournament=tournament, team=team, created_by=actor)
+
+
+@transaction.atomic
+def leave_team_from_tournament(*, tournament, team, actor):
+    if team.captain_id != actor.id:
+        raise ValidationError({'team': 'Only the team owner can remove this team from a tournament.'})
+
+    registration = TournamentTeamRegistration.objects.filter(
         tournament=tournament,
         team=team,
-        created_by=actor,
-    )
+        is_active=True,
+    ).first()
+    if registration is None:
+        raise ValidationError({'team': 'This team is not actively registered for this tournament.'})
+
+    registration.is_active = False
+    registration.save(update_fields=['is_active'])
+    return registration
 
 
 @transaction.atomic

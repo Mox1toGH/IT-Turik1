@@ -12,7 +12,7 @@
 
     <template #error>
       <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament info (code: {{ error?.code }})</p>
+        <p>Error while fetching tournament info (code: {{ tournamentInfoError?.code }})</p>
       </div>
     </template>
 
@@ -106,13 +106,13 @@
       <join-tournament-btn
         v-if="tournament?.status === 'registration'"
         :tournament-id="props.tournamentId"
+        :registered-team-id="tournament?.registered_team?.id ?? null"
       />
     </div>
   </ui-card>
 </template>
 
 <script setup lang="ts">
-import { parseApiError } from '@/api/errors'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -121,10 +121,14 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed, ref } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
-import { useCurrentRound, useStartRegistration, useTournamentInfo } from '@/api/queries/tournaments'
 import JoinTournamentBtn from './JoinTournamentBtn.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../components/shared/LargeTextModal.vue'
+import {
+  useGetCurrentTask,
+  useGetTournament,
+  useStartTournamentRegistration,
+} from '@/api/tournaments/tournaments'
 
 interface Props {
   tournamentId: number
@@ -138,12 +142,11 @@ const {
   isLoading,
   error: tournamentInfoError,
   isError,
-} = useTournamentInfo({ id: props.tournamentId })
-const error = computed(() => parseApiError(tournamentInfoError.value))
-const { data: currentRound } = useCurrentRound(
-  { id: props.tournamentId },
+} = useGetTournament(props.tournamentId)
+const { data: currentRound } = useGetCurrentTask(
+  { tournament_id: props.tournamentId },
   {
-    enabled: computed(() => tournament.value?.status === 'running'),
+    query: { enabled: computed(() => tournament.value?.status === 'running') },
   },
 )
 
@@ -157,11 +160,11 @@ const statusBadgeVariant = computed(() => {
   return 'gray'
 })
 
-const { mutate: startRegistration, isPending } = useStartRegistration()
+const { mutate: startRegistration, isPending } = useStartTournamentRegistration()
 
 const handleStartRegistration = () => {
   startRegistration({
-    tournamentId: props.tournamentId,
+    id: props.tournamentId,
   })
 }
 </script>

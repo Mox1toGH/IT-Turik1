@@ -2,7 +2,7 @@
   <ui-card :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching my teams (code: {{ error?.code }})</p>
+        <p>Error while fetching my teams (code: {{ teamsError?.code }})</p>
       </div>
     </template>
 
@@ -90,20 +90,19 @@
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import type { GetTeamsResponse } from '@/api/services/teams/types'
 import { computed, ref } from 'vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { useTeams } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
-import { parseApiError } from '@/api/errors'
 import { truncateText } from '@/lib/utils'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
 
-const { data: user } = useProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useTeams()
-const error = computed(() => parseApiError(teamsError.value))
+type Team = ListTeamsQueryResult[number]
+
+const { data: user } = useGetUserProfile()
+const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useListTeams()
 
 const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {
@@ -116,12 +115,12 @@ const myPages = computed(() =>
   Math.max(1, Math.ceil((myTeams.value?.length ?? 0) / TEAMS_PER_PAGE)),
 )
 
-const isCaptain = (team: GetTeamsResponse[number]) => team.captain_id === user.value?.id
-const captainName = (team: GetTeamsResponse[number]) => {
+const isCaptain = (team: Team) => team.captain_id === user.value?.id
+const captainName = (team: Team) => {
   const captain = team.members.find((member) => member.id === team.captain_id)
   return captain?.username || `User #${team.captain_id}`
 }
-const isAcceptedMember = (team: GetTeamsResponse[number]) => team.is_member || isCaptain(team)
+const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 </script>
 
 <style scoped>
@@ -145,18 +144,23 @@ const isAcceptedMember = (team: GetTeamsResponse[number]) => team.is_member || i
 
 .team-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
 .team-header h3 {
   font-family: var(--font-display);
+  min-width: 0;
 }
 
 .badges {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 .pagination {

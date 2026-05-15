@@ -9,8 +9,8 @@
     <template #default="{ close }">
       <div class="actions-list">
         <ui-button
-          v-if="props.status === 'draft'"
           variant="secondary"
+          :disabled="props.status !== 'draft'"
           size="sm"
           class="action-btn"
           @click="
@@ -23,8 +23,8 @@
         >
         <template v-if="profile?.role === 'admin'">
           <ui-button
-            v-if="props.status === 'active'"
             size="sm"
+            :disabled="props.status !== 'active'"
             class="action-btn"
             @click="
               () => {
@@ -37,8 +37,22 @@
           </ui-button>
           <ui-button
             size="sm"
+            :disabled="props.status !== 'submission_closed'"
+            class="action-btn"
+            @click="
+              () => {
+                close()
+                handleMarkEvaluated()
+              }
+            "
+          >
+            Mark evaluated
+          </ui-button>
+          <ui-button
+            size="sm"
             class="action-btn action-delete"
             variant="danger"
+            :disabled="props.status !== 'draft'"
             @click="
               () => {
                 close()
@@ -55,28 +69,33 @@
 </template>
 
 <script setup lang="ts">
-import type { RoundId, RoundStatus, TournamentId } from '@/api/dbTypes'
-import { parseApiError } from '@/api/errors'
-import { useProfile } from '@/api/queries/accounts'
-import { useCloseSubmissions, useDeleteRound, useStartRound } from '@/api/queries/tournaments'
+import type { StatusE43Enum } from '@/api/.ts.schemas'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useCloseRoundSubmissions,
+  useDeleteRound,
+  useMarkRoundEvaluated,
+  useStartRound,
+} from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import { useNotification } from '@/composables/useNotification'
 import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
 
 interface Props {
-  roundId: RoundId
-  tournamentId: TournamentId
-  status: RoundStatus
+  roundId: number
+  tournamentId: number
+  status: StatusE43Enum
 }
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: profile } = useProfile()
-const { mutate: deleteRound } = useDeleteRound({ id: props.tournamentId })
+const { data: profile } = useGetUserProfile()
+const { mutate: deleteRound } = useDeleteRound()
 const { mutate: startRound } = useStartRound()
-const { mutate: closeSubmissions } = useCloseSubmissions()
+const { mutate: closeSubmissions } = useCloseRoundSubmissions()
+const { mutate: markEvaluated } = useMarkRoundEvaluated()
 
 function handleDeleteRound() {
   deleteRound(
@@ -85,8 +104,7 @@ function handleDeleteRound() {
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -95,12 +113,11 @@ function handleDeleteRound() {
 function handleStartRound() {
   startRound(
     {
-      roundId: props.roundId,
+      id: props.roundId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -109,12 +126,24 @@ function handleStartRound() {
 function handleCloseSubmissions() {
   closeSubmissions(
     {
-      roundId: props.roundId,
+      id: props.roundId,
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
+      },
+    },
+  )
+}
+
+function handleMarkEvaluated() {
+  markEvaluated(
+    {
+      id: props.roundId,
+    },
+    {
+      onError: (error) => {
+        showNotification(error?.message, 'error')
       },
     },
   )

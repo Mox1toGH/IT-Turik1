@@ -1,8 +1,13 @@
 <template>
-  <template v-if="teams && teams.length > 0 && user?.role === 'team'">
-    <ui-button :disabled="isPending" @click="open">
+  <template v-if="user?.role === 'team' && (hasEligibleTeams || props.registeredTeamId)">
+    <ui-button v-if="!props.registeredTeamId" :disabled="isPending" @click="open">
       <LoadingIcon v-if="isPending" class="team-spinner" />
       <span>Join Tournament</span>
+    </ui-button>
+
+    <ui-button v-else :disabled="isPending" variant="danger" @click="handleLeave">
+      <LoadingIcon v-if="isPending" class="team-spinner" />
+      <span>Leave Tournament</span>
     </ui-button>
 
     <ui-modal v-model="isOpen">
@@ -17,7 +22,7 @@
       <template v-else>
         <ui-input v-model="search" type="text" placeholder="Search teams..." autocomplete="off" />
 
-        <ul v-if="filteredTeams.length" class="team-list">
+        <ul v-if="filteredTeams" class="team-list">
           <li
             v-for="team in filteredTeams"
             :key="team.id"
@@ -42,36 +47,43 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { TeamId, TournamentId } from '@/api/dbTypes'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useEligibleTeams, useRegisterTeam } from '@/api/queries/tournaments'
 import { useNotification } from '@/composables/useNotification'
-import { parseApiError } from '@/api/errors'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import { useProfile } from '@/api/queries/accounts'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import {
+  useListEligibleTeamsForTournament,
+  useRegisterTeamForTournament,
+  useUnregisterTeamFromTournament,
+} from '@/api/tournaments/tournaments'
 
 interface Props {
-  tournamentId: TournamentId
+  tournamentId: number
+  registeredTeamId?: number | null
 }
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const { data: user } = useProfile()
+const { data: user } = useGetUserProfile()
 
 const isOpen = ref(false)
 const search = ref('')
 
-const { data: teams, isLoading: isLoadingTeams } = useEligibleTeams({ id: props.tournamentId })
-const { mutate: register, isPending } = useRegisterTeam()
+const { data: teams, isLoading: isLoadingTeams } = useListEligibleTeamsForTournament(
+  props.tournamentId,
+)
+const { mutate: register, isPending } = useRegisterTeamForTournament()
+const { mutate: leave } = useUnregisterTeamFromTournament()
+const hasEligibleTeams = computed(() => (teams.value?.length ?? 0) > 0)
 
 const filteredTeams = computed(() => {
   const query = search.value.trim().toLowerCase()
   if (!query) return teams.value ?? []
-  return (teams.value ?? []).filter((team) => team.name.toLowerCase().includes(query))
+  return teams.value?.filter((team) => team.name.toLowerCase().includes(query))
 })
 
 watch(isOpen, (val) => {
@@ -86,15 +98,31 @@ function close() {
   isOpen.value = false
 }
 
-function handleJoin(teamId: TeamId) {
+function handleJoin(teamId: number) {
   if (isPending.value) return
   register(
-    { id: props.tournamentId, body: { team_id: teamId } },
+    { id: props.tournamentId, data: { team_id: teamId } },
     {
       onSuccess: () => close(),
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
+      },
+    },
+  )
+}
+
+function handleLeave() {
+  if (!props.registeredTeamId || isPending.value) return
+  leave(
+    {
+      id: props.tournamentId,
+      data: {
+        team_id: props.registeredTeamId,
+      },
+    },
+    {
+      onError: (error) => {
+        showNotification(error?.message, 'error')
       },
     },
   )

@@ -50,9 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import type { RoundId, TournamentId } from '@/api/dbTypes'
-import { parseApiError } from '@/api/errors'
-import { useSubmitRound } from '@/api/queries/tournaments'
+import { useCreateSubmission } from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
@@ -60,11 +58,12 @@ import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { SubmitRoundSchema } from '@/schemas/tournaments.schema'
+import { useRoute, useRouter } from 'vue-router'
 
 interface Props {
   modelValue: boolean
-  roundId: RoundId
-  tournamentId: TournamentId
+  roundId: number
+  tournamentId: number
 }
 
 interface Form {
@@ -78,6 +77,8 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 const { showNotification } = useNotification()
+const route = useRoute()
+const router = useRouter()
 
 const form = useForm<Form>(SubmitRoundSchema, {
   github_url: '',
@@ -85,31 +86,40 @@ const form = useForm<Form>(SubmitRoundSchema, {
   description: '',
 })
 
-const { mutate: submit, isPending } = useSubmitRound()
+const { mutate: submit, isPending } = useCreateSubmission()
 const submitRound = () => {
   if (!form.validate()) return
+  if (!props.roundId || props.roundId <= 0) {
+    showNotification('Round is not selected', 'error')
+    return
+  }
 
   submit(
     {
-      body: {
-        team: 0, // TODO: get from active tournament team
+      data: {
         round: props.roundId,
         ...form.fields.value,
       },
     },
     {
       onError: (error) => {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
 
       onSuccess() {
         showNotification('Success', 'success')
+        form.reset()
         emit('update:modelValue', false)
+        void router.replace({
+          query: {
+            ...route.query,
+            section: 'submissions',
+          },
+        })
       },
     },
   )

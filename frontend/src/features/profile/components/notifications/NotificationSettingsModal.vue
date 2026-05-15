@@ -69,20 +69,20 @@
 import UiModal from '@/components/ui/UiModal.vue'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import {
-  useNotificationSettings,
-  useUpdateEventConfig,
-  useUpdateGlobalConfig,
-} from '@/api/queries/notifications'
 import { useNotification } from '@/composables/useNotification'
+import {
+  useGetNotificationSettings,
+  useUpdateGlobalNotificationConfig,
+  useUpdateNotificationConfig,
+} from '@/api/notifications/notifications'
 
 defineProps<{
   isOpen: boolean
 }>()
 
-const { data: settings, isLoading, error } = useNotificationSettings()
-const { mutate: updateEvent, isPending: isUpdatingEvent } = useUpdateEventConfig()
-const { mutate: updateGlobal, isPending: isUpdatingGlobal } = useUpdateGlobalConfig()
+const { data: settings, isLoading, error } = useGetNotificationSettings()
+const { mutate: updateEvent, isPending: isUpdatingEvent } = useUpdateNotificationConfig()
+const { mutate: updateGlobal, isPending: isUpdatingGlobal } = useUpdateGlobalNotificationConfig()
 
 const { showNotification } = useNotification()
 
@@ -93,10 +93,12 @@ const getEventTitle = (key: string) => {
 
 const handleGlobalToggle = (val: boolean) => {
   updateGlobal(
-    { emails_disabled_globally: val },
+    { data: { emails_disabled_globally: val } },
     {
-      onSuccess: () => showNotification('Global email settings updated', 'success'),
-      onError: () => showNotification('Failed to update settings', 'error'),
+      onSuccess: () => {
+        showNotification('Global email settings updated', 'success')
+      },
+      onError: (error) => showNotification(error.message, 'error'),
     },
   )
 }
@@ -107,11 +109,15 @@ const handleEventToggle = (eventType: string, channel: 'system' | 'email', val: 
     ...(channel === 'system' ? { is_system_enabled: val } : {}),
     ...(channel === 'email' ? { is_email_enabled: val } : {}),
   }
-  updateEvent(payload, {
-    onSuccess: () =>
-      showNotification(`Settings for ${getEventTitle(eventType)} updated`, 'success'),
-    onError: () => showNotification('Failed to update event setting', 'error'),
-  })
+  updateEvent(
+    { data: payload },
+    {
+      onSuccess: () => {
+        showNotification(`Settings for ${getEventTitle(eventType)} updated`, 'success')
+      },
+      onError: (error) => showNotification(error.message, 'error'),
+    },
+  )
 }
 </script>
 

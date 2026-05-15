@@ -43,9 +43,18 @@
           v-for="joinRequest in filteredPendingJoinRequests"
           :key="`join-request-${joinRequest.id}`"
         >
-          <div>
-            <p class="join-request-name">{{ joinRequest.user.username }}</p>
-            <p class="text-muted join-request-email">{{ joinRequest.user.email }}</p>
+          <div class="join-request-user">
+            <user-avatar
+              :avatar="joinRequest.user.avatar"
+              :avatar-frame-url="joinRequest.user.avatar_frame_url"
+              :username="joinRequest.user.username"
+              :full-name="joinRequest.user.full_name"
+              :size="40"
+            />
+            <div>
+              <p class="join-request-name">{{ joinRequest.user.username }}</p>
+              <p class="text-muted join-request-email">{{ joinRequest.user.email }}</p>
+            </div>
           </div>
 
           <template #footer>
@@ -81,32 +90,28 @@
 </template>
 
 <script setup lang="ts">
-import type { JoinRequestId, TeamId } from '@/api/dbTypes'
-import type { ManageJoinRequestAction } from '@/api/services/teams/types'
+import {
+  useAcceptTeamJoinRequest,
+  useDeclineTeamJoinRequest,
+  useListTeamJoinRequestsByTeam,
+} from '@/api/teams/teams'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
-import { teamKeys } from '@/api/queries/keys'
-import { useManageJoinRequest, useTeamJoinRequests } from '@/api/queries/teams'
-import { useQueryClient } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
 
 interface Props {
-  teamId: TeamId
+  teamId: number
   searchFilter?: string
   isCaptain?: boolean
 }
 
 const props = defineProps<Props>()
-const queryClient = useQueryClient()
 const { showNotification } = useNotification()
-const {
-  data: joinRequest,
-  isLoading,
-  isLoadingError,
-} = useTeamJoinRequests({ teamId: props.teamId })
+const { data: joinRequest, isLoading, isLoadingError } = useListTeamJoinRequestsByTeam(props.teamId)
 
 const matches = (parts: (string | undefined)[]) => {
   const q = props.searchFilter?.trim().toLowerCase()
@@ -120,26 +125,24 @@ const filteredPendingJoinRequests = computed(() =>
     .filter((r) => matches([r.user.username, r.user.email, r.user.full_name])),
 )
 
-const loadingJoinRequestIds = ref<Set<JoinRequestId>>(new Set())
-const { mutate: manageJoinRequestMutate } = useManageJoinRequest()
+const loadingJoinRequestIds = ref<Set<number>>(new Set())
+const { mutate: accept } = useAcceptTeamJoinRequest()
+const { mutate: decline } = useDeclineTeamJoinRequest()
 
-const reviewJoinRequest = (id: JoinRequestId, action: ManageJoinRequestAction) => {
+const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   loadingJoinRequestIds.value.add(id)
 
-  manageJoinRequestMutate(
-    { id, teamId: props.teamId, action },
+  const mutate = action === 'accept' ? accept : decline
+
+  mutate(
+    { requestId: id, id: props.teamId },
     {
       onSuccess: () => {
         const pastTense = { accept: 'accepted', decline: 'declined' }
         showNotification(`Join request ${pastTense[action]}`, 'success')
-
-        queryClient.invalidateQueries({ queryKey: teamKeys.team(props.teamId) })
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? `Unable to ${action} join request` : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
       onSettled: () => {
         loadingJoinRequestIds.value.delete(id)
@@ -182,6 +185,12 @@ const reviewJoinRequest = (id: JoinRequestId, action: ManageJoinRequestAction) =
 .join-request-name,
 .join-request-email {
   margin: 0;
+}
+
+.join-request-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .join-request-name {

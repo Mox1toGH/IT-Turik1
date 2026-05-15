@@ -5,8 +5,23 @@ export const tournamentsRoutes = [
     meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
+    path: '/tournaments/:id/edit',
+    component: () => import('./pages/TournamentEditPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/tournaments',
     component: () => import('./pages/TournamentsListPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/tournaments/archive',
+    component: () => import('./pages/TournamentArchivePage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/tournaments/archive/:id',
+    component: () => import('./pages/TournamentArchiveDetailPage.vue'),
     meta: { requiresAuth: true },
   },
   {

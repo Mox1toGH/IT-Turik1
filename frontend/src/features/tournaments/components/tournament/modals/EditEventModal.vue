@@ -18,6 +18,18 @@
       </label>
 
       <label class="form-item">
+        <p class="form-label">Descriprion</p>
+        <ui-text-area
+          v-model="form.fields.value.description"
+          :is-invalid="!!form.errors.value.description"
+          @blur="form.validateField('description')"
+        />
+        <small v-if="form.errors.value.description" class="text-error">{{
+          form.errors.value.description
+        }}</small>
+      </label>
+
+      <label class="form-item">
         <p class="form-label">Start Date</p>
         <ui-date-picker
           v-model="form.fields.value.startDate"
@@ -55,27 +67,28 @@ import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
-import { useEditEvent } from '@/api/queries/tournaments'
 import { useForm } from '@/composables/useForm'
 import { EditEventSchema } from '@/schemas/tournaments.schema'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useQueryClient } from '@tanstack/vue-query'
-import type { TournamentId } from '@/api/dbTypes'
-import { tournamentsKeys } from '@/api/queries/keys'
+import UiTextArea from '@/components/ui/UiTextArea.vue'
+import { useUpdateEvent } from '@/api/tournaments/tournaments'
 
 interface Props {
   modelValue: boolean
   eventId: number
-  tournamentId: TournamentId
+  tournamentId: number
   title: string
+  description: string
   startDate: Date | string
+  eventType: 'meet' | 'event'
+  link: string
 }
 
 interface Form {
   title: string
+  description: string
   startDate: Date
   startTime: string
 }
@@ -86,40 +99,41 @@ const emit = defineEmits<{
 }>()
 
 const { showNotification } = useNotification()
-const queryClient = useQueryClient()
 
 const date = props.startDate instanceof Date ? props.startDate : new Date(props.startDate)
 const pad = (value: number) => String(value).padStart(2, '0')
 const form = useForm<Form>(EditEventSchema, {
   title: props.title,
+  description: props.description,
   startDate: date,
   startTime: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
 })
 
-const { mutate, isPending } = useEditEvent()
+const { mutate, isPending } = useUpdateEvent()
 const editEvent = () => {
   mutate(
     {
-      eventId: props.eventId,
-      body: {
+      id: props.eventId,
+      data: {
         title: form.fields.value.title,
+        description: form.fields.value.description,
+        type: props.eventType,
+        link: props.link,
         start_datetime: combineDateAndTime(
           form.fields.value.startDate,
           form.fields.value.startTime,
-        ),
+        ).toISOString(),
       },
     },
     {
-      onError: (err) => {
-        const parsedError = parseApiError(err)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+      onError: (error) => {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
 
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: tournamentsKeys.events(props.tournamentId) })
         emit('update:modelValue', false)
       },
     },

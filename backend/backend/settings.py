@@ -21,6 +21,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'EXCEPTION_HANDLER': 'backend.exceptions.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'CAMELIZE_NAMES': True,
+    'OPERATION_ID_GENERATOR': 'drf_spectacular.generators.CamelCaseOperationIDGenerator',
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 SIMPLE_JWT = {
@@ -57,7 +64,14 @@ INSTALLED_APPS = [
     'tournaments',
     'corsheaders',
     'rest_framework_simplejwt',
+    'certificates',
     'notifications',
+    'stats',
+    'news',
+    'points',
+    'shop',
+    'inventory',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +88,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     origin for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',') if origin
 ]
+
+FRONTEND_URL = os.getenv('FRONTEND_URL', '')
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -122,5 +138,6 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-

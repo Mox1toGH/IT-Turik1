@@ -115,7 +115,7 @@
     <template #footer>
       <div class="info-actions">
         <ui-button
-          v-if="props.team?.can_request_to_join"
+          v-if="props.team?.can_request_to_join && user?.role === 'team'"
           size="sm"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
@@ -138,14 +138,15 @@ import UiCard from '@/components/ui/UiCard.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import { useLeaveTeam, useSendJoinRequest } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import type { GetTeamInfoResponse } from '@/api/services/teams/types'
 import { truncateText } from '@/lib/utils'
+import type { Team } from '@/api/.ts.schemas'
+import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
 interface Props {
-  team?: GetTeamInfoResponse
+  team?: Team
   loading: boolean
   loadingError?: boolean
   isCaptain: boolean
@@ -159,6 +160,8 @@ const emit = defineEmits<{
   (e: 'leave'): void
 }>()
 
+const { data: user } = useGetUserProfile()
+
 const captainName = computed(() => {
   const captain = props.team?.members.find((member) => member.id === props.team?.captain_id)
   return captain?.username || `User #${props.team?.captain_id}`
@@ -167,24 +170,21 @@ const captainName = computed(() => {
 const canLeaveTeam = computed(() => props.team?.is_member && !props.isCaptain)
 
 // ── Join Request ────────────────────────────────────────────────────
-const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useSendJoinRequest()
+const { mutate: sendJoinRequestMutate, isPending: joinRequestLoading } = useCreateTeamJoinRequest()
 
 const sendJoinRequest = () => {
   if (!props.team) return
   hideNotification()
 
   sendJoinRequestMutate(
-    { id: props.team?.id },
+    { id: props.team?.id, data: { detail: '' } },
     {
       onSuccess: () => {
         emit('deleted')
         showNotification('Join request sent.', 'success')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to send join request.' : 'Server connection error.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )
@@ -203,11 +203,8 @@ const leaveTeam = () => {
       onSuccess: () => {
         emit('leave')
       },
-      onError: (err) => {
-        showNotification(
-          err.response ? 'Unable to leave team.' : 'Unable to connect to server.',
-          'error',
-        )
+      onError: (error) => {
+        showNotification(error.message, 'error')
       },
     },
   )

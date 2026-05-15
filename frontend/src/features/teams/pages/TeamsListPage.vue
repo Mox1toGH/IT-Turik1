@@ -14,7 +14,10 @@
               <ui-badge>Total teams: {{ teams?.length ?? '0' }}</ui-badge>
             </ui-skeleton-loader>
           </div>
-          <h1>Team directory</h1>
+          <div class="title-row">
+            <team-directory-title-icon class="title-icon" />
+            <h1>Team directory</h1>
+          </div>
           <p class="section-subtitle">
             Open a team workspace to view details, edit info, and manage members.
           </p>
@@ -23,7 +26,9 @@
 
       <template #footer>
         <div class="hero-actions">
-          <ui-button asLink to="/teams/create" class="manage-link">Create new team</ui-button>
+          <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" class="manage-link"
+            >Create new team</ui-button
+          >
         </div>
       </template>
     </ui-card>
@@ -42,12 +47,15 @@ import UiCard from '@/components/ui/UiCard.vue'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
-import { useTeams } from '@/api/queries/teams'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import TeamDirectoryTitleIcon from '@/icons/TeamDirectoryTitleIcon.vue'
+import { useListTeams } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 
-const { data: teams, isLoading: isLoadingTeams } = useTeams()
+const { data: teams, isLoading: isLoadingTeams } = useListTeams()
+const { data: user } = useGetUserProfile()
 </script>
 
 <style scoped>
@@ -56,6 +64,19 @@ const { data: teams, isLoading: isLoadingTeams } = useTeams()
   justify-content: space-between;
   align-items: center;
 }
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.title-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  opacity: 0.86;
+}
+
 .hero-actions {
   display: flex;
   gap: 0.6rem;

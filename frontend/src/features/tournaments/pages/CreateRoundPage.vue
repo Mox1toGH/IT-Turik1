@@ -46,27 +46,49 @@
         }}</small>
       </label>
 
-      <label class="form-item start-date-field">
-        <span class="form-label">Start date</span>
-        <ui-date-picker
-          v-model="form.fields.value.start_date"
-          :isInvalid="!!form.errors.value.start_date"
-          @blur="form.validateField('start_date')"
-        />
+      <label class="form-item start-datetime-field">
+        <span class="form-label">Start date/time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.start_date"
+            :isInvalid="!!form.errors.value.start_date"
+            @blur="form.validateField('start_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.start_time"
+            type="time"
+            :isInvalid="!!form.errors.value.start_time"
+            @blur="form.validateField('start_time')"
+          />
+        </div>
         <small v-if="form.errors.value.start_date" class="text-error">{{
           form.errors.value.start_date
         }}</small>
+        <small v-if="form.errors.value.start_time" class="text-error">{{
+          form.errors.value.start_time
+        }}</small>
       </label>
 
-      <label class="form-item end-date-field">
-        <span class="form-label">End date</span>
-        <ui-date-picker
-          v-model="form.fields.value.end_date"
-          :isInvalid="!!form.errors.value.end_date"
-          @blur="form.validateField('end_date')"
-        />
+      <label class="form-item end-datetime-field">
+        <span class="form-label">End date/time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.end_date"
+            :isInvalid="!!form.errors.value.end_date"
+            @blur="form.validateField('end_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.end_time"
+            type="time"
+            :isInvalid="!!form.errors.value.end_time"
+            @blur="form.validateField('end_time')"
+          />
+        </div>
         <small v-if="form.errors.value.end_date" class="text-error">{{
           form.errors.value.end_date
+        }}</small>
+        <small v-if="form.errors.value.end_time" class="text-error">{{
+          form.errors.value.end_time
         }}</small>
       </label>
 
@@ -128,10 +150,10 @@ import EditorModal from '../components/create-round/modals/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateRoundSchema } from '@/schemas/tournaments.schema'
 import type { JSONContent } from '@tiptap/core'
-import { useCreateRound } from '@/api/queries/tournaments'
 import { useRoute, useRouter } from 'vue-router'
-import { parseApiError } from '@/api/errors'
 import { useNotification } from '@/composables/useNotification'
+import { combineDateAndTime } from '@/lib/date'
+import { useCreateRound } from '@/api/tournaments/tournaments'
 
 interface RoundCriteriaItem {
   id: string
@@ -148,7 +170,9 @@ interface Form {
   must_have_requirements: JSONContent | null
   criteria: RoundCriteriaItem[]
   start_date: Date
+  start_time: string
   end_date: Date
+  end_time: string
 }
 
 const form = useForm<Form>(CreateRoundSchema, {
@@ -159,7 +183,9 @@ const form = useForm<Form>(CreateRoundSchema, {
   must_have_requirements: null,
   criteria: [],
   start_date: new Date(),
+  start_time: '00:00',
   end_date: new Date(),
+  end_time: '23:59',
 })
 
 const route = useRoute()
@@ -171,17 +197,20 @@ const { mutate: createRound, isPending } = useCreateRound()
 
 function handleSubmit() {
   if (!form.validate()) return
+  const { start_time, end_time, ...rest } = form.fields.value
 
   createRound(
     {
-      id: tournamentId,
-      body: {
+      tournamentPk: tournamentId,
+      data: {
         tournament: tournamentId,
-        ...form.fields.value,
+        ...rest,
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
     {
-      onSuccess: () => {
+      onSuccess: (_data) => {
         router.push({
           path: `/tournaments/${tournamentId}`,
           query: {
@@ -190,11 +219,10 @@ function handleSubmit() {
         })
       },
       onError(error) {
-        const parsedError = parseApiError(error)
-        for (const [field, errors] of Object.entries(parsedError?.details || {})) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
           form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
         }
-        showNotification(parsedError?.message, 'error')
+        showNotification(error?.message, 'error')
       },
     },
   )
@@ -226,32 +254,39 @@ function handleSubmit() {
 
 .must-have-field {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 5;
 }
 
-.start-date-field {
+.start-datetime-field {
   grid-column: 2;
   grid-row: 1;
 }
 
-.end-date-field {
+.end-datetime-field {
   grid-column: 2;
   grid-row: 2;
 }
 
+.datetime-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .passing-count-field {
   grid-column: 1;
-  grid-row: 5;
+  grid-row: 6;
 }
 
 .criteria-field {
   grid-column: 2;
-  grid-row: 5;
+  grid-row: 6;
 }
 
 .submit-btn {
   grid-column: 2;
-  grid-row: 6;
+  grid-row: 7;
 }
 
 .text-error {
@@ -274,12 +309,16 @@ function handleSubmit() {
     grid-row: 5;
   }
 
-  .start-date-field,
-  .end-date-field,
+  .start-datetime-field,
+  .end-datetime-field,
   .criteria-field,
   .submit-btn {
     grid-column: 1;
     grid-row: auto;
+  }
+
+  .datetime-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>

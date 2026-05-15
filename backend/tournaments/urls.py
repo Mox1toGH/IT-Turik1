@@ -20,12 +20,19 @@ from .views import (
     TournamentEligibleTeamsView,
     TournamentStartRegistrationView,
     TournamentTeamRegistrationCreateView,
+    TournamentTeamLeaveView,
     TournamentTeamRegistrationDetailView,
+    TournamentTeamRegistrationDisqualificationView,
     TournamentUpdateView,
+    TournamentBannerView,
     
     TournamentMyTeamSubmissionsView,
     TournamentSubmissionsView, 
     RoundSubmissionsView,
+    TournamentArchiveDetailView,
+    TournamentArchiveListView,
+    TournamentArchiveSubmissionsView,
+    MyCalendarView,
 )
 
 router = DefaultRouter()
@@ -33,15 +40,24 @@ router.register(r'events', EventViewSet, basename='event')
 
 urlpatterns = [
     path('', TournamentListView.as_view(), name='tournaments'),
+    path('archive/', TournamentArchiveListView.as_view(), name='tournament_archive_list'),
+    path('archive/<int:pk>/', TournamentArchiveDetailView.as_view(), name='tournament_archive_detail'),
+    path(
+        'archive/<int:pk>/submissions/',
+        TournamentArchiveSubmissionsView.as_view(),
+        name='tournament_archive_submissions',
+    ),
     path('<int:pk>/', TournamentDetailView.as_view(), name='tournament_detail'),
     path('manage/', TournamentCreateView.as_view(), name='tournament_manage_create'),
     path('manage/<int:pk>/', TournamentUpdateView.as_view(), name='tournament_manage_update'),
+    path('manage/<int:pk>/banner/', TournamentBannerView.as_view(), name='tournament_manage_banner'),
     path(
         '<int:pk>/start-registration/',
         TournamentStartRegistrationView.as_view(),
         name='tournament_start_registration',
     ),
     path('<int:pk>/register-team/', TournamentTeamRegistrationCreateView.as_view(), name='tournament_register_team'),
+    path('<int:pk>/leave-team/', TournamentTeamLeaveView.as_view(), name='tournament_leave_team'),
     path('<int:pk>/eligible-teams/', TournamentEligibleTeamsView.as_view(), name='tournament_eligible_teams'),
     path('<int:pk>/teams/', TournamentTeamsView.as_view(), name='tournament_teams'),
     path('active/', TeamActiveTournamentView.as_view(), name='team_active_tournament'),
@@ -49,6 +65,11 @@ urlpatterns = [
         '<int:pk>/registrations/<int:registration_pk>/',
         TournamentTeamRegistrationDetailView.as_view(),
         name='tournament_registration_detail',
+    ),
+    path(
+        '<int:pk>/registrations/<int:registration_pk>/disqualification/',
+        TournamentTeamRegistrationDisqualificationView.as_view(),
+        name='tournament_registration_disqualification',
     ),
     path('<int:tournament_pk>/rounds/', RoundListCreateView.as_view(), name='rounds'),
     path('rounds/<int:pk>/', RoundDetailView.as_view(), name='round_detail'),
@@ -61,6 +82,7 @@ urlpatterns = [
     path('<int:pk>/my-submissions/', TournamentMyTeamSubmissionsView.as_view(), name='tournament_my_submissions'),
     path('rounds/<int:pk>/submissions/', RoundSubmissionsView.as_view(), name='round_submissions'),
     
+    path('my-calendar/', MyCalendarView.as_view(), name='my_calendar'),
     path('current-task/', CurrentTaskView.as_view(), name='current_task'),
     path('icons/', IconListView.as_view(), name='icon_list'),
 ] + router.urls

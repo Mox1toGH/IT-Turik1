@@ -1,8 +1,20 @@
 <template>
   <section class="page-shell teams-detail-page">
-    <ui-card class="hero-card">
+    <ui-card class="hero-card" :class="{ 'hero-card--with-banner': Boolean(team?.banner) }">
+      <button
+        v-if="isCaptain && !isInfoLoading"
+        class="banner-edit-btn"
+        type="button"
+        @click="isBannerModalOpen = true"
+        aria-label="Edit team banner"
+      >
+        <avatar-edit-icon />
+      </button>
+      <div v-if="team?.banner" class="hero-banner" :style="heroBannerStyle" />
+      <div v-if="team?.banner" class="hero-overlay" />
+
       <template #header>
-        <div class="hero-top">
+        <div class="hero-top hero-content">
           <div>
             <p class="section-eyebrow">Team workspace</p>
             <ui-skeleton-loader class="section-title" :loading="isInfoLoading">
@@ -53,7 +65,7 @@
       </template>
 
       <template #footer>
-        <div class="hero-actions">
+        <div class="hero-actions hero-content">
           <ui-button asLink variant="secondary" size="sm" to="/teams">Back to teams</ui-button>
         </div>
       </template>
@@ -147,12 +159,56 @@
         @update-team="(newTeamValue) => (team = newTeamValue)"
       />
     </ui-skeleton-loader>
+
+    <ui-modal v-model="isBannerModalOpen" @close="resetBannerState">
+      <template #title>
+        <h3>Team banner</h3>
+      </template>
+
+      <div class="banner-modal-body">
+        <div
+          v-if="bannerPreviewUrl"
+          class="banner-preview-frame"
+          @pointerdown="onBannerPreviewPointerDown"
+        >
+          <img
+            :src="bannerPreviewUrl"
+            alt="Team banner preview"
+            class="banner-preview"
+            :style="{ objectPosition: bannerObjectPosition }"
+          />
+        </div>
+        <div v-else class="banner-empty">No banner</div>
+
+        <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
+        <input type="file" accept="image/*" @change="onBannerChange" />
+      </div>
+
+      <template #footer>
+        <ui-button size="sm" variant="secondary" @click="resetBannerState">Cancel</ui-button>
+        <ui-button
+          size="sm"
+          variant="secondary"
+          :disabled="isBannerUpdating || !team?.banner"
+          @click="removeBanner"
+        >
+          Remove
+        </ui-button>
+        <ui-button size="sm" :disabled="isBannerUpdating || !selectedBanner" @click="saveBanner">
+          <loading-icon v-if="isBannerUpdating" />
+          Save
+        </ui-button>
+      </template>
+    </ui-modal>
   </section>
 </template>
 
 <script setup lang="ts">
+import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import DiscordIcon from '@/icons/DiscordIcon.vue'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
 import TelegramIcon from '@/icons/TelegramIcon.vue'
+import UiModal from '@/components/ui/UiModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import TeamBaseInfo from '../components/team-detail/TeamBaseInfo.vue'
@@ -161,41 +217,244 @@ import TeamManageZone from '../components/team-detail/TeamManageZone.vue'
 import TeamJoinRequests from '../components/team-detail/TeamJoinRequests.vue'
 import TeamInvitations from '../components/team-detail/TeamInvitations.vue'
 import { useRoute, useRouter } from 'vue-router'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import { useTeamInfo } from '@/api/queries/teams'
-import { useProfile } from '@/api/queries/accounts'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import { truncateText } from '@/lib/utils'
-import { useActiveTeamTournament } from '@/api/queries/tournaments'
 import { formatDate } from '@/lib/date'
+import { useNotification } from '@/composables/useNotification'
+import {
+  clearImagePosition,
+  readImagePosition,
+  toObjectPosition,
+  writeImagePosition,
+} from '@/lib/imagePosition'
+import { useGetTeam, useDeleteTeamBanner, useUpdateTeamBanner } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 
 const router = useRouter()
 const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
-const { data: user, isLoading: isProfileLoading } = useProfile()
+const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
 const {
   data: team,
   isLoading: isInfoLoading,
   isLoadingError: isInfoLoadingError,
-} = useTeamInfo({ id: teamId })
+} = useGetTeam(teamId)
 
-const { data: activeTournament } = useActiveTeamTournament(
-  { id: teamId },
+const { data: activeTournament } = useGetTeamActiveTournament(
+  { team_id: teamId },
   {
-    enabled: team.value?.is_in_active_tournament,
+    query: { enabled: team.value?.is_in_active_tournament },
   },
 )
 
 const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
+const isBannerModalOpen = ref(false)
+const selectedBanner = ref<File | null>(null)
+const selectedBannerUrl = ref('')
+const bannerPositionX = ref(50)
+const bannerPositionY = ref(50)
+const { showNotification } = useNotification()
+
+const { mutate: updateBanner, isPending: isUpdatingBanner } = useUpdateTeamBanner()
+const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useDeleteTeamBanner()
+const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
+
+const bannerPreviewUrl = computed(() => {
+  if (selectedBannerUrl.value) return selectedBannerUrl.value
+  return team.value?.banner || ''
+})
+const bannerPositionKey = computed(() => `image-position:banner:team:${teamId}`)
+const bannerObjectPosition = computed(() =>
+  toObjectPosition({ x: bannerPositionX.value, y: bannerPositionY.value }),
+)
+
+const heroBannerStyle = computed(() => {
+  if (!team.value?.banner) return {}
+  return {
+    backgroundImage: `url(${team.value.banner})`,
+    backgroundPosition: bannerObjectPosition.value,
+  }
+})
+
+const closeBannerModal = () => {
+  isBannerModalOpen.value = false
+}
+
+const resetBannerState = () => {
+  selectedBanner.value = null
+  const saved = readImagePosition(bannerPositionKey.value)
+  bannerPositionX.value = saved.x
+  bannerPositionY.value = saved.y
+  if (selectedBannerUrl.value) {
+    URL.revokeObjectURL(selectedBannerUrl.value)
+    selectedBannerUrl.value = ''
+  }
+  closeBannerModal()
+}
+
+const onBannerChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  selectedBanner.value = target.files?.[0] || null
+}
+
+const saveBanner = () => {
+  if (!selectedBanner.value) return
+  writeImagePosition(bannerPositionKey.value, {
+    x: bannerPositionX.value,
+    y: bannerPositionY.value,
+  })
+  updateBanner(
+    { id: teamId, data: { banner: selectedBanner.value } },
+    {
+      onSuccess: () => {
+        showNotification('Banner updated.', 'success')
+        resetBannerState()
+      },
+      onError: (error) => {
+        showNotification(error.message, 'error')
+      },
+    },
+  )
+}
+
+const removeBanner = () => {
+  removeTeamBanner(
+    { id: teamId },
+    {
+      onSuccess: () => {
+        clearImagePosition(bannerPositionKey.value)
+        showNotification('Banner removed.', 'success')
+        resetBannerState()
+      },
+      onError: (error) => {
+        showNotification(error.message, 'error')
+      },
+    },
+  )
+}
+
+const onBannerPreviewPointerDown = (event: PointerEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  if (!target) return
+  target.setPointerCapture(event.pointerId)
+
+  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
+    const rect = target.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
+    bannerPositionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
+    bannerPositionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
+  }
+
+  applyPositionFromPointer(event)
+
+  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
+  const handleUp = (pointerEvent: PointerEvent) => {
+    applyPositionFromPointer(pointerEvent)
+    writeImagePosition(bannerPositionKey.value, {
+      x: bannerPositionX.value,
+      y: bannerPositionY.value,
+    })
+    target.removeEventListener('pointermove', handleMove)
+    target.removeEventListener('pointerup', handleUp)
+    target.removeEventListener('pointercancel', handleUp)
+  }
+
+  target.addEventListener('pointermove', handleMove)
+  target.addEventListener('pointerup', handleUp)
+  target.addEventListener('pointercancel', handleUp)
+}
+
+watch(selectedBanner, (file) => {
+  if (selectedBannerUrl.value) {
+    URL.revokeObjectURL(selectedBannerUrl.value)
+    selectedBannerUrl.value = ''
+  }
+  if (file) {
+    selectedBannerUrl.value = URL.createObjectURL(file)
+  }
+})
+
+watch(
+  bannerPositionKey,
+  (key) => {
+    const saved = readImagePosition(key)
+    bannerPositionX.value = saved.x
+    bannerPositionY.value = saved.y
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
+.hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-card--with-banner :deep(.ui-card-body),
+.hero-card--with-banner :deep(.ui-card-header),
+.hero-card--with-banner :deep(.ui-card-footer) {
+  color: #fff;
+}
+
+.hero-card--with-banner .section-eyebrow {
+  color: #f8d7b6;
+}
+
+.hero-card--with-banner .contact-icon {
+  color: #fff;
+}
+
+.hero-banner {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(135deg, rgba(5, 11, 23, 0.8), rgba(5, 11, 23, 0.45));
+}
+
+.banner-edit-btn {
+  position: absolute;
+  bottom: 0.9rem;
+  right: 0.9rem;
+  z-index: 3;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  background: var(--secondary);
+  color: var(--color-gray-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.banner-edit-btn:hover {
+  border-color: var(--brand-500);
+  color: var(--brand-700);
+}
+
 .hero-top {
   display: flex;
   justify-content: space-between;
@@ -262,6 +521,47 @@ const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
 
 .panel {
   border: 1px solid var(--line-soft);
+}
+
+.banner-modal-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.banner-preview-frame,
+.banner-empty {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 5;
+  border-radius: 0.6rem;
+  border: 1px solid var(--line-soft);
+}
+
+.banner-preview-frame {
+  overflow: hidden;
+  cursor: move;
+}
+
+.position-hint {
+  margin: 0;
+  color: var(--color-gray-500);
+  font-size: 0.82rem;
+}
+
+.banner-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+}
+
+.banner-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-500);
+  font-size: 0.85rem;
 }
 
 @media (max-width: 720px) {
