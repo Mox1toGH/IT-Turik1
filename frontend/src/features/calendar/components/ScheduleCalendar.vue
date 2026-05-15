@@ -168,7 +168,6 @@ import CalendarDayDetail from './CalendarDayDetail.vue'
 import { truncateText } from '@/lib/utils'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useListRounds } from '@/api/tournaments/tournaments'
 import type { Event, Round } from '@/api/.ts.schemas'
 
 interface CalendarItem {
@@ -187,8 +186,6 @@ interface Props {
   rounds: Round[]
   gcalConnected?: boolean
 }
-
-useListRounds
 
 const props = defineProps<Props>()
 const emit = defineEmits<{

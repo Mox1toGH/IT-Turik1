@@ -91,8 +91,13 @@ import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
 import { computed, onMounted, ref } from 'vue'
-import { googleCalendarService } from '@/api/services/google-calendar'
-import { useGetMyCalendar } from '@/api/tournaments/tournaments'
+import {
+  connectGoogleCalendar,
+  disconnectGoogleCalendar,
+  getGoogleCalendarStatus,
+} from '@/api/accounts/accounts'
+import { exportToGoogleCalendar, useGetMyCalendar } from '@/api/tournaments/tournaments'
+import type { Event, Round } from '@/api/.ts.schemas'
 
 const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
 
@@ -106,7 +111,7 @@ const isExporting = ref(false)
 
 onMounted(async () => {
   try {
-    const status = await googleCalendarService.getStatus()
+    const status = await getGoogleCalendarStatus()
     gcalConnected.value = status.connected
   } catch {
     gcalConnected.value = false
@@ -117,7 +122,7 @@ onMounted(async () => {
 
 async function connectGcal() {
   try {
-    const { auth_url } = await googleCalendarService.connect()
+    const { auth_url } = await connectGoogleCalendar()
     window.location.href = auth_url
   } catch (e) {
     console.error('Failed to get Google Calendar auth URL', e)
@@ -126,7 +131,7 @@ async function connectGcal() {
 
 async function disconnectGcal() {
   try {
-    await googleCalendarService.disconnect()
+    await disconnectGoogleCalendar()
     gcalConnected.value = false
   } catch (e) {
     console.error('Failed to disconnect Google Calendar', e)
@@ -137,9 +142,9 @@ async function exportAll() {
   if (isExporting.value) return
   isExporting.value = true
   try {
-    const eventIds = events.value.map((e: any) => e.id)
-    const roundIds = rounds.value.map((r: any) => r.id)
-    await googleCalendarService.exportToGoogle({
+    const eventIds = (events.value as Event[]).map((event) => event.id)
+    const roundIds = (rounds.value as Round[]).map((round) => round.id)
+    await exportToGoogleCalendar({
       event_ids: eventIds,
       round_ids: roundIds,
     })
@@ -152,7 +157,7 @@ async function exportAll() {
 
 async function exportEvent(eventId: number) {
   try {
-    await googleCalendarService.exportToGoogle({ event_ids: [eventId] })
+    await exportToGoogleCalendar({ event_ids: [eventId] })
   } catch (e) {
     console.error('Export event failed', e)
   }
@@ -160,7 +165,7 @@ async function exportEvent(eventId: number) {
 
 async function exportRound(roundId: number) {
   try {
-    await googleCalendarService.exportToGoogle({ round_ids: [roundId] })
+    await exportToGoogleCalendar({ round_ids: [roundId] })
   } catch (e) {
     console.error('Export round failed', e)
   }

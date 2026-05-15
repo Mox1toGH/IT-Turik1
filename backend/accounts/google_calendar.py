@@ -7,10 +7,18 @@ import requests as http_requests
 from django.conf import settings
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from rest_framework import status
+from rest_framework import generics, status
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
+
+from backend.openapi import _400, _401, _503
+from accounts.serializers import (
+    GoogleCalendarCallbackRequestSerializer,
+    GoogleCalendarConnectResponseSerializer,
+    GoogleCalendarStatusSerializer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +26,12 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.events']
 
 GOOGLE_AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_URI = 'https://oauth2.googleapis.com/token'
+
+
+class ServiceUnavailableError(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = 'Google Calendar integration is not configured.'
+    default_code = 'service_unavailable'
 
 
 def _generate_code_verifier():
@@ -168,24 +182,41 @@ def _sync_all_calendar_items(user):
     logger.info('Auto-synced all calendar items for user %s', user.id)
 
 
-class GoogleCalendarStatusView(APIView):
+class GoogleCalendarStatusView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = GoogleCalendarStatusSerializer
 
+    @extend_schema(
+        operation_id='getGoogleCalendarStatus',
+        responses={
+            200: GoogleCalendarStatusSerializer,
+            401: _401,
+        },
+    )
     def get(self, request):
-        return Response({
-            'connected': request.user.google_calendar_connected,
-        })
+        return Response(
+            GoogleCalendarStatusSerializer(
+                {'connected': request.user.google_calendar_connected},
+            ).data,
+        )
 
 
-class GoogleCalendarConnectView(APIView):
+class GoogleCalendarConnectView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = GoogleCalendarConnectResponseSerializer
 
+    @extend_schema(
+        operation_id='connectGoogleCalendar',
+        request=None,
+        responses={
+            200: GoogleCalendarConnectResponseSerializer,
+            401: _401,
+            503: _503,
+        },
+    )
     def post(self, request):
         if not settings.GOOGLE_OAUTH_CLIENT_SECRET:
-            return Response(
-                {'detail': 'Google Calendar integration is not configured.'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+            raise ServiceUnavailableError()
 
         # Generate PKCE pair
         code_verifier = _generate_code_verifier()
@@ -211,19 +242,29 @@ class GoogleCalendarConnectView(APIView):
         }
         request.user.save(update_fields=['google_calendar_token'])
 
-        return Response({'auth_url': auth_url})
+        return Response(
+            GoogleCalendarConnectResponseSerializer({'auth_url': auth_url}).data,
+        )
 
 
-class GoogleCalendarCallbackView(APIView):
+class GoogleCalendarCallbackView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = GoogleCalendarCallbackRequestSerializer
 
+    @extend_schema(
+        operation_id='callbackGoogleCalendar',
+        request=GoogleCalendarCallbackRequestSerializer,
+        responses={
+            200: GoogleCalendarStatusSerializer,
+            400: _400,
+            401: _401,
+            503: _503,
+        },
+    )
     def post(self, request):
-        code = request.data.get('code')
-        if not code:
-            return Response(
-                {'detail': 'Authorization code is required.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data['code']
 
         try:
             # Restore the PKCE code_verifier
@@ -244,10 +285,7 @@ class GoogleCalendarCallbackView(APIView):
                 error_data = token_response.json()
                 error_msg = error_data.get('error_description', error_data.get('error', 'Unknown error'))
                 logger.error('Google token exchange failed: %s', error_data)
-                return Response(
-                    {'detail': f'Token exchange failed: {error_msg}'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                raise ValidationError({'code': [f'Token exchange failed: {error_msg}']})
 
             tokens = token_response.json()
 
@@ -262,22 +300,34 @@ class GoogleCalendarCallbackView(APIView):
             # Auto-sync all existing events/rounds to Google Calendar
             _sync_all_calendar_items(user)
 
-            return Response({'connected': True})
-
-        except Exception as e:
-            logger.exception('Google Calendar OAuth callback failed')
             return Response(
-                {'detail': f'Failed to connect: {str(e)}'},
-                status=status.HTTP_400_BAD_REQUEST,
+                GoogleCalendarStatusSerializer({'connected': True}).data,
             )
 
+        except ValidationError:
+            raise
+        except Exception as e:
+            logger.exception('Google Calendar OAuth callback failed')
+            raise ValidationError({'code': [f'Failed to connect: {str(e)}']})
 
-class GoogleCalendarDisconnectView(APIView):
+
+class GoogleCalendarDisconnectView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = GoogleCalendarStatusSerializer
 
+    @extend_schema(
+        operation_id='disconnectGoogleCalendar',
+        request=None,
+        responses={
+            200: GoogleCalendarStatusSerializer,
+            401: _401,
+        },
+    )
     def post(self, request):
         user = request.user
         user.google_calendar_token = None
         user.google_calendar_connected = False
         user.save(update_fields=['google_calendar_token', 'google_calendar_connected'])
-        return Response({'connected': False})
+        return Response(
+            GoogleCalendarStatusSerializer({'connected': False}).data,
+        )

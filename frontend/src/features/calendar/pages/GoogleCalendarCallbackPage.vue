@@ -27,7 +27,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import CrossIcon from '@/icons/CrossIcon.vue'
-import { googleCalendarService } from '@/api/services/google-calendar'
+import { callbackGoogleCalendar } from '@/api/accounts/accounts'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,13 +50,13 @@ onMounted(async () => {
   }
 
   try {
-    await googleCalendarService.callback({ code })
+    await callbackGoogleCalendar({ code })
     isSuccess.value = true
     isProcessing.value = false
     setTimeout(() => router.push('/calendar'), 1500)
-  } catch (e: any) {
+  } catch (e) {
     isProcessing.value = false
-    errorMessage.value = e?.response?.data?.detail || 'An unknown error occurred.'
+    errorMessage.value = 'Failed to connect. Please try again.'
   }
 })
 </script>

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
@@ -47,6 +49,8 @@ from .serializers import (
     TournamentTeamRegistrationSerializer,
     TournamentTeamRegistrationDisqualificationSerializer,
     TournamentBannerSerializer,
+    ExportToGoogleCalendarRequestSerializer,
+    ExportToGoogleCalendarResponseSerializer,
 )
 from .services import (
     close_submissions_on_round,
@@ -1112,9 +1116,19 @@ class TournamentArchiveSubmissionsView(SyncStatusesMixin, generics.ListAPIView):
         )
 
 
-class ExportToGoogleCalendarView(APIView):
+class ExportToGoogleCalendarView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ExportToGoogleCalendarRequestSerializer
 
+    @extend_schema(
+        operation_id='exportToGoogleCalendar',
+        request=ExportToGoogleCalendarRequestSerializer,
+        responses={
+            200: ExportToGoogleCalendarResponseSerializer,
+            400: _400,
+            401: _401,
+        },
+    )
     def post(self, request):
         user = request.user
         if not user.google_calendar_connected:
@@ -1130,14 +1144,13 @@ class ExportToGoogleCalendarView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        event_ids = request.data.get('event_ids', [])
-        round_ids = request.data.get('round_ids', [])
+        request_serializer = self.get_serializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        event_ids = request_serializer.validated_data.get('event_ids', [])
+        round_ids = request_serializer.validated_data.get('round_ids', [])
 
         if not event_ids and not round_ids:
-            return Response(
-                {'detail': 'Provide event_ids or round_ids to export.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise ValidationError({'event_ids': ['Provide event_ids or round_ids to export.']})
 
         created = []
         errors = []
@@ -1147,7 +1160,7 @@ class ExportToGoogleCalendarView(APIView):
             for event in events:
                 try:
                     start_dt = event.start_datetime
-                    end_dt = start_dt + __import__('datetime').timedelta(hours=1)
+                    end_dt = start_dt + timedelta(hours=1)
 
                     gcal_event = {
                         'summary': f'{event.title} — {event.tournament.name}',
@@ -1192,7 +1205,7 @@ class ExportToGoogleCalendarView(APIView):
                             'timeZone': 'UTC',
                         },
                         'end': {
-                            'dateTime': (round_obj.start_date + __import__('datetime').timedelta(hours=1)).isoformat(),
+                            'dateTime': (round_obj.start_date + timedelta(hours=1)).isoformat(),
                             'timeZone': 'UTC',
                         },
                     }
@@ -1208,7 +1221,7 @@ class ExportToGoogleCalendarView(APIView):
                             'timeZone': 'UTC',
                         },
                         'end': {
-                            'dateTime': (round_obj.end_date + __import__('datetime').timedelta(minutes=30)).isoformat(),
+                            'dateTime': (round_obj.end_date + timedelta(minutes=30)).isoformat(),
                             'timeZone': 'UTC',
                         },
                     }
@@ -1231,7 +1244,8 @@ class ExportToGoogleCalendarView(APIView):
                         'error': str(e),
                     })
 
-        return Response({
-            'created': created,
-            'errors': errors,
-        })
+        return Response(
+            ExportToGoogleCalendarResponseSerializer(
+                {'created': created, 'errors': errors},
+            ).data,
+        )
