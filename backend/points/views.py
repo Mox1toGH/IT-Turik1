@@ -10,6 +10,7 @@ from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParam
 from backend.openapi import _400, _401, _403, _404
 
 from backend.permissions import is_platform_admin
+from notifications.services import NotificationService
 
 from .models import PointsTransaction, UserPointsBalance
 from .serializers import (
@@ -181,4 +182,14 @@ class AdminModifyUserPointsBalanceView(APIView):
                 }
             ).data,
         }
+
+        NotificationService.notify(
+            recipients=[target_user],
+            event_type='points_balance_changed',
+            context={
+                'delta': transaction_obj.amount,
+                'balance': balance_obj.balance,
+                'reason': transaction_obj.reason,
+            },
+        )
         return Response(response_data)

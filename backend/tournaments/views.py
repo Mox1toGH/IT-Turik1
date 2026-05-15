@@ -15,6 +15,7 @@ from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRe
 from backend.permissions import Permission, has_permission as user_has_permission
 from certificates.models import Certificate, CertificateTemplate
 from evaluation.leaderboard_service import get_tournament_leaderboard
+from notifications.services import NotificationService
 
 from .permissions import (
     CanCreateTournament,
@@ -77,6 +78,26 @@ def get_own_submissions_queryset(user):
         .distinct()
         .order_by('-updated_at')
     )
+
+
+def _get_team_participants(team):
+    user_map = {team.captain_id: team.captain} if team.captain_id else {}
+    for member in team.members.all():
+        user_map[member.id] = member
+    return list(user_map.values())
+
+
+def _get_tournament_participants(tournament):
+    registrations = (
+        TournamentTeamRegistration.objects.filter(tournament=tournament, is_active=True)
+        .select_related('team__captain')
+        .prefetch_related('team__members')
+    )
+    user_map = {}
+    for registration in registrations:
+        for user in _get_team_participants(registration.team):
+            user_map[user.id] = user
+    return list(user_map.values())
 
 
 class SyncStatusesMixin:
@@ -368,6 +389,19 @@ class TournamentTeamRegistrationCreateView(SyncStatusesMixin, generics.GenericAP
         )
         serializer.is_valid(raise_exception=True)
         registration = serializer.save()
+        registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .prefetch_related('team__members')
+            .get(pk=registration.pk)
+        )
+        NotificationService.notify(
+            recipients=_get_team_participants(registration.team),
+            event_type='tournament_team_registered',
+            context={
+                'team_name': registration.team.name,
+                'tournament_name': tournament.name,
+            },
+        )
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_201_CREATED)
 
 
@@ -393,6 +427,20 @@ class TournamentTeamLeaveView(SyncStatusesMixin, generics.GenericAPIView):
         )
         serializer.is_valid(raise_exception=True)
         registration = serializer.save()
+        registration = (
+            TournamentTeamRegistration.objects.select_related('team')
+            .prefetch_related('team__members')
+            .get(pk=registration.pk)
+        )
+        recipients = [u for u in _get_team_participants(registration.team) if u.id != request.user.id]
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_team_unregistered',
+            context={
+                'team_name': registration.team.name,
+                'tournament_name': tournament.name,
+            },
+        )
         return Response(TournamentTeamRegistrationSerializer(registration).data, status=status.HTTP_200_OK)
 
 
@@ -435,14 +483,33 @@ class TournamentTeamRegistrationDisqualificationView(generics.GenericAPIView):
 
     def patch(self, request, pk, registration_pk):
         registration = get_object_or_404(
-            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team'),
+            TournamentTeamRegistration.objects.filter(tournament_id=pk).select_related('team', 'tournament'),
             pk=registration_pk,
         )
+        registration = TournamentTeamRegistration.objects.select_related(
+            'team__captain', 'tournament'
+        ).prefetch_related('team__members').get(pk=registration.pk)
         serializer = self.get_serializer(registration, data=request.data)
         serializer.is_valid(raise_exception=True)
+        previous_is_active = registration.is_active
         serializer.save()
 
         action = 'activated' if registration.is_active else 'disqualified'
+        event_type = None
+        if registration.is_active and not previous_is_active:
+            event_type = 'tournament_team_reactivated'
+        elif not registration.is_active:
+            event_type = 'tournament_team_disqualified'
+        if event_type:
+            NotificationService.notify(
+                recipients=_get_team_participants(registration.team),
+                event_type=event_type,
+                context={
+                    'team_name': registration.team.name,
+                    'tournament_name': registration.tournament.name,
+                    'reason': registration.disqualification_reason or 'No reason provided',
+                },
+            )
 
         return Response(
             DisqualificationResponseSerializer({
@@ -693,6 +760,14 @@ class RoundStartView(SyncStatusesMixin, generics.GenericAPIView):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
         start_round(round_obj)
         round_obj.refresh_from_db()
+        NotificationService.notify(
+            recipients=_get_tournament_participants(round_obj.tournament),
+            event_type='tournament_round_started',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': round_obj.tournament.name,
+            },
+        )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
@@ -713,8 +788,24 @@ class RoundMarkEvaluatedView(SyncStatusesMixin, generics.GenericAPIView):
 
     def post(self, request, pk):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
+        tournament_name = round_obj.tournament.name
         mark_round_evaluated(round_obj)
         round_obj.refresh_from_db()
+        recipients = _get_tournament_participants(round_obj.tournament)
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='tournament_round_evaluated',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': tournament_name,
+            },
+        )
+        if round_obj.tournament.status == Tournament.STATUS_FINISHED:
+            NotificationService.notify(
+                recipients=recipients,
+                event_type='tournament_finished',
+                context={'tournament_name': tournament_name},
+            )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 
@@ -831,6 +922,14 @@ class RoundCloseSubmissionsView(SyncStatusesMixin, generics.GenericAPIView):
         round_obj = get_object_or_404(get_round_queryset(), pk=pk)
         close_submissions_on_round(round_obj)
         round_obj.refresh_from_db()
+        NotificationService.notify(
+            recipients=_get_tournament_participants(round_obj.tournament),
+            event_type='tournament_round_submissions_closed',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': round_obj.tournament.name,
+            },
+        )
         return Response(RoundSerializer(round_obj).data, status=status.HTTP_200_OK)
 
 

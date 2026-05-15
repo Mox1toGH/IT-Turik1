@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from accounts.models import User
+from notifications.services import NotificationService
 from tournaments.models import Round
 from tournaments.models import TournamentTeamRegistration
 
@@ -51,6 +52,9 @@ def replace_round_jury_assignments(round_obj, assignments_data):
         missing_text = ', '.join(str(item) for item in sorted(missing_jury_ids))
         raise ValidationError({'jury': f'Invalid jury user ids or non-jury users: {missing_text}'})
 
+    previous_jury_ids = set(
+        JuryAssignment.objects.filter(submission__round=round_obj).values_list('jury_id', flat=True)
+    )
     JuryAssignment.objects.filter(submission__round=round_obj).delete()
     new_assignments = []
     for item in assignments_data:
@@ -60,6 +64,17 @@ def replace_round_jury_assignments(round_obj, assignments_data):
 
     if new_assignments:
         JuryAssignment.objects.bulk_create(new_assignments)
+    newly_assigned_ids = all_jury_ids - previous_jury_ids
+    if newly_assigned_ids:
+        recipients = list(User.objects.filter(id__in=newly_assigned_ids))
+        NotificationService.notify(
+            recipients=recipients,
+            event_type='jury_assignment_received',
+            context={
+                'round_name': round_obj.name,
+                'tournament_name': round_obj.tournament.name,
+            },
+        )
 
     return len(new_assignments)
 
