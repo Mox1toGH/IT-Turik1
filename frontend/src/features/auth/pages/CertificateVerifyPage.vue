@@ -16,36 +16,32 @@
 
       <div v-if="isLoading" class="result result-loading">Checking...</div>
 
-      <div
-        v-else-if="result"
-        class="result"
-        :class="result.is_valid ? 'result-valid' : 'result-invalid'"
-      >
+      <div v-else-if="result" class="result" :class="isValidResult ? 'result-valid' : 'result-invalid'">
         <div class="result-head">
           <p class="result-title">Verification result</p>
-          <span class="status-badge" :class="result.is_valid ? 'status-valid' : 'status-invalid'">
-            {{ result.is_valid ? 'Valid' : 'Invalid' }}
+          <span class="status-badge" :class="isValidResult ? 'status-valid' : 'status-invalid'">
+            {{ isValidResult ? 'Valid' : 'Invalid' }}
           </span>
         </div>
 
-        <template v-if="result">
+        <template v-if="certificateData">
           <div class="result-grid">
             <p>
-              <span class="label">Name</span><strong>{{ result.full_name || '-' }}</strong>
+              <span class="label">Name</span><strong>{{ certificateData.full_name || '-' }}</strong>
             </p>
             <p>
-              <span class="label">Team</span><strong>{{ result.team_name || '-' }}</strong>
+              <span class="label">Team</span><strong>{{ certificateData.team_name || '-' }}</strong>
             </p>
             <p>
               <span class="label">Tournament</span
-              ><strong>{{ result.tournament_name || '-' }}</strong>
+              ><strong>{{ certificateData.tournament_name || '-' }}</strong>
             </p>
             <p>
               <span class="label">Certificate number</span
-              ><strong>{{ result.certificate_number || '-' }}</strong>
+              ><strong>{{ certificateData.certificate_number || '-' }}</strong>
             </p>
             <p>
-              <span class="label">Placement</span><strong>{{ result.placement || '-' }}</strong>
+              <span class="label">Placement</span><strong>{{ certificateData.placement || '-' }}</strong>
             </p>
           </div>
         </template>
@@ -57,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
@@ -66,6 +62,7 @@ import {
   verifyCertificate,
   type VerifyCertificateQueryResult,
 } from '@/api/certificates/certificates'
+import type { Certificate } from '@/api/.ts.schemas'
 
 const route = useRoute()
 const router = useRouter()
@@ -75,6 +72,16 @@ type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: str
 const codeInput = ref(String(route.params.code ?? '').trim())
 const result = ref<Result | null>(null)
 const isLoading = ref(false)
+const certificateData = computed<Certificate | null>(() => {
+  if (!result.value) return null
+  const candidate = (result.value as { data?: Certificate }).data
+  return candidate ?? (result.value as unknown as Certificate)
+})
+const isValidResult = computed(() => {
+  if (!result.value) return false
+  if (typeof result.value.is_valid === 'boolean') return result.value.is_valid
+  return !!certificateData.value
+})
 
 watch(
   () => route.params.code,

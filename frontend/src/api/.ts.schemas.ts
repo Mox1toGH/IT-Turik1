@@ -1186,6 +1186,9 @@ export interface RoleActivationCodeGenerateResponse {
  * * `jury` - jury
 * `admin` - admin
 * `organizer` - organizer
+ * * `organizer` - organizer
+* `admin` - admin
+* `jury` - jury
  */
 export type RoleActivationCodeGenerateRoleEnum = typeof RoleActivationCodeGenerateRoleEnum[keyof typeof RoleActivationCodeGenerateRoleEnum];
 
@@ -2194,6 +2197,7 @@ export const SchemaRetrieveLang = {
   hi: 'hi',
   hr: 'hr',
   hsb: 'hsb',
+  ht: 'ht',
   hu: 'hu',
   hy: 'hy',
   ia: 'ia',

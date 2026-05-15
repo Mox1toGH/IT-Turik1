@@ -19,31 +19,31 @@
       <ui-button class="verify-btn" type="submit">Verify</ui-button>
     </form>
 
-    <div v-if="result" class="result" :class="result.is_valid ? 'result-valid' : 'result-invalid'">
+    <div v-if="result" class="result" :class="isValidResult ? 'result-valid' : 'result-invalid'">
       <div class="result-head">
         <p class="result-title">Verification result</p>
-        <span class="status-badge" :class="result.is_valid ? 'status-valid' : 'status-invalid'">{{
-          result.is_valid ? 'Valid' : 'Invalid'
+        <span class="status-badge" :class="isValidResult ? 'status-valid' : 'status-invalid'">{{
+          isValidResult ? 'Valid' : 'Invalid'
         }}</span>
       </div>
-      <template v-if="result.data">
+      <template v-if="certificateData">
         <div class="result-grid">
           <p>
-            <span class="label">Name</span><strong>{{ result.data.full_name || '-' }}</strong>
+            <span class="label">Name</span><strong>{{ certificateData.full_name || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Team</span><strong>{{ result.data.team_name || '-' }}</strong>
+            <span class="label">Team</span><strong>{{ certificateData.team_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Tournament</span
-            ><strong>{{ result.data.tournament_name || '-' }}</strong>
+            ><strong>{{ certificateData.tournament_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Certificate number</span
-            ><strong>{{ result.data.certificate_number || '-' }}</strong>
+            ><strong>{{ certificateData.certificate_number || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Placement</span><strong>{{ result.data.placement || '-' }}</strong>
+            <span class="label">Placement</span><strong>{{ certificateData.placement || '-' }}</strong>
           </p>
         </div>
       </template>
@@ -57,10 +57,21 @@ import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import type { Certificate } from '@/api/.ts.schemas'
 
 const props = defineProps<{ verifyCode: string; result: any }>()
 const emit = defineEmits<{ (e: 'update:verifyCode', value: string): void; (e: 'submit'): void }>()
 const code = computed({ get: () => props.verifyCode, set: (v) => emit('update:verifyCode', v) })
+const certificateData = computed<Certificate | null>(() => {
+  if (!props.result) return null
+  const candidate = (props.result as { data?: Certificate }).data
+  return candidate ?? (props.result as Certificate)
+})
+const isValidResult = computed(() => {
+  if (!props.result) return false
+  if (typeof props.result.is_valid === 'boolean') return props.result.is_valid
+  return !!certificateData.value
+})
 </script>
 
 <style scoped>

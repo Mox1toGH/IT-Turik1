@@ -422,6 +422,13 @@ export const queryClient = new QueryClient({
       const key = mutation.options.mutationKey?.[0] as string | undefined
       if (!key) return
 
+      // Зберегти токен ДО інвалідації
+      if ((key === 'login' || key === 'googleAuth') && data) {
+        const d = data as { access?: string; refresh?: string }
+        if (d.access) localStorage.setItem('access', d.access)
+        if (d.refresh) localStorage.setItem('refresh', d.refresh)
+      }
+
       const entries = MUTATION_INVALIDATION_MAP[key] ?? []
       const ctx: Ctx = {
         vars: (vars ?? {}) as Ctx['vars'],
