@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.utils import timezone
 from notifications.models import Notification, UserNotificationSettings, NotificationConfig
 from accounts.models import User
 
@@ -51,5 +52,7 @@ class NotificationModelTests(TestCase):
     def test_notification_ordering(self):
         n1 = Notification.objects.create(recipient=self.user, event_type='t1', title='1')
         n2 = Notification.objects.create(recipient=self.user, event_type='t2', title='2')
+        Notification.objects.filter(pk=n1.pk).update(created_at=timezone.now() - timezone.timedelta(minutes=1))
+        Notification.objects.filter(pk=n2.pk).update(created_at=timezone.now())
         notifs = Notification.objects.all()
-        self.assertEqual(notifs[0], n2) # Order is -created_at
+        self.assertEqual(notifs[0], n2)  # Order is -created_at
