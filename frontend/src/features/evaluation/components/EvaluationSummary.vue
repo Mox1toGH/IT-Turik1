@@ -41,7 +41,7 @@ import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
 
 interface Props {
   evaluation: JuryAssignment['evaluation']
-  criteria: Criterion[]
+  criteria: readonly Criterion[]
 }
 
 const props = defineProps<Props>()

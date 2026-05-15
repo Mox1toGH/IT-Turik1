@@ -122,7 +122,7 @@ class SubmissionEvaluationSerializer(serializers.ModelSerializer):
 
 
 class RoundShortSerializer(serializers.ModelSerializer):
-    criteria = extend_schema_field(CriterionSerializer(many=True))(serializers.JSONField())
+    criteria = CriterionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Round
