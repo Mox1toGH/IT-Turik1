@@ -2,7 +2,7 @@
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
-const API_BASE: string = 'http://localhost:8000'
+const API_BASE: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 export const AXIOS_INSTANCE = Axios.create({
   baseURL: API_BASE,
