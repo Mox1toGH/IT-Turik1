@@ -30,7 +30,11 @@ from .serializers import (
 @extend_schema(
     operation_id='listJuryAssignments',
     parameters=[
-        OpenApiParameter('round_id', int, description='Filter by round ID'),
+        OpenApiParameter('round_id', int, required=False, description='Filter by single round ID'),
+        OpenApiParameter('round_ids', str, required=False, description='Comma-separated round IDs'),
+        OpenApiParameter('tournament_ids', str, required=False, description='Comma-separated tournament IDs'),
+        OpenApiParameter('evaluation_status', str, required=False,
+                         description='all | evaluated | not_evaluated (default: all)'),
     ],
     responses={
         200: JuryAssignmentSerializer(many=True),
