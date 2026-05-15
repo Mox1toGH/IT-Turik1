@@ -1,12 +1,21 @@
 # IT-Turik1
 
-Коротка інструкція з запуску проєкту, тестів та налаштування `.env`.
+Інструкція з запуску проєкту у двох варіантах: **вручну** та через **Docker**.
+
+---
 
 ## 1. Що потрібно встановити
 
+### Для ручного запуску
 - Python 3.11+
 - Node.js 20.19+ або 22.12+
 - npm
+- PostgreSQL 15+
+
+### Для Docker
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (включає Docker та Docker Compose)
+
+---
 
 ## 2. Налаштування `.env`
 
@@ -23,7 +32,7 @@ Copy-Item backend\.env.example backend\.env
 ```env
 DJANGO_SECRET_KEY=replace-me
 DJANGO_DEBUG=True
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 EMAIL_HOST=smtp.gmail.com
@@ -35,6 +44,13 @@ EMAIL_HOST_PASSWORD=your-app-password
 GOOGLE_OAUTH_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
 GOOGLE_OAUTH_CLIENT_SECRET=your-google-client-secret
 GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:5173/calendar/google-callback
+
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=itturik
+DB_USER=itturik
+DB_PASSWORD=itturik
+DB_HOST=db        # для Docker: db / для ручного: localhost
+DB_PORT=5432
 ```
 
 Як отримати значення:
@@ -46,35 +62,11 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 ```
 
 - `DJANGO_DEBUG`: `True` для локальної розробки, `False` для продакшну.
-- `DJANGO_ALLOWED_HOSTS`: список хостів через кому (локально: `localhost,127.0.0.1`).
+- `DJANGO_ALLOWED_HOSTS`: список хостів через кому. Для Docker обов'язково додай `backend`.
 - `CORS_ALLOWED_ORIGINS`: адреса фронтенду (локально: `http://localhost:5173`).
-- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`: для Gmail залиш як у прикладі.
-- `EMAIL_HOST_USER`: твоя Gmail-адреса.
-- `EMAIL_HOST_PASSWORD`: App Password у Google Account:
-  1. Увімкни 2FA у Google Account.
-  2. Відкрий `Security -> App passwords`.
-  3. Створи пароль застосунку та встав у `.env`.
-- `GOOGLE_OAUTH_CLIENT_ID`: у Google Cloud Console:
-  1. `APIs & Services -> Credentials`.
-  2. `Create Credentials -> OAuth client ID -> Web application`.
-  3. Додай `http://localhost:5173` у `Authorized JavaScript origins`.
-  4. Скопіюй `Client ID`.
-- `GOOGLE_OAUTH_CLIENT_SECRET`: секрет OAuth-клієнта, доступний у тих же Credentials.
-- `GOOGLE_CALENDAR_REDIRECT_URI`: URI для OAuth callback (за замовчуванням `http://localhost:5173/calendar/google-callback`). Додай цю адресу як **Authorized redirect URI** у Google Cloud Console.
-
-### Google Calendar Integration
-
-Для роботи інтеграції з Google Calendar додатково потрібно:
-
-1. Увімкнути **Google Calendar API** у Google Cloud Console (`APIs & Services -> Library`).
-2. Додати `http://localhost:5173/calendar/google-callback` до **Authorized redirect URIs** в OAuth client.
-3. Заповнити `GOOGLE_OAUTH_CLIENT_SECRET` та `GOOGLE_CALENDAR_REDIRECT_URI` у `backend/.env`.
-
-**Можливості:**
-- Підключення Google Calendar з профілю у розділі Calendar.
-- Автоматична синхронізація всіх існуючих подій при підключенні.
-- Автоматичне додавання нових подій та раундів у Google Calendar (`post_save` сигнали).
-- Ручний експорт окремих подій через кнопку "Add to GCal".
+- `EMAIL_HOST_PASSWORD`: App Password у Google Account — `Security → App passwords`.
+- `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`: у Google Cloud Console → `APIs & Services → Credentials → OAuth client ID → Web application`.
+- `DB_HOST`: **`db`** для Docker, **`localhost`** для ручного запуску.
 
 ### Frontend
 
@@ -91,9 +83,31 @@ VITE_GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-`VITE_GOOGLE_CLIENT_ID` має збігатися зі значенням `GOOGLE_OAUTH_CLIENT_ID` на backend.
+`VITE_GOOGLE_CLIENT_ID` має збігатися зі значенням `GOOGLE_OAUTH_CLIENT_ID` у backend.
 
-## 3. Запуск проєкту
+### Google Calendar Integration
+
+Для роботи інтеграції з Google Calendar:
+
+1. Увімкни **Google Calendar API** у Google Cloud Console (`APIs & Services → Library`).
+2. Додай `http://localhost:5173/calendar/google-callback` до **Authorized redirect URIs** в OAuth client.
+3. Заповни `GOOGLE_OAUTH_CLIENT_SECRET` та `GOOGLE_CALENDAR_REDIRECT_URI` у `backend/.env`.
+
+---
+
+## 3. Варіант A — Ручний запуск
+
+### Передумови
+
+Створи базу даних PostgreSQL вручну:
+
+```sql
+CREATE DATABASE itturik;
+CREATE USER itturik WITH PASSWORD 'itturik';
+GRANT ALL PRIVILEGES ON DATABASE itturik TO itturik;
+```
+
+У `backend/.env` встанови `DB_HOST=localhost`.
 
 ### Backend
 
@@ -105,38 +119,51 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-#### Варіант A: з WebSocket (ASGI, рекомендовано для realtime notifications)
+#### Варіант A: з WebSocket — рекомендовано (realtime notifications)
 
 ```powershell
 daphne -b 0.0.0.0 -p 8000 backend.asgi:application
 ```
 
-Використовуй цей режим, якщо потрібні realtime події через `/ws/notifications/`.
-
-#### Варіант B: без WebSocket (класичний Django runserver)
+#### Варіант B: без WebSocket (тільки REST API)
 
 ```powershell
 python manage.py runserver
 ```
 
-Використовуй цей режим для REST/OpenAPI. WebSocket-нотифікації в цьому режимі недоступні.
+> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише у Варіанті A.
 
 Backend буде доступний на `http://localhost:8000`.
-
 ### Frontend (в новому терміналі)
 
 ```powershell
 cd frontend
 nvm use
 npm install
+```
+
+#### Генерація API-клієнта. Лише при першому запуску:
+```powershell
+npm run generate-api
+```
+> Запускати лише з запущеним backend-сервером!
+
+#### Запуск frontend серверу:
+```powershell
 npm run dev
 ```
 
 Frontend буде доступний на `http://localhost:5173`.
 
-## 4. Тести
+### Superuser (ручний варіант)
 
-### Backend
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+python manage.py createsuperuser
+```
+
+### Тести (ручний варіант)
 
 ```powershell
 cd backend
@@ -144,30 +171,102 @@ cd backend
 python manage.py test
 ```
 
-### Frontend
-
-Окремі unit/integration тести наразі не налаштовані. Для перевірки коду використовуй:
-
 ```powershell
 cd frontend
 npm run lint
 ```
 
+---
 
+## 4. Варіант B — Docker
+
+### Передумови
+
+- Встановлений і запущений Docker Desktop.
+- Заповнені `backend/.env` та `frontend/.env` (див. розділ 2).
+- У `backend/.env` встановлено `DB_HOST=db`.
+
+### Перший запуск
+
+```bash
+docker compose up --build
+```
+
+Docker автоматично:
+- запустить PostgreSQL
+- виконає міграції
+- згенерує openapi схему
+- запустить backend і frontend
+
+### Наступні запуски
+
+```bash
+docker compose up
+```
+
+### Зупинка
+
+```bash
+docker compose down
+```
+
+### Superuser (Docker)
+
+Поки контейнери запущені, виконай в окремому терміналі:
+
+```bash
+docker compose exec backend python manage.py createsuperuser
+```
+
+### Тести (Docker)
+
+```bash
+docker compose exec backend python manage.py test
+```
+
+### Корисні команди
+
+```bash
+# Переглянути логи
+docker compose logs -f
+
+# Логи конкретного сервісу
+docker compose logs -f backend
+
+# Виконати будь-яку manage.py команду
+docker compose exec backend python manage.py <команда>
+
+# Перебудувати образи після змін у Dockerfile або requirements.txt
+docker compose up --build
+
+# Видалити всі дані БД (повний скид)
+docker compose down -v
+```
+
+---
 
 ## 5. Генерація API (OpenAPI & Orval)
 
-Якщо ви змінили або додали нові ендпоінти в бекенді (views/serializers), потрібно оновити згенерований API-клієнт на фронтенді.
-Оскільки Orval налаштований на отримання схеми з працюючого бекенду, переконайтеся, що Django сервер запущений (`python manage.py runserver`).
+Якщо змінились або додались нові ендпоінти в backend, оновіть згенерований API-клієнт на frontend.
+Переконайся, що Django сервер запущений.
 
-### Оновити хуки на фронтенді
+### Ручний варіант
+
 ```powershell
 cd frontend
 nvm use
 npm run generate-api
 ```
 
-Після цього оновлені хуки (наприклад, `useGetUserPoints`) з'являться в `frontend/src/api/`.
+### Docker варіант
+
+```bash
+docker compose exec frontend npm run generate-api
+```
+
+Оновлені хуки з'являться у `frontend/src/api/`.
+
+---
 
 ## 6. Правила розробки
 
@@ -176,7 +275,9 @@ npm run generate-api
 - Під час розробки дотримуватися наявної структури та архітектури проєкту.
 - Змінювати структуру або архітектуру можна, але притримуватися цілісності проекту, щоб код не виглядав різнобійним.
 
-## 7. Git Workflow 
+---
+
+## 7. Git Workflow
 
 ### Гілки
 
@@ -213,7 +314,7 @@ git pull origin dev
 
 ### Pull Request
 
-- Створити PR: `feature/*` -> `dev`.
+- Створити PR: `feature/*` → `dev`.
 - Пройти code review.
 - Після approval виконати merge.
 
@@ -238,4 +339,4 @@ git pull origin dev
 
 ### Реліз
 
-- Merge `dev` -> `main` через Pull Request.
+- Merge `dev` → `main` через Pull Request.
