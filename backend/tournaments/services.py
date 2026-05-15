@@ -21,6 +21,10 @@ def _set_tournament_finished_if_all_rounds_evaluated(*, tournament):
     if last_round:
         from evaluation.leaderboard_service import save_leaderboard_snapshot
         save_leaderboard_snapshot(tournament_id=tournament.id, round_id=last_round.id)
+
+    from points.services import award_tournament_points
+    award_tournament_points(tournament=tournament)
+
     return True
 
 

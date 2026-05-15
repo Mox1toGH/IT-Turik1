@@ -95,6 +95,34 @@
           <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
         </ui-skeleton-loader>
       </div>
+
+      <div class="tournament-points">
+        <p class="text-muted">Your points</p>
+        <ui-skeleton-loader :loading="pointsLoading">
+          <template #skeleton>
+            <div style="display: flex; flex-direction: column; gap: 0.3rem">
+              <ui-skeleton variant="rect" width="120px" />
+              <ui-skeleton variant="rect" width="180px" />
+            </div>
+          </template>
+
+          <div v-if="pointsError" class="points-error">
+            <p>Unable to load your points.</p>
+          </div>
+          <div v-else-if="!profile?.id">
+            <p>Log in to see your points balance.</p>
+          </div>
+          <div v-else>
+            <p><strong>Balance:</strong> {{ pointsBalance?.balance ?? 0 }}</p>
+            <p v-if="tournamentPointsEarned !== null">
+              <strong>From this tournament:</strong>
+              <span :class="{ 'positive-value': tournamentPointsEarned > 0 }">
+                {{ tournamentPointsEarned > 0 ? '+' : '' }}{{ tournamentPointsEarned }}
+              </span>
+            </p>
+          </div>
+        </ui-skeleton-loader>
+      </div>
     </div>
 
     <div class="tournament-action">
@@ -124,6 +152,8 @@ import { formatDate } from '@/lib/date'
 import JoinTournamentBtn from './JoinTournamentBtn.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../components/shared/LargeTextModal.vue'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetMyPointsBalance, useListMyPointsTransactions } from '@/api/points/points'
 import {
   useGetCurrentTask,
   useGetTournament,
@@ -143,12 +173,43 @@ const {
   error: tournamentInfoError,
   isError,
 } = useGetTournament(props.tournamentId)
+const { data: profile } = useGetUserProfile()
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {
     query: { enabled: computed(() => tournament.value?.status === 'running') },
   },
 )
+
+const {
+  data: pointsBalance,
+  isLoading: isBalanceLoading,
+  error: pointsBalanceError,
+} = useGetMyPointsBalance({
+  query: { enabled: computed(() => Boolean(profile.value?.id)) },
+})
+const {
+  data: pointsTransactions,
+  isLoading: isTransactionsLoading,
+  error: pointsTransactionsError,
+} = useListMyPointsTransactions(
+  { page_size: 100, ordering: '-created_at' },
+  {
+    query: { enabled: computed(() => Boolean(profile.value?.id) && Boolean(tournament.value)) },
+  },
+)
+
+const pointsLoading = computed(() => isBalanceLoading.value || isTransactionsLoading.value)
+const pointsError = computed(() =>
+  Boolean(pointsBalanceError.value || pointsTransactionsError.value),
+)
+const tournamentPointsEarned = computed(() => {
+  if (!tournament.value?.name || !pointsTransactions.value?.results) return null
+
+  return pointsTransactions.value.results
+    .filter((transaction) => transaction.reason?.includes(tournament.value?.name))
+    .reduce((sum, transaction) => sum + (transaction.amount ?? 0), 0)
+})
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
 const statusBadgeVariant = computed(() => {
@@ -202,7 +263,7 @@ const handleStartRegistration = () => {
 
 .tournament-description-text {
   border-radius: 6px;
-  transition: baclground 2s ease-in;
+  transition: background 2s ease-in;
   word-break: break-word;
 }
 
@@ -226,5 +287,13 @@ const handleStartRegistration = () => {
 
 .tournament-action-btn {
   width: 100%;
+}
+
+.tournament-points {
+  padding-top: 0.7rem;
+}
+
+.positive-value {
+  color: var(--success);
 }
 </style>
