@@ -295,7 +295,7 @@ class GoogleAuthSerializer(serializers.Serializer):
             'user': UserSerializer(user).data,
             'onboarding_required': user.needs_onboarding,
         }
-        return user
+        return user, refresh
 
 
 class TeamUserListSerializer(serializers.ModelSerializer):
