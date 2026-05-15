@@ -224,7 +224,7 @@ type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderb
 
 const route = useRoute()
 const router = useRouter()
-const id = Number(route.params.id) || 1
+const id = Number(route.params.id)
 
 const { data: user } = useGetUserProfile()
 const { data: tournament } = useGetTournament(id)
