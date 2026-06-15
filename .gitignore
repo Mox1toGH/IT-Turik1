@@ -9,9 +9,15 @@
 *.sqlite3-journal
 backend/db.sqlite3
 backend/db.sqlite3-journal
+backend/media/*
+backend/staticfiles/*
+backend/schema.yml
 
+.gemini
 .codex
+.cursor
 tasks.txt
+venv312
 
 ### Django ###
 *.log
@@ -21,7 +27,6 @@ __pycache__/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
 # in your Git repository. Update and uncomment the following line accordingly.
@@ -333,3 +338,4 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+backend/schema.json

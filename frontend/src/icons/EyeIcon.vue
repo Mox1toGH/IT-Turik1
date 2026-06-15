@@ -1,7 +1,6 @@
 <template>
   <svg
     v-if="props.isCrossed"
-    class="toggle-icon"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -19,7 +18,6 @@
   </svg>
   <svg
     v-else
-    class="toggle-icon"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"

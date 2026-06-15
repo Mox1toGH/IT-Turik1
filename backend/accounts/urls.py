@@ -1,20 +1,31 @@
-from django.urls import include, path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.urls import path
+
+from .google_calendar import (
+    GoogleCalendarCallbackView,
+    GoogleCalendarConnectView,
+    GoogleCalendarDisconnectView,
+    GoogleCalendarStatusView,
+)
 
 from .views import (
     ActivationView,
     ChangePasswordView,
     GoogleAuthView,
+    LoginView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RoleActivationCodeAdminView,
     RegisterView,
+    TokenRefreshView,
+    UserDetailView,
     UserListView,
+    UserAvatarView,
     UserProfileView,
+    UserTournamentHistoryView,
 )
 
 urlpatterns = [
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/', LoginView.as_view(), name='token_obtain_pair'),
     path('google-login/', GoogleAuthView.as_view(), name='google_login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('register/', RegisterView.as_view(), name='register'),
@@ -24,5 +35,13 @@ urlpatterns = [
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('role-codes/', RoleActivationCodeAdminView.as_view(), name='role_codes_admin'),
     path('profile/', UserProfileView.as_view(), name='profile'),
+    path('profile/avatar/', UserAvatarView.as_view(), name='profile_avatar'),
     path('users/', UserListView.as_view(), name='users'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user_detail'),
+    path('users/<int:pk>/tournaments-history/', UserTournamentHistoryView.as_view(), name='user_tournaments_history'),
+
+    path('google-calendar/status/', GoogleCalendarStatusView.as_view(), name='google_calendar_status'),
+    path('google-calendar/connect/', GoogleCalendarConnectView.as_view(), name='google_calendar_connect'),
+    path('google-calendar/callback/', GoogleCalendarCallbackView.as_view(), name='google_calendar_callback'),
+    path('google-calendar/disconnect/', GoogleCalendarDisconnectView.as_view(), name='google_calendar_disconnect'),
 ]

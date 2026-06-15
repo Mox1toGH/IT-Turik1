@@ -1,0 +1,28 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fireGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff4d00;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#ffae00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fff700;stop-opacity:1" />
+    </linearGradient>
+    <filter id="fireGlow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Base Frame -->
+  <rect x="10" y="10" width="180" height="180" rx="40" stroke="#333" stroke-width="6" />
+  <!-- Fire Accents at Bottom -->
+  <path d="M20 180C20 180 30 140 50 160C70 180 80 130 100 150C120 170 130 120 150 140C170 160 180 120 180 120V180H20Z" fill="url(#fireGradient)" filter="url(#fireGlow)" opacity="0.8">
+    <animate attributeName="d" dur="3s" repeatCount="indefinite"
+      values="M20 180C20 180 30 140 50 160C70 180 80 130 100 150C120 170 130 120 150 140C170 160 180 120 180 120V180H20Z;
+              M20 180C20 180 35 150 55 170C75 190 85 140 105 160C125 180 135 130 155 150C175 170 185 130 185 130V180H20Z;
+              M20 180C20 180 30 140 50 160C70 180 80 130 100 150C120 170 130 120 150 140C170 160 180 120 180 120V180H20Z" />
+  </path>
+  <!-- Top Accents -->
+  <circle cx="50" cy="25" r="5" fill="#fff700" filter="url(#fireGlow)" />
+  <circle cx="150" cy="25" r="5" fill="#fff700" filter="url(#fireGlow)" />
+</svg>

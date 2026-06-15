@@ -1,22 +1,43 @@
 import re
 import secrets
 import string
+from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import EmailMessage
 from django.db import transaction
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
-
+from rest_framework.exceptions import APIException
+from teams.models import Team, TeamMember
+from tournaments.models import Round, Tournament, TournamentTeamRegistration
 from .models import RoleActivationCode, User
+from drf_spectacular.utils import extend_schema_field
 
 
 RESTRICTED_ROLES = {'jury', 'organizer', 'admin'}
 MAX_ACTIVE_CODES_PER_ROLE = 10
+
+
+def send_html_email(subject: str, template_name: str, context: dict, recipient: str) -> None:
+    html_message = render_to_string(template_name, context)
+    email = EmailMessage(
+        subject=subject,
+        body=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.content_subtype = 'html'
+    email.send()
 
 
 def validate_strong_password(password, user=None, field_name='password'):
@@ -41,8 +62,10 @@ def generate_unique_role_code(length=12):
         code = ''.join(secrets.choice(alphabet) for _ in range(length))
         if not RoleActivationCode.objects.filter(code=code).exists():
             return code
-    raise serializers.ValidationError({'non_field_errors': ['Unable to generate a unique activation code. Please retry.']})
+    raise serializers.ValidationError({'message': ['Unable to generate a unique activation code. Please retry.']})
 
+class MessageResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -127,18 +150,73 @@ class RegisterSerializer(serializers.ModelSerializer):
             token = default_token_generator.make_token(user)
 
             activation_link = f"http://localhost:5173/activate/{uid}/{token}"
-            send_mail(
+            send_html_email(
                 subject='Account activation',
-                message=f'Open this link to activate your account: {activation_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+                template_name='accounts/account_activation_email.html',
+                context={
+                    'subject': 'Account activation',
+                    'title': 'Activate your account',
+                    'username': user.username,
+                    'action_url': activation_link,
+                    'action_label': 'Activate account',
+                    'secondary_message': 'If you did not create this account, you can safely ignore this email.',
+                },
+                recipient=user.email,
             )
             return user
 
+class ActivationResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    message = serializers.CharField()
+
+class UserTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    contact_telegram = serializers.CharField()
+    contact_discord = serializers.CharField()
+
+
+class UserActiveTournamentTeamSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class UserActiveTournamentRoundSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    status = serializers.CharField()
+
+
+class UserActiveTournamentSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    current_round = UserActiveTournamentRoundSerializer(allow_null=True)
+
+
+class UserTournamentHistoryItemSerializer(serializers.Serializer):
+    tournament_id = serializers.IntegerField()
+    tournament_name = serializers.CharField()
+    tournament_status = serializers.CharField()
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    team = UserActiveTournamentTeamSerializer()
+    team_registration_status = serializers.CharField()
+    final_rank = serializers.IntegerField(allow_null=True)
+    final_score = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True)
 
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(source='date_joined', read_only=True)
     teams = serializers.SerializerMethodField()
+    avatar = serializers.ImageField(read_only=True)
+    avatar_frame_url = serializers.SerializerMethodField()
+    active_tournament = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -150,12 +228,46 @@ class UserSerializer(serializers.ModelSerializer):
             'full_name',
             'phone',
             'city',
+            'avatar',
+            'is_staff',
+            'avatar_frame_url',
             'created_at',
             'needs_onboarding',
             'teams',
+            'active_tournament',
         )
-        read_only_fields = ('id', 'email', 'created_at', 'needs_onboarding', 'teams')
+        read_only_fields = (
+            'id',
+            'email',
+            'created_at',
+            'needs_onboarding',
+            'teams',
+            'is_staff',
+            'active_tournament',
+        )
 
+    @extend_schema_field(serializers.URLField(allow_null=True))
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+
+        url = equipped_item.product.effective_digital_asset_url
+        if not url:
+            return None
+
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
+
+    @extend_schema_field(UserTeamSerializer(many=True))
     def get_teams(self, obj):
         return [
             {
@@ -167,11 +279,197 @@ class UserSerializer(serializers.ModelSerializer):
             for team in obj.teams.all()
         ]
 
+    @staticmethod
+    def _team_registration_status(registration: TournamentTeamRegistration) -> str:
+        if registration.is_disqualified:
+            return 'disqualified'
+        if registration.is_active:
+            return 'active'
+        return 'inactive'
+
+    @extend_schema_field(UserActiveTournamentSerializer(allow_null=True))
+    def get_active_tournament(self, obj):
+        team_ids = set(TeamMember.objects.filter(user=obj).values_list('team_id', flat=True)) | set(
+            Team.objects.filter(captain=obj).values_list('id', flat=True)
+        )
+        if not team_ids:
+            return None
+
+        registration = (
+            TournamentTeamRegistration.objects.select_related('tournament', 'team')
+            .filter(
+                team_id__in=team_ids,
+                tournament__status__in=[
+                    Tournament.STATUS_REGISTRATION,
+                    Tournament.STATUS_RUNNING,
+                ],
+            )
+            .filter(Q(is_active=True) | Q(is_disqualified=True))
+            .annotate(
+                tournament_status_priority=Case(
+                    When(tournament__status=Tournament.STATUS_RUNNING, then=Value(0)),
+                    When(tournament__status=Tournament.STATUS_REGISTRATION, then=Value(1)),
+                    default=Value(2),
+                    output_field=IntegerField(),
+                ),
+                registration_status_priority=Case(
+                    When(is_disqualified=True, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            .order_by(
+                'tournament_status_priority',
+                'registration_status_priority',
+                'tournament__start_date',
+                'id',
+            )
+            .first()
+        )
+
+        if registration is None:
+            return None
+
+        current_round = (
+            Round.objects.filter(
+                tournament_id=registration.tournament_id,
+                status=Round.STATUS_ACTIVE,
+            )
+            .order_by('start_date', 'id')
+            .first()
+        )
+
+        return {
+            'id': registration.tournament.id,
+            'name': registration.tournament.name,
+            'status': registration.tournament.status,
+            'start_date': registration.tournament.start_date,
+            'end_date': registration.tournament.end_date,
+            'team': {
+                'id': registration.team.id,
+                'name': registration.team.name,
+            },
+            'team_registration_status': self._team_registration_status(registration),
+            'current_round': (
+                {
+                    'id': current_round.id,
+                    'name': current_round.name,
+                    'start_date': current_round.start_date,
+                    'end_date': current_round.end_date,
+                    'status': current_round.status,
+                }
+                if current_round is not None
+                else None
+            ),
+        }
+    
+class GoogleAuthResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = UserSerializer()
+    onboarding_required = serializers.BooleanField()
+
+class GoogleAuthSerializer(serializers.Serializer):
+    id_token = serializers.CharField()
+
+    def validate(self, attrs):
+        raw_id_token = attrs.get('id_token')
+
+        if not settings.GOOGLE_OAUTH_CLIENT_ID:
+            raise APIException('Google auth is not configured.')
+
+        try:
+            payload = id_token.verify_oauth2_token(
+                raw_id_token,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID,
+            )
+        except ValueError:
+            raise serializers.ValidationError({'id_token': 'Invalid Google token.'})
+
+        if payload.get('iss') not in {'accounts.google.com', 'https://accounts.google.com'}:
+            raise serializers.ValidationError({'id_token': 'Invalid token issuer.'})
+
+        if not payload.get('email_verified'):
+            raise serializers.ValidationError({'id_token': 'Google email is not verified.'})
+
+        email = payload.get('email')
+        if not email:
+            raise serializers.ValidationError({'id_token': 'Google account email is missing.'})
+
+        attrs['email'] = email
+        attrs['full_name'] = payload.get('name', '')
+        return attrs
+
+    @staticmethod
+    def _generate_unique_username(email):
+        base = re.sub(r'[^a-zA-Z0-9_]', '', email.split('@')[0]) or 'user'
+        base = base[:140]
+        username = base
+        index = 1
+
+        while User.objects.filter(username=username).exists():
+            suffix = str(index)
+            username = f"{base[:150 - len(suffix)]}{suffix}"
+            index += 1
+
+        return username
+
+    def save(self):
+        email = self.validated_data['email']
+        full_name = self.validated_data['full_name']
+
+        user = User.objects.filter(email=email).first()
+        if user is None:
+            username = self._generate_unique_username(email)
+            user = User.objects.create(
+                username=username,
+                email=email,
+                full_name=full_name,
+                is_active=True,
+                needs_onboarding=True,
+            )
+            user.set_unusable_password()
+            user.save()
+        else:
+            updated_fields = []
+            if not user.is_active:
+                user.is_active = True
+                updated_fields.append('is_active')
+            if full_name and not user.full_name:
+                user.full_name = full_name
+                updated_fields.append('full_name')
+            if updated_fields:
+                user.save(update_fields=updated_fields)
+
+        refresh = RefreshToken.for_user(user)
+        self.validated_data['response'] = {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+            'onboarding_required': user.needs_onboarding,
+        }
+        return user, refresh
+
 
 class TeamUserListSerializer(serializers.ModelSerializer):
+    avatar_frame_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'full_name', 'role')
+        fields = ('id', 'username', 'email', 'full_name', 'role', 'avatar', 'avatar_frame_url')
+
+    def get_avatar_frame_url(self, obj) -> Optional[str]:
+        from inventory.models import UserInventory
+
+        equipped_item = (
+            UserInventory.objects.select_related('product', 'product__avatar_frame')
+            .filter(user=obj, is_equipped=True)
+            .first()
+        )
+        if equipped_item is None:
+            return None
+        return equipped_item.product.effective_digital_asset_url or None
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -285,27 +583,45 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+class UserAvatarUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('avatar',)
 
-    def validate_email(self, value):
-        if not User.objects.filter(email=value).exists():
-            raise serializers.ValidationError('No account found with this email address.')
-        return value
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def save(self):
-        email = self.validated_data['email']
-        user = User.objects.get(email=email)
+        email = self.validated_data.get('email')
+        request = self.context.get('request')
+
+        if email:
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                raise serializers.ValidationError({'email': 'No account found with this email address.'})
+        elif request and request.user and request.user.is_authenticated:
+            user = request.user
+            if not user.email:
+                raise serializers.ValidationError({'email': 'Your account does not have an email address.'})
+        else:
+            raise serializers.ValidationError({'email': 'Email is required for unauthenticated requests.'})
 
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         reset_link = f"http://localhost:5173/reset-password/{uid}/{token}"
-
-        send_mail(
+        send_html_email(
             subject='Password reset',
-            message=f'Open this link to reset your password: {reset_link}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+            template_name='accounts/password_reset_email.html',
+            context={
+                'subject': 'Password reset',
+                'title': 'Reset your password',
+                'username': user.username,
+                'action_url': reset_link,
+                'action_label': 'Reset password',
+                'secondary_message': 'If you did not request a password reset, you can safely ignore this email.',
+            },
+            recipient=user.email,
         )
 
         return user
@@ -318,7 +634,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context.get('user')
         if user is None:
-            raise serializers.ValidationError({'non_field_errors': ['Invalid password reset request.']})
+            raise serializers.ValidationError({'message': ['Invalid password reset request.']})
 
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
@@ -343,7 +659,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context.get('user')
         if user is None:
-            raise serializers.ValidationError({'non_field_errors': ['Invalid request context.']})
+            raise serializers.ValidationError({'message': ['Invalid request context.']})
 
         current_password = attrs.get('current_password')
         if not user.check_password(current_password):
@@ -362,7 +678,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['new_password'])
         user.save(update_fields=['password'])
         return user
-
 
 class RoleActivationCodeSerializer(serializers.ModelSerializer):
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
@@ -414,3 +729,30 @@ class RoleActivationCodeGenerateSerializer(serializers.Serializer):
                 )
             )
         return created_codes
+    
+class ActiveCountsSerializer(serializers.Serializer):
+    jury = serializers.IntegerField()
+    organizer = serializers.IntegerField()
+    admin = serializers.IntegerField()
+
+
+class RoleActivationCodeListResponseSerializer(serializers.Serializer):
+    codes = RoleActivationCodeSerializer(many=True)
+    active_counts = ActiveCountsSerializer()
+
+
+class RoleActivationCodeGenerateResponseSerializer(serializers.Serializer):
+    created = RoleActivationCodeSerializer(many=True)
+    active_counts = ActiveCountsSerializer()
+
+
+class GoogleCalendarStatusSerializer(serializers.Serializer):
+    connected = serializers.BooleanField()
+
+
+class GoogleCalendarConnectResponseSerializer(serializers.Serializer):
+    auth_url = serializers.URLField()
+
+
+class GoogleCalendarCallbackRequestSerializer(serializers.Serializer):
+    code = serializers.CharField()

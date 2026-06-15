@@ -1,0 +1,324 @@
+<template>
+  <ui-card>
+    <template #header>
+      <h1>Create round</h1>
+    </template>
+
+    <form class="round-form" @submit.prevent="handleSubmit">
+      <label class="form-item title-field">
+        <span class="form-label">Name</span>
+        <ui-input
+          v-model="form.fields.value.name"
+          placeholder="Enter round title"
+          :isInvalid="!!form.errors.value.name"
+          @blur="form.validateField('name')"
+        />
+        <small v-if="form.errors.value.name" class="text-error">{{ form.errors.value.name }}</small>
+      </label>
+
+      <label class="form-item desc-field">
+        <span class="form-label">Description</span>
+        <editor-modal
+          v-model="form.fields.value.description"
+          title="Description"
+          addText="Add description"
+          editText="Edit description"
+          ariaLabel="Description editor"
+          @blur="form.validateField('description')"
+        />
+        <small v-if="form.errors.value.description" class="text-error">{{
+          form.errors.value.description
+        }}</small>
+      </label>
+
+      <label class="form-item tech-field">
+        <span class="form-label">Technical requirements</span>
+        <editor-modal
+          v-model="form.fields.value.tech_requirements"
+          title="Technical requirements"
+          addText="Add technical requirements"
+          editText="Edit technical requirements"
+          ariaLabel="Technical requirements editor"
+          @blur="form.validateField('tech_requirements')"
+        />
+        <small v-if="form.errors.value.tech_requirements" class="text-error">{{
+          form.errors.value.tech_requirements
+        }}</small>
+      </label>
+
+      <label class="form-item start-datetime-field">
+        <span class="form-label">Start date/time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.start_date"
+            :isInvalid="!!form.errors.value.start_date"
+            @blur="form.validateField('start_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.start_time"
+            type="time"
+            :isInvalid="!!form.errors.value.start_time"
+            @blur="form.validateField('start_time')"
+          />
+        </div>
+        <small v-if="form.errors.value.start_date" class="text-error">{{
+          form.errors.value.start_date
+        }}</small>
+        <small v-if="form.errors.value.start_time" class="text-error">{{
+          form.errors.value.start_time
+        }}</small>
+      </label>
+
+      <label class="form-item end-datetime-field">
+        <span class="form-label">End date/time</span>
+        <div class="datetime-row">
+          <ui-date-picker
+            v-model="form.fields.value.end_date"
+            :isInvalid="!!form.errors.value.end_date"
+            @blur="form.validateField('end_date')"
+          />
+          <ui-input
+            v-model="form.fields.value.end_time"
+            type="time"
+            :isInvalid="!!form.errors.value.end_time"
+            @blur="form.validateField('end_time')"
+          />
+        </div>
+        <small v-if="form.errors.value.end_date" class="text-error">{{
+          form.errors.value.end_date
+        }}</small>
+        <small v-if="form.errors.value.end_time" class="text-error">{{
+          form.errors.value.end_time
+        }}</small>
+      </label>
+
+      <label class="form-item criteria-field">
+        <span class="form-label">Evaluation criteria</span>
+        <AddCriteriaModal
+          v-model="form.fields.value.criteria"
+          @blur="form.validateField('criteria')"
+        />
+        <small v-if="form.errors.value.criteria" class="text-error">
+          {{ form.errors.value.criteria }}
+        </small>
+      </label>
+
+      <label class="form-item must-have-field">
+        <span class="form-label">Must have</span>
+        <editor-modal
+          v-model="form.fields.value.must_have_requirements"
+          title="Must have"
+          addText="Add must have"
+          editText="Edit must have"
+          ariaLabel="Must have editor"
+          @blur="form.validateField('must_have_requirements')"
+        />
+        <small v-if="form.errors.value.must_have_requirements" class="text-error">{{
+          form.errors.value.must_have_requirements
+        }}</small>
+      </label>
+
+      <label class="form-item passing-count-field">
+        <span class="form-label">Passing count</span>
+        <ui-input
+          type="number"
+          v-model.number="form.fields.value.passing_count"
+          placeholder="Enter passing teams count"
+          :isInvalid="!!form.errors.value.passing_count"
+          @blur="form.validateField('passing_count')"
+        />
+        <small v-if="form.errors.value.passing_count" class="text-error">{{
+          form.errors.value.passing_count
+        }}</small>
+      </label>
+
+      <ui-button class="submit-btn" type="submit" :disabled="isPending">
+        <loading-icon v-if="isPending" />
+        <p>Create</p></ui-button
+      >
+    </form>
+  </ui-card>
+</template>
+
+<script setup lang="ts">
+import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard.vue'
+import UiDatePicker from '@/components/ui/UiDatePicker.vue'
+import UiInput from '@/components/ui/UiInput.vue'
+import AddCriteriaModal from '../components/create-round/modals/AddCriteriaModal.vue'
+import EditorModal from '../components/create-round/modals/EditorModal.vue'
+import { useForm } from '@/composables/useForm'
+import { CreateRoundSchema } from '@/schemas/tournaments.schema'
+import type { JSONContent } from '@tiptap/core'
+import { useRoute, useRouter } from 'vue-router'
+import { useNotification } from '@/composables/useNotification'
+import { combineDateAndTime } from '@/lib/date'
+import { useCreateRound } from '@/api/tournaments/tournaments'
+
+interface RoundCriteriaItem {
+  id: string
+  name: string
+  description: string
+  max_score: number
+}
+
+interface Form {
+  name: string
+  passing_count: number
+  tech_requirements: JSONContent | null
+  description: JSONContent | null
+  must_have_requirements: JSONContent | null
+  criteria: RoundCriteriaItem[]
+  start_date: Date
+  start_time: string
+  end_date: Date
+  end_time: string
+}
+
+const form = useForm<Form>(CreateRoundSchema, {
+  name: '',
+  passing_count: 2,
+  description: null,
+  tech_requirements: null,
+  must_have_requirements: null,
+  criteria: [],
+  start_date: new Date(),
+  start_time: '00:00',
+  end_date: new Date(),
+  end_time: '23:59',
+})
+
+const route = useRoute()
+const router = useRouter()
+const { showNotification } = useNotification()
+const tournamentId = Number(route.params.id)
+
+const { mutate: createRound, isPending } = useCreateRound()
+
+function handleSubmit() {
+  if (!form.validate()) return
+  const { start_time, end_time, ...rest } = form.fields.value
+
+  createRound(
+    {
+      tournamentPk: tournamentId,
+      data: {
+        tournament: tournamentId,
+        ...rest,
+        start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+        end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
+      },
+    },
+    {
+      onSuccess: (_data) => {
+        router.push({
+          path: `/tournaments/${tournamentId}`,
+          query: {
+            section: 'rounds',
+          },
+        })
+      },
+      onError(error) {
+        for (const [field, errors] of Object.entries(error?.details || {})) {
+          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        }
+        showNotification(error?.message, 'error')
+      },
+    },
+  )
+}
+</script>
+
+<style scoped>
+.round-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: 1rem;
+}
+
+.title-field {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.desc-field {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.tech-field {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.must-have-field {
+  grid-column: 2;
+  grid-row: 5;
+}
+
+.start-datetime-field {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.end-datetime-field {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.datetime-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.passing-count-field {
+  grid-column: 1;
+  grid-row: 6;
+}
+
+.criteria-field {
+  grid-column: 2;
+  grid-row: 6;
+}
+
+.submit-btn {
+  grid-column: 2;
+  grid-row: 7;
+}
+
+.text-error {
+  color: var(--destructive);
+}
+
+@media (max-width: 800px) {
+  .round-form {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1.2rem;
+  }
+
+  .must-have-field {
+    grid-column: 1;
+    grid-row: 4;
+  }
+
+  .passing-count-field {
+    grid-row: 5;
+  }
+
+  .start-datetime-field,
+  .end-datetime-field,
+  .criteria-field,
+  .submit-btn {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .datetime-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

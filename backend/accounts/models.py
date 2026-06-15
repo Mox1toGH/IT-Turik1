@@ -23,7 +23,10 @@ class User(AbstractUser):
     full_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=100, blank=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     email = models.EmailField(unique=True)
+    google_calendar_token = models.JSONField(blank=True, null=True)
+    google_calendar_connected = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 

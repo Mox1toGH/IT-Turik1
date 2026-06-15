@@ -1,0 +1,90 @@
+<template>
+  <section class="page-shell">
+    <ui-card>
+      <template #header>
+        <div>
+          <div class="top-header">
+            <p class="section-eyebrow">Teams</p>
+
+            <ui-skeleton-loader :loading="isLoadingTeams">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="108px" height="30px" />
+              </template>
+
+              <ui-badge>Total teams: {{ teams?.length ?? '0' }}</ui-badge>
+            </ui-skeleton-loader>
+          </div>
+          <div class="title-row">
+            <team-directory-title-icon class="title-icon" />
+            <h1>Team directory</h1>
+          </div>
+          <p class="section-subtitle">
+            Open a team workspace to view details, edit info, and manage members.
+          </p>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="hero-actions">
+          <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" class="manage-link"
+            >Create new team</ui-button
+          >
+        </div>
+      </template>
+    </ui-card>
+
+    <team-invatations />
+
+    <team-my-teams />
+
+    <teams-other-teams />
+  </section>
+</template>
+
+<script setup lang="ts">
+import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard.vue'
+import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
+import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
+import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiBadge from '@/components/ui/UiBadge.vue'
+import TeamDirectoryTitleIcon from '@/icons/TeamDirectoryTitleIcon.vue'
+import { useListTeams } from '@/api/teams/teams'
+import { useGetUserProfile } from '@/api/accounts/accounts'
+
+const { data: teams, isLoading: isLoadingTeams } = useListTeams()
+const { data: user } = useGetUserProfile()
+</script>
+
+<style scoped>
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.title-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  opacity: 0.86;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.manage-link {
+  display: inline-flex;
+}
+</style>

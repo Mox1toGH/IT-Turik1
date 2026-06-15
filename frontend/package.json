@@ -12,13 +12,22 @@
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "generate-api": "orval"
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.96.2",
     "@tanstack/vue-query-devtools": "^6.1.13",
+    "@tiptap/extension-highlight": "^3.22.4",
+    "@tiptap/starter-kit": "^3.22.4",
+    "@tiptap/vue-3": "^3.4.0",
     "axios": "^1.14.0",
+    "framer-motion": "^12.38.0",
     "pinia": "^3.0.4",
+    "recharts": "^3.8.1",
+    "valibot": "^1.3.1",
     "vue": "^3.5.30",
     "vue-router": "^5.0.3",
     "vue-tel-input": "^9.8.0"
@@ -27,6 +36,8 @@
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.12.0",
     "@vitejs/plugin-vue": "^6.0.4",
+    "@vitest/browser-playwright": "^4.1.3",
+    "@vitest/coverage-v8": "^4.1.3",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.9.0",
     "eslint": "^10.0.3",
@@ -35,11 +46,13 @@
     "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
     "npm-run-all2": "^8.0.4",
+    "orval": "^7.4.0",
     "oxlint": "~1.51.0",
     "prettier": "3.8.1",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.7",
+    "vitest-browser-vue": "^2.1.0",
     "vue-tsc": "^3.2.5"
   },
   "engines": {
