@@ -14,10 +14,7 @@
               <ui-badge>Total teams: {{ teams?.length ?? '0' }}</ui-badge>
             </ui-skeleton-loader>
           </div>
-          <div class="title-row">
-            <team-directory-title-icon class="title-icon" />
-            <h1>Team directory</h1>
-          </div>
+          <h1>Team directory</h1>
           <p class="section-subtitle">
             Open a team workspace to view details, edit info, and manage members.
           </p>
@@ -50,7 +47,6 @@ import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import TeamDirectoryTitleIcon from '@/icons/TeamDirectoryTitleIcon.vue'
 import { useListTeams } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 
@@ -63,18 +59,6 @@ const { data: user } = useGetUserProfile()
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.title-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  opacity: 0.86;
 }
 
 .hero-actions {

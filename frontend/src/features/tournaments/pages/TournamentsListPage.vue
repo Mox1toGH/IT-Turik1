@@ -3,10 +3,7 @@
     <ui-card :is-error="isError">
       <template #header>
         <div class="tournaments-header">
-          <div class="title-row">
-            <tournaments-list-title-icon class="title-icon" />
-            <h1 class="tournaments-title">Tournaments list</h1>
-          </div>
+          <h1 class="tournaments-title">Tournaments list</h1>
           <div class="header-actions">
             <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary"
               >Archive</ui-button
@@ -192,7 +189,6 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
-import TournamentsListTitleIcon from '@/icons/TournamentsListTitleIcon.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -286,18 +282,6 @@ const onStatusChange = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.title-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  opacity: 0.86;
 }
 
 .header-actions {

@@ -7,10 +7,7 @@
             <p class="section-eyebrow">News</p>
             <ui-badge>Total posts: {{ totalNews }}</ui-badge>
           </div>
-          <div class="title-row">
-            <news-board-title-icon class="title-icon" />
-            <h1>News board</h1>
-          </div>
+          <h1>News board</h1>
           <div class="subtitle-row">
             <p class="section-subtitle">Important updates, announcements, and platform changes.</p>
             <div class="create-news-action" v-if="canManageNews">
@@ -479,18 +476,6 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.title-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  opacity: 0.86;
 }
 
 .create-news-action {

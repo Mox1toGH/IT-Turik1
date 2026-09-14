@@ -3,10 +3,7 @@
     <ui-card class="calendar-hero">
       <div>
         <p class="eyebrow">Schedule</p>
-        <div class="title-row">
-          <calendar-title-icon class="title-icon" />
-          <h1>Calendar</h1>
-        </div>
+        <h1>Calendar</h1>
         <p class="sub">
           Events, consultations, deadlines and round milestones across your tournaments.
         </p>
@@ -19,13 +16,16 @@
           </ui-button>
         </template>
         <template v-else-if="gcalConnected">
-          <ui-button size="sm" variant="ghost" @click="exportAll" :disabled="isExporting || !hasItems">
+          <ui-button
+            size="sm"
+            variant="ghost"
+            @click="exportAll"
+            :disabled="isExporting || !hasItems"
+          >
             <google-calendar-icon class="gcal-icon" />
             {{ isExporting ? 'Exporting…' : 'Export All to Google' }}
           </ui-button>
-          <ui-button size="sm" variant="danger" @click="disconnectGcal">
-            Disconnect
-          </ui-button>
+          <ui-button size="sm" variant="danger" @click="disconnectGcal"> Disconnect </ui-button>
         </template>
         <template v-else>
           <ui-button size="sm" variant="secondary" @click="connectGcal">
@@ -86,7 +86,6 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
-import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
@@ -209,7 +208,9 @@ async function exportRound(roundId: number) {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .eyebrow {
@@ -224,19 +225,6 @@ h1 {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(1.4rem, 1.3vw + 1rem, 2rem);
-}
-
-.title-row {
-  margin-top: 0.45rem;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.title-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  opacity: 0.92;
 }
 
 .sub {
