@@ -31,13 +31,13 @@
         <div class="row two">
           <label class="field">
             <span class="label">Price (points)</span>
-            <ui-input v-model.number="form.price" type="number" min="0" />
+            <ui-number-input v-model.number="form.price" min="0" />
             <small v-if="errors.price" class="error">{{ errors.price }}</small>
           </label>
 
           <label class="field">
             <span class="label">Stock Quantity</span>
-            <ui-input type="number" v-model.number="form.stock_quantity" min="0" />
+            <ui-number-input v-model.number="form.stock_quantity" min="0" />
             <small v-if="errors.stock_quantity" class="error">{{ errors.stock_quantity }}</small>
           </label>
         </div>
@@ -180,6 +180,7 @@ import type { ShopCategory } from '@/api/services/shop/types'
 import type { AvatarFrame, Product } from '@/api/.ts.schemas'
 import type { CreateAdminProductMutationBody } from '@/api/shop/shop'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import { truncateText } from '@/lib/utils'

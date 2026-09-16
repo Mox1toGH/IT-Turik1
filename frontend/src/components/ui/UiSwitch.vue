@@ -1,51 +1,13 @@
 <template>
-  <button
-    type="button"
-    class="visibility-switch"
-    role="switch"
-    :aria-checked="modelValue"
-    :class="{ 'is-checked': modelValue }"
-    @click="toggleVisibility"
-    @keydown="onVisibilityKeydown"
-  >
-    <span class="switch-knob" />
-  </button>
+  <SwitchRoot class="visibility-switch" v-model="modelValue">
+    <SwitchThumb class="switch-knob" />
+  </SwitchRoot>
 </template>
 
 <script setup lang="ts">
-interface Props {
-  modelValue?: boolean
-}
+import { SwitchRoot, SwitchThumb } from 'reka-ui'
 
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-const toggleVisibility = () => {
-  emit('update:modelValue', !props.modelValue)
-}
-
-const onVisibilityKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'ArrowLeft') {
-    event.preventDefault()
-    emit('update:modelValue', false)
-    return
-  }
-
-  if (event.key === 'ArrowRight') {
-    event.preventDefault()
-    emit('update:modelValue', true)
-    return
-  }
-
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    toggleVisibility()
-  }
-}
+const modelValue = defineModel<boolean>()
 </script>
 
 <style>
@@ -69,7 +31,7 @@ const onVisibilityKeydown = (event: KeyboardEvent) => {
   outline-offset: 2px;
 }
 
-.visibility-switch.is-checked {
+.visibility-switch[data-state='checked'] {
   background: var(--brand-500);
   border-color: var(--brand-500);
 }
@@ -78,13 +40,13 @@ const onVisibilityKeydown = (event: KeyboardEvent) => {
   width: 1.2rem;
   height: 1.2rem;
   border-radius: 999px;
-  border: 1px solid var(white);
+  border: 1px solid white;
   background: white;
   transform: translateX(0);
   transition: transform 180ms ease;
 }
 
-.visibility-switch.is-checked .switch-knob {
+.switch-knob[data-state='checked'] {
   transform: translateX(1.3rem);
   border-color: transparent;
   background: #fff;

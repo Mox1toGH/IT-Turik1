@@ -53,7 +53,7 @@
 
           <div class="form-item">
             <label class="form-label"> Quantity </label>
-            <ui-input v-model="generateForm.quantity" type="number" min="1" max="10" required />
+            <ui-number-input v-model="generateForm.quantity" min="1" max="10" required />
             <small v-if="errors?.quantity" class="text-error">{{ errors.quantity[0] }}</small>
           </div>
 
@@ -148,6 +148,7 @@
 import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'

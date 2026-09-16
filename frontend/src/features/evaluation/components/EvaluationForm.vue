@@ -11,9 +11,8 @@
           <p class="criterion-max">Max: {{ criterion.max_score }}</p>
         </div>
 
-        <ui-input
+        <ui-number-input
           v-model="scoresMap[criterion.id]"
-          type="number"
           :min="0"
           :max="criterion.max_score"
           :is-invalid="hasCriterionError(criterion.id, criterion.max_score)"
@@ -48,6 +47,7 @@
 import { computed, reactive, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import type { JuryAssignment, ScoreItem } from '@/api/.ts.schemas'
 import {

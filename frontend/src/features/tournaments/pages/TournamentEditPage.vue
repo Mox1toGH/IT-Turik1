@@ -23,7 +23,7 @@
       <form class="tournament-form" @submit.prevent="handleSubmit">
         <label class="form-item name-field">
           <span class="form-label">Team name</span>
-          <ui-input
+          <ui-number-input
             id="teamName"
             v-model="form.fields.value.name"
             placeholder="Enter tournament name"
@@ -54,9 +54,8 @@
         <div class="form-row settings-row">
           <label class="form-item" style="grid-column-start: 1">
             <span class="form-label">Max Teams</span>
-            <ui-input
+            <ui-number-input
               id="maxTeams"
-              type="number"
               v-model.number="form.fields.value.max_teams"
               min="2"
               required
@@ -71,7 +70,6 @@
           <label class="form-item">
             <span class="form-label">Min team members</span>
             <ui-input
-              type="number"
               v-model.number="form.fields.value.min_team_members"
               min="2"
               required
@@ -151,6 +149,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'

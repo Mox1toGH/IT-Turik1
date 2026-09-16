@@ -152,9 +152,8 @@
           <p><strong>Current balance:</strong> {{ pointsBalance?.balance ?? 0 }}</p>
           <label>
             Quantity
-            <ui-input
+            <ui-number-input
               v-model="purchaseQty"
-              type="number"
               :min="1"
               :max="Math.max(1, activeProduct.stock_quantity || 0)"
             />
@@ -280,6 +279,7 @@
 import { computed, ref, watch } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'

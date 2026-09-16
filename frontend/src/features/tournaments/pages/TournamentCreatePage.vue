@@ -36,9 +36,8 @@
       <div class="form-row settings-row">
         <label class="form-item" style="grid-column-start: 1">
           <span class="form-label">Max Teams</span>
-          <ui-input
+          <ui-number-input
             id="maxTeams"
-            type="number"
             v-model.number="form.fields.value.max_teams"
             min="2"
             required
@@ -52,8 +51,7 @@
 
         <label class="form-item">
           <span class="form-label">Min team members</span>
-          <ui-input
-            type="number"
+          <ui-number-input
             v-model.number="form.fields.value.min_team_members"
             min="2"
             required
@@ -85,7 +83,6 @@
             <span class="form-label">Time</span>
             <ui-time-picker
               v-model="form.fields.value.startTime"
-              class="time-field"
               @blur="form.validateField('startTime')"
             />
             <small v-if="form.errors.value.startTime" class="text-error">{{
@@ -112,7 +109,6 @@
             <span class="form-label">Time</span>
             <ui-time-picker
               v-model="form.fields.value.endTime"
-              class="time-field"
               @blur="form.validateField('endTime')"
             />
             <small v-if="form.errors.value.endTime" class="text-error">{{
@@ -136,6 +132,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiTimePicker from '@/components/ui/UiTimePicker.vue'
 import { useForm } from '@/composables/useForm'
@@ -252,10 +249,6 @@ const handleSubmit = () => {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 0.8rem;
-}
-
-.time-field {
-  width: 100%;
 }
 
 @media (max-width: 800px) {

@@ -56,12 +56,7 @@
 
           <label class="form-item">
             <span class="field-label">Max score</span>
-            <ui-input
-              type="number"
-              v-model.number="newCriterion.max_score"
-              min="1"
-              placeholder="10"
-            />
+            <ui-number-input v-model.number="newCriterion.max_score" min="1" placeholder="10" />
           </label>
 
           <label class="form-item full-width">
@@ -87,6 +82,7 @@
 import { computed, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'

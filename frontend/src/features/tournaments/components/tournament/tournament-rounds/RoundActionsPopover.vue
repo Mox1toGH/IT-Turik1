@@ -1,7 +1,7 @@
 <template>
   <ui-popover minWidth="180px" header="actions">
-    <template #trigger="{ toggle }">
-      <ui-button variant="secondary" class="actions-trigger" size="sm" @click="toggle"
+    <template #trigger>
+      <ui-button variant="secondary" class="actions-trigger" size="sm"
         ><three-center-dots-icon width="18"
       /></ui-button>
     </template>
