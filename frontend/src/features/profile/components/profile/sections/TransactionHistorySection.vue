@@ -2,7 +2,7 @@
   <section class="page-shell">
     <ui-card>
       <template #header>
-        <div class="head">
+        <div>
           <div>
             <p class="section-eyebrow">Transactions</p>
             <h1 class="section-title">
@@ -12,9 +12,6 @@
                   : 'My transaction history'
               }}
             </h1>
-          </div>
-          <div class="head-actions">
-            <ui-button variant="secondary" @click="goBack">Back</ui-button>
           </div>
         </div>
       </template>
@@ -70,7 +67,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
@@ -85,7 +82,6 @@ import {
 } from '@/api/points/points'
 
 const route = useRoute()
-const router = useRouter()
 const { data: viewer } = useGetUserProfile()
 
 const currentPage = ref(1)
@@ -151,29 +147,9 @@ const prevPage = () => {
 const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value += 1
 }
-
-const goBack = () => {
-  if (isAdminUserView.value) {
-    router.push(`/users/${targetUserId.value}`)
-    return
-  }
-  router.push('/profile')
-}
 </script>
 
 <style scoped>
-.head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.head-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -186,7 +162,8 @@ const goBack = () => {
 }
 
 .toolbar-label {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   color: var(--color-gray-500);
   font-weight: 600;
 }
@@ -209,7 +186,8 @@ const goBack = () => {
 }
 
 .tx-amount {
-  font-size: 1.05rem;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
 }
 
 .tx-amount.positive {
@@ -222,7 +200,8 @@ const goBack = () => {
 
 .meta {
   color: var(--color-gray-500);
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
 }
 
 .tx-reason {

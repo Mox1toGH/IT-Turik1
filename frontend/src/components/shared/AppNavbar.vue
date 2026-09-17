@@ -305,11 +305,11 @@ const isSectionActive = (section: Section) => {
 
 .nav-cta {
   color: var(--primary-foreground);
-  background: linear-gradient(120deg, var(--brand-700), var(--brand-500));
+  background: var(--primary);
 }
 
 .nav-cta:hover {
-  background: linear-gradient(120deg, var(--brand-600), var(--brand-500));
+  opacity: 0.75;
 }
 
 .nav-cta.active {

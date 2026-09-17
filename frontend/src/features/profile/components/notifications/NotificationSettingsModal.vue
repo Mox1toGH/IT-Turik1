@@ -1,5 +1,5 @@
 <template>
-  <ui-modal :modelValue="isOpen" @update:modelValue="$emit('update:isOpen', $event)">
+  <ui-modal :modelValue="isOpen" scrollable @update:modelValue="$emit('update:isOpen', $event)">
     <template #title>
       <h3>Notification Settings</h3>
     </template>

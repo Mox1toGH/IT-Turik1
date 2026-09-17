@@ -1,12 +1,17 @@
 <template>
-  <ui-card class="tournament-card" :is-error="isError">
+  <ui-card variant="panel" class="tournament-card" :is-error="isError">
     <template #header>
       <div class="tournament-header">
-        <h2>Tournament Info</h2>
+        <div>
+          <p class="section-eyebrow">Overview</p>
+          <h2 class="text-3xl">Tournament info</h2>
+          <p class="section-subtitle text-base">Core dates, description, and your progress.</p>
+        </div>
 
-        <ui-button v-if="tournament?.status === 'draft'" size="sm" @click="handleStartRegistration"
-          ><loading-icon v-if="isPending" />Start registration</ui-button
-        >
+        <ui-button v-if="tournament?.status === 'draft'" @click="handleStartRegistration">
+          <loading-icon v-if="isPending" />
+          Start registration
+        </ui-button>
       </div>
     </template>
 
@@ -236,11 +241,21 @@ const handleStartRegistration = () => {
 }
 
 .tournament-header {
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.tournament-header h2 {
+  margin: 2rem 0 0.45rem;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.tournament-header .section-subtitle {
+  margin: 0;
 }
 
 .status-timeline {
@@ -251,14 +266,34 @@ const handleStartRegistration = () => {
 .tournament-info {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.8rem;
 }
 
 .tournament-name,
 .tournament-dates,
-.tournament-description {
-  padding-bottom: 0.7rem;
-  border-bottom: 1px solid var(--border);
+.tournament-description,
+.tournament-points {
+  padding: 0.95rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.tournament-name p,
+.tournament-dates p,
+.tournament-description p,
+.tournament-points p {
+  margin: 0;
+}
+
+.tournament-name .text-muted,
+.tournament-dates .text-muted,
+.tournament-description .text-muted,
+.tournament-points .text-muted {
+  margin-bottom: 0.45rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
 }
 
 .tournament-description-text {
@@ -270,7 +305,8 @@ const handleStartRegistration = () => {
 .tournament-dates {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .tournament-label {
@@ -290,10 +326,19 @@ const handleStartRegistration = () => {
 }
 
 .tournament-points {
-  padding-top: 0.7rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
 .positive-value {
   color: var(--success);
+}
+
+@media (max-width: 700px) {
+  .tournament-header,
+  .tournament-dates {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>

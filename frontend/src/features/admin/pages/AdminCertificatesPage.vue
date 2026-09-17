@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
+    <section class="page-section certificates-section">
+      <header class="page-header">
         <div class="head">
           <div>
             <p class="section-eyebrow">Admin</p>
@@ -10,11 +10,9 @@
               Create certificates for users, manage template library, and verify certificate codes.
             </p>
           </div>
-          <ui-button as-link to="/admin" variant="secondary"
-            >Back to Admin hub</ui-button
-          >
+          <ui-button as-link to="/admin" variant="secondary">Back to Admin hub</ui-button>
         </div>
-      </template>
+      </header>
 
       <div class="layout">
         <AdminCreateCertificateCard
@@ -63,7 +61,7 @@
           @delete="confirmDeleteCert"
         />
       </div>
-    </ui-card>
+    </section>
 
     <UiConfirmModal
       v-model="isDeleteModalOpen"
@@ -110,7 +108,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import { useNotification } from '@/composables/useNotification'

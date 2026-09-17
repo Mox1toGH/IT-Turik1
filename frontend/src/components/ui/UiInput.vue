@@ -33,9 +33,10 @@ function handleInput(event: Event) {
 <style scoped>
 .input {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
   font: inherit;
+  font-size: 0.84rem;
   background: var(--input);
   color: var(--foreground);
   transition:
@@ -45,7 +46,7 @@ function handleInput(event: Event) {
 
 .input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .input:disabled {

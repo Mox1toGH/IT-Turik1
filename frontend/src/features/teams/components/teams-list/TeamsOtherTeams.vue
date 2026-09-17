@@ -1,5 +1,5 @@
 <template>
-  <ui-card :isError="isLoadingError">
+  <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 200px; justify-content: center; align-items: center">
         <p>Error while fetching invitations (code: {{ teamsError?.code }})</p>
@@ -8,14 +8,21 @@
 
     <template #header>
       <div class="section-head">
-        <h2>Other teams</h2>
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="80px" />
-          </template>
+        <div>
+          <p class="section-eyebrow">Discover</p>
+          <h2 class="text-3xl">Other teams</h2>
+          <p class="section-subtitle text-base">Browse public workspaces and request access.</p>
+        </div>
 
-          <span class="text-muted">{{ otherTeams?.length ?? 0 }} available</span>
-        </ui-skeleton-loader>
+        <div class="section-meta">
+          <ui-skeleton-loader :loading="isLoadingTeams">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100px" height="38px" />
+            </template>
+
+            <span class="count-pill text-base">{{ otherTeams?.length ?? 0 }} available</span>
+          </ui-skeleton-loader>
+        </div>
       </div>
     </template>
 
@@ -44,7 +51,13 @@
         </div>
       </template>
 
-      <p v-if="otherTeams?.length === 0" class="text-muted">No other teams available.</p>
+      <div v-if="otherTeams?.length === 0" class="empty-row">
+        <div class="empty-icon" aria-hidden="true">+</div>
+        <div class="empty-copy">
+          <h3 class="text-lg">No teams to discover</h3>
+          <p class="text-base">Available teams will show up here when they can be joined.</p>
+        </div>
+      </div>
       <div v-else class="team-grid">
         <ui-card v-for="team in otherTeamsPageItems" :key="`other-${team.id}`" class="team-item">
           <template #header>
@@ -81,34 +94,20 @@
       </div>
     </ui-skeleton-loader>
 
-    <div v-if="otherPages > 1" class="pagination">
-      <ui-button
-        size="sm"
-        variant="secondary"
-        class="btn-soft"
-        :disabled="otherPage === 1"
-        @click="otherPage -= 1"
-        type="button"
-      >
-        Prev
-      </ui-button>
-      <span>Page {{ otherPage }} / {{ otherPages }}</span>
-      <ui-button
-        size="sm"
-        variant="secondary"
-        :disabled="otherPage === otherPages"
-        @click="otherPage += 1"
-        type="button"
-      >
-        Next
-      </ui-button>
-    </div>
+    <ui-pagination
+      v-if="otherPages > 1"
+      v-model="otherPage"
+      :total-items="otherTeams.length"
+      :page-size="OTHER_TEAMS_PER_PAGE"
+      :show-summary="false"
+    />
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -174,9 +173,37 @@ const sendJoinRequest = (teamId: number) => {
 <style scoped>
 .section-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.7rem;
+  gap: 1rem;
+}
+
+.section-head h2 {
+  margin: 2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.section-head .section-subtitle {
+  margin: 0;
+}
+
+.section-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .team-grid {
@@ -190,6 +217,49 @@ const sendJoinRequest = (teamId: number) => {
   background: var(--muted);
 }
 
+.empty-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 96px;
+  padding: 1.35rem;
+  border: 1px dashed var(--line-soft);
+  border-radius: 16px;
+  background: var(--background);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.empty-copy {
+  min-width: 0;
+}
+
+.empty-copy h3,
+.empty-copy p {
+  margin: 0;
+}
+
+.empty-copy h3 {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.empty-copy p {
+  margin-top: 0.25rem;
+  color: var(--muted-foreground);
+}
+
 .team-meta {
   display: flex;
   align-items: center;
@@ -201,16 +271,22 @@ const sendJoinRequest = (teamId: number) => {
   font-family: var(--font-display);
 }
 
-.pagination {
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
 .actions {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+@media (max-width: 700px) {
+  .section-head,
+  .empty-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-meta {
+    min-height: 0;
+    align-items: flex-start;
+  }
 }
 </style>

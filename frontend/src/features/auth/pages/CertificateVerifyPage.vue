@@ -1,6 +1,6 @@
 <template>
   <main class="verify-page">
-    <ui-card class="verify-card">
+    <section class="verify-card">
       <div class="title-row">
         <h1>Certificate Verification</h1>
         <ui-button variant="secondary" @click="goBack">Back</ui-button>
@@ -16,7 +16,11 @@
 
       <div v-if="isLoading" class="result result-loading">Checking...</div>
 
-      <div v-else-if="result" class="result" :class="isValidResult ? 'result-valid' : 'result-invalid'">
+      <div
+        v-else-if="result"
+        class="result"
+        :class="isValidResult ? 'result-valid' : 'result-invalid'"
+      >
         <div class="result-head">
           <p class="result-title">Verification result</p>
           <span class="status-badge" :class="isValidResult ? 'status-valid' : 'status-invalid'">
@@ -41,21 +45,21 @@
               ><strong>{{ certificateData.certificate_number || '-' }}</strong>
             </p>
             <p>
-              <span class="label">Placement</span><strong>{{ certificateData.placement || '-' }}</strong>
+              <span class="label">Placement</span
+              ><strong>{{ certificateData.placement || '-' }}</strong>
             </p>
           </div>
         </template>
 
         <p v-if="result.message" class="result-message">{{ result.message }}</p>
       </div>
-    </ui-card>
+    </section>
   </main>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import {

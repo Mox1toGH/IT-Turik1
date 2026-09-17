@@ -1,32 +1,68 @@
 <template>
-  <section class="page-shell">
-    <ui-card :is-error="isError">
-      <template #header>
-        <div class="tournaments-header">
-          <h1 class="tournaments-title">Tournaments list</h1>
-          <div class="header-actions">
-            <ui-button size="sm" asLink to="/tournaments/archive" variant="secondary"
-              >Archive</ui-button
-            >
-            <ui-button
-              v-if="user?.role === 'admin'"
-              size="sm"
-              asLink
-              to="/tournaments/create"
-              class="create-new-btn"
-              >Create new</ui-button
-            >
+  <section class="tournaments-page page-shell">
+    <header class="tournaments-hero">
+      <div class="tournaments-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Tournaments</span>
+        </div>
+
+        <h1 class="text-6xl">Tournaments list</h1>
+        <p class="section-subtitle text-xl">
+          Browse active competitions, track registration, and open tournament workspaces.
+        </p>
+      </div>
+
+      <div class="hero-actions">
+        <ui-skeleton-loader :loading="isLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="148px" height="64px" />
+          </template>
+
+          <ui-card variant="stat" class="tournaments-stat-card">
+            <strong class="text-2xl">{{ data?.total ?? 0 }}</strong>
+            <span class="text-sm">Total results</span>
+          </ui-card>
+        </ui-skeleton-loader>
+
+        <ui-card variant="stat" class="tournaments-stat-card">
+          <strong class="text-2xl">{{ pageItems.length }}</strong>
+          <span class="text-sm">Showing now</span>
+        </ui-card>
+
+        <ui-button asLink to="/tournaments/archive" variant="default" size="lg">Archive</ui-button>
+        <ui-button v-if="user?.role === 'admin'" asLink to="/tournaments/create" size="lg">
+          <span class="create-plus text-2xl" aria-hidden="true">+</span>
+          Create tournament
+        </ui-button>
+      </div>
+    </header>
+
+    <div class="tournaments-rule" aria-hidden="true"></div>
+
+    <section class="tournaments-section">
+      <div v-if="isError" class="error-state">
+        <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
+      </div>
+
+      <ui-card v-else variant="panel" class="tournaments-panel">
+        <template #header>
+          <div class="section-head">
+            <div>
+              <p class="section-eyebrow">Discover</p>
+              <h2 class="text-3xl">Active tournaments</h2>
+              <p class="section-subtitle text-base">
+                Filter competitions by name or registration status.
+              </p>
+            </div>
+
+            <div class="section-meta">
+              <span class="count-pill text-base">{{ pageItems.length }} shown</span>
+            </div>
           </div>
-        </div>
-      </template>
+        </template>
 
-      <template #error>
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
-        </div>
-      </template>
-
-      <div>
         <div class="filters-wrapper">
           <div class="search-wrapper">
             <ui-input
@@ -36,9 +72,14 @@
               @keydown.enter="applySearch"
             />
 
-            <ui-button v-if="searchInput.length >= 2" @click="applySearch"
-              ><arrow-right
-            /></ui-button>
+            <ui-button
+              v-if="searchInput.length >= 2"
+              class="search-button"
+              aria-label="Search tournaments"
+              @click="applySearch"
+            >
+              <arrow-right />
+            </ui-button>
           </div>
 
           <div class="filters">
@@ -92,17 +133,13 @@
                   :key="tournament.id"
                   class="tournament-card"
                 >
-                  <div
-                    class="tournament-top"
-                    :class="{ 'tournament-top--with-banner': Boolean(tournament.banner) }"
-                    :style="
-                      tournament.banner
-                        ? {
-                            backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})`,
-                          }
-                        : {}
-                    "
-                  >
+                  <div class="tournament-top">
+                    <img
+                      v-if="tournament.banner"
+                      class="tournament-banner"
+                      :src="tournament.banner"
+                      :alt="`${tournament.name} banner`"
+                    />
                     <h3 class="tounament-title" :title="tournament.name">
                       {{ truncateText(tournament.name, 80) }}
                     </h3>
@@ -133,8 +170,7 @@
                       size="sm"
                       asLink
                       :to="`/tournaments/${tournament.id}`"
-                      variant="secondary"
-                      class="tournaments-details-btn"
+                      variant="default"
                     >
                       View details
                     </ui-button>
@@ -143,39 +179,26 @@
               </div>
             </template>
 
-            <ui-card v-if="!isError && pageItems.length === 0" class="empty-card"
-              ><p class="empty-error">No tournaments found</p></ui-card
-            >
+            <ui-card v-if="!isError && pageItems.length === 0" class="empty-card">
+              <div class="empty-row">
+                <div class="empty-icon" aria-hidden="true">+</div>
+                <div class="empty-copy">
+                  <h3 class="text-lg">No tournaments found</h3>
+                  <p class="text-base">Try changing the search text or status filters.</p>
+                </div>
+              </div>
+            </ui-card>
 
-            <div v-if="totalPages > 1" class="pagination">
-              <ui-button size="sm" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
-                Prev
-              </ui-button>
-
-              <ui-button
-                v-for="page in visiblePages"
-                :key="`${page}`"
-                size="sm"
-                class="pagination-btn"
-                :disabled="page === '...'"
-                :variant="page === currentPage ? 'default' : 'secondary'"
-                @click="typeof page === 'number' && goToPage(page)"
-              >
-                {{ page }}
-              </ui-button>
-
-              <ui-button
-                size="sm"
-                :disabled="currentPage === totalPages"
-                @click="goToPage(currentPage + 1)"
-              >
-                Next
-              </ui-button>
-            </div>
+            <ui-pagination
+              v-if="(data?.total ?? 0) > pageSize"
+              v-model="currentPage"
+              :total-items="data?.total ?? 0"
+              :page-size="pageSize"
+            />
           </div>
         </ui-skeleton-loader>
-      </div>
-    </ui-card>
+      </ui-card>
+    </section>
   </section>
 </template>
 
@@ -188,6 +211,7 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
@@ -206,9 +230,8 @@ const statusOptions = computed(() => {
   return user.value?.role === 'admin' ? base : base.filter((option) => option.value !== 'draft')
 })
 
-const pageSize = 12
-
 const currentPage = ref(1)
+const pageSize = 12
 const searchInput = ref('')
 const searchQuery = ref('')
 const statusFilter = ref<NonNullable<StatusD67Enum[]>>([])
@@ -217,8 +240,8 @@ const { data: user } = useGetUserProfile()
 const params = computed(() => ({
   page: currentPage.value,
   searchQuery: searchQuery.value,
-  pageSize,
-  status: statusFilter.value,
+  page_size: pageSize,
+  status: statusFilter.value.join(','),
 })) as unknown as Ref<ListTournamentsParams>
 const {
   data,
@@ -231,7 +254,6 @@ const {
 })
 
 const pageItems = computed(() => data.value?.data ?? [])
-const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / pageSize))
 const statusBadgeVariant = (status?: StatusD67Enum) => {
   if (status === 'draft') return 'gray'
   if (status === 'finished') return 'gray'
@@ -241,35 +263,9 @@ const statusBadgeVariant = (status?: StatusD67Enum) => {
   return 'gray'
 }
 
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  const current = currentPage.value
-
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1)
-  }
-
-  if (current <= 4) {
-    return [1, 2, 3, 4, 5, '...', total]
-  }
-
-  if (current >= total - 3) {
-    return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-  }
-
-  return [1, '...', current - 1, current, current + 1, '...', total]
-})
-
-const goToPage = (page: number) => {
-  if (page < 1 || page > totalPages.value) {
-    return
-  }
-  currentPage.value = page
-}
-
 const applySearch = () => {
   currentPage.value = 1
-  searchQuery.value = searchInput.value
+  searchQuery.value = searchInput.value.trim()
 }
 
 const onStatusChange = () => {
@@ -278,64 +274,184 @@ const onStatusChange = () => {
 </script>
 
 <style scoped>
-.tournaments-header {
+.tournaments-page {
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
+}
+
+.tournaments-hero {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.tournaments-hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.tournaments-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.tournaments-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
 }
 
-.header-actions {
+.tournaments-stat-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.tournaments-stat-card span {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.create-plus {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tournaments-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.tournaments-section {
+  min-width: 0;
+}
+
+.tournaments-panel {
+  min-width: 0;
+}
+
+.section-head {
   display: flex;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-head h2 {
+  margin: 2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.section-head .section-subtitle {
+  margin: 0;
+}
+
+.section-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .filters-wrapper {
-  margin-bottom: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
 }
 
 .filters {
   display: flex;
   gap: 0.4rem;
-  justify-content: end;
+  justify-content: flex-end;
 }
 
 .search-wrapper {
   display: flex;
-  justify-content: space-between;
-  gap: 0.3rem;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
 .search-input {
   flex: 1;
+  min-width: 0;
+}
+
+.search-button {
+  flex: 0 0 auto;
 }
 
 .tournaments-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.9rem;
 }
 
 .tounament-title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
   word-break: break-word;
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
 }
 
 .tournament-top {
-  border-radius: 12px;
-  padding: 12px;
-  margin: -4px -4px 12px;
-  background: color-mix(in srgb, var(--muted) 90%, #000 10%);
-  background-size: cover;
-  background-position: center;
-  min-height: 140px;
   display: flex;
   flex-direction: column;
+  gap: 0.65rem;
+  min-height: 156px;
 }
 
-.tournament-top--with-banner {
-  color: #fff;
+.tournament-banner {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--background);
 }
 
 .tournament-info {
@@ -346,13 +462,16 @@ const onStatusChange = () => {
 
 .tournaments-description {
   flex: 1;
-  margin-bottom: 0;
-  line-height: 1.5;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   word-break: break-word;
 }
 
 .tournament-card {
-  background: var(--muted) !important;
+  padding: 0.95rem;
+  background: var(--muted);
 }
 
 .tournaments-meta {
@@ -361,6 +480,8 @@ const onStatusChange = () => {
   align-items: center;
   gap: 12px;
   color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
 }
 
 .tournaments-date {
@@ -369,67 +490,117 @@ const onStatusChange = () => {
   gap: 4px;
 }
 
+.tournaments-date p:first-child {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+
 .tournaments-date p {
   margin: 0;
 }
 
-.tournaments-details-btn {
-  width: 100%;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.pagination-btn {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
+.empty-card {
+  background: transparent;
+  border: 0;
   padding: 0;
 }
 
-@media (max-width: 1024px) {
-  .tournaments-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.empty-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 96px;
+  padding: 1.35rem;
+  border: 1px dashed var(--line-soft);
+  border-radius: 16px;
+  background: var(--background);
 }
 
-@media (max-width: 768px) {
-  .tournaments-grid {
+.empty-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.empty-copy {
+  min-width: 0;
+}
+
+.empty-copy h3,
+.empty-copy p {
+  margin: 0;
+}
+
+.empty-copy h3 {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.empty-copy p {
+  margin-top: 0.25rem;
+  color: var(--muted-foreground);
+}
+
+.error-state {
+  display: flex;
+  min-height: 136px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+@media (max-width: 760px) {
+  .tournaments-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .tournaments-hero,
+  .section-head,
+  .empty-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tournaments-hero {
+    gap: 1rem;
+  }
+
+  .tournaments-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .tournaments-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .hero-actions,
+  .section-meta {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .filters-wrapper {
     grid-template-columns: 1fr;
-    gap: 12px;
+  }
+
+  .filters {
+    justify-content: flex-start;
   }
 
   .tournaments-meta {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .pagination {
-    gap: 6px;
-    margin-top: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .pagination {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .tournaments-header {
-    flex-direction: column;
-    align-items: start;
-  }
-
-  .create-new-btn {
-    width: 100%;
   }
 }
 </style>

@@ -56,23 +56,13 @@
           </div>
         </div>
 
-        <div v-if="totalCertPages > 1" class="pagination">
-          <ui-button
-            size="sm"
-            variant="secondary"
-            :disabled="certsPage === 1"
-            @click="$emit('update:certsPage', certsPage - 1)"
-            >Prev</ui-button
-          >
-          <span class="page-info">Page {{ certsPage }} / {{ totalCertPages }}</span>
-          <ui-button
-            size="sm"
-            variant="secondary"
-            :disabled="certsPage === totalCertPages"
-            @click="$emit('update:certsPage', certsPage + 1)"
-            >Next</ui-button
-          >
-        </div>
+        <ui-pagination
+          v-if="totalCertPages > 1"
+          v-model="localCertsPage"
+          :total-items="certsResponse?.count || 0"
+          :page-size="certsResponse?.page_size || 10"
+          :show-summary="false"
+        />
       </div>
     </ui-skeleton-loader>
   </ui-card>
@@ -86,6 +76,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 
@@ -105,6 +96,11 @@ const emit = defineEmits<{
   (e: 'delete', code: string): void
 }>()
 
+const localCertsPage = computed({
+  get: () => props.certsPage,
+  set: (v) => emit('update:certsPage', v),
+})
+
 const query = computed({ get: () => props.searchQuery, set: (v) => emit('update:searchQuery', v) })
 
 const formatDate = (date: string) => (!date ? '-' : new Date(date).toLocaleDateString('uk-UA'))
@@ -119,18 +115,9 @@ const formatDate = (date: string) => (!date ? '-' : new Date(date).toLocaleDateS
   grid-column: 1 / -1;
 }
 .panel-head {
-  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-}
-.panel-title {
-  margin: 0;
-  font-size: 1rem;
-}
-.panel-note {
-  font-size: 0.8rem;
-  color: var(--color-gray-500);
 }
 .panel-title-row {
   display: flex;
@@ -190,39 +177,11 @@ const formatDate = (date: string) => (!date ? '-' : new Date(date).toLocaleDateS
   display: flex;
   gap: 6px;
 }
-.action-btn-mini {
-  background: none;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-.action-btn-mini:hover {
-  background: var(--secondary);
-  color: var(--foreground);
-}
-.action-btn-mini.delete:hover {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.icon-mini {
-  width: 14px;
-  height: 14px;
-}
 .certs-list-skeleton {
   display: grid;
   gap: 10px;
 }
-.page-info {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-gray-600);
-}
+
 @media (max-width: 900px) {
   .panel-title-row {
     flex-direction: column;

@@ -6,8 +6,8 @@
       <p class="section-subtitle">Review and evaluate submitted projects</p>
     </div>
 
-    <ui-card>
-      <template #header>
+    <section class="evaluation-section">
+      <header class="page-controls-header">
         <div class="page-controls">
           <div class="filters-wrap">
             <ui-select
@@ -51,7 +51,7 @@
             </div>
           </div>
         </div>
-      </template>
+      </header>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
@@ -87,7 +87,7 @@
           />
         </template>
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
@@ -134,7 +134,10 @@ const roundOptions = computed(() => {
   const unique = new Map<string, string>()
 
   assignments.value.forEach((assignment) => {
-    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? `Round #${assignment.round_details.id}`)
+    unique.set(
+      String(assignment.round_details.id),
+      assignment.round_details.name ?? `Round #${assignment.round_details.id}`,
+    )
   })
 
   tournaments.value.forEach((tournament) => {
@@ -168,7 +171,9 @@ const filteredAssignments = computed(() => {
   let list = assignments.value
 
   if (selectedRounds.value.length) {
-    list = list.filter((assignment) => selectedRounds.value.includes(String(assignment.round_details.id)))
+    list = list.filter((assignment) =>
+      selectedRounds.value.includes(String(assignment.round_details.id)),
+    )
   }
 
   if (selectedTournamentIds.value.length) {
@@ -193,7 +198,9 @@ const pagedAssignments = computed(() => {
 })
 
 const totalCount = computed(() => filteredAssignments.value.length)
-const evaluatedCount = computed(() => filteredAssignments.value.filter((item) => item.is_evaluated).length)
+const evaluatedCount = computed(
+  () => filteredAssignments.value.filter((item) => item.is_evaluated).length,
+)
 const progressPercent = computed(() =>
   totalCount.value ? Math.round((evaluatedCount.value / totalCount.value) * 100) : 0,
 )

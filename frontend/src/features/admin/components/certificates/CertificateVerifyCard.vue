@@ -80,18 +80,9 @@ const isValidResult = computed(() => {
   color: var(--muted-foreground);
 }
 .panel-head {
-  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-}
-.panel-title {
-  margin: 0;
-  font-size: 1rem;
-}
-.panel-note {
-  font-size: 0.8rem;
-  color: var(--color-gray-500);
 }
 .verify-form {
   display: flex;

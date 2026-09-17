@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
+    <section class="page-section role-codes-section">
+      <header class="page-header">
         <div class="head">
           <div>
             <p class="section-eyebrow">Admin</p>
@@ -12,7 +12,7 @@
           </div>
           <ui-button as-link to="/admin" variant="secondary">Back to Admin hub</ui-button>
         </div>
-      </template>
+      </header>
 
       <div>
         <div class="counts">
@@ -79,7 +79,7 @@
         </div>
       </div>
 
-      <template #footer>
+      <section class="codes-section">
         <ui-skeleton-loader :loading="isLoading">
           <template #skeleton>
             <div class="codes-list">
@@ -131,23 +131,20 @@
                 </div>
               </ui-card>
 
-              <ui-card class="empty-card">
-                <p v-if="!codes.length" class="text-muted empty-error">
-                  No codes found for current filter.
-                </p>
+              <ui-card v-if="!codes.length" class="empty-card">
+                <p class="text-muted empty-error">No codes found for current filter.</p>
               </ui-card>
             </template>
           </div>
         </ui-skeleton-loader>
-      </template>
-    </ui-card>
+      </section>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiCard from '@/components/ui/UiCard.vue'

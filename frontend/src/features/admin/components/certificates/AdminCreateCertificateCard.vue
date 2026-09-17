@@ -81,10 +81,8 @@ const localForm = computed({
 
 <style scoped>
 .panel { background: var(--muted); color: var(--muted-foreground); }
-.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
-.panel-title { margin: 0; font-size: 1rem; }
-.panel-note { font-size: 0.8rem; color: var(--color-gray-500); }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; align-items: end; }
+.panel-head { justify-content: space-between; align-items: center; gap: 0.75rem; }
+.form-grid { align-items: end; gap: 0.75rem; }
 .form-grid :deep(.select-trigger) { background: var(--input) !important; border-color: var(--border) !important; color: var(--foreground) !important; border-radius: 12px !important; font-weight: 400 !important; padding: 0.75rem 0.85rem !important; }
 .form-grid :deep(.select-trigger:focus-visible) { box-shadow: 0 0 0 3px var(--ring) !important; }
 .form-item { display: grid; gap: 0.4rem; }

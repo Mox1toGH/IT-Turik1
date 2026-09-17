@@ -13,8 +13,9 @@
         ><ui-input v-model="localTemplateForm.name" required placeholder="Summer Cup 2026" />
       </div>
       <div class="form-item">
-        <label class="form-label">Image</label
-        ><input
+        <label class="form-label">Image</label>
+
+        <input
           class="file-input"
           type="file"
           accept="image/*"
@@ -73,23 +74,13 @@
           </ui-card>
         </div>
 
-        <div v-if="totalTemplatePages > 1" class="pagination">
-          <ui-button
-            size="sm"
-            variant="secondary"
-            :disabled="templatesPage === 1"
-            @click="$emit('prev-page')"
-            >Prev</ui-button
-          >
-          <span class="page-info">Page {{ templatesPage }} / {{ totalTemplatePages }}</span>
-          <ui-button
-            size="sm"
-            variant="secondary"
-            :disabled="templatesPage === totalTemplatePages"
-            @click="$emit('next-page')"
-            >Next</ui-button
-          >
-        </div>
+        <ui-pagination
+          v-if="totalTemplatePages > 1"
+          v-model="localTemplatesPage"
+          :total-items="paginatedTemplates.length * totalTemplatePages"
+          :page-size="paginatedTemplates.length"
+          :show-summary="false"
+        />
       </div>
     </ui-skeleton-loader>
   </ui-card>
@@ -103,6 +94,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 import type { CertificateTemplate } from '@/api/.ts.schemas'
@@ -123,13 +115,17 @@ const emit = defineEmits<{
   (e: 'upload'): void
   (e: 'edit', tpl: CertificateTemplate): void
   (e: 'delete', id: number): void
-  (e: 'prev-page'): void
-  (e: 'next-page'): void
+  (e: 'update:templatesPage', value: number): void
 }>()
 
 const localTemplateForm = computed({
   get: () => props.templateForm,
   set: (v) => emit('update:templateForm', v),
+})
+
+const localTemplatesPage = computed({
+  get: () => props.templatesPage,
+  set: (v) => emit('update:templatesPage', v),
 })
 </script>
 
@@ -139,18 +135,9 @@ const localTemplateForm = computed({
   color: var(--muted-foreground);
 }
 .panel-head {
-  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
-}
-.panel-title {
-  margin: 0;
-  font-size: 1rem;
-}
-.panel-note {
-  font-size: 0.8rem;
-  color: var(--color-gray-500);
 }
 .template-form {
   display: grid;
@@ -238,30 +225,6 @@ const localTemplateForm = computed({
   gap: 2px;
   min-width: 44px;
 }
-.action-btn-mini {
-  background: none;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-.action-btn-mini:hover {
-  background: var(--secondary);
-  color: var(--foreground);
-}
-.action-btn-mini.delete:hover {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.icon-mini {
-  width: 14px;
-  height: 14px;
-}
 .preview {
   width: 100%;
   max-height: 220px;
@@ -269,17 +232,5 @@ const localTemplateForm = computed({
   border-radius: 10px;
   border: 1px solid var(--line-soft);
   background: #fff;
-}
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-.page-info {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-gray-600);
 }
 </style>

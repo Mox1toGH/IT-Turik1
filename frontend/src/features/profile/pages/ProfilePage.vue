@@ -1,480 +1,487 @@
 <template>
-  <section class="page-shell">
-    <ui-card :is-error="isLoadingError">
-      <template #error>
-        <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
-        </div>
-      </template>
+  <section class="page-shell profile-page">
+    <div v-if="isLoadingError" class="error-state">
+      <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
+    </div>
 
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">User Center</p>
-            <h1 class="section-title profile-title">My profile</h1>
+    <template v-else>
+      <header class="profile-header">
+        <div class="profile-header-copy">
+          <div class="breadcrumb-label">
+            <span>Workspace</span>
+            <span aria-hidden="true">/</span>
+            <span>Profile</span>
           </div>
-          <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
+
+          <h1 class="text-6xl">My profile</h1>
+          <p class="profile-subtitle text-xl">Manage your account details and preferences.</p>
         </div>
-        <div class="avatar-row">
-          <div class="avatar-box">
-            <user-avatar
-              :avatar="user?.avatar"
-              :avatar-frame-url="user?.avatar_frame_url"
-              :username="user?.username || 'user'"
-              :full-name="user?.full_name || ''"
-              :size="108"
-              :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+
+        <div class="profile-actions">
+          <ui-card variant="stat" class="joined-card">
+            <strong class="text-base">{{
+              user?.created_at ? formatDate(user.created_at) : 'N/A'
+            }}</strong>
+            <span class="text-sm">Joined</span>
+          </ui-card>
+        </div>
+      </header>
+
+      <div class="profile-rule" aria-hidden="true"></div>
+
+      <div class="profile-layout">
+        <main class="profile-main">
+          <Transition name="profile-section" mode="out-in">
+            <ProfileOverviewSection
+              v-if="activeSection === 'overview'"
+              :user="user"
+              :is-loading="isLoading"
             />
-            <avatar-modal :user="user" :disabled="isLoading" />
-          </div>
-          <ui-card class="balance-card">
-            <template #header>
-              <span class="card-text-title">Points balance</span>
-            </template>
-            <ui-skeleton-loader :loading="isPointsLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100%" />
-              </template>
-              <p class="balance-value">{{ pointsBalance?.balance ?? 0 }}</p>
-            </ui-skeleton-loader>
-          </ui-card>
-        </div>
-      </template>
 
-      <div class="details">
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Username</span>
-          </template>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Email</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Role</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Full name</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">City</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Phone</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Teams</span>
-          </template>
-
-          <div>
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 2" :key="i" variant="rect" width="150px" />
-                </div>
-              </template>
-
-              <div class="team-list">
-                <router-link
-                  v-for="team in user?.teams || []"
-                  :key="team.id"
-                  :to="`/teams/${team.id}`"
-                  class="team-link"
-                >
-                  {{ team.name }}
-                </router-link>
-              </div>
-
-              <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-            </ui-skeleton-loader>
-          </div>
-        </ui-card>
-      </div>
-
-      <div v-if="user?.active_tournament" class="tournament-overview-row">
-        <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
-          <ui-card class="active-tournament-card">
-            <template #header>
-              <span class="card-text-title">Active tournament</span>
-            </template>
-            <div class="active-tournament-content">
-              <div>
-                <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
-                <p class="active-tournament-meta">{{ formatDate(user.active_tournament.start_date) }} - {{ formatDate(user.active_tournament.end_date) }}</p>
-              </div>
+            <div v-else class="profile-content-view">
               <ui-button
-                as-link
-                to="/profile/tournaments-history"
-                variant="secondary"
+                variant="ghost"
                 size="sm"
-                class="history-btn"
-                @click.stop
+                class="back-to-profile"
+                @click="activeSection = 'overview'"
               >
-                Tournament history
+                <ArrowRight class="back-icon" />
+                Back to profile
               </ui-button>
+              <component :is="activeComponent" />
             </div>
+          </Transition>
+        </main>
+
+        <aside class="profile-rail">
+          <ui-card
+            variant="panel"
+            class="rail-card"
+            role="navigation"
+            aria-label="Profile shortcuts"
+          >
+            <p class="rail-eyebrow">Activity</p>
+            <button
+              :class="['rail-link', { active: activeSection === 'statistics' }]"
+              type="button"
+              @click="activeSection = 'statistics'"
+            >
+              <span class="rail-link-copy"><EditIcon />My statistics</span>
+              <ArrowRight />
+            </button>
+            <button
+              :class="['rail-link', { active: activeSection === 'transactions' }]"
+              type="button"
+              @click="activeSection = 'transactions'"
+            >
+              <span class="rail-link-copy"><FileCheckIcon />Transaction history</span>
+              <ArrowRight />
+            </button>
+            <button
+              :class="['rail-link', { active: activeSection === 'orders' }]"
+              type="button"
+              @click="activeSection = 'orders'"
+            >
+              <span class="rail-link-copy"><TeamIcon />My shop orders</span>
+              <ArrowRight />
+            </button>
+            <button
+              :class="['rail-link', { active: activeSection === 'inventory' }]"
+              type="button"
+              @click="activeSection = 'inventory'"
+            >
+              <span class="rail-link-copy"><LockIcon />Digital inventory</span>
+              <ArrowRight />
+            </button>
           </ui-card>
-        </router-link>
+
+          <ui-card
+            variant="panel"
+            class="rail-card account-card"
+            role="navigation"
+            aria-label="Account shortcuts"
+          >
+            <p class="rail-eyebrow">Account</p>
+            <button
+              :class="['rail-link', { active: activeSection === 'notifications' }]"
+              type="button"
+              @click="activeSection = 'notifications'"
+            >
+              <span class="rail-link-copy"><BellIcon />Notifications</span>
+              <ArrowRight />
+            </button>
+            <button
+              :class="['rail-link', { active: activeSection === 'certificates' }]"
+              type="button"
+              @click="activeSection = 'certificates'"
+            >
+              <span class="rail-link-copy"><FileCheckIcon />Certificates</span>
+              <ArrowRight />
+            </button>
+          </ui-card>
+
+          <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
+            Log out
+          </ui-button>
+        </aside>
       </div>
 
-      <div class="stats-link-row">
-        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
-          >My Statistics</ui-button
-        >
-        <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
-          Transaction History
-        </ui-button>
-        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary"
-          >My Shop Orders</ui-button
-        >
-        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary"
-          >Digital Inventory</ui-button
-        >
-      </div>
-
-      <div class="actions">
-        <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
-        <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
-        <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
-        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
-          Log Out
-        </ui-button>
-      </div>
-
-      <ui-card class="danger-zone">
-        <p class="danger-text">Danger zone: this action permanently deletes your account.</p>
-
+      <ui-card v-if="activeSection === 'overview'" class="danger-zone">
+        <div>
+          <p class="danger-title">Danger zone</p>
+          <p class="danger-text">Permanently delete your account and all associated data.</p>
+        </div>
         <delete-profile-modal />
       </ui-card>
-    </ui-card>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import BellIcon from '@/icons/BellIcon.vue'
+import ArrowRight from '@/icons/ArrowRight.vue'
+import EditIcon from '@/icons/EditIcon.vue'
+import FileCheckIcon from '@/icons/FileCheckIcon.vue'
+import LockIcon from '@/icons/LockIcon.vue'
+import TeamIcon from '@/icons/TeamIcon.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
-import AvatarModal from '../components/profile/modals/AvatarModal.vue'
+import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
 import { useUserStore } from '@/stores/user'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { formatDate } from '@/lib/date'
-import { useGetMyPointsBalance } from '@/api/points/points'
+import StatsPage from '@/features/stats/pages/StatsPage.vue'
+import TransactionHistorySection from '../components/profile/sections/TransactionHistorySection.vue'
+import ShopOrderHistoryPage from '@/features/shop/pages/ShopOrderHistoryPage.vue'
+import ShopInventoryPage from '@/features/shop/pages/ShopInventoryPage.vue'
+import NotificationsSection from './NotificationsPage.vue'
+import CertificatesSection from '../components/profile/sections/CertificatesSection.vue'
+
+type ProfileSection =
+  | 'overview'
+  | 'statistics'
+  | 'transactions'
+  | 'orders'
+  | 'inventory'
+  | 'notifications'
+  | 'certificates'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
-const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
-
 const router = useRouter()
 const isDeleting = ref(false)
+const activeSection = ref<ProfileSection>('overview')
+
+const viewComponents = {
+  statistics: StatsPage,
+  transactions: TransactionHistorySection,
+  orders: ShopOrderHistoryPage,
+  inventory: ShopInventoryPage,
+  notifications: NotificationsSection,
+  certificates: CertificatesSection,
+} as const
+
+const activeComponent = computed(
+  () => viewComponents[activeSection.value as Exclude<ProfileSection, 'overview'>],
+)
 
 const logout = () => {
   store.logout()
   router.push('/login')
 }
-
-const goToEditProfile = () => {
-  router.push('/profile/edit')
-}
-
-const goToNotifications = () => {
-  router.push('/profile/notifications')
-}
-
-const goToCertificates = () => {
-  router.push('/profile/certificates')
-}
-
 </script>
 
 <style scoped>
-.head {
+.profile-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
+}
+
+.profile-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-end;
-  gap: 1rem;
+  justify-content: space-between;
+  gap: 1.25rem;
 }
 
-.profile-title {
-  margin-top: 0.2rem;
+.profile-header-copy {
+  min-width: 0;
 }
 
-.meta {
-  margin: 0;
-  font-size: 0.86rem;
-}
-
-.avatar-row {
-  margin-top: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.9rem;
-}
-
-.avatar-box {
-  display: flex;
+.breadcrumb-label {
+  display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-}
-
-.balance-card {
-  min-width: 220px;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 12%, var(--muted));
-}
-
-.balance-value {
-  margin: 0;
-  font-size: 2rem;
-  line-height: 1;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   font-weight: 800;
-  color: var(--primary);
-}
-
-.details {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-top: 1rem;
-  align-items: start;
-}
-
-.item {
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.85);
-  min-width: 0;
-  display: grid;
-  gap: 0.3rem;
-  align-content: start;
-}
-
-.item-label {
-  color: var(--color-gray-500);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.field-card {
-  background: var(--muted);
-  color: var(--muted-foreground);
-  gap: 0;
-}
-
-.item-phone {
-  align-content: start;
-}
-
-.item-wide {
-  grid-column: 1 / -1;
-}
-
-.team-list {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.team-link {
-  color: var(--brand-700);
-  text-decoration: none;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.badge {
-  width: max-content;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.actions {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.stats-link-row {
-  margin-top: 0.9rem;
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.tournament-overview-row {
-  margin-top: 0.9rem;
-  min-width: 220px;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.overview-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.active-tournament-card {
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
-  min-height: 100%;
-}
-
-.active-tournament-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-}
-
-.active-tournament-name,
-.active-tournament-meta {
+.profile-header h1 {
   margin: 0;
-}
-
-.active-tournament-name {
-  font-weight: 700;
+  max-width: 760px;
   color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 
-.history-btn {
-  align-self: center;
-  border-color: color-mix(in srgb, var(--primary) 75%, #ffffff 25%);
-  background: var(--primary);
-  color: white;
+.profile-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  color: var(--muted-foreground);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.joined-card {
+  display: flex;
+}
+
+.joined-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.joined-card span {
+  color: var(--muted-foreground);
   font-weight: 700;
   white-space: nowrap;
 }
 
-.history-btn:hover,
-.history-btn:focus-visible,
-.history-btn:active {
-  background: color-mix(in srgb, var(--primary) 84%, black 16%);
-  color: white;
-  border-color: color-mix(in srgb, var(--primary) 72%, black 28%);
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.danger-zone {
-  margin-top: 1.4rem;
-  padding-top: 1rem;
-  border: 1px solied var(--destructive);
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+.profile-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
 }
 
-.danger-text {
-  margin: 0 0 0.6rem;
-  color: color-mix(in srgb, var(--destructive) 80%, transparent);
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.6rem;
+  align-items: start;
+}
+
+.profile-main,
+.profile-rail {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.profile-section-enter-active,
+.profile-section-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.profile-section-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.profile-section-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.rail-card {
+  display: grid;
+  gap: 0;
+  padding: 1.25rem;
+}
+
+.account-card {
+  padding-top: 1.25rem;
+}
+
+.rail-eyebrow {
+  margin: 0 0 0.7rem;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.rail-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.7rem 0;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  text-decoration: none;
+}
+
+.rail-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rail-link + .rail-link {
+  border-top: 1px solid var(--line-soft);
+}
+
+.rail-link:hover {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.rail-link.active {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  color: var(--primary);
+}
+
+.rail-link-copy {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.6rem;
   font-weight: 600;
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: grid;
-  place-items: center;
-  z-index: 50;
-  padding: 1rem;
+.rail-link-copy :deep(svg) {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
 }
 
-@media (max-width: 760px) {
-  .profile-card {
-    max-width: 100%;
-    margin: 0;
+.rail-link > :deep(svg) {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+}
+
+.profile-content-view {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.back-to-profile {
+  justify-self: end;
+}
+
+.back-icon {
+  transform: rotate(180deg);
+}
+
+.danger-zone {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem;
+  border-color: var(--destructive);
+  border-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
+  background: color-mix(in srgb, var(--destructive) 8%, var(--card));
+}
+
+.danger-title,
+.danger-text {
+  margin: 0;
+}
+
+.danger-title {
+  color: var(--destructive);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 700;
+}
+
+.danger-text {
+  margin-top: 0.35rem;
+  color: color-mix(in srgb, var(--destructive) 72%, var(--foreground));
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+}
+
+.error-state {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  border: 1px solid var(--destructive);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+  color: var(--destructive);
+}
+
+@media (max-width: 800px) {
+  .profile-page {
+    padding: 1rem 1rem 2rem;
   }
 
-  .head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .avatar-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .balance-card {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .details {
+  .profile-layout {
     grid-template-columns: 1fr;
   }
 
-  .tournament-overview-row {
-    width: 100%;
-    min-width: 0;
+  .profile-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .actions {
+  .profile-header {
+    align-items: flex-start;
     flex-direction: column;
+    gap: 1rem;
+  }
+
+  .profile-header h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .profile-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .profile-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .danger-zone {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .edit-details-link,
+  .danger-zone :deep(button) {
+    align-self: stretch;
   }
 }
 </style>

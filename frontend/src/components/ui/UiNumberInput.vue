@@ -130,7 +130,7 @@ function handleKeydown(event: KeyboardEvent) {
   align-items: center;
   gap: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--input);
   overflow: hidden;
   transition:
@@ -139,7 +139,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 .number-wrapper:focus-within {
-  box-shadow: 0 0 0 3px var(--ring);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .number-wrapper.invalid {
@@ -153,7 +153,8 @@ function handleKeydown(event: KeyboardEvent) {
   background: transparent;
   color: var(--foreground);
   font: inherit;
-  padding: 0.4rem 0;
+  padding: 0.3rem 0;
+  font-size: 0.84rem;
   width: 5ch;
   text-align: center;
   outline: none;
@@ -167,11 +168,11 @@ function handleKeydown(event: KeyboardEvent) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
+  width: 1.9rem;
   height: 100%;
   padding: 0.4rem 0;
-  min-height: 2.625rem;
-  background: color-mix(in srgb, var(--foreground) 20%, transparent);
+  min-height: 2.25rem;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
   border: none;
   color: var(--foreground);
   cursor: pointer;
@@ -183,7 +184,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 .stepper-btn:disabled {
-  opacity: 0.25;
+  background: color-mix(in srgb, var(--foreground) 0.1%, transparent);
   cursor: not-allowed;
 }
 

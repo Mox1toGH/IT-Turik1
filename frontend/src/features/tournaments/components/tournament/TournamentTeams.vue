@@ -1,7 +1,15 @@
 <template>
-  <ui-card class="tournament-card" :is-error="isError">
+  <ui-card variant="panel" class="tournament-card" :is-error="isError">
     <template #header>
-      <h2 class="tournament-card-title">Teams Info</h2>
+      <div class="tournament-card-head">
+        <div>
+          <p class="section-eyebrow">Teams</p>
+          <h2 class="text-3xl">Teams info</h2>
+          <p class="section-subtitle text-base">Registered and disqualified teams.</p>
+        </div>
+
+        <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
+      </div>
     </template>
 
     <template #error>
@@ -228,14 +236,38 @@ const handleConfirmAction = () => {
   flex: 1;
 }
 
-.tournament-card-title {
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
+.tournament-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tournament-card-head h2 {
+  margin: 2rem 0 0.45rem;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.tournament-card-head .section-subtitle {
+  margin: 0;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .team-search {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
 }
 
 .teams-list-wrap {
@@ -246,22 +278,30 @@ const handleConfirmAction = () => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  min-width: 0;
+}
+
+.team-info p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .team-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--border);
-  padding: 0.7rem 0;
+  gap: 0.8rem;
+  margin-top: 0.55rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--background);
+  color: var(--foreground);
+  text-decoration: none;
 }
 
 .team-item:hover {
-  background: var(--accent);
-}
-
-.team-item:not(:last-child) {
-  border-bottom: 1px solid var(--border);
+  color: var(--primary);
 }
 
 .team-action-group {
@@ -295,5 +335,17 @@ const handleConfirmAction = () => {
   display: flex;
   flex-direction: column;
   border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 700px) {
+  .tournament-card-head,
+  .team-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .team-action-group {
+    flex-wrap: wrap;
+  }
 }
 </style>

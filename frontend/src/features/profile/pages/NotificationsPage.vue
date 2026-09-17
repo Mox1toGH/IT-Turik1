@@ -1,120 +1,140 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">User Center</p>
-            <h1 class="section-title profile-title">Notifications</h1>
-            <p class="meta">Notifications older than 30 days are automatically deleted.</p>
+    <section class="notifications-section">
+      <header class="notifications-hero">
+        <div class="notifications-hero-copy">
+          <div class="breadcrumb-label">
+            <span>User Center</span>
+            <span aria-hidden="true">/</span>
+            <span>Notifications</span>
           </div>
-          <div class="header-actions">
-            <ui-button
-              variant="secondary"
-              size="sm"
-              @click="handleMarkAllRead"
-              :disabled="!hasUnread || isMarkingAll"
-            >
-              Mark all read
-            </ui-button>
-            <ui-button
-              variant="danger"
-              size="sm"
-              @click="handleDeleteAll"
-              :disabled="!hasNotifications || isDeletingAll"
-            >
-              Delete all
-            </ui-button>
-            <ui-button size="sm" @click="isSettingsModalOpen = true"> Settings </ui-button>
+
+          <h1 class="text-6xl">Notifications</h1>
+          <p class="section-subtitle text-xl">
+            Notifications older than 30 days are automatically deleted.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <ui-card variant="stat" class="notifications-stat-card">
+            <span class="text-sm">Unread:</span>
+            <strong class="text-3xl">{{ unreadCount }}</strong>
+          </ui-card>
+
+          <ui-button
+            variant="secondary"
+            size="lg"
+            :disabled="!hasUnread || isMarkingAll"
+            @click="handleMarkAllRead"
+          >
+            Mark all read
+          </ui-button>
+          <ui-button
+            variant="danger"
+            size="lg"
+            :disabled="!hasNotifications || isDeletingAll"
+            @click="handleDeleteAll"
+          >
+            Delete all
+          </ui-button>
+          <ui-button size="lg" @click="isSettingsModalOpen = true">Settings</ui-button>
+        </div>
+      </header>
+
+      <div class="notifications-rule" aria-hidden="true"></div>
+
+      <ui-card variant="form" class="form-panel notifications-panel">
+        <div v-if="isLoading" class="loading-state">
+          <p class="text-muted">Loading notifications...</p>
+        </div>
+        <div v-else-if="error" class="error-state">
+          <p>Error loading notifications.</p>
+        </div>
+        <div v-else-if="notificationsData?.results?.length === 0" class="empty-state">
+          <p class="text-muted">You have no notifications.</p>
+        </div>
+        <div v-else class="notifications-list">
+          <div
+            v-for="notification in notificationsData?.results"
+            :key="notification.id"
+            :class="['notification-item', { 'is-unread': !notification.is_read }]"
+            @click="!notification.is_read && handleMarkRead(notification.id)"
+          >
+            <div class="notification-header">
+              <div class="notification-title-group">
+                <span v-if="!notification.is_read" class="unread-dot"></span>
+                <ui-badge variant="gray">{{ notification.event_type }}</ui-badge>
+                <h4 class="notification-title">{{ notification.title }}</h4>
+              </div>
+              <div class="notification-actions">
+                <span class="notification-date">{{ formatDate(notification.created_at) }}</span>
+                <button
+                  v-if="getRedirectUrl(notification)"
+                  class="icon-btn"
+                  @click.stop="handleNotificationClick(notification)"
+                  title="Go to page"
+                >
+                  <external-link-icon class="icon" />
+                </button>
+                <button
+                  class="icon-btn danger"
+                  @click.stop="handleDelete(notification.id)"
+                  title="Delete notification"
+                >
+                  <trash-icon class="icon" />
+                </button>
+              </div>
+            </div>
+            <div class="notification-body">
+              <p class="notification-message">
+                <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
+                  <a
+                    v-if="part.type === 'user'"
+                    :href="`/users/${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </a>
+                  <router-link
+                    v-else-if="part.type === 'team'"
+                    :to="`/teams/${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </router-link>
+                  <router-link
+                    v-else-if="part.type === 'news'"
+                    :to="`/news#news-${part.id}`"
+                    class="user-link"
+                    @click.stop
+                  >
+                    {{ part.text }}
+                  </router-link>
+                  <span v-else>{{ part.text }}</span>
+                </template>
+              </p>
+            </div>
           </div>
         </div>
-      </template>
 
-      <div v-if="isLoading" class="loading-state">
-        <p>Loading notifications...</p>
-      </div>
-      <div v-else-if="error" class="error-state">
-        <p>Error loading notifications.</p>
-      </div>
-      <div v-else-if="notificationsData?.results?.length === 0" class="empty-state">
-        <p>You have no notifications.</p>
-      </div>
-      <div v-else class="notifications-list">
-        <div
-          v-for="notification in notificationsData?.results"
-          :key="notification.id"
-          :class="['notification-item', { 'is-unread': !notification.is_read }]"
-          @click="!notification.is_read && handleMarkRead(notification.id)"
-        >
-          <div class="notification-header">
-            <div class="notification-title-group">
-              <span v-if="!notification.is_read" class="unread-dot"></span>
-              <ui-badge variant="gray">{{ notification.event_type }}</ui-badge>
-              <h4 class="notification-title">{{ notification.title }}</h4>
-            </div>
-            <div class="notification-actions">
-              <span class="notification-date">{{ formatDate(notification.created_at) }}</span>
-              <button
-                v-if="getRedirectUrl(notification)"
-                class="redirect-btn"
-                @click.stop="handleNotificationClick(notification)"
-                title="Go to page"
-              >
-                <external-link-icon class="icon" />
-              </button>
-              <button
-                class="delete-btn"
-                @click.stop="handleDelete(notification.id)"
-                title="Delete notification"
-              >
-                <trash-icon class="icon" />
-              </button>
-            </div>
-          </div>
-          <div class="notification-body">
-            <p class="notification-message">
-              <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                <a
-                  v-if="part.type === 'user'"
-                  :href="`/users/${part.id}`"
-                  class="user-link"
-                  @click.stop
-                >
-                  {{ part.text }}
-                </a>
-                <router-link
-                  v-else-if="part.type === 'team'"
-                  :to="`/teams/${part.id}`"
-                  class="user-link"
-                  @click.stop
-                >
-                  {{ part.text }}
-                </router-link>
-                <router-link
-                  v-else-if="part.type === 'news'"
-                  :to="`/news#news-${part.id}`"
-                  class="user-link"
-                  @click.stop
-                >
-                  {{ part.text }}
-                </router-link>
-                <span v-else>{{ part.text }}</span>
-              </template>
-            </p>
-          </div>
+        <div v-if="totalPages > 1" class="pagination-controls">
+          <ui-button size="sm" variant="secondary" :disabled="page === 1" @click="prevPage">
+            Previous
+          </ui-button>
+          <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
+          <ui-button
+            size="sm"
+            variant="secondary"
+            :disabled="page === totalPages"
+            @click="nextPage"
+          >
+            Next
+          </ui-button>
         </div>
-      </div>
-
-      <div v-if="totalPages > 1" class="pagination-controls">
-        <ui-button size="sm" variant="secondary" :disabled="page === 1" @click="prevPage"
-          >Previous</ui-button
-        >
-        <span class="page-info">Page {{ page }} of {{ totalPages }}</span>
-        <ui-button size="sm" variant="secondary" :disabled="page === totalPages" @click="nextPage"
-          >Next</ui-button
-        >
-      </div>
-    </ui-card>
+      </ui-card>
+    </section>
 
     <notification-settings-modal v-model:is-open="isSettingsModalOpen" />
 
@@ -173,9 +193,11 @@ const confirmModalConfig = ref({
   confirmVariant: 'danger' as const,
 })
 
-const hasUnread = computed(() => {
-  return notificationsData.value?.results?.some((n) => !n.is_read) ?? false
+const unreadCount = computed(() => {
+  return notificationsData.value?.results?.filter((n) => !n.is_read).length ?? 0
 })
+
+const hasUnread = computed(() => unreadCount.value > 0)
 
 const hasNotifications = computed(() => {
   return (notificationsData.value?.results?.length ?? 0) > 0
@@ -332,26 +354,76 @@ const formatDate = (dateStr: string) => {
 </script>
 
 <style scoped>
-.head {
+.notifications-hero {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.profile-title {
-  margin-top: 0.2rem;
+.notifications-hero-copy {
+  min-width: 0;
 }
 
-.meta {
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.notifications-hero h1 {
   margin: 0;
-  font-size: 0.86rem;
-  color: var(--muted-foreground);
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 
-.header-actions {
+.notifications-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.hero-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.notifications-stat-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.notifications-stat-card span {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.notifications-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.form-panel.card {
+  display: grid;
+  gap: 0;
 }
 
 .loading-state,
@@ -366,7 +438,6 @@ const formatDate = (dateStr: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1rem;
 }
 
 .notification-item {
@@ -392,15 +463,17 @@ const formatDate = (dateStr: string) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  gap: 0.75rem;
 }
 
 .notification-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
-.redirect-btn {
+.icon-btn {
   background: none;
   border: none;
   color: var(--muted-foreground);
@@ -413,35 +486,17 @@ const formatDate = (dateStr: string) => {
   transition: all 0.2s;
 }
 
-.redirect-btn:hover {
+.icon-btn:hover {
   color: var(--brand-600);
   background: color-mix(in srgb, var(--brand-500) 10%, transparent);
 }
 
-.redirect-btn .icon {
-  width: 16px;
-  height: 16px;
-}
-
-.delete-btn {
-  background: none;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.delete-btn:hover {
-  color: #c4000a;
+.icon-btn.danger:hover {
+  color: var(--destructive);
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
 }
 
-.delete-btn .icon {
+.icon-btn .icon {
   width: 16px;
   height: 16px;
 }
@@ -450,6 +505,7 @@ const formatDate = (dateStr: string) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .unread-dot {
@@ -457,37 +513,29 @@ const formatDate = (dateStr: string) => {
   height: 8px;
   border-radius: 50%;
   background-color: var(--brand-500);
+  flex-shrink: 0;
 }
 
 .notification-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .notification-date {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .notification-body {
-  font-size: 0.9rem;
-  color: var(--foreground);
+  font-size: var(--text-sm);
   line-height: 1.4;
+  color: var(--foreground);
   margin-left: 0.5rem;
-}
-
-@media (max-width: 760px) {
-  .head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
 }
 
 .pagination-controls {
@@ -501,7 +549,8 @@ const formatDate = (dateStr: string) => {
 }
 
 .page-info {
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   color: var(--muted-foreground);
   font-weight: 500;
 }
@@ -516,5 +565,32 @@ const formatDate = (dateStr: string) => {
 .user-link:hover {
   color: var(--brand-700);
   text-decoration: underline;
+}
+
+@media (max-width: 760px) {
+  .notifications-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .notifications-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .notifications-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .notification-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
+    <section class="admin-orders-section">
+      <header class="page-header">
         <div class="head">
           <div>
             <p class="section-eyebrow">Admin</p>
@@ -9,7 +9,7 @@
           </div>
           <ui-button variant="secondary" as-link to="/shop">Back to Shop</ui-button>
         </div>
-      </template>
+      </header>
 
       <div class="toolbar">
         <ui-select v-model="statusFilter" :options="statusOptions" />
@@ -71,24 +71,24 @@
           </tbody>
         </table>
 
-        <div v-if="totalPages > 1" class="pagination">
-          <ui-button variant="secondary" :disabled="page === 1" @click="page -= 1">Prev</ui-button>
-          <span>Page {{ page }} / {{ totalPages }}</span>
-          <ui-button variant="secondary" :disabled="page === totalPages" @click="page += 1"
-            >Next</ui-button
-          >
-        </div>
+        <ui-pagination
+          v-if="totalPages > 1"
+          v-model="page"
+          :total-items="orders.length"
+          :page-size="pageSize"
+          :show-summary="false"
+        />
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useNotification } from '@/composables/useNotification'

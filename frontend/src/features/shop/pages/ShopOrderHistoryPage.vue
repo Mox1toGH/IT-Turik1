@@ -1,15 +1,14 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
+    <section class="orders-section">
+      <header class="page-header">
+        <div>
           <div>
             <p class="section-eyebrow">Shop</p>
             <h1 class="section-title">My Orders</h1>
           </div>
-          <ui-button variant="secondary" as-link to="/profile">Back to Profile</ui-button>
         </div>
-      </template>
+      </header>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
@@ -53,18 +52,16 @@
             </ui-button>
           </ui-card>
 
-          <div v-if="totalPages > 1" class="pagination">
-            <ui-button variant="secondary" :disabled="page === 1" @click="page -= 1"
-              >Prev</ui-button
-            >
-            <span>Page {{ page }} / {{ totalPages }}</span>
-            <ui-button variant="secondary" :disabled="page === totalPages" @click="page += 1"
-              >Next</ui-button
-            >
-          </div>
+          <ui-pagination
+            v-if="totalPages > 1"
+            v-model="page"
+            :total-items="orders.length"
+            :page-size="itemsPerPage"
+            :show-summary="false"
+          />
         </div>
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
@@ -73,6 +70,7 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -121,12 +119,6 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 </script>
 
 <style scoped>
-.head {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
 .list {
   display: grid;
   gap: 10px;
@@ -144,18 +136,5 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
   color: var(--brand-700);
   font-weight: 700;
   text-decoration: none;
-}
-.pagination {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-}
-@media (max-width: 760px) {
-  .head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 </style>

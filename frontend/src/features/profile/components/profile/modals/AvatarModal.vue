@@ -1,5 +1,11 @@
 <template>
-  <button class="avatar-edit-btn" type="button" @click="isOpen = true" :disabled="disabled">
+  <button
+    v-if="showTrigger"
+    class="avatar-edit-btn"
+    type="button"
+    @click="isOpen = true"
+    :disabled="disabled"
+  >
     <AvatarEditIcon />
   </button>
 
@@ -57,10 +63,14 @@ import {
 import type { User } from '@/api/.ts.schemas'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
 
-const props = defineProps<{
-  user?: User
-  disabled?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    user?: User
+    disabled?: boolean
+    showTrigger?: boolean
+  }>(),
+  { showTrigger: true },
+)
 
 const isOpen = ref(false)
 const selectedAvatar = ref<File | null>(null)
@@ -86,6 +96,12 @@ const { showNotification } = useNotification()
 const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useUpdateUserAvatar()
 const { mutate: removeAvatarRequest, isPending: isRemovingAvatar } = useDeleteUserAvatar()
 const isUpdating = computed(() => isUpdatingAvatar.value || isRemovingAvatar.value)
+
+const open = () => {
+  if (!props.disabled) isOpen.value = true
+}
+
+defineExpose({ open })
 
 const closeModal = () => {
   isOpen.value = false

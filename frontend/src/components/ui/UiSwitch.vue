@@ -32,8 +32,7 @@ const modelValue = defineModel<boolean>()
 }
 
 .visibility-switch[data-state='checked'] {
-  background: var(--brand-500);
-  border-color: var(--brand-500);
+  background: var(--primary);
 }
 
 .switch-knob {
@@ -49,6 +48,6 @@ const modelValue = defineModel<boolean>()
 .switch-knob[data-state='checked'] {
   transform: translateX(1.3rem);
   border-color: transparent;
-  background: #fff;
+  background: var(--primary-foreground);
 }
 </style>

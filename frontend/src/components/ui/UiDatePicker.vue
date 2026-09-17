@@ -91,16 +91,19 @@ function handleValueChange(value: DateValue | undefined) {
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: var(--input);
   border-radius: 8px;
-  background: transparent;
   color: inherit;
   font: inherit;
   cursor: text;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .datepicker-field:focus-within {
-  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .datepicker-field.invalid {

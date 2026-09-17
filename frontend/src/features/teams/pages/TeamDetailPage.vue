@@ -1,79 +1,114 @@
 <template>
   <section class="page-shell teams-detail-page">
-    <ui-card class="hero-card" :class="{ 'hero-card--with-banner': Boolean(team?.banner) }">
+    <header class="team-detail-hero">
+      <div class="team-detail-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Teams</span>
+          <span aria-hidden="true">/</span>
+          <span>Details</span>
+        </div>
+
+        <ui-skeleton-loader :loading="isInfoLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" height="48px" width="320px" />
+          </template>
+
+          <h1 :title="team?.name">
+            {{ truncateText(team?.name ?? 'Team details', 45) }}
+          </h1>
+        </ui-skeleton-loader>
+
+        <div class="hero-contacts">
+          <ui-skeleton-loader :loading="isInfoLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="120px" />
+            </template>
+            <a
+              v-if="team?.contact_telegram"
+              :href="telegramLink(team.contact_telegram)"
+              class="contact-pill"
+            >
+              <telegram-icon class="contact-icon" />
+              <ui-badge>@{{ team?.contact_telegram }}</ui-badge>
+            </a>
+            <span v-else class="contact-pill muted">No Telegram</span>
+          </ui-skeleton-loader>
+
+          <ui-skeleton-loader :loading="isInfoLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="120px" />
+            </template>
+            <a
+              v-if="team?.contact_discord"
+              class="contact-pill"
+              :href="discordLink(team.contact_discord)"
+            >
+              <discord-icon class="contact-icon" />
+              <ui-badge>{{ team.contact_discord }}</ui-badge>
+            </a>
+
+            <span v-else class="contact-pill muted">No Discord</span>
+          </ui-skeleton-loader>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <ui-skeleton-loader :loading="isInfoLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="148px" height="64px" />
+          </template>
+
+          <ui-card variant="stat" class="detail-stat-card">
+            <strong>{{ team?.members.length ?? 0 }}</strong>
+            <span>Members</span>
+          </ui-card>
+        </ui-skeleton-loader>
+
+        <ui-skeleton-loader :loading="isInfoLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="148px" height="64px" />
+          </template>
+
+          <ui-card variant="stat" class="detail-stat-card">
+            <span>Visibility:</span>
+            <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
+          </ui-card>
+        </ui-skeleton-loader>
+
+        <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
+      </div>
+    </header>
+
+    <div class="teams-rule" aria-hidden="true"></div>
+
+    <section
+      v-if="team?.banner || (isCaptain && !isInfoLoading)"
+      class="team-banner-panel"
+      :class="{ 'team-banner-panel--empty': !team?.banner }"
+    >
+      <div v-if="team?.banner" class="hero-banner" :style="heroBannerStyle" />
       <button
         v-if="isCaptain && !isInfoLoading"
-        class="banner-edit-btn"
+        class="banner-edit-overlay"
         type="button"
         @click="isBannerModalOpen = true"
-        aria-label="Edit team banner"
       >
         <avatar-edit-icon />
+        {{ team?.banner ? 'Edit banner' : 'Add banner' }}
       </button>
-      <div v-if="team?.banner" class="hero-banner" :style="heroBannerStyle" />
-      <div v-if="team?.banner" class="hero-overlay" />
+    </section>
 
+    <ui-card v-if="activeTournament" class="active-tournament-card">
       <template #header>
-        <div class="hero-top hero-content">
+        <div class="panel-header">
+          <span class="step-marker">Live</span>
           <div>
-            <p class="section-eyebrow">Team workspace</p>
-            <ui-skeleton-loader class="section-title" :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" height="30px" width="200px" />
-              </template>
-
-              <h1 class="section-title" :title="team?.name">
-                {{ truncateText(team?.name ?? 'Team details', 45) }}
-              </h1>
-            </ui-skeleton-loader>
-          </div>
-
-          <div class="hero-contacts">
-            <ui-skeleton-loader :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-              <a
-                v-if="team?.contact_telegram"
-                :href="telegramLink(team.contact_telegram)"
-                class="contact-pill"
-              >
-                <telegram-icon class="contact-icon" />
-
-                <ui-badge>@{{ team?.contact_telegram }}</ui-badge>
-              </a>
-              <span v-else class="contact-pill muted">No Telegram</span>
-            </ui-skeleton-loader>
-
-            <ui-skeleton-loader :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-              <a
-                v-if="team?.contact_discord"
-                class="contact-pill"
-                :href="discordLink(team.contact_discord)"
-              >
-                <discord-icon class="contact-icon" />
-                <ui-badge>{{ team.contact_discord }}</ui-badge>
-              </a>
-
-              <span v-else class="contact-pill muted">No Discord</span>
-            </ui-skeleton-loader>
+            <p class="section-eyebrow">Active tournament</p>
+            <h2>Tournament dashboard</h2>
           </div>
         </div>
-      </template>
-
-      <template #footer>
-        <div class="hero-actions hero-content">
-          <ui-button asLink variant="secondary" size="sm" to="/teams">Back to teams</ui-button>
-        </div>
-      </template>
-    </ui-card>
-
-    <ui-card v-if="activeTournament">
-      <template #header>
-        <p class="section-eyebrow">Active tournament</p>
       </template>
 
       <div class="active-tournament">
@@ -118,8 +153,16 @@
         @leave="router.push('/teams')"
       />
 
-      <ui-card class="panel">
-        <div style="display: flex; flex-direction: column; gap: 20px">
+      <ui-card class="panel members-panel">
+        <div class="members-workspace">
+          <div class="panel-header">
+            <span class="step-marker">02</span>
+            <div>
+              <h2>Members</h2>
+              <p class="text-muted">Search accepted members, requests, and invitations.</p>
+            </div>
+          </div>
+
           <ui-input
             v-model="searchInput"
             placeholder="Search by username or email"
@@ -394,41 +437,98 @@ watch(
 </script>
 
 <style scoped>
-.hero-card {
-  position: relative;
+.teams-detail-page {
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
+}
+
+.team-detail-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.team-detail-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.team-detail-hero h1 {
+  margin: 0;
+  max-width: 760px;
   overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-overflow: ellipsis;
 }
 
-.hero-content {
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.detail-stat-card {
+  display: flex;
+}
+
+.detail-stat-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl--line-height);
+  font-weight: 800;
+}
+
+.detail-stat-card span {
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.teams-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.team-banner-panel {
   position: relative;
-  z-index: 2;
+  min-height: 220px;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 20px;
+  background: var(--card);
 }
 
-.section-title {
-  color: var(--foreground);
-}
-
-.contact-pill {
-  color: var(--foreground);
-}
-
-.hero-card--with-banner :deep(.ui-card-body),
-.hero-card--with-banner :deep(.ui-card-header),
-.hero-card--with-banner :deep(.ui-card-footer) {
-  color: #fff;
-}
-
-.hero-card--with-banner .section-title,
-.hero-card--with-banner .contact-pill {
-  color: #fff;
-}
-
-.hero-card--with-banner .section-eyebrow {
-  color: #f8d7b6;
-}
-
-.hero-card--with-banner .contact-icon {
-  color: #fff;
+.team-banner-panel--empty {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 44%),
+    var(--card);
 }
 
 .hero-banner {
@@ -439,47 +539,30 @@ watch(
   z-index: 0;
 }
 
-.hero-overlay {
+.banner-edit-overlay {
   position: absolute;
-  inset: 0;
+  right: 1rem;
+  bottom: 1rem;
   z-index: 1;
-  background: linear-gradient(135deg, rgba(5, 11, 23, 0.8), rgba(5, 11, 23, 0.45));
-}
-
-.banner-edit-btn {
-  position: absolute;
-  bottom: 0.9rem;
-  right: 0.9rem;
-  z-index: 3;
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  background: var(--secondary);
-  color: var(--color-gray-700);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.45rem;
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  color: var(--foreground);
+  font-weight: 800;
   cursor: pointer;
-}
-
-.banner-edit-btn:hover {
-  border-color: var(--brand-500);
-  color: var(--brand-700);
-}
-
-.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  backdrop-filter: blur(12px);
 }
 
 .hero-contacts {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  justify-items: end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
 }
 
 .contact-icon {
@@ -492,18 +575,26 @@ watch(
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  color: var(--foreground);
+  text-decoration: none;
 }
 
-.hero-actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+.muted {
+  color: var(--muted-foreground);
+}
+
+.active-tournament-card.card {
+  gap: 1rem;
+  border-color: var(--line-soft);
+  border-radius: 18px;
 }
 
 .active-tournament {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .active-tournament-info {
@@ -511,14 +602,13 @@ watch(
   flex-direction: column;
   gap: 5px;
   flex: 1;
-  padding: 0 2rem;
-  border-left: 2px solid var(--border);
-  border-top: none;
-  border-bottom: none;
+  min-width: 0;
+  padding: 0.95rem 1.1rem;
+  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
 }
 
-.active-tournament-info:last-child {
-  border-right: 2px solid var(--border);
+.active-tournament-info:not(:last-child) {
+  border-right: 1px solid var(--line-soft);
 }
 
 .active-tournament-badge,
@@ -532,8 +622,15 @@ watch(
   gap: 1rem;
 }
 
-.panel {
+.panel.card {
   border: 1px solid var(--line-soft);
+  border-radius: 18px;
+}
+
+.members-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .banner-modal-body {
@@ -578,8 +675,23 @@ watch(
 }
 
 @media (max-width: 720px) {
-  .hero-contacts {
-    justify-items: start;
+  .teams-detail-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .team-detail-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .team-detail-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
   }
 
   .workspace-grid {
@@ -599,14 +711,15 @@ watch(
   .active-tournament {
     flex-direction: column;
     align-items: stretch;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
   }
 
   .active-tournament-info {
-    padding: 0.75rem 0;
-    border-left: none;
-    border-right: none !important;
-    border-top: none;
-    border-bottom: 2px solid var(--border);
+    padding: 0.85rem;
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
   }
 }
 </style>

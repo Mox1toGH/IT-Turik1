@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell callback-page">
-    <ui-card class="callback-card">
+    <section class="callback-card">
       <div v-if="isProcessing" class="callback-status">
         <div class="spinner"></div>
         <p>Connecting Google Calendar...</p>
@@ -16,14 +16,13 @@
         <p class="text-muted">{{ errorMessage }}</p>
         <ui-button variant="default" @click="goToCalendar">Back to Calendar</ui-button>
       </div>
-    </ui-card>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import CrossIcon from '@/icons/CrossIcon.vue'
@@ -106,6 +105,8 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

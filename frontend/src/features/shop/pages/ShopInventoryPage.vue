@@ -1,15 +1,14 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
+    <section class="inventory-section">
+      <header class="page-header">
+        <div>
           <div>
             <p class="section-eyebrow">Profile</p>
             <h1 class="section-title">Digital Inventory</h1>
           </div>
-          <ui-button as-link to="/profile" variant="secondary">Back to Profile</ui-button>
         </div>
-      </template>
+      </header>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
@@ -60,7 +59,7 @@
           </ui-card>
         </div>
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
@@ -109,12 +108,6 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 </script>
 
 <style scoped>
-.head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
 .grid {
   display: grid;
   gap: 10px;

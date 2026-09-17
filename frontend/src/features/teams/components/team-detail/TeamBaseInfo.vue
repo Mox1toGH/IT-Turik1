@@ -7,19 +7,18 @@
     </template>
 
     <template #header>
-      <div class="panel-head">
-        <h2>Team Info</h2>
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="150px" />
-          </template>
-        </ui-skeleton-loader>
+      <div class="panel-header">
+        <span class="step-marker">01</span>
+        <div>
+          <h2>Team info</h2>
+          <p class="text-muted">Core identity, ownership, and directory status.</p>
+        </div>
       </div>
     </template>
 
     <div>
       <div class="info-grid">
-        <ui-card title="Name" class="info-item">
+        <ui-card title="Name" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Name</span>
           </template>
@@ -35,7 +34,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Email" class="info-item">
+        <ui-card title="Email" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Email</span>
           </template>
@@ -49,7 +48,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Organization" class="info-item">
+        <ui-card title="Organization" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Organization</span>
           </template>
@@ -63,7 +62,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Captain" class="info-item">
+        <ui-card title="Captain" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Captain</span>
           </template>
@@ -82,7 +81,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Members count" class="info-item">
+        <ui-card title="Members count" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Members count</span>
           </template>
@@ -96,7 +95,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Visibility" class="info-item">
+        <ui-card title="Visibility" variant="inset" class="info-item">
           <template #header>
             <span class="card-label">Visibility</span>
           </template>
@@ -212,11 +211,40 @@ const leaveTeam = () => {
 </script>
 
 <style scoped>
-.panel-head {
+.panel-header {
   display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.panel-header h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+  font-weight: 800;
+}
+
+.panel-header p {
+  margin: 0;
+}
+
+.step-marker {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--brand-700);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .info-grid {
@@ -227,10 +255,7 @@ const leaveTeam = () => {
 .info-item {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
   gap: 0.3rem;
-  background: var(--muted);
 }
 
 .info-item span {

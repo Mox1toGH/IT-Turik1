@@ -91,15 +91,18 @@ function handleTimeChange(value: TimeLike | undefined) {
   padding: 0.5rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   border-radius: 8px;
-  background: transparent;
+  background: var(--input);
   color: inherit;
   font: inherit;
   cursor: text;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .time-field:focus-within {
-  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .time-field.invalid {

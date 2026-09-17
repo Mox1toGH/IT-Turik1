@@ -304,7 +304,8 @@ const submitPointsUpdate = async () => {
 
 .meta {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
 }
 
 .details {
@@ -328,7 +329,8 @@ const submitPointsUpdate = async () => {
 
 .item-label {
   color: var(--color-gray-500);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -443,7 +445,8 @@ const submitPointsUpdate = async () => {
 }
 
 .field-label {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   color: var(--color-gray-500);
   font-weight: 600;
 }

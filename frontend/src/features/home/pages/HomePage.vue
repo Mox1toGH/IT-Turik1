@@ -1,11 +1,16 @@
 <template>
   <section class="page-shell home-page">
-    <ui-card class="hero">
-      <div>
-        <p class="eyebrow">Dashboard</p>
+    <header class="home-hero">
+      <div class="hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Home</span>
+        </div>
+
         <h1>
           Welcome back,
-          <ui-skeleton-loader :loading="isLoading" style="display: inline-block">
+          <ui-skeleton-loader :loading="isLoading" class="name-loader">
             <template #skeleton>
               <ui-skeleton variant="rect" width="160px" />
             </template>
@@ -14,30 +19,48 @@
           </ui-skeleton-loader>
         </h1>
 
-        <p class="sub">Manage your profile and stay ready for upcoming competitions.</p>
+        <p class="section-subtitle">
+          Manage your profile, track competition readiness, and jump back into the work that
+          matters.
+        </p>
       </div>
-    </ui-card>
+
+      <div class="hero-actions">
+        <ui-card v-for="item in heroStats" :key="item.label" variant="stat" class="hero-stat">
+          <span class="text-base">{{ item.label }}:</span>
+          <strong class="text-base">{{ item.value }}</strong>
+        </ui-card>
+      </div>
+    </header>
+
+    <div class="home-rule" aria-hidden="true"></div>
 
     <StatsPreview :user="user" />
 
-    <div class="grid">
-      <ui-card v-if="isTeamRole" class="info-card">
+    <section class="dashboard-grid" aria-label="Account overview">
+      <ui-card v-if="isTeamRole" class="info-card quick-card" variant="form">
         <template #header>
-          <h2>Швидкий доступ</h2>
+          <div class="panel-header">
+            <span class="step-marker">01</span>
+            <div>
+              <h2>Quick access</h2>
+              <p class="text-muted">Current tournament links for your team.</p>
+            </div>
+          </div>
         </template>
 
-        <ui-skeleton-loader :loading="isQuickBlockLoading" min-height="120px">
+        <ui-skeleton-loader class="panel-body" :loading="isQuickBlockLoading" min-height="120px">
           <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 10px">
+            <div class="skeleton-stack">
               <ui-skeleton variant="rect" width="50%" />
               <ui-skeleton variant="rect" width="60%" />
               <ui-skeleton variant="rect" width="45%" />
             </div>
           </template>
 
-          <ul class="account-data">
+          <ul class="data-list">
             <li>
-              Ваш турнір:
+              <span>Tournament</span>
               <RouterLink
                 v-if="activeTournament"
                 class="quick-link"
@@ -48,7 +71,7 @@
               <span v-else>-</span>
             </li>
             <li>
-              Ваше завдання:
+              <span>Current task</span>
               <RouterLink
                 v-if="activeTournament && currentRound?.name"
                 class="quick-link"
@@ -59,7 +82,7 @@
               <span v-else>{{ currentRound?.name ?? '-' }}</span>
             </li>
             <li>
-              Ваш сабміт:
+              <span>Latest submission</span>
               <RouterLink
                 v-if="activeTournament && lastSubmission?.round_details?.name"
                 class="quick-link"
@@ -73,29 +96,26 @@
         </ui-skeleton-loader>
       </ui-card>
 
-      <ui-card class="info-card" :is-error="isLoadingError">
+      <ui-card class="info-card" variant="form" :is-error="isLoadingError">
         <template #error>
-          <div
-            style="
-              width: 100%;
-              height: 100%;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 126px;
-            "
-          >
+          <div class="empty-state">
             <p>Failed to fetch account info (code: {{ profileError?.code }})</p>
           </div>
         </template>
 
         <template #header>
-          <h2>Account details</h2>
+          <div class="panel-header">
+            <span class="step-marker">02</span>
+            <div>
+              <h2>Account details</h2>
+              <p class="text-muted">Profile identity and team membership.</p>
+            </div>
+          </div>
         </template>
 
-        <ui-skeleton-loader :loading="isLoading">
+        <ui-skeleton-loader class="panel-body" :loading="isLoading">
           <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 10px">
+            <div class="skeleton-stack">
               <ui-skeleton variant="rect" width="55%" />
               <ui-skeleton variant="rect" width="65%" />
               <ui-skeleton variant="rect" width="35%" />
@@ -103,57 +123,51 @@
             </div>
           </template>
 
-          <div class="account-data">
-            <p><strong>Username:</strong> {{ user?.username ?? '-' }}</p>
-            <p><strong>Email:</strong> {{ user?.email ?? '-' }}</p>
-            <p><strong>Role:</strong> {{ user?.role ?? '-' }}</p>
-            <p v-if="teamNames"><strong>Teams:</strong> {{ teamNames }}</p>
-          </div>
+          <dl class="detail-list">
+            <div v-for="item in accountDetails" :key="item.label">
+              <dt>{{ item.label }}</dt>
+              <dd>{{ item.value }}</dd>
+            </div>
+          </dl>
         </ui-skeleton-loader>
       </ui-card>
 
-      <ui-card class="info-card" :is-error="isLoadingError">
+      <ui-card class="info-card" variant="form" :is-error="isLoadingError">
         <template #error>
-          <div
-            style="
-              width: 100%;
-              height: 100%;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            "
-          >
+          <div class="empty-state">
             <p>Failed to fetch profile status (code: {{ profileError?.code }})</p>
           </div>
         </template>
 
         <template #header>
-          <h2>Quick status</h2>
+          <div class="panel-header">
+            <span class="step-marker">03</span>
+            <div>
+              <h2>Quick status</h2>
+              <p class="text-muted">Readiness checks for your account.</p>
+            </div>
+          </div>
         </template>
 
-        <ui-skeleton-loader :loading="isLoading" min-height="90px">
+        <ui-skeleton-loader class="panel-body" :loading="isLoading" min-height="90px">
           <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 10px">
+            <div class="skeleton-stack">
               <ui-skeleton variant="rect" width="45%" />
               <ui-skeleton variant="rect" width="38%" />
               <ui-skeleton variant="rect" width="42%" />
             </div>
           </template>
 
-          <ul class="account-data">
-            <li>
-              Profile ready: <span>{{ profileReady ? 'Yes' : 'No' }}</span>
-            </li>
-            <li>
-              City set: <span>{{ user?.city ? 'Yes' : 'No' }}</span>
-            </li>
-            <li>
-              Phone set: <span>{{ user?.phone ? 'Yes' : 'No' }}</span>
+          <ul class="status-list">
+            <li v-for="item in statusItems" :key="item.label">
+              <span class="status-dot" :class="{ ready: item.ready }" aria-hidden="true"></span>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.ready ? 'Ready' : 'Missing' }}</strong>
             </li>
           </ul>
         </ui-skeleton-loader>
       </ui-card>
-    </div>
+    </section>
   </section>
 </template>
 
@@ -177,6 +191,21 @@ const profileReady = computed(() => Boolean(user.value?.full_name && user.value?
 const teamNames = computed(() => (user.value?.teams || []).map((team) => team.name).join(', '))
 const isTeamRole = computed(() => user.value?.role === 'team')
 const myTeamIds = computed(() => new Set((user.value?.teams ?? []).map((team) => team.id)))
+const accountDetails = computed(() => [
+  { label: 'Username', value: user.value?.username ?? '-' },
+  { label: 'Email', value: user.value?.email ?? '-' },
+  { label: 'Role', value: user.value?.role ?? '-' },
+  { label: 'Teams', value: teamNames.value || '-' },
+])
+const statusItems = computed(() => [
+  { label: 'Profile ready', ready: profileReady.value },
+  { label: 'City set', ready: Boolean(user.value?.city) },
+  { label: 'Phone set', ready: Boolean(user.value?.phone) },
+])
+const heroStats = computed(() => [
+  { label: 'Role', value: user.value?.role ?? '-' },
+  { label: 'Teams', value: String(user.value?.teams?.length ?? 0) },
+])
 
 const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useListTournaments(
   computed(() => ({
@@ -243,105 +272,263 @@ const isQuickBlockLoading = computed(
 <style scoped>
 .home-page {
   display: grid;
-  gap: 1rem;
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
 }
 
-.hero {
-  padding: 1.4rem;
-  background:
-    linear-gradient(130deg, rgba(15, 118, 110, 0.95), rgba(20, 184, 166, 0.88)),
-    linear-gradient(45deg, rgba(249, 115, 22, 0.2), transparent);
-  color: white;
-  border: none;
+.home-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
 }
 
-.eyebrow {
-  margin: 0;
-  letter-spacing: 0.08em;
+.hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-size: 0.75rem;
-  opacity: 0.85;
 }
 
-h1 {
-  margin: 0.45rem 0 0;
+.home-hero h1 {
+  margin: 0;
+  max-width: 800px;
+  color: var(--foreground);
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 1.3vw + 1rem, 2rem);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-weight: 800;
 }
 
-.sub {
-  margin: 0.5rem 0 0;
-  opacity: 0.92;
+.name-loader {
+  display: inline-block;
+}
+
+.home-hero .section-subtitle {
+  max-width: 760px;
+  margin: 0.45rem 0 0;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
 }
 
 .hero-actions {
   display: flex;
-  gap: 0.55rem;
+  gap: 1rem;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
 }
 
-.grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.account-data {
+.hero-stat {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
 }
 
-.info-card h2 {
-  margin-top: 0;
+.hero-stat strong {
+  color: var(--foreground);
   font-family: var(--font-display);
+  font-weight: 800;
 }
 
-.info-card p,
-li {
+.hero-stat span {
   color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-ul {
-  padding: 0;
-  list-style: none;
+.home-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.dashboard-grid {
   display: grid;
-  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
 }
 
-li {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px dashed var(--line-soft);
-  padding-bottom: 0.35rem;
+.quick-card {
+  grid-column: span 1;
 }
 
-li span {
+.panel-header {
+  min-width: 0;
+}
+
+.panel-body {
+  display: block;
+}
+
+.panel-body :deep(> div) {
+  min-width: 0;
+}
+
+.skeleton-stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+:deep(.data-list),
+:deep(.status-list),
+:deep(.detail-list) {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+:deep(.data-list li),
+:deep(.detail-list div),
+:deep(.status-list li) {
+  display: grid;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+}
+
+:deep(.data-list li),
+:deep(.detail-list div) {
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+}
+
+:deep(.data-list span),
+:deep(.detail-list dt) {
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   font-weight: 700;
 }
-.quick-link {
+
+:deep(.data-list li > :last-child),
+:deep(.detail-list dd) {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:deep(.status-list li) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+:deep(.status-list span:not(.status-dot)) {
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   font-weight: 700;
+}
+
+:deep(.status-list strong) {
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+}
+
+:deep(.status-dot) {
+  width: 0.7rem;
+  height: 0.7rem;
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--warning);
+}
+
+:deep(.status-dot.ready) {
+  background: var(--primary);
+}
+
+:deep(.quick-link) {
   color: var(--accent-strong);
+  font-weight: 800;
   text-decoration: none;
 }
 
-.quick-link:hover {
+:deep(.quick-link:hover) {
   text-decoration: underline;
 }
 
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 126px;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 980px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-card {
+    grid-column: auto;
+  }
+}
+
 @media (max-width: 760px) {
-  .hero {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .home-hero {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .home-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .home-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
   }
 
   .hero-actions {
     justify-content: flex-start;
   }
 
-  .grid {
+  :deep(.data-list li),
+  :deep(.detail-list div) {
     grid-template-columns: 1fr;
+  }
+
+  :deep(.data-list li > :last-child),
+  :deep(.detail-list dd) {
+    text-align: left;
   }
 }
 </style>

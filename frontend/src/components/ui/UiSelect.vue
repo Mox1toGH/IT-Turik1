@@ -170,15 +170,18 @@ const selectedLabel = computed(() => {
   border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
   border-radius: 8px;
   font: inherit;
-  font-size: 0.875rem;
-  background: transparent;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  background: var(--secondary);
   color: inherit;
   outline: none;
   transition: border-color 0.15s ease;
 }
 
 :deep(.select-search:focus) {
-  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+  border-color: color-mix(in srgb, var(--secondary) 80%, white);
 }
 
 :deep(.select-search:disabled) {
@@ -206,6 +209,8 @@ const selectedLabel = computed(() => {
   border-radius: 8px;
   cursor: pointer;
   font: inherit;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   color: inherit;
   transition: background 0.1s ease;
 }
@@ -229,7 +234,8 @@ const selectedLabel = computed(() => {
 :deep(.select-empty) {
   padding: 0.75rem;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   color: var(--muted-foreground);
 }
 

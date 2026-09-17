@@ -1,7 +1,5 @@
 <template>
   <div id="app" class="app-shell">
-    <div class="bg-orb orb-a"></div>
-    <div class="bg-orb orb-b"></div>
     <VueQueryDevtools />
 
     <app-navbar />
@@ -90,30 +88,6 @@ applyTheme()
   min-height: 100vh;
   overflow-x: hidden;
   padding-top: var(--nav-offset);
-}
-
-.bg-orb {
-  position: fixed;
-  border-radius: 999px;
-  filter: blur(40px);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.orb-a {
-  width: 320px;
-  height: 320px;
-  left: -90px;
-  top: 80px;
-  background: rgba(20, 184, 166, 0.18);
-}
-
-.orb-b {
-  width: 260px;
-  height: 260px;
-  right: -70px;
-  top: 220px;
-  background: rgba(249, 115, 22, 0.18);
 }
 
 .page-content {

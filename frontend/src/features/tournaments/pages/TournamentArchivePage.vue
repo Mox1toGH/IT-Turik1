@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
+    <section class="archive-section">
+      <header class="page-header">
         <div class="archive-header">
           <div class="title-row">
             <h1 class="archive-title">Tournament Archive</h1>
@@ -12,7 +12,7 @@
             >
           </div>
         </div>
-      </template>
+      </header>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
@@ -61,9 +61,7 @@
                   <p>Finished:</p>
                   <p>{{ formatDate(item.end_date) }}</p>
                 </div>
-                <p class="archive-count">
-                  {{ item.standings.length }} standings
-                </p>
+                <p class="archive-count">{{ item.standings.length }} standings</p>
               </div>
             </div>
             <template #footer>
@@ -84,7 +82,7 @@
           <p class="empty-error">No finished tournaments yet.</p>
         </ui-card>
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 

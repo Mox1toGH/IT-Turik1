@@ -64,7 +64,8 @@ onMounted(async () => {
 }
 
 .notice {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.45rem;
 }
 

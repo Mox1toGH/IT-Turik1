@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell calendar-page">
-    <ui-card class="calendar-hero">
+    <section class="calendar-hero">
       <div>
         <p class="eyebrow">Schedule</p>
         <h1>Calendar</h1>
@@ -34,16 +34,14 @@
           </ui-button>
         </template>
       </div>
-    </ui-card>
+    </section>
 
-    <ui-card>
-      <template #error>
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
-        </div>
-      </template>
+    <section class="calendar-content">
+      <div v-if="isError" class="calendar-error">
+        <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
+      </div>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-skeleton-loader v-else :loading="isLoading">
         <template #skeleton>
           <div class="calendar-skeleton">
             <div class="skeleton-nav">
@@ -57,11 +55,7 @@
           </div>
         </template>
 
-        <div v-if="isError" class="calendar-error">
-          <p>Error while fetching calendar data</p>
-        </div>
-
-        <div v-else-if="!hasItems" class="calendar-empty">
+        <div v-if="!hasItems" class="calendar-empty">
           <calendar-icon class="empty-icon" />
           <p>No upcoming events or deadlines</p>
           <p class="text-muted">Join a tournament to see its schedule here</p>
@@ -76,12 +70,11 @@
           @export-round="exportRound"
         />
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'

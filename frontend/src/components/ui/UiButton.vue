@@ -52,18 +52,18 @@ const sizeClass = computed(() => sizes[props.size])
 
 <style scoped>
 .btn-sm {
-  padding: 0.45rem 0.7rem;
-  font-size: 0.85rem !important;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem !important;
 }
 
 .btn-md {
-  padding: 0.7rem 1rem;
-  font-size: 1rem !important;
+  padding: 0.48rem 0.8rem;
+  font-size: 0.84rem !important;
 }
 
 .btn-lg {
-  padding: 0.9rem 1.35rem;
-  font-size: 1.1rem !important;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem !important;
 }
 
 .btn {
@@ -72,10 +72,10 @@ const sizeClass = computed(() => sizes[props.size])
   align-items: center;
   justify-content: center;
   border: 0;
-  gap: 0.4rem;
+  gap: 0.35rem;
   font: inherit;
-  font-weight: 700;
-  border-radius: var(--radius);
+  font-weight: 600;
+  border-radius: 8px;
   background: var(--secondary);
   color: var(--secondary-foreground);
   cursor: pointer;
@@ -89,7 +89,7 @@ const sizeClass = computed(() => sizes[props.size])
 }
 
 .btn:focus {
-  box-shadow: 0 0 0 3px var(--ring);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .btn:disabled {
@@ -120,20 +120,20 @@ const sizeClass = computed(() => sizes[props.size])
 
 .ghost-btn {
   border: 1px solid;
-  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  background: transparent;
   color: var(--foreground);
-  border-color: var(--primary);
+  border-color: var(--border);
 }
 
 .ghost-btn:hover {
-  background: color-mix(in oklab, var(--primary) 20%, transparent);
+  background: var(--secondary);
 }
 
 .danger-btn {
   border: 1px solid;
   background: color-mix(in oklab, var(--destructive) 10%, transparent);
   color: var(--destructive);
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .danger-btn:focus {
