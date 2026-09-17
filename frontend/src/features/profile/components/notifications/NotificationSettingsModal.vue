@@ -1,3 +1,6 @@
+<!-- TODO: hrere i use boolean to remove undefined from component @update:modelValue.
+Somehow neeed to figure out it in different way cuz we don't have undefined at all for example in switch component -->
+
 <template>
   <ui-modal :modelValue="isOpen" scrollable @update:modelValue="$emit('update:isOpen', $event)">
     <template #title>
@@ -39,7 +42,9 @@
                 <span class="toggle-text">System</span>
                 <ui-switch
                   :modelValue="config.is_system_enabled"
-                  @update:modelValue="(val) => handleEventToggle(config.event_type, 'system', val)"
+                  @update:modelValue="
+                    (val) => handleEventToggle(config.event_type, 'system', Boolean(val))
+                  "
                   :disabled="isUpdatingEvent"
                 />
               </label>
@@ -47,7 +52,9 @@
                 <span class="toggle-text">Email</span>
                 <ui-switch
                   :modelValue="config.is_email_enabled"
-                  @update:modelValue="(val) => handleEventToggle(config.event_type, 'email', val)"
+                  @update:modelValue="
+                    (val) => handleEventToggle(config.event_type, 'email', Boolean(val))
+                  "
                   :disabled="isUpdatingEvent"
                 />
               </label>
@@ -91,9 +98,9 @@ const getEventTitle = (key: string) => {
   return event ? event.title : key
 }
 
-const handleGlobalToggle = (val: boolean) => {
+const handleGlobalToggle = (val: boolean | undefined) => {
   updateGlobal(
-    { data: { emails_disabled_globally: val } },
+    { data: { emails_disabled_globally: Boolean(val) } },
     {
       onSuccess: () => {
         showNotification('Global email settings updated', 'success')

@@ -198,7 +198,7 @@
         <div v-else class="banner-empty">No banner</div>
 
         <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
-        <input type="file" accept="image/*" @change="onBannerChange" />
+        <ui-file-drop v-model="selectedBanner" accept="image/*" />
       </div>
 
       <template #footer>
@@ -251,6 +251,7 @@ import {
   useGetTournament,
   useUpdateTournamentBanner,
 } from '@/api/tournaments/tournaments'
+import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 
 type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
 
@@ -262,7 +263,7 @@ const { data: user } = useGetUserProfile()
 const { data: tournament } = useGetTournament(id)
 const { showNotification } = useNotification()
 const isBannerModalOpen = ref(false)
-const selectedBanner = ref<File | null>(null)
+const selectedBanner = ref<File[]>([])
 const selectedBannerUrl = ref('')
 const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
@@ -311,7 +312,7 @@ const closeBannerModal = () => {
 }
 
 const resetBannerState = () => {
-  selectedBanner.value = null
+  selectedBanner.value = []
   const saved = readImagePosition(bannerPositionKey.value)
   bannerPositionX.value = saved.x
   bannerPositionY.value = saved.y
@@ -322,11 +323,6 @@ const resetBannerState = () => {
   closeBannerModal()
 }
 
-const onBannerChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedBanner.value = target.files?.[0] || null
-}
-
 const saveBanner = () => {
   if (!selectedBanner.value) return
   writeImagePosition(bannerPositionKey.value, {
@@ -334,7 +330,7 @@ const saveBanner = () => {
     y: bannerPositionY.value,
   })
   updateBanner(
-    { id, data: { banner: selectedBanner.value } },
+    { id, data: { banner: selectedBanner.value[0] } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
@@ -394,13 +390,15 @@ const onBannerPreviewPointerDown = (event: PointerEvent) => {
   target.addEventListener('pointercancel', handleUp)
 }
 
-watch(selectedBanner, (file) => {
+watch(selectedBanner, (files) => {
+  const firstFile = files[0]
+
   if (selectedBannerUrl.value) {
     URL.revokeObjectURL(selectedBannerUrl.value)
     selectedBannerUrl.value = ''
   }
-  if (file) {
-    selectedBannerUrl.value = URL.createObjectURL(file)
+  if (firstFile) {
+    selectedBannerUrl.value = URL.createObjectURL(firstFile)
   }
 })
 

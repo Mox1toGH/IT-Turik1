@@ -98,6 +98,7 @@ import UiPagination from '@/components/ui/UiPagination.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 import type { CertificateTemplate } from '@/api/.ts.schemas'
+import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 
 const props = defineProps<{
   templateForm: { name: string; file: File | null; is_default: boolean }

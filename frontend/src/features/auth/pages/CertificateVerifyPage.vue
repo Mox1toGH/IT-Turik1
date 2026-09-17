@@ -1,58 +1,77 @@
 <template>
   <main class="verify-page">
-    <section class="verify-card">
-      <div class="title-row">
-        <h1>Certificate Verification</h1>
-        <ui-button variant="secondary" @click="goBack">Back</ui-button>
-      </div>
-      <p class="muted">Enter code from certificate or open this page from QR code.</p>
-
-      <form class="verify-form" @submit.prevent="submit">
-        <div class="input-wrap">
-          <ui-input v-model="codeInput" placeholder="Paste verification code" required />
-        </div>
-        <ui-button class="verify-btn" type="submit">Verify</ui-button>
-      </form>
-
-      <div v-if="isLoading" class="result result-loading">Checking...</div>
-
-      <div
-        v-else-if="result"
-        class="result"
-        :class="isValidResult ? 'result-valid' : 'result-invalid'"
-      >
-        <div class="result-head">
-          <p class="result-title">Verification result</p>
-          <span class="status-badge" :class="isValidResult ? 'status-valid' : 'status-invalid'">
-            {{ isValidResult ? 'Valid' : 'Invalid' }}
-          </span>
-        </div>
-
-        <template v-if="certificateData">
-          <div class="result-grid">
-            <p>
-              <span class="label">Name</span><strong>{{ certificateData.full_name || '-' }}</strong>
-            </p>
-            <p>
-              <span class="label">Team</span><strong>{{ certificateData.team_name || '-' }}</strong>
-            </p>
-            <p>
-              <span class="label">Tournament</span
-              ><strong>{{ certificateData.tournament_name || '-' }}</strong>
-            </p>
-            <p>
-              <span class="label">Certificate number</span
-              ><strong>{{ certificateData.certificate_number || '-' }}</strong>
-            </p>
-            <p>
-              <span class="label">Placement</span
-              ><strong>{{ certificateData.placement || '-' }}</strong>
-            </p>
+    <section class="verify-shell page-shell">
+      <header class="verify-hero">
+        <div class="verify-hero-copy">
+          <div class="breadcrumb-label">
+            <span>Certificates</span>
+            <span aria-hidden="true">/</span>
+            <span>Verify</span>
           </div>
-        </template>
 
-        <p v-if="result.message" class="result-message">{{ result.message }}</p>
-      </div>
+          <h1 class="text-6xl">Certificate Verification</h1>
+          <p class="section-subtitle text-xl">
+            Enter the code from a certificate, or open this page from its QR code.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <ui-button variant="secondary" size="lg" @click="goBack">Back</ui-button>
+        </div>
+      </header>
+
+      <div class="verify-rule" aria-hidden="true"></div>
+
+      <ui-card class="verify-card">
+        <form class="verify-form" @submit.prevent="submit">
+          <div class="input-wrap">
+            <ui-input v-model="codeInput" placeholder="Paste verification code" required />
+          </div>
+          <ui-button class="verify-btn" type="submit" size="lg">Verify</ui-button>
+        </form>
+
+        <div v-if="isLoading" class="result result-loading">Checking...</div>
+
+        <div
+          v-else-if="result"
+          class="result"
+          :class="isValidResult ? 'result-valid' : 'result-invalid'"
+        >
+          <div class="result-head">
+            <p class="result-title">Verification result</p>
+            <ui-badge :variant="isValidResult ? 'green' : 'red'">
+              {{ isValidResult ? 'Valid' : 'Invalid' }}
+            </ui-badge>
+          </div>
+
+          <template v-if="certificateData">
+            <div class="result-grid">
+              <p>
+                <span class="label">Name</span
+                ><strong>{{ certificateData.full_name || '-' }}</strong>
+              </p>
+              <p>
+                <span class="label">Team</span
+                ><strong>{{ certificateData.team_name || '-' }}</strong>
+              </p>
+              <p>
+                <span class="label">Tournament</span
+                ><strong>{{ certificateData.tournament_name || '-' }}</strong>
+              </p>
+              <p>
+                <span class="label">Certificate number</span
+                ><strong>{{ certificateData.certificate_number || '-' }}</strong>
+              </p>
+              <p>
+                <span class="label">Placement</span
+                ><strong>{{ certificateData.placement || '-' }}</strong>
+              </p>
+            </div>
+          </template>
+
+          <p v-if="result.message" class="result-message">{{ result.message }}</p>
+        </div>
+      </ui-card>
     </section>
   </main>
 </template>
@@ -62,6 +81,8 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard.vue'
+import UiBadge from '@/components/ui/UiBadge.vue'
 import {
   verifyCertificate,
   type VerifyCertificateQueryResult,
@@ -141,23 +162,76 @@ async function verify() {
   box-sizing: border-box;
 }
 
-.verify-card {
+.verify-shell {
   width: 100%;
-  max-width: 680px;
+  max-width: 760px;
+  gap: 1.4rem;
 }
 
-.title-row {
+.verify-hero {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.verify-hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.verify-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.verify-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 620px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  color: var(--muted-foreground);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.verify-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.verify-card {
+  padding: 1.4rem;
 }
 
 .verify-form {
   display: flex;
   gap: 10px;
-  margin: 16px 0;
+  margin-bottom: 16px;
   width: 100%;
 }
 
@@ -180,12 +254,12 @@ async function verify() {
   border-radius: 14px;
   padding: 14px;
   margin-top: 12px;
-  border: 1px solid #dbe3ee;
-  background: #f8fafc;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
 }
 
 .result-loading {
-  color: #475569;
+  color: var(--muted-foreground);
   font-weight: 600;
 }
 
@@ -199,28 +273,11 @@ async function verify() {
 
 .result-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #334155;
+  color: var(--muted-foreground);
   font-weight: 700;
-}
-
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.status-valid {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.status-invalid {
-  background: #fee2e2;
-  color: #991b1b;
 }
 
 .result-grid {
@@ -233,8 +290,8 @@ async function verify() {
   margin: 0;
   padding: 10px;
   border-radius: 10px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--background);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -242,34 +299,50 @@ async function verify() {
 
 .label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--muted-foreground);
 }
 
 .result-message {
   margin: 10px 0 0;
-  color: #475569;
+  color: var(--muted-foreground);
 }
 
 .result-valid {
-  border-color: #86efac;
+  border-color: color-mix(in srgb, var(--success, #22c55e) 45%, var(--border));
 }
 
 .result-invalid {
-  border-color: #fca5a5;
-}
-
-.muted {
-  opacity: 0.75;
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 45%, var(--border));
 }
 
 @media (max-width: 760px) {
-  .verify-form {
-    flex-direction: column;
+  .verify-page {
+    padding: 16px;
+    padding-top: 64px;
   }
 
-  .title-row {
+  .verify-hero {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .verify-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .verify-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .verify-form {
+    flex-direction: column;
   }
 
   .verify-btn {

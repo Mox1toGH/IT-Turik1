@@ -115,7 +115,7 @@
       <div class="info-actions">
         <ui-button
           v-if="props.team?.can_request_to_join && user?.role === 'team'"
-          size="sm"
+          size="md"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
         >
@@ -123,7 +123,13 @@
           {{ joinRequestLoading ? 'Sending...' : 'Request to join this team' }}
         </ui-button>
 
-        <ui-button v-if="canLeaveTeam" variant="danger" size="sm" @click="leaveTeam">
+        <ui-button
+          v-if="canLeaveTeam"
+          class="leave-team"
+          variant="danger"
+          size="md"
+          @click="leaveTeam"
+        >
           Leave team
         </ui-button>
       </div>
@@ -273,6 +279,10 @@ const leaveTeam = () => {
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+}
+
+.info-actions .leave-team {
+  width: 100%;
 }
 
 .modal-text {

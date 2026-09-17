@@ -61,8 +61,8 @@
           </template>
 
           <ui-card variant="stat" class="detail-stat-card">
-            <strong>{{ team?.members.length ?? 0 }}</strong>
-            <span>Members</span>
+            <strong class="text-2xl">{{ team?.members.length ?? 0 }}</strong>
+            <span class="text-sm">Members</span>
           </ui-card>
         </ui-skeleton-loader>
 
@@ -72,8 +72,8 @@
           </template>
 
           <ui-card variant="stat" class="detail-stat-card">
-            <span>Visibility:</span>
-            <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
+            <span class="text-sm">Visibility:</span>
+            <strong class="text-2xl">{{ team?.is_public ? 'Public' : 'Private' }}</strong>
           </ui-card>
         </ui-skeleton-loader>
 
@@ -224,7 +224,7 @@
         <div v-else class="banner-empty">No banner</div>
 
         <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
-        <input type="file" accept="image/*" @change="onBannerChange" />
+        <ui-file-drop v-model="selectedBanner" accept="image/*" />
       </div>
 
       <template #footer>
@@ -278,6 +278,7 @@ import {
 import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
+import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -300,7 +301,7 @@ const { data: activeTournament } = useGetTeamActiveTournament(
 
 const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
 const isBannerModalOpen = ref(false)
-const selectedBanner = ref<File | null>(null)
+const selectedBanner = ref<File[]>([])
 const selectedBannerUrl = ref('')
 const bannerPositionX = ref(50)
 const bannerPositionY = ref(50)
@@ -332,7 +333,7 @@ const closeBannerModal = () => {
 }
 
 const resetBannerState = () => {
-  selectedBanner.value = null
+  selectedBanner.value = []
   const saved = readImagePosition(bannerPositionKey.value)
   bannerPositionX.value = saved.x
   bannerPositionY.value = saved.y
@@ -343,11 +344,6 @@ const resetBannerState = () => {
   closeBannerModal()
 }
 
-const onBannerChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedBanner.value = target.files?.[0] || null
-}
-
 const saveBanner = () => {
   if (!selectedBanner.value) return
   writeImagePosition(bannerPositionKey.value, {
@@ -355,7 +351,7 @@ const saveBanner = () => {
     y: bannerPositionY.value,
   })
   updateBanner(
-    { id: teamId, data: { banner: selectedBanner.value } },
+    { id: teamId, data: { banner: selectedBanner.value[0] } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
@@ -415,13 +411,15 @@ const onBannerPreviewPointerDown = (event: PointerEvent) => {
   target.addEventListener('pointercancel', handleUp)
 }
 
-watch(selectedBanner, (file) => {
+watch(selectedBanner, (files) => {
+  const firstFile = files[0]
+
   if (selectedBannerUrl.value) {
     URL.revokeObjectURL(selectedBannerUrl.value)
     selectedBannerUrl.value = ''
   }
-  if (file) {
-    selectedBannerUrl.value = URL.createObjectURL(file)
+  if (firstFile) {
+    selectedBannerUrl.value = URL.createObjectURL(firstFile)
   }
 })
 
@@ -486,22 +484,14 @@ watch(
   align-items: center;
 }
 
-.detail-stat-card {
-  display: flex;
-}
-
 .detail-stat-card strong {
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  line-height: var(--text-2xl--line-height);
   font-weight: 800;
 }
 
 .detail-stat-card span {
   color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -592,7 +582,6 @@ watch(
 .active-tournament {
   display: flex;
   align-items: center;
-  border: 1px solid var(--line-soft);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -602,7 +591,7 @@ watch(
   flex-direction: column;
   gap: 5px;
   flex: 1;
-  min-width: 0;
+  height: 100%;
   padding: 0.95rem 1.1rem;
   background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
 }

@@ -97,7 +97,7 @@
     <ui-pagination
       v-if="otherPages > 1"
       v-model="otherPage"
-      :total-items="otherTeams.length"
+      :total-items="otherTeams?.length ?? 0"
       :page-size="OTHER_TEAMS_PER_PAGE"
       :show-summary="false"
     />

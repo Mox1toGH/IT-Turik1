@@ -26,7 +26,7 @@
       <div v-else class="avatar-empty">No avatar</div>
 
       <p v-if="previewUrl" class="position-hint">Drag image to choose avatar position</p>
-      <input type="file" accept="image/*" @change="onAvatarChange" />
+      <ui-file-drop v-model="selectedAvatar" accept="image/*" />
     </div>
 
     <template #footer>
@@ -62,6 +62,7 @@ import {
 } from '@/lib/imagePosition'
 import type { User } from '@/api/.ts.schemas'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
+import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -73,7 +74,7 @@ const props = withDefaults(
 )
 
 const isOpen = ref(false)
-const selectedAvatar = ref<File | null>(null)
+const selectedAvatar = ref<File[]>([])
 const selectedAvatarUrl = ref('')
 const avatarPositionKey = computed(() =>
   props.user?.id ? `image-position:avatar:user:${props.user.id}` : '',
@@ -108,7 +109,7 @@ const closeModal = () => {
 }
 
 const resetState = () => {
-  selectedAvatar.value = null
+  selectedAvatar.value = []
   const saved = readImagePosition(avatarPositionKey.value)
   positionX.value = saved.x
   positionY.value = saved.y
@@ -117,11 +118,6 @@ const resetState = () => {
     selectedAvatarUrl.value = ''
   }
   closeModal()
-}
-
-const onAvatarChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedAvatar.value = target.files?.[0] || null
 }
 
 const removeAvatar = () => {
@@ -143,7 +139,7 @@ const saveAvatar = () => {
   if (!selectedAvatar.value) return
 
   updateAvatar(
-    { data: { avatar: selectedAvatar.value } },
+    { data: { avatar: selectedAvatar.value[0] } },
     {
       onSuccess: async () => {
         if (avatarPositionKey.value) {
@@ -189,13 +185,15 @@ const onPreviewPointerDown = (event: PointerEvent) => {
   target.addEventListener('pointercancel', handleUp)
 }
 
-watch(selectedAvatar, (file) => {
+watch(selectedAvatar, (files) => {
+  const firstFile = files[0]
+
   if (selectedAvatarUrl.value) {
     URL.revokeObjectURL(selectedAvatarUrl.value)
     selectedAvatarUrl.value = ''
   }
-  if (file) {
-    selectedAvatarUrl.value = URL.createObjectURL(file)
+  if (firstFile) {
+    selectedAvatarUrl.value = URL.createObjectURL(firstFile)
   }
 })
 

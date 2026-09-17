@@ -51,20 +51,20 @@
                 />
 
                 <div class="member-main">
-                <div style="display: flex; justify-content: space-between">
-                  <p class="member-name">
-                    <RouterLink :to="`/users/${member.id}`" class="member-link">
-                      {{ member.username }}
-                    </RouterLink>
-                  </p>
+                  <div style="display: flex; justify-content: space-between">
+                    <p class="member-name">
+                      <RouterLink :to="`/users/${member.id}`" class="member-link">
+                        {{ member.username }}
+                      </RouterLink>
+                    </p>
 
-                  <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
-                    >Captain</ui-badge
-                  >
-                  <ui-badge v-else variant="gray">Member</ui-badge>
-                </div>
+                    <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
+                      >Captain</ui-badge
+                    >
+                    <ui-badge v-else variant="gray">Member</ui-badge>
+                  </div>
 
-                <p class="text-muted member-email">{{ member.email }}</p>
+                  <p class="text-muted member-email">{{ member.email }}</p>
                 </div>
               </div>
             </ui-card>
@@ -108,7 +108,6 @@ const matches = (parts: (string | undefined)[]) => {
 const filteredMembers = computed(() =>
   props.team?.members.filter((m) => matches([m.username, m.email, m.full_name])),
 )
-
 </script>
 
 <style scoped>
@@ -161,7 +160,7 @@ const filteredMembers = computed(() =>
   overflow-y: auto;
   max-height: 300px;
   display: grid;
-  gap: 0.55rem;
+  gap: 0.5rem;
   grid-template-rows: auto;
 }
 

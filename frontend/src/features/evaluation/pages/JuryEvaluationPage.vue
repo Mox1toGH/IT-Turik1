@@ -1,10 +1,32 @@
 <template>
-  <section class="page-shell">
-    <div class="section-header">
-      <p class="section-eyebrow">Jury</p>
-      <h1 class="section-title">My Evaluations</h1>
-      <p class="section-subtitle">Review and evaluate submitted projects</p>
-    </div>
+  <section class="jury-page page-shell">
+    <header class="jury-hero">
+      <div class="jury-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Jury</span>
+        </div>
+
+        <h1 class="text-6xl">My Evaluations</h1>
+        <p class="section-subtitle text-xl">Review and evaluate submitted projects.</p>
+      </div>
+
+      <div class="hero-actions">
+        <ui-skeleton-loader :loading="isLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="180px" height="64px" />
+          </template>
+
+          <ui-card variant="stat" class="jury-stat-card">
+            <span class="text-sm">Evaluated:</span>
+            <strong class="text-xl">{{ evaluatedCount }} / {{ totalCount }}</strong>
+          </ui-card>
+        </ui-skeleton-loader>
+      </div>
+    </header>
+
+    <div class="jury-rule" aria-hidden="true"></div>
 
     <section class="evaluation-section">
       <header class="page-controls-header">
@@ -211,33 +233,86 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 </script>
 
 <style scoped>
-.page-shell {
+.jury-page {
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
+}
+
+.jury-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.jury-hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.jury-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.jury-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.jury-stat-card {
+  display: flex;
+}
+
+.jury-stat-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.jury-stat-card span {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.jury-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.evaluation-section {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.section-eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.section-title {
-  margin: 0;
-}
-
-.section-subtitle {
-  margin: 0;
-  color: var(--muted-foreground);
 }
 
 .page-controls {
@@ -305,6 +380,32 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 @media (max-width: 980px) {
   .assignments-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .jury-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .jury-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .jury-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .jury-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
   }
 }
 

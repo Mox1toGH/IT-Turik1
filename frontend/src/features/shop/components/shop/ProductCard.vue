@@ -26,7 +26,7 @@
     </p>
 
     <div class="card-actions">
-      <ui-button size="sm" variant="secondary" @click="emit('view', product)">View</ui-button>
+      <ui-button size="md" @click="emit('view', product)">Buy</ui-button>
       <ui-button v-if="isAdmin" size="sm" @click="emit('edit', product)">Edit</ui-button>
       <ui-button v-if="isAdmin" size="sm" variant="danger" @click="emit('delete', product)">
         Delete
