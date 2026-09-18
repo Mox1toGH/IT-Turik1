@@ -15,7 +15,7 @@
 
     <div class="hero-actions">
       <ui-card variant="stat" class="news-stat-card">
-        <strong class="text-2xl">{{ totalNews }}</strong>
+        <strong class="text-xl">{{ totalNews }}</strong>
         <span class="text-sm">Total posts</span>
       </ui-card>
 
@@ -96,8 +96,6 @@ defineEmits<{
 }
 
 .news-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
   font-weight: 800;
 }
 

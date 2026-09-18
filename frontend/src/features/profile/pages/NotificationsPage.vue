@@ -18,7 +18,7 @@
         <div class="hero-actions">
           <ui-card variant="stat" class="notifications-stat-card">
             <span class="text-sm">Unread:</span>
-            <strong class="text-3xl">{{ unreadCount }}</strong>
+            <strong class="text-xl">{{ unreadCount }}</strong>
           </ui-card>
 
           <ui-button
@@ -404,8 +404,6 @@ const formatDate = (dateStr: string) => {
 }
 
 .notifications-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
   font-weight: 800;
 }
 
@@ -505,7 +503,7 @@ const formatDate = (dateStr: string) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .unread-dot {

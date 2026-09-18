@@ -57,23 +57,23 @@
       <div class="hero-actions">
         <ui-skeleton-loader :loading="isInfoLoading">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="detail-stat-card">
-            <strong class="text-2xl">{{ team?.members.length ?? 0 }}</strong>
+            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
             <span class="text-sm">Members</span>
           </ui-card>
         </ui-skeleton-loader>
 
         <ui-skeleton-loader :loading="isInfoLoading">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="detail-stat-card">
             <span class="text-sm">Visibility:</span>
-            <strong class="text-2xl">{{ team?.is_public ? 'Public' : 'Private' }}</strong>
+            <strong class="text-xl">{{ team?.is_public ? 'Public' : 'Private' }}</strong>
           </ui-card>
         </ui-skeleton-loader>
 
@@ -485,8 +485,6 @@ watch(
 }
 
 .detail-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
   font-weight: 800;
 }
 

@@ -102,14 +102,7 @@
             aria-label="Account shortcuts"
           >
             <p class="rail-eyebrow">Account</p>
-            <button
-              :class="['rail-link', { active: activeSection === 'notifications' }]"
-              type="button"
-              @click="activeSection = 'notifications'"
-            >
-              <span class="rail-link-copy"><BellIcon />Notifications</span>
-              <ArrowRight />
-            </button>
+
             <button
               :class="['rail-link', { active: activeSection === 'certificates' }]"
               type="button"
@@ -142,7 +135,6 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import BellIcon from '@/icons/BellIcon.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 import FileCheckIcon from '@/icons/FileCheckIcon.vue'
@@ -157,7 +149,6 @@ import StatsPage from '@/features/stats/pages/StatsPage.vue'
 import TransactionHistorySection from '../components/profile/sections/TransactionHistorySection.vue'
 import ShopOrderHistoryPage from '@/features/shop/pages/ShopOrderHistoryPage.vue'
 import ShopInventoryPage from '@/features/shop/pages/ShopInventoryPage.vue'
-import NotificationsSection from './NotificationsPage.vue'
 import CertificatesSection from '../components/profile/sections/CertificatesSection.vue'
 
 type ProfileSection =
@@ -166,7 +157,6 @@ type ProfileSection =
   | 'transactions'
   | 'orders'
   | 'inventory'
-  | 'notifications'
   | 'certificates'
 
 const store = useUserStore()
@@ -180,7 +170,6 @@ const viewComponents = {
   transactions: TransactionHistorySection,
   orders: ShopOrderHistoryPage,
   inventory: ShopInventoryPage,
-  notifications: NotificationsSection,
   certificates: CertificatesSection,
 } as const
 

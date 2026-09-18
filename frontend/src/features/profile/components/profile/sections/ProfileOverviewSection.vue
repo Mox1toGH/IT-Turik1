@@ -11,7 +11,7 @@
         <template #skeleton>
           <ui-skeleton variant="rect" width="5rem" />
         </template>
-        <p class="balance-value text-2xl">{{ pointsBalance?.balance ?? 0 }}</p>
+        <p class="balance-value text-xl">{{ pointsBalance?.balance ?? 0 }}</p>
       </ui-skeleton-loader>
     </ui-card>
 
@@ -127,11 +127,9 @@ const openEditProfile = () => {
 }
 
 .balance-value {
-  margin: 0;
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;
-  line-height: 1;
 }
 
 .details-section h1,

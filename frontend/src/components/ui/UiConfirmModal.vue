@@ -1,6 +1,6 @@
 <template>
   <ui-modal
-    :model-value="modelValue"
+    :model-value="isOpen"
     @update:model-value="$emit('update:modelValue', $event)"
     :max-width="maxWidth"
   >
@@ -29,8 +29,9 @@
 import UiModal from './UiModal.vue'
 import UiButton from './UiButton.vue'
 
+const isOpen = defineModel({ default: false })
+
 interface Props {
-  modelValue: boolean
   title?: string
   message?: string
   confirmText?: string

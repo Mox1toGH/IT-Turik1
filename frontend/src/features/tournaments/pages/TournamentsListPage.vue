@@ -17,17 +17,17 @@
       <div class="hero-actions">
         <ui-skeleton-loader :loading="isLoading">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="tournaments-stat-card">
-            <strong class="text-2xl">{{ data?.total ?? 0 }}</strong>
+            <strong class="text-xl">{{ data?.total ?? 0 }}</strong>
             <span class="text-sm">Total results</span>
           </ui-card>
         </ui-skeleton-loader>
 
         <ui-card variant="stat" class="tournaments-stat-card">
-          <strong class="text-2xl">{{ pageItems.length }}</strong>
+          <strong class="text-xl">{{ pageItems.length }}</strong>
           <span class="text-sm">Showing now</span>
         </ui-card>
 
@@ -329,8 +329,6 @@ const onStatusChange = () => {
 }
 
 .tournaments-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
   font-weight: 800;
 }
 
@@ -442,7 +440,7 @@ const onStatusChange = () => {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  min-height: 156px;
+  margin-bottom: 0.5rem;
 }
 
 .tournament-banner {

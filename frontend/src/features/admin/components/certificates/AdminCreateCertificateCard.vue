@@ -7,36 +7,85 @@
       </div>
     </template>
 
-    <form class="form-grid" @submit.prevent="$emit('submit')">
-      <div class="form-item">
-        <label class="form-label">User</label>
-        <ui-select v-model="localForm.user" :options="userOptions" placeholder="Select user" />
-      </div>
+    <form class="form-grid" @submit.prevent="handleCreateCertificate">
+      <label class="form-item">
+        <p class="form-label">User</p>
+        <ui-select
+          v-model="form.fields.value.user"
+          :options="userOptions"
+          :is-invalid="!!form.errors.value.user"
+          placeholder="Select user"
+          @blur="form.validateField('user')"
+        />
+        <small v-if="form.errors.value.user" class="text-error">{{ form.errors.value.user }}</small>
+      </label>
 
-      <div class="form-item">
-        <label class="form-label">Tournament</label>
-        <ui-select v-model="localForm.tournament" :options="tournamentOptions" placeholder="Select tournament" />
-      </div>
+      <label class="form-item">
+        <p class="form-label">Tournament</p>
+        <ui-select
+          v-model="form.fields.value.tournament"
+          :options="tournamentOptions"
+          :is-invalid="!!form.errors.value.tournament"
+          placeholder="Select tournament"
+          @blur="form.validateField('tournament')"
+        />
+        <small v-if="form.errors.value.tournament" class="text-error">{{
+          form.errors.value.tournament
+        }}</small>
+      </label>
 
-      <div class="form-item">
-        <label class="form-label">Team (optional)</label>
-        <ui-select v-model="localForm.team" :options="teamOptions" placeholder="No team" />
-      </div>
+      <label class="form-item">
+        <p class="form-label">Team (optional)</p>
+        <ui-select
+          v-model="form.fields.value.team"
+          :options="teamOptions"
+          :is-invalid="!!form.errors.value.team"
+          placeholder="No team"
+          @blur="form.validateField('team')"
+        />
+        <small v-if="form.errors.value.team" class="text-error">{{ form.errors.value.team }}</small>
+      </label>
 
-      <div class="form-item">
-        <label class="form-label">Template (optional)</label>
-        <ui-select v-model="localForm.template" :options="templateOptions" placeholder="Default template" />
-      </div>
+      <label class="form-item">
+        <p class="form-label">Template (optional)</p>
+        <ui-select
+          v-model="form.fields.value.template"
+          :options="templateOptions"
+          :is-invalid="!!form.errors.value.template"
+          placeholder="Default template"
+          @blur="form.validateField('template')"
+        />
+        <small v-if="form.errors.value.template" class="text-error">{{
+          form.errors.value.template
+        }}</small>
+      </label>
 
-      <div class="form-item">
-        <label class="form-label">Placement</label>
-        <ui-input v-model="localForm.placement" required placeholder="1st" />
-      </div>
+      <label class="form-item">
+        <p class="form-label">Placement</p>
+        <ui-input
+          v-model="form.fields.value.placement"
+          :is-invalid="!!form.errors.value.placement"
+          placeholder="1st"
+          required
+          @blur="form.validateField('placement')"
+        />
+        <small v-if="form.errors.value.placement" class="text-error">{{
+          form.errors.value.placement
+        }}</small>
+      </label>
 
-      <div class="form-item">
-        <label class="form-label">Certificate number (optional)</label>
-        <ui-input v-model="localForm.certificate_number" placeholder="Leave empty for auto: CERT-YYYY-MM-DD" />
-      </div>
+      <label class="form-item">
+        <p class="form-label">Certificate number (optional)</p>
+        <ui-input
+          v-model="form.fields.value.certificate_number"
+          :is-invalid="!!form.errors.value.certificate_number"
+          placeholder="Leave empty for auto: CERT-YYYY-MM-DD"
+          @blur="form.validateField('certificate_number')"
+        />
+        <small v-if="form.errors.value.certificate_number" class="text-error">{{
+          form.errors.value.certificate_number
+        }}</small>
+      </label>
 
       <ui-button type="submit" class="submit" :disabled="isCreating">
         {{ isCreating ? 'Creating...' : 'Create Certificate' }}
@@ -46,47 +95,100 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
+import { useForm } from '@/composables/useForm'
+import { CreateCertificateSchema } from '@/schemas/certificates.schema'
+import { useNotification } from '@/composables/useNotification'
+import { useCreateCertificate } from '@/api/certificates/certificates'
 
-const props = defineProps<{
-  form: {
-    user: number
-    tournament: number
-    team: number
-    template: number
-    placement: string
-    certificate_number: string
-  }
+defineProps<{
   userOptions: Array<{ value: number; label: string }>
   tournamentOptions: Array<{ value: number; label: string }>
   teamOptions: Array<{ value: number; label: string }>
   templateOptions: Array<{ value: number; label: string }>
-  isCreating: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:form', value: typeof props.form): void
-  (e: 'submit'): void
-}>()
+const { showNotification } = useNotification()
 
-const localForm = computed({
-  get: () => props.form,
-  set: (value) => emit('update:form', value),
+const form = useForm(CreateCertificateSchema, {
+  user: 0,
+  tournament: 0,
+  team: 0,
+  template: 0,
+  placement: '',
+  certificate_number: '',
 })
+
+const { mutateAsync: createCertificate, isPending: isCreating } = useCreateCertificate()
+
+const handleCreateCertificate = async () => {
+  if (!form.fields.value.user || !form.fields.value.tournament) {
+    showNotification('Please select user and tournament.', 'error')
+    return
+  }
+
+  try {
+    await createCertificate({
+      data: {
+        user: form.fields.value.user,
+        tournament: form.fields.value.tournament,
+        team: form.fields.value.team || null,
+        template: form.fields.value.template || null,
+        placement: form.fields.value.placement,
+        certificate_number: form.fields.value.certificate_number.trim() || undefined,
+      },
+    })
+
+    showNotification('Certificate created successfully.', 'success')
+    form.reset()
+  } catch {
+    showNotification('Failed to create certificate.', 'error')
+  }
+}
 </script>
 
 <style scoped>
-.panel { background: var(--muted); color: var(--muted-foreground); }
-.panel-head { justify-content: space-between; align-items: center; gap: 0.75rem; }
-.form-grid { align-items: end; gap: 0.75rem; }
-.form-grid :deep(.select-trigger) { background: var(--input) !important; border-color: var(--border) !important; color: var(--foreground) !important; border-radius: 12px !important; font-weight: 400 !important; padding: 0.75rem 0.85rem !important; }
-.form-grid :deep(.select-trigger:focus-visible) { box-shadow: 0 0 0 3px var(--ring) !important; }
-.form-item { display: grid; gap: 0.4rem; }
-.form-label { font-size: 0.85rem; font-weight: 600; }
-.submit { width: fit-content; }
-@media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.panel-head {
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.form-grid {
+  align-items: end;
+  gap: 0.75rem;
+}
+.form-grid :deep(.select-trigger) {
+  background: var(--input) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+  border-radius: 12px !important;
+  font-weight: 400 !important;
+  padding: 0.75rem 0.85rem !important;
+}
+.form-grid :deep(.select-trigger:focus-visible) {
+  box-shadow: 0 0 0 3px var(--ring) !important;
+}
+.form-item {
+  display: grid;
+  gap: 0.4rem;
+}
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.submit {
+  width: fit-content;
+}
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

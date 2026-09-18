@@ -7,10 +7,10 @@
       </div>
     </template>
 
-    <form class="verify-form" @submit.prevent="$emit('submit')">
+    <form class="verify-form" @submit.prevent="handleVerify">
       <div class="input-wrap">
         <ui-input
-          v-model="code"
+          v-model="verifyCode"
           placeholder="Paste code or certificate number"
           required
           class="ui-input-full"
@@ -19,59 +19,77 @@
       <ui-button class="verify-btn" type="submit">Verify</ui-button>
     </form>
 
-    <div v-if="result" class="result" :class="isValidResult ? 'result-valid' : 'result-invalid'">
+    <div
+      v-if="verifyResult || verifyError"
+      class="result"
+      :class="isValidResult ? 'result-valid' : 'result-invalid'"
+    >
       <div class="result-head">
         <p class="result-title">Verification result</p>
         <span class="status-badge" :class="isValidResult ? 'status-valid' : 'status-invalid'">{{
           isValidResult ? 'Valid' : 'Invalid'
         }}</span>
       </div>
-      <template v-if="certificateData">
+      <template v-if="verifyResult">
         <div class="result-grid">
           <p>
-            <span class="label">Name</span><strong>{{ certificateData.full_name || '-' }}</strong>
+            <span class="label">Name</span><strong>{{ verifyResult.full_name || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Team</span><strong>{{ certificateData.team_name || '-' }}</strong>
+            <span class="label">Team</span><strong>{{ verifyResult.team_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Tournament</span
-            ><strong>{{ certificateData.tournament_name || '-' }}</strong>
+            ><strong>{{ verifyResult.tournament_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Certificate number</span
-            ><strong>{{ certificateData.certificate_number || '-' }}</strong>
+            ><strong>{{ verifyResult.certificate_number || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Placement</span><strong>{{ certificateData.placement || '-' }}</strong>
+            <span class="label">Placement</span><strong>{{ verifyResult.placement || '-' }}</strong>
           </p>
         </div>
       </template>
-      <p v-if="result.message" class="result-message">{{ result.message }}</p>
+      <p v-if="verifyError" class="result-message">{{ verifyError }}</p>
     </div>
   </ui-card>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import type { Certificate } from '@/api/.ts.schemas'
+import {
+  verifyCertificate,
+  type VerifyCertificateQueryResult,
+} from '@/api/certificates/certificates'
 
-const props = defineProps<{ verifyCode: string; result: any }>()
-const emit = defineEmits<{ (e: 'update:verifyCode', value: string): void; (e: 'submit'): void }>()
-const code = computed({ get: () => props.verifyCode, set: (v) => emit('update:verifyCode', v) })
+const verifyCode = ref('')
+const verifyResult = ref<VerifyCertificateQueryResult | null>(null)
+const verifyError = ref<string | null>(null)
+
+function isCertificate(result: VerifyCertificateQueryResult): result is Certificate {
+  return 'certificate_number' in result
+}
+
 const certificateData = computed<Certificate | null>(() => {
-  if (!props.result) return null
-  const candidate = (props.result as { data?: Certificate }).data
-  return candidate ?? (props.result as Certificate)
+  if (verifyResult.value && isCertificate(verifyResult.value)) return verifyResult.value
+  return null
 })
-const isValidResult = computed(() => {
-  if (!props.result) return false
-  if (typeof props.result.is_valid === 'boolean') return props.result.is_valid
-  return !!certificateData.value
-})
+
+const isValidResult = computed(() => certificateData.value !== null)
+
+async function handleVerify() {
+  try {
+    verifyResult.value = await verifyCertificate(verifyCode.value)
+  } catch {
+    verifyResult.value = null
+    verifyError.value = 'Verification failed.'
+  }
+}
 </script>
 
 <style scoped>

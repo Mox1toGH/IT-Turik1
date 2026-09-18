@@ -26,7 +26,7 @@
       <div class="hero-actions">
         <ui-skeleton-loader :loading="isLoadingTeamInfo">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="edit-stat-card">
@@ -37,7 +37,7 @@
 
         <ui-skeleton-loader :loading="isLoadingTeamInfo">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="edit-stat-card">

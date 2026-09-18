@@ -17,7 +17,7 @@
       <div class="hero-actions">
         <ui-skeleton-loader :loading="isLoadingTeams">
           <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="64px" />
+            <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
           <ui-card variant="stat" class="teams-stat-card">

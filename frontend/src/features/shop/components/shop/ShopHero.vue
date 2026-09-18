@@ -16,12 +16,12 @@
     <div class="hero-actions">
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
-          <ui-skeleton variant="rect" width="148px" height="64px" />
+          <ui-skeleton variant="rect" width="148px" height="45px" />
         </template>
 
         <ui-card variant="stat" class="shop-stat-card">
           <span class="text-sm">Total products:</span>
-          <strong class="text-2xl">{{ totalProducts }}</strong>
+          <strong class="text-xl">{{ totalProducts }}</strong>
         </ui-card>
       </ui-skeleton-loader>
 
@@ -112,13 +112,7 @@ const emit = defineEmits<{
   align-items: center;
 }
 
-.shop-stat-card {
-  display: flex;
-}
-
 .shop-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
   font-weight: 800;
 }
 

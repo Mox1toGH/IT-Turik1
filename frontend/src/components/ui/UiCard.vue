@@ -51,9 +51,9 @@ const variantClass = `card-${props.variant}`
 }
 
 .card-stat {
-  min-width: 148px;
-  min-height: 64px;
-  padding: 0.9rem 1.1rem;
+  min-width: 100px;
+  min-height: 30px;
+  padding: 0.5rem 1.1rem;
   align-items: center;
   justify-content: center;
   flex-direction: row;

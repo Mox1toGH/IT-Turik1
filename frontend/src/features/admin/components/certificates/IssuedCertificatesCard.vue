@@ -4,9 +4,9 @@
       <div class="panel-head">
         <div class="panel-title-row">
           <h2 class="panel-title">Issued Certificates</h2>
-          <form class="search-box" @submit.prevent="$emit('search')">
+          <form class="search-box" @submit.prevent="handleSearch">
             <ui-input
-              v-model="query"
+              v-model="searchQuery"
               placeholder="Search by full name or verification code..."
               size="sm"
               class="ui-input-full"
@@ -33,7 +33,7 @@
               ><span class="cert-num">#{{ cert.certificate_number || cert.unique_code }}</span>
             </div>
             <div class="cert-details-grid">
-              <span><strong>User:</strong> {{ cert.full_name || cert.username }}</span>
+              <span><strong>User:</strong> {{ cert.full_name }}</span>
               <span><strong>Placement:</strong> {{ cert.placement || '-' }}</span>
               <span><strong>Team:</strong> {{ cert.team_name || '-' }}</span>
               <span><strong>Date:</strong> {{ formatDate(cert.created_at) }}</span>
@@ -43,13 +43,13 @@
             <a :href="cert.certificate_url" target="_blank" class="action-btn-mini" title="View PDF"
               ><ui-badge variant="gray">PDF</ui-badge></a
             >
-            <button class="action-btn-mini" title="Edit certificate" @click="$emit('edit', cert)">
+            <button class="action-btn-mini" title="Edit certificate" @click="openEditCert(cert)">
               <EditIcon class="icon-mini" />
             </button>
             <button
               class="action-btn-mini delete"
               title="Delete certificate"
-              @click="$emit('delete', cert.unique_code)"
+              @click="openDeleteCert(cert.unique_code)"
             >
               <TrashIcon class="icon-mini" />
             </button>
@@ -58,18 +58,46 @@
 
         <ui-pagination
           v-if="totalCertPages > 1"
-          v-model="localCertsPage"
+          v-model="certsPage"
           :total-items="certsResponse?.count || 0"
-          :page-size="certsResponse?.page_size || 10"
+          :page-size="certsPageSize"
           :show-summary="false"
         />
       </div>
     </ui-skeleton-loader>
   </ui-card>
+
+  <EditCertificateModal
+    v-model:cert="certToEdit"
+    :user-options="userOptions"
+    :tournament-options="tournamentOptions"
+    :team-options="teamOptions"
+    :template-options="templateOptions"
+  />
+
+  <!-- <UiConfirmModal
+    v-model="isDeleteModalOpen"
+    title="Delete Template"
+    message="Are you sure you want to delete this template? This action cannot be undone."
+    confirmText="Delete"
+    confirmVariant="danger"
+    :loading="isDeleting"
+    @confirm="onDeleteConfirm"
+  /> -->
+
+  <UiConfirmModal
+    v-model="isDeleteCertModalOpen"
+    title="Delete Certificate"
+    message="Are you sure you want to delete this certificate? This action cannot be undone."
+    confirmText="Delete"
+    confirmVariant="danger"
+    :loading="isDeletingCert"
+    @confirm="onDeleteCertConfirm"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -79,29 +107,69 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import EditIcon from '@/icons/EditIcon.vue'
+import { useDeleteCertificate, useListCertificates } from '@/api/certificates/certificates'
+import type { Certificate } from '@/api/.ts.schemas'
+import { useNotification } from '@/composables/useNotification'
+import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 
-const props = defineProps<{
-  searchQuery: string
-  certsPage: number
-  totalCertPages: number
-  certsResponse: any
-  isCertsLoading: boolean
-  isCertsError: boolean
-}>()
-const emit = defineEmits<{
-  (e: 'update:searchQuery', value: string): void
-  (e: 'search'): void
-  (e: 'update:certsPage', value: number): void
-  (e: 'edit', cert: any): void
-  (e: 'delete', code: string): void
+defineProps<{
+  userOptions: Array<{ value: number; label: string }>
+  tournamentOptions: Array<{ value: number; label: string }>
+  teamOptions: Array<{ value: number; label: string }>
+  templateOptions: Array<{ value: number; label: string }>
 }>()
 
-const localCertsPage = computed({
-  get: () => props.certsPage,
-  set: (v) => emit('update:certsPage', v),
+const { showNotification } = useNotification()
+
+const certsPage = ref(1)
+const certsPageSize = 10
+const certsSearch = ref('')
+const searchQuery = ref('')
+
+const isDeleteCertModalOpen = ref(false)
+const certToDeleteCode = ref<string | null>(null)
+
+const openDeleteCert = (certCode: Certificate['unique_code']) => {
+  certToDeleteCode.value = certCode
+  isDeleteCertModalOpen.value = true
+}
+
+const { mutateAsync: deleteCert, isPending: isDeletingCert } = useDeleteCertificate()
+
+const onDeleteCertConfirm = async () => {
+  if (!certToDeleteCode.value) return
+
+  try {
+    await deleteCert({ uniqueCode: certToDeleteCode.value })
+    showNotification('Certificate deleted successfully.', 'success')
+    isDeleteCertModalOpen.value = false
+  } catch {
+    showNotification('Failed to delete certificate.', 'error')
+  }
+}
+
+const certToEdit = ref<Certificate | null>(null)
+const openEditCert = (cert: Certificate) => {
+  certToEdit.value = cert
+}
+
+const {
+  data: certsResponse,
+  isLoading: isCertsLoading,
+  isLoadingError: isCertsError,
+} = useListCertificates(
+  computed(() => ({ page: certsPage.value, pageSize: certsPageSize, search: certsSearch.value })),
+)
+
+const totalCertPages = computed(() => {
+  const total = certsResponse.value?.count || 0
+  return Math.max(1, Math.ceil(total / certsPageSize))
 })
 
-const query = computed({ get: () => props.searchQuery, set: (v) => emit('update:searchQuery', v) })
+const handleSearch = () => {
+  certsSearch.value = searchQuery.value
+  certsPage.value = 1
+}
 
 const formatDate = (date: string) => (!date ? '-' : new Date(date).toLocaleDateString('uk-UA'))
 </script>
