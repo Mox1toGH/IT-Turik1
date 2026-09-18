@@ -10,7 +10,7 @@
 
         <h1>
           Welcome back,
-          <ui-skeleton-loader :loading="isLoading" class="name-loader">
+          <ui-skeleton-loader :loading="isLoadingUser" class="name-loader">
             <template #skeleton>
               <ui-skeleton variant="rect" width="160px" />
             </template>
@@ -38,135 +38,25 @@
     <StatsPreview :user="user" />
 
     <section class="dashboard-grid" aria-label="Account overview">
-      <ui-card v-if="isTeamRole" class="info-card quick-card" variant="form">
-        <template #header>
-          <div class="panel-header">
-            <span class="step-marker">01</span>
-            <div>
-              <h2>Quick access</h2>
-              <p class="text-muted">Current tournament links for your team.</p>
-            </div>
-          </div>
-        </template>
+      <template v-if="isTeamRole">
+        <QuickAccessCard
+          :user="user"
+          :is-loading-user="isLoadingUser"
+          :is-loading-user-error="isLoadingUserError"
+        />
+      </template>
 
-        <ui-skeleton-loader class="panel-body" :loading="isQuickBlockLoading" min-height="120px">
-          <template #skeleton>
-            <div class="skeleton-stack">
-              <ui-skeleton variant="rect" width="50%" />
-              <ui-skeleton variant="rect" width="60%" />
-              <ui-skeleton variant="rect" width="45%" />
-            </div>
-          </template>
+      <AccountDetailsCard
+        :user="user"
+        :is-loading-user="isLoadingUser"
+        :is-loading-user-error="isLoadingUserError"
+      />
 
-          <ul class="data-list">
-            <li>
-              <span>Tournament</span>
-              <RouterLink
-                v-if="activeTournament"
-                class="quick-link"
-                :to="`/tournaments/${activeTournament.id}`"
-              >
-                {{ activeTournament.name }}
-              </RouterLink>
-              <span v-else>-</span>
-            </li>
-            <li>
-              <span>Current task</span>
-              <RouterLink
-                v-if="activeTournament && currentRound?.name"
-                class="quick-link"
-                :to="`/tournaments/${activeTournament.id}?section=rounds`"
-              >
-                {{ currentRound.name }}
-              </RouterLink>
-              <span v-else>{{ currentRound?.name ?? '-' }}</span>
-            </li>
-            <li>
-              <span>Latest submission</span>
-              <RouterLink
-                v-if="activeTournament && lastSubmission?.round_details?.name"
-                class="quick-link"
-                :to="`/tournaments/${activeTournament.id}?section=submissions`"
-              >
-                {{ lastSubmission.round_details.name }}
-              </RouterLink>
-              <span v-else>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
-            </li>
-          </ul>
-        </ui-skeleton-loader>
-      </ui-card>
-
-      <ui-card class="info-card" variant="form" :is-error="isLoadingError">
-        <template #error>
-          <div class="empty-state">
-            <p>Failed to fetch account info (code: {{ profileError?.code }})</p>
-          </div>
-        </template>
-
-        <template #header>
-          <div class="panel-header">
-            <span class="step-marker">02</span>
-            <div>
-              <h2>Account details</h2>
-              <p class="text-muted">Profile identity and team membership.</p>
-            </div>
-          </div>
-        </template>
-
-        <ui-skeleton-loader class="panel-body" :loading="isLoading">
-          <template #skeleton>
-            <div class="skeleton-stack">
-              <ui-skeleton variant="rect" width="55%" />
-              <ui-skeleton variant="rect" width="65%" />
-              <ui-skeleton variant="rect" width="35%" />
-              <ui-skeleton variant="rect" width="70%" />
-            </div>
-          </template>
-
-          <dl class="detail-list">
-            <div v-for="item in accountDetails" :key="item.label">
-              <dt>{{ item.label }}</dt>
-              <dd>{{ item.value }}</dd>
-            </div>
-          </dl>
-        </ui-skeleton-loader>
-      </ui-card>
-
-      <ui-card class="info-card" variant="form" :is-error="isLoadingError">
-        <template #error>
-          <div class="empty-state">
-            <p>Failed to fetch profile status (code: {{ profileError?.code }})</p>
-          </div>
-        </template>
-
-        <template #header>
-          <div class="panel-header">
-            <span class="step-marker">03</span>
-            <div>
-              <h2>Quick status</h2>
-              <p class="text-muted">Readiness checks for your account.</p>
-            </div>
-          </div>
-        </template>
-
-        <ui-skeleton-loader class="panel-body" :loading="isLoading" min-height="90px">
-          <template #skeleton>
-            <div class="skeleton-stack">
-              <ui-skeleton variant="rect" width="45%" />
-              <ui-skeleton variant="rect" width="38%" />
-              <ui-skeleton variant="rect" width="42%" />
-            </div>
-          </template>
-
-          <ul class="status-list">
-            <li v-for="item in statusItems" :key="item.label">
-              <span class="status-dot" :class="{ ready: item.ready }" aria-hidden="true"></span>
-              <span>{{ item.label }}</span>
-              <strong>{{ item.ready ? 'Ready' : 'Missing' }}</strong>
-            </li>
-          </ul>
-        </ui-skeleton-loader>
-      </ui-card>
+      <QuickStatusCard
+        :user="user"
+        :is-loading-user="isLoadingUser"
+        :is-loading-user-error="isLoadingUserError"
+      ></QuickStatusCard>
     </section>
   </section>
 </template>
@@ -178,95 +68,24 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import {
-  useGetCurrentTask,
-  useListMyTeamSubmissions,
-  useListTournaments,
-} from '@/api/tournaments/tournaments'
+import AccountDetailsCard from '../components/AccountDetailsCard.vue'
+import QuickStatusCard from '../components/QuickStatusCard.vue'
+import QuickAccessCard from '../components/QuickAccessCard.vue'
 
-const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
+const {
+  data: user,
+  isLoading: isLoadingUser,
+  isLoadingError: isLoadingUserError,
+} = useGetUserProfile()
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
-const profileReady = computed(() => Boolean(user.value?.full_name && user.value?.city))
-const teamNames = computed(() => (user.value?.teams || []).map((team) => team.name).join(', '))
+
 const isTeamRole = computed(() => user.value?.role === 'team')
-const myTeamIds = computed(() => new Set((user.value?.teams ?? []).map((team) => team.id)))
-const accountDetails = computed(() => [
-  { label: 'Username', value: user.value?.username ?? '-' },
-  { label: 'Email', value: user.value?.email ?? '-' },
-  { label: 'Role', value: user.value?.role ?? '-' },
-  { label: 'Teams', value: teamNames.value || '-' },
-])
-const statusItems = computed(() => [
-  { label: 'Profile ready', ready: profileReady.value },
-  { label: 'City set', ready: Boolean(user.value?.city) },
-  { label: 'Phone set', ready: Boolean(user.value?.phone) },
-])
+
 const heroStats = computed(() => [
   { label: 'Role', value: user.value?.role ?? '-' },
   { label: 'Teams', value: String(user.value?.teams?.length ?? 0) },
 ])
-
-const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useListTournaments(
-  computed(() => ({
-    page: 1,
-    page_size: 100,
-    status: 'registration,running',
-  })),
-  {
-    query: { enabled: computed(() => Boolean(isTeamRole.value)) },
-  },
-)
-const activeTournament = computed(() =>
-  (tournamentsResponse.value?.data ?? []).find((tournament) =>
-    myTeamIds.value.has(tournament.registered_team?.id ?? -1),
-  ),
-)
-const activeTournamentId = computed(() => activeTournament.value?.id ?? 0)
-const shouldFetchCurrentRound = computed(
-  () =>
-    Boolean(isTeamRole.value && activeTournamentId.value) &&
-    activeTournament.value?.status === 'running',
-)
-
-const { data: currentRound, isLoading: isLoadingCurrentRound } = useGetCurrentTask(
-  { tournament_id: activeTournamentId.value },
-  {
-    query: {
-      enabled: shouldFetchCurrentRound,
-      retry: false,
-    },
-  },
-)
-
-const { data: submissions, isLoading: isLoadingSubmissions } = useListMyTeamSubmissions(
-  activeTournamentId,
-  {
-    query: {
-      enabled: computed(() =>
-        Boolean(isTeamRole.value && activeTournamentId.value && user.value?.role === 'team'),
-      ),
-    },
-  },
-)
-
-const lastSubmission = computed(() => {
-  const list = submissions.value ?? []
-  if (list.length === 0) return null
-  return list.reduce((latest, current) =>
-    new Date(current.created_at).getTime() > new Date(latest.created_at).getTime()
-      ? current
-      : latest,
-  )
-})
-
-const isQuickBlockLoading = computed(
-  () =>
-    isLoading.value ||
-    isLoadingActiveTournament.value ||
-    isLoadingCurrentRound.value ||
-    isLoadingSubmissions.value,
-)
 </script>
 
 <style scoped>
@@ -364,19 +183,11 @@ const isQuickBlockLoading = computed(
   grid-column: span 1;
 }
 
-.panel-header {
-  min-width: 0;
-}
-
 .panel-body {
   display: block;
 }
 
-.panel-body :deep(> div) {
-  min-width: 0;
-}
-
-.skeleton-stack {
+:deep(.skeleton-stack) {
   display: grid;
   gap: 0.65rem;
 }
