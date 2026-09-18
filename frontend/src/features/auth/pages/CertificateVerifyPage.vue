@@ -1,3 +1,6 @@
+<!-- TODO: maybe add this page to another folder.
+ cuz it's not auth feature -->
+
 <template>
   <main class="verify-page">
     <section class="verify-shell page-shell">
@@ -89,23 +92,25 @@ import {
 } from '@/api/certificates/certificates'
 import type { Certificate } from '@/api/.ts.schemas'
 
+type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: string }
+
 const route = useRoute()
 const router = useRouter()
 
-type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: string }
-
 const codeInput = ref(String(route.params.code ?? '').trim())
+
 const result = ref<Result | null>(null)
+const isValidResult = computed(() => {
+  if (!result.value) return false
+  if (typeof result.value.is_valid === 'boolean') return result.value.is_valid
+  return !!certificateData.value
+})
+
 const isLoading = ref(false)
 const certificateData = computed<Certificate | null>(() => {
   if (!result.value) return null
   const candidate = (result.value as { data?: Certificate }).data
   return candidate ?? (result.value as unknown as Certificate)
-})
-const isValidResult = computed(() => {
-  if (!result.value) return false
-  if (typeof result.value.is_valid === 'boolean') return result.value.is_valid
-  return !!certificateData.value
 })
 
 watch(

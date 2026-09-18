@@ -241,9 +241,9 @@ const form = useForm<Form>(RegisterSchema, {
   phone: '',
   city: '',
 })
-const { showNotification } = useNotification()
 const storage = useUserStore()
 const router = useRouter()
+const { showNotification } = useNotification()
 
 const { mutate: register, isPending: isLoading, isSuccess } = useRegisterUser()
 
@@ -254,17 +254,27 @@ const roleOptions = [
   { value: 'jury', label: 'Jury' },
   { value: 'admin', label: 'Admin' },
 ]
+
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
 const roleLabel = computed(
   () => roleOptions.find((option) => option.value === form.fields.value.role)?.label ?? 'Team',
 )
 
-const saveTokensAndRedirect = (data: GoogleAuthMutationResult) => {
+watch(
+  () => form.fields.value.role,
+  (newRole) => {
+    if (!restrictedRoles.includes(newRole)) {
+      form.fields.value.redeem_code = ''
+    }
+  },
+)
+
+function saveTokensAndRedirect(data: GoogleAuthMutationResult) {
   storage.setTokens(data)
   router.push('/')
 }
 
-const handleRegister = () => {
+function handleRegister() {
   if (!form.validate()) return
 
   register(
@@ -280,15 +290,6 @@ const handleRegister = () => {
     },
   )
 }
-
-watch(
-  () => form.fields.value.role,
-  (newRole) => {
-    if (!restrictedRoles.includes(newRole)) {
-      form.fields.value.redeem_code = ''
-    }
-  },
-)
 </script>
 
 <style scoped>

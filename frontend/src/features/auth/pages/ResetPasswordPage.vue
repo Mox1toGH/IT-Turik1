@@ -80,6 +80,13 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 
 const route = useRoute()
+const {
+  mutate: resetPassword,
+  isPending: isResetingPassword,
+  isSuccess,
+  error: resetError,
+} = useConfirmPasswordReset()
+
 const form = ref({
   new_password: '',
   confirm_password: '',
@@ -88,15 +95,9 @@ const form = ref({
 const uid = computed(() => String(route.params.uid))
 const token = computed(() => String(route.params.token))
 
-const { isLoading, error } = useValidatePasswordResetLink(uid.value, token.value)
-const {
-  mutate: resetPassword,
-  isPending: isResetingPassword,
-  isSuccess,
-  error: resetError,
-} = useConfirmPasswordReset()
+const { isLoading, error } = useValidatePasswordResetLink(uid, token)
 
-const handleReset = () => {
+function handleReset() {
   resetPassword({
     uidb64: uid.value,
     token: token.value,

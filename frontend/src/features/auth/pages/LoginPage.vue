@@ -81,14 +81,14 @@ const store = useUserStore()
 const form = useForm(LoginSchema, { username: '', password: '' })
 const router = useRouter()
 
-const saveAndRedirect = (data: LoginResponse) => {
+const { mutate: login, isPending, error } = useLogin()
+
+function saveAndRedirect(data: LoginResponse) {
   store.setTokens(data)
   router.push('/')
 }
 
-const { mutate: login, isPending, error } = useLogin()
-
-const handleLogin = async () => {
+async function handleLogin() {
   if (!form.validate()) return
 
   login(

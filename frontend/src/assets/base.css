@@ -182,71 +182,6 @@ a {
   font-weight: 700;
 }
 
-.text-xs {
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-}
-
-.text-sm {
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-}
-
-.text-base {
-  font-size: var(--text-base);
-  line-height: var(--text-base--line-height);
-}
-
-.text-lg {
-  font-size: var(--text-lg);
-  line-height: var(--text-lg--line-height);
-}
-
-.text-xl {
-  font-size: var(--text-xl);
-  line-height: var(--text-xl--line-height);
-}
-
-.text-2xl {
-  font-size: var(--text-2xl);
-  line-height: var(--text-2xl--line-height);
-}
-
-.text-3xl {
-  font-size: var(--text-3xl);
-  line-height: var(--text-3xl--line-height);
-}
-
-.text-4xl {
-  font-size: var(--text-4xl);
-  line-height: var(--text-4xl--line-height);
-}
-
-.text-5xl {
-  font-size: var(--text-5xl);
-  line-height: var(--text-5xl--line-height);
-}
-
-.text-6xl {
-  font-size: var(--text-6xl);
-  line-height: var(--text-6xl--line-height);
-}
-
-.text-7xl {
-  font-size: var(--text-7xl);
-  line-height: var(--text-7xl--line-height);
-}
-
-.text-8xl {
-  font-size: var(--text-8xl);
-  line-height: var(--text-8xl--line-height);
-}
-
-.text-9xl {
-  font-size: var(--text-9xl);
-  line-height: var(--text-9xl--line-height);
-}
-
 .card-label {
   font-size: 0.8rem;
   font-weight: 600;
@@ -267,6 +202,10 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.text-error {
+  color: var(--destructive);
 }
 
 .notice {
@@ -295,10 +234,6 @@ a {
   color: var(--destructive);
 }
 
-.text-error {
-  color: var(--destructive);
-}
-
 .text-muted {
   color: var(--muted-foreground);
 }
@@ -322,7 +257,6 @@ a {
   font-weight: 700;
 }
 
-/* Common panel/card patterns */
 .panel {
   border: 1px solid var(--line-soft);
   border-radius: 18px;
@@ -358,7 +292,6 @@ a {
   margin: 0;
 }
 
-/* Step marker pattern */
 .step-marker {
   display: inline-flex;
   align-items: center;
@@ -376,14 +309,12 @@ a {
   text-transform: uppercase;
 }
 
-/* Form grid pattern */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
 }
 
-/* Action button pattern */
 .action-btn-mini {
   background: none;
   border: none;

@@ -28,7 +28,7 @@
               placeholder="name@mail.com"
               required
             />
-            <small v-if="error?.details.email" class="error">{{ error.details.email[0] }}</small>
+            <small v-if="error?.details.email" class="error">{{ error.details.email }}</small>
           </label>
 
           <div class="footer-actions">
@@ -53,9 +53,9 @@ import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useRequestPasswordReset } from '@/api/accounts/accounts'
 
-const { showNotification } = useNotification()
 const email = ref('')
 
+const { showNotification } = useNotification()
 const { mutate: forgotPassword, isPending: isLoading, error } = useRequestPasswordReset()
 
 const handleSubmit = () => {
