@@ -66,8 +66,8 @@
 
       <aside class="summary-panel" aria-label="Purchase summary">
         <ui-card variant="stat" class="summary-stat">
-          <strong>{{ total }}</strong>
-          <span>Points to deduct</span>
+          <span class="text-sm">Points to deduct:</span>
+          <strong class="text-xl">{{ total }}</strong>
         </ui-card>
 
         <ui-card variant="form" class="summary-card">
@@ -266,14 +266,8 @@ const submit = () => {
   min-width: 0;
 }
 
-.summary-stat {
-  justify-content: flex-start;
-}
-
 .summary-stat strong {
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  line-height: var(--text-2xl--line-height);
   font-weight: 800;
 }
 

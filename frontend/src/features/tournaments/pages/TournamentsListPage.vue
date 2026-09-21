@@ -402,7 +402,7 @@ const onStatusChange = () => {
 .filters {
   display: flex;
   gap: 0.4rem;
-  justify-content: flex-end;
+  justify-content: end;
 }
 
 .search-wrapper {
@@ -590,10 +590,6 @@ const onStatusChange = () => {
 
   .filters-wrapper {
     grid-template-columns: 1fr;
-  }
-
-  .filters {
-    justify-content: flex-start;
   }
 
   .tournaments-meta {

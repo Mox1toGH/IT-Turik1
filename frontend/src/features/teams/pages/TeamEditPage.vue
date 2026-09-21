@@ -30,8 +30,8 @@
           </template>
 
           <ui-card variant="stat" class="edit-stat-card">
-            <strong>{{ team?.members.length ?? 0 }}</strong>
-            <span>Members</span>
+            <span class="text-sm">Members:</span>
+            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
           </ui-card>
         </ui-skeleton-loader>
 
@@ -152,22 +152,14 @@ watchEffect(() => {
   align-items: center;
 }
 
-.edit-stat-card {
-  display: flex;
-}
-
 .edit-stat-card strong {
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  line-height: var(--text-2xl--line-height);
   font-weight: 800;
 }
 
 .edit-stat-card span {
   color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
   font-weight: 700;
   white-space: nowrap;
 }

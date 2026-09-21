@@ -1,24 +1,26 @@
 <template>
-  <SelectRoot v-model="model" :multiple="multiple" :disabled="isLoading" class="select-wrapper">
-    <SelectTrigger as-child>
-      <UiButton
-        variant="ghost"
-        class="select-trigger"
-        :disabled="isLoading"
-        data-testid="trigger-wrapper"
-      >
-        <span class="select-value">
-          {{ selectedLabel }}
-        </span>
+  <ComboboxRoot v-model="value" :multiple="multiple" :disabled="isLoading" class="select-wrapper">
+    <ComboboxAnchor as-child>
+      <ComboboxTrigger as-child>
+        <UiButton
+          variant="ghost"
+          class="select-trigger"
+          :disabled="isLoading"
+          data-testid="trigger-wrapper"
+        >
+          <span class="select-value">
+            {{ selectedLabel }}
+          </span>
 
-        <LoadingIcon v-if="isLoading" data-testid="loading-icon" />
+          <LoadingIcon v-if="isLoading" data-testid="loading-icon" />
 
-        <ArrowDown v-else class="select-chevron" data-testid="arrow-icon" />
-      </UiButton>
-    </SelectTrigger>
+          <ArrowDown v-else class="select-chevron" data-testid="arrow-icon" />
+        </UiButton>
+      </ComboboxTrigger>
+    </ComboboxAnchor>
 
-    <SelectPortal>
-      <SelectContent
+    <ComboboxPortal>
+      <ComboboxContent
         class="select-dropdown"
         position="popper"
         :align="props.align"
@@ -27,46 +29,57 @@
           zIndex: 9999,
         }"
       >
-        <SelectViewport class="select-list">
+        <div class="select-search-wrapper">
+          <ComboboxInput
+            class="select-search"
+            placeholder="Search..."
+            :disabled="isError || isLoading"
+            data-testid="select-search"
+          />
+        </div>
+
+        <ComboboxViewport class="select-list">
           <div v-if="isError" role="alert" class="select-error">
             {{ error }}
           </div>
 
-          <div v-else-if="!options.length" class="select-empty" data-testid="select-empty">
+          <ComboboxEmpty v-else class="select-empty" data-testid="select-empty">
             No options found
-          </div>
+          </ComboboxEmpty>
 
-          <SelectItem
+          <ComboboxItem
             v-for="option in options"
             :key="option.value"
             :value="option.value"
             class="select-option"
           >
-            <SelectItemText>
+            <span>
               {{ option.label }}
-            </SelectItemText>
+            </span>
 
-            <SelectItemIndicator>
+            <ComboboxItemIndicator>
               <SelectedIcon class="select-check" />
-            </SelectItemIndicator>
-          </SelectItem>
-        </SelectViewport>
-      </SelectContent>
-    </SelectPortal>
-  </SelectRoot>
+            </ComboboxItemIndicator>
+          </ComboboxItem>
+        </ComboboxViewport>
+      </ComboboxContent>
+    </ComboboxPortal>
+  </ComboboxRoot>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  SelectContent,
-  SelectItem,
-  SelectItemIndicator,
-  SelectItemText,
-  SelectPortal,
-  SelectRoot,
-  SelectTrigger,
-  SelectViewport,
+  ComboboxAnchor,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxItemIndicator,
+  ComboboxPortal,
+  ComboboxRoot,
+  ComboboxTrigger,
+  ComboboxViewport,
 } from 'reka-ui'
 
 import UiButton from './UiButton.vue'
@@ -85,6 +98,7 @@ export interface SelectOption {
 
 type Props = {
   multiple?: boolean
+  modelValue: SelectOptionValue | SelectOptionValue[] | null
   options?: SelectOption[]
   placeholder?: string
   isLoading?: boolean
@@ -94,16 +108,17 @@ type Props = {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: null,
   options: () => [],
   placeholder: 'Select an option',
   align: 'end',
 })
 
-const model = defineModel<SelectOptionValue | SelectOptionValue[] | null>({ default: null })
+const value = defineModel<SelectOptionValue | SelectOptionValue[] | null>()
 
 const selectedLabel = computed(() => {
   if (props.multiple) {
-    const values = Array.isArray(model.value) ? model.value : []
+    const values = Array.isArray(props.modelValue) ? props.modelValue : []
 
     if (!values.length) {
       return props.placeholder
@@ -116,7 +131,7 @@ const selectedLabel = computed(() => {
     return labels.length === 1 ? labels[0] : `${labels[0]} +${labels.length - 1} more`
   }
 
-  const option = props.options.find((option) => option.value === model.value)
+  const option = props.options.find((option) => option.value === props.modelValue)
 
   return option?.label ?? props.placeholder
 })
@@ -149,6 +164,39 @@ const selectedLabel = computed(() => {
   overflow: hidden;
 }
 
+.select-search-wrapper {
+  padding: 0.35rem 0.35rem 0;
+}
+
+:deep(.select-search) {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: 8px;
+  font: inherit;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  background: var(--secondary);
+  color: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+:deep(.select-search:focus) {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+  border-color: color-mix(in srgb, var(--secondary) 80%, white);
+}
+
+:deep(.select-search:disabled) {
+  cursor: not-allowed;
+}
+
+:deep(.select-search::placeholder) {
+  color: color-mix(in srgb, var(--foreground) 42%, transparent);
+}
+
 :deep(.select-list) {
   list-style: none;
   margin: 0;
@@ -169,9 +217,8 @@ const selectedLabel = computed(() => {
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   color: inherit;
-  gap: 10px;
-  outline: none;
   transition: background 0.1s ease;
+  gap: 10px;
 }
 
 .select-option:hover,
@@ -190,7 +237,7 @@ const selectedLabel = computed(() => {
 }
 
 .select-error,
-.select-empty {
+:deep(.select-empty) {
   padding: 0.75rem;
   text-align: center;
   font-size: var(--text-sm);
@@ -203,3 +250,4 @@ const selectedLabel = computed(() => {
   color: var(--primary);
 }
 </style>
+```

@@ -10,7 +10,7 @@
     <form class="form-grid" @submit.prevent="handleCreateCertificate">
       <label class="form-item">
         <p class="form-label">User</p>
-        <ui-select
+        <ui-select-search
           v-model="form.fields.value.user"
           :options="userOptions"
           :is-invalid="!!form.errors.value.user"
@@ -22,7 +22,7 @@
 
       <label class="form-item">
         <p class="form-label">Tournament</p>
-        <ui-select
+        <ui-select-search
           v-model="form.fields.value.tournament"
           :options="tournamentOptions"
           :is-invalid="!!form.errors.value.tournament"
@@ -36,7 +36,7 @@
 
       <label class="form-item">
         <p class="form-label">Team (optional)</p>
-        <ui-select
+        <ui-select-search
           v-model="form.fields.value.team"
           :options="teamOptions"
           :is-invalid="!!form.errors.value.team"
@@ -48,7 +48,7 @@
 
       <label class="form-item">
         <p class="form-label">Template (optional)</p>
-        <ui-select
+        <ui-select-search
           v-model="form.fields.value.template"
           :options="templateOptions"
           :is-invalid="!!form.errors.value.template"
@@ -98,11 +98,11 @@
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateCertificateSchema } from '@/schemas/certificates.schema'
 import { useNotification } from '@/composables/useNotification'
 import { useCreateCertificate } from '@/api/certificates/certificates'
+import UiSelectSearch from '@/components/ui/UiSelectSearch.vue'
 
 defineProps<{
   userOptions: Array<{ value: number; label: string }>

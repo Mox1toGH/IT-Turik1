@@ -1,7 +1,7 @@
 <template>
   <div class="toolbar">
     <ui-input v-model="search" placeholder="Search by name" />
-    <ui-select v-model="category" :options="categoryOptions" />
+    <ui-select-search v-model="category" :options="categoryOptions" />
     <ui-select v-model="type" :options="typeOptions" />
     <ui-select v-model="ordering" :options="orderingOptions" />
   </div>
@@ -16,6 +16,7 @@ import {
   type ProductOrdering,
   type ProductType,
 } from '../../composables/useShopCatalog'
+import UiSelectSearch from '@/components/ui/UiSelectSearch.vue'
 
 defineProps<{
   categoryOptions: { value: string; label: string }[]
