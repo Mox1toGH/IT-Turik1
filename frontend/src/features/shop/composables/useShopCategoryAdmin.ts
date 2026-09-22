@@ -7,7 +7,6 @@ import {
 } from '@/api/shop/shop'
 import { useNotification } from '@/composables/useNotification'
 
-/** Список та CRUD категорій (адмін). */
 export function useShopCategoryAdmin(enabled: Ref<boolean>) {
   const { showNotification } = useNotification()
 

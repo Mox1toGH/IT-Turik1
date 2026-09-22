@@ -42,17 +42,14 @@
 
     <product-detail-modal
       v-model="isDetailOpen"
-      :product="activeProduct"
-      :balance="pointsBalance?.balance ?? 0"
-      :submitting="isPurchasePending"
-      @purchase="handlePurchase"
+      :product="selectedProduct"
       @preview="openImagePreview"
     />
 
     <product-editor-modal
-      v-model="isProductFormOpen"
-      :mode="editingProduct ? 'edit' : 'create'"
-      :product="editingProduct"
+      v-model="isProductEditOpen"
+      :mode="selectedProduct ? 'edit' : 'create'"
+      :product="selectedProduct"
       :categories="adminCategories"
       :avatar-frames="avatarFrames"
       :submitting="isSavingProduct"
@@ -84,18 +81,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
-import ProductEditorModal from '../components/shop/ProductEditorModal.vue'
+import ProductEditorModal from '../components/shop/modals/ProductEditorModal.vue'
 import ShopHero from '../components/shop/ShopHero.vue'
 import ShopToolbar from '../components/shop/ShopToolbar.vue'
 import ProductGrid from '../components/shop/ProductGrid.vue'
-import ProductDetailModal from '../components/shop/ProductDetailModal.vue'
-import CategoryManagerModal from '../components/shop/CategoryManagerModal.vue'
-import ImagePreviewModal from '../components/shop/ImagePreviewModal.vue'
+import ProductDetailModal from '../components/shop/modals/ProductDetailModal.vue'
+import CategoryManagerModal from '../components/shop/modals/CategoryManagerModal.vue'
+import ImagePreviewModal from '../components/shop/modals/ImagePreviewModal.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useShopCatalog } from '../composables/useShopCatalog'
-import { useProductPurchase } from '../composables/useProductPurchase'
 import { useShopProductAdmin } from '../composables/useShopProductAdmin'
 import { useShopCategoryAdmin } from '../composables/useShopCategoryAdmin'
+import type { Product } from '@/api/.ts.schemas.ts'
 
 const { data: profile } = useGetUserProfile()
 const isAdmin = computed(() => profile.value?.role === 'admin')
@@ -116,25 +113,37 @@ const {
   error,
 } = useShopCatalog()
 
-const {
-  pointsBalance,
-  isPurchasePending,
-  isDetailOpen,
-  activeProduct,
-  openProductDetail,
-  handlePurchase,
-} = useProductPurchase()
+const selectedProduct = ref<Product | null>(null)
+
+const isDetailOpen = ref(false)
+const isProductCreateOpen = ref(false)
+const isProductEditOpen = ref(false)
+const isProductDeleteOpen = ref(false)
+
+const openProductCreate = () => {
+  selectedProduct.value = null
+  isProductCreateOpen.value = true
+}
+
+const openProductEdit = (product: Product) => {
+  selectedProduct.value = product
+  isProductEditOpen.value = true
+}
+
+const openProductDelete = (product: Product) => {
+  selectedProduct.value = product
+  isProductDeleteOpen.value = true
+}
+
+const openProductDetail = (product: Product) => {
+  selectedProduct.value = product
+  isDetailOpen.value = true
+}
 
 const {
   avatarFrames,
-  isProductFormOpen,
-  editingProduct,
-  isProductDeleteOpen,
   isSavingProduct,
   isDeletingProduct,
-  openProductCreate,
-  openProductEdit,
-  openProductDelete,
   submitProductForm,
   confirmProductDelete,
 } = useShopProductAdmin()

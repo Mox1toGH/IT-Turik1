@@ -9,7 +9,6 @@ import {
 import { useNotification } from '@/composables/useNotification'
 import type { Product } from '@/api/.ts.schemas'
 
-/** Стан модалок та мутації CRUD для товарів (адмін). */
 export function useShopProductAdmin() {
   const { showNotification } = useNotification()
 

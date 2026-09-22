@@ -17,7 +17,6 @@ export const orderingOptions = [
   { value: '-price', label: 'Price high-low' },
 ]
 
-/** Фільтри, пагінація та запит списку товарів. */
 export function useShopCatalog(initialPageSize = 12) {
   const currentPage = ref(1)
   const pageSize = ref(initialPageSize)

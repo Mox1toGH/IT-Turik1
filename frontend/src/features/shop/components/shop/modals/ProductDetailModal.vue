@@ -94,7 +94,7 @@
           <div class="summary-list">
             <ui-card variant="inset" class="summary-list-item">
               <span>Current balance</span>
-              <strong>{{ balance }}</strong>
+              <strong>{{ pointsBalance }}</strong>
             </ui-card>
             <ui-card variant="inset" class="summary-list-item">
               <span>Will deduct</span>
@@ -111,11 +111,11 @@
 
     <template #footer>
       <div class="footer-actions">
-        <ui-button variant="secondary" :disabled="submitting" @click="isOpen = false">
+        <ui-button variant="secondary" :disabled="isPurchasePending" @click="isOpen = false">
           Cancel
         </ui-button>
-        <ui-button :disabled="submitting || !product?.is_available" @click="submit">
-          {{ submitting ? 'Processing...' : 'Buy' }}
+        <ui-button :disabled="isPurchasePending || !product?.is_available" @click="handlePurchase">
+          {{ isPurchasePending ? 'Processing...' : 'Buy' }}
         </ui-button>
       </div>
     </template>
@@ -128,34 +128,20 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import { getProductImage } from '../../lib/getProductImage'
+import { getProductImage } from '../../../lib/getProductImage'
 import { truncateText } from '@/lib/utils'
 import type { Product } from '@/api/.ts.schemas'
+import { useGetMyPointsBalance } from '@/api/points/points'
+import { usePurchaseProduct } from '@/api/shop/shop'
+import { useNotification } from '@/composables/useNotification'
 
-const props = withDefaults(
-  defineProps<{
-    product: Product | null
-    balance?: number
-    submitting?: boolean
-  }>(),
-  { balance: 0, submitting: false },
-)
-
-const emit = defineEmits<{
-  purchase: [payload: { productId: number; quantity: number }]
-  preview: [url: string]
+const props = defineProps<{
+  product: Product | null
 }>()
-
+const emit = defineEmits<{ preview: [url: string] }>()
 const isOpen = defineModel<boolean>({ default: false })
 
 const quantity = ref(1)
-
-watch(
-  () => [isOpen.value, props.product?.id],
-  () => {
-    quantity.value = 1
-  },
-)
 
 const images = computed(() => {
   if (!props.product) return []
@@ -168,9 +154,30 @@ const cover = computed(() => images.value[0] || '')
 const maxQuantity = computed(() => Math.max(1, props.product?.stock_quantity || 0))
 const total = computed(() => (Number(quantity.value) || 1) * (props.product?.price ?? 0))
 
-const submit = () => {
+const { showNotification } = useNotification()
+const { data: pointsBalance } = useGetMyPointsBalance()
+const { mutate: purchase, isPending: isPurchasePending } = usePurchaseProduct()
+
+watch(
+  () => [isOpen.value, props.product?.id],
+  () => {
+    quantity.value = 1
+  },
+)
+
+function handlePurchase(payload: { productId: number; quantity: number }) {
   if (!props.product) return
-  emit('purchase', { productId: props.product.id, quantity: Number(quantity.value) || 1 })
+
+  purchase(
+    { data: { product_id: payload.productId, quantity: payload.quantity } },
+    {
+      onSuccess: (res) => {
+        showNotification(`Purchase successful. Order #${res.id} (${res.status}).`, 'success')
+        isOpen.value = false
+      },
+      onError: (error) => showNotification(error?.message ?? 'Purchase failed.', 'error'),
+    },
+  )
 }
 </script>
 
