@@ -33,30 +33,7 @@
         :search="search"
       >
         <template #default="{ team }">
-          <RouterLink :to="`/teams/${team.id}`" class="team-item">
-            <div class="team-info">
-              <ui-badge v-if="!team.is_active" variant="red">
-                <CrossIcon />
-              </ui-badge>
-              <TeamIcon :class="[{ 'text-muted': !team.is_active }]" />
-              <p :title="team.name" :class="[{ 'text-muted': !team.is_active }]">
-                {{ truncateText(team.name, 15) }}
-              </p>
-            </div>
-
-            <div class="team-action-group">
-              <ui-badge variant="primary">{{ team.members_count }} members</ui-badge>
-              <ui-button
-                v-if="isAdmin"
-                size="sm"
-                variant="danger"
-                :disabled="isUpdating"
-                @click.prevent.stop="openDisqualifyModal(team)"
-              >
-                <TeamDeleteIcon />
-              </ui-button>
-            </div>
-          </RouterLink>
+          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
         </template>
       </TournamentTeamSection>
 
@@ -68,77 +45,21 @@
         :search="search"
       >
         <template #default="{ team }">
-          <RouterLink :to="`/teams/${team.id}`" class="team-item">
-            <div class="team-info">
-              <TeamIcon />
-              {{ team.name }}
-            </div>
-
-            <div class="team-action-group">
-              <ui-badge variant="red">Disqualified</ui-badge>
-              <ui-button
-                v-if="
-                  isAdmin &&
-                  (tournament?.status === 'registration' || tournament?.status === 'running')
-                "
-                size="sm"
-                variant="default"
-                :disabled="isUpdating"
-                @click.prevent.stop="openReactivateModal(team)"
-              >
-                <AddTeamIcon />
-              </ui-button>
-            </div>
-          </RouterLink>
+          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
         </template>
       </TournamentTeamSection>
     </div>
-
-    <ui-confirm-modal
-      v-model="showConfirmModal"
-      :title="confirmModalTitle"
-      :message="confirmModalConfirmMessage"
-      :confirm-text="confirmModalConfirmText"
-      :confirm-variant="confirmModalVariant"
-      :loading="isUpdating"
-      @confirm="handleConfirmAction"
-    >
-      <div v-if="pendingAction?.action === 'disqualified'" class="reason-input form-item">
-        <p class="form-label">Reason:</p>
-        <ui-input
-          v-model="disqualificationReason"
-          label="Reason (optional)"
-          placeholder="e.g. Violation of rules"
-          style="width: 100%"
-          autofocus
-        />
-      </div>
-    </ui-confirm-modal>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import TeamIcon from '@/icons/TeamIcon.vue'
-import { RouterLink } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
-import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
-import AddTeamIcon from '@/icons/AddTeamIcon.vue'
-import { truncateText } from '@/lib/utils'
-import CrossIcon from '@/icons/CrossIcon.vue'
-import {
-  useDisqualifyTeamFromTournament,
-  useGetTournament,
-  useListTournamentTeams,
-} from '@/api/tournaments/tournaments'
+import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { TournamentTeamRegistrationList } from '@/api/.ts.schemas'
-import { useNotification } from '@/composables/useNotification'
+import TeamCard from './TeamCard.vue'
 
 interface Props {
   tournamentId: number
@@ -166,69 +87,6 @@ const error = computed(() => activeTeamsError.value || disqualifiedTeamsError.va
 const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
-
-const showConfirmModal = ref(false)
-const confirmModalTitle = ref('')
-const confirmModalConfirmText = ref('')
-const confirmModalConfirmMessage = ref<string | undefined>()
-const confirmModalVariant = ref<'default' | 'danger'>('default')
-const disqualificationReason = ref('')
-const pendingAction = ref<{
-  team: TournamentTeamRegistrationList
-  action: 'activated' | 'disqualified'
-} | null>(null)
-
-const { mutate: updateRegistration, isPending: isUpdating } = useDisqualifyTeamFromTournament()
-
-const { showNotification } = useNotification()
-
-const openDisqualifyModal = (team: TournamentTeamRegistrationList) => {
-  pendingAction.value = { team, action: 'disqualified' }
-  disqualificationReason.value = ''
-  confirmModalTitle.value = `Disqualify ${truncateText(team.name, 10)}`
-  confirmModalConfirmText.value = 'Disqualify'
-  confirmModalVariant.value = 'danger'
-  showConfirmModal.value = true
-}
-
-const openReactivateModal = (team: TournamentTeamRegistrationList) => {
-  pendingAction.value = { team, action: 'activated' }
-  confirmModalTitle.value = `Reactivate ${truncateText(team.name, 10)}`
-  confirmModalConfirmText.value = 'Reactivate'
-  confirmModalConfirmMessage.value = 'Are you sure you want to reactivate this team?'
-  confirmModalVariant.value = 'default'
-  showConfirmModal.value = true
-}
-
-const handleConfirmAction = () => {
-  if (!pendingAction.value) return
-
-  const isDisqualifying = pendingAction.value.action === 'disqualified'
-
-  updateRegistration(
-    {
-      id: props.tournamentId,
-      registrationPk: pendingAction.value.team.registration_id,
-      data: {
-        action: isDisqualifying ? 'disqualify' : 'reactivate',
-        disqualification_reason: isDisqualifying ? disqualificationReason.value : '',
-      },
-    },
-    {
-      onSuccess: () => {
-        showConfirmModal.value = false
-        pendingAction.value = null
-        disqualificationReason.value = ''
-      },
-      onError: (error) => {
-        showConfirmModal.value = false
-        pendingAction.value = null
-
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
 </script>
 
 <style scoped>
@@ -272,48 +130,6 @@ const handleConfirmAction = () => {
 
 .teams-list-wrap {
   background-color: var(--muted);
-}
-
-.team-info {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.team-info p {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.team-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.8rem;
-  margin-top: 0.55rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: var(--background);
-  color: var(--foreground);
-  text-decoration: none;
-}
-
-.team-item:hover {
-  color: var(--primary);
-}
-
-.team-action-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.team-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
 }
 
 .teams-list {
