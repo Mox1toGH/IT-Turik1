@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from 'vue'
+import { computed, type Ref } from 'vue'
 import {
   useCreateAdminCategory,
   useDeleteAdminCategory,
@@ -12,11 +12,6 @@ export function useShopCategoryAdmin(enabled: Ref<boolean>) {
 
   const { data: adminCategoryData } = useListAdminCategories(void 0, { query: { enabled } })
   const adminCategories = computed(() => adminCategoryData.value?.results ?? [])
-
-  const isCategoryModalOpen = ref(false)
-  const openCategoryModal = () => {
-    isCategoryModalOpen.value = true
-  }
 
   const { mutate: createCategoryMutation } = useCreateAdminCategory()
   const { mutate: updateCategoryMutation } = useUpdateAdminCategory()
@@ -44,8 +39,6 @@ export function useShopCategoryAdmin(enabled: Ref<boolean>) {
 
   return {
     adminCategories,
-    isCategoryModalOpen,
-    openCategoryModal,
     createCategory,
     updateCategory,
     deleteCategory,

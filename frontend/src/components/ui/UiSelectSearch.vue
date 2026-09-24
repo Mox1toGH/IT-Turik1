@@ -27,6 +27,8 @@
         :side-offset="3"
         :style="{
           zIndex: 9999,
+          width: 'var(--reka-combobox-trigger-width)',
+          minWidth: 'var(--reka-combobox-trigger-width)',
         }"
       >
         <div class="select-search-wrapper">

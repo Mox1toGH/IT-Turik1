@@ -25,6 +25,8 @@
         :side-offset="3"
         :style="{
           zIndex: 9999,
+          width: 'var(--reka-select-trigger-width)',
+          minWidth: 'var(--reka-select-trigger-width)',
         }"
       >
         <SelectViewport class="select-list">
@@ -123,10 +125,6 @@ const selectedLabel = computed(() => {
 </script>
 
 <style scoped>
-.select-trigger {
-  width: 100%;
-}
-
 .select-chevron {
   flex-shrink: 0;
   color: color-mix(in srgb, var(--foreground) 42%, transparent);

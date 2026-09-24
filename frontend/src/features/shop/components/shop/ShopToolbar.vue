@@ -1,6 +1,6 @@
 <template>
   <div class="toolbar">
-    <ui-input v-model="search" placeholder="Search by name" />
+    <ui-input v-model="search" class="toolbar-search" placeholder="Search by name" />
     <ui-select-search v-model="category" :options="categoryOptions" />
     <ui-select v-model="type" :options="typeOptions" />
     <ui-select v-model="ordering" :options="orderingOptions" />
@@ -38,7 +38,17 @@ const ordering = defineModel<ProductOrdering>('ordering', { default: 'name' })
 
 @media (max-width: 900px) {
   .toolbar {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+  }
+
+  .toolbar-search {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .toolbar :deep(.select-wrapper) {
+    grid-row: 2;
   }
 }
 </style>

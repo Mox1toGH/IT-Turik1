@@ -18,11 +18,6 @@
         </div>
 
         <div class="row two">
-          <ui-card variant="inset" class="summary-list-item">
-            <span>Total categories</span>
-            <strong>{{ categories.length }}</strong>
-          </ui-card>
-
           <label class="field">
             <span class="label">Search</span>
             <ui-input v-model.trim="categorySearch" placeholder="Search categories" />
@@ -216,18 +211,6 @@ const submitCreate = () => {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   align-items: end;
-}
-
-.summary-list-item span {
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-}
-
-.summary-list-item strong {
-  font-family: var(--font-display);
-  font-weight: 800;
 }
 
 .categories-list {

@@ -97,28 +97,16 @@ import type { Product } from '@/api/.ts.schemas.ts'
 const { data: profile } = useGetUserProfile()
 const isAdmin = computed(() => profile.value?.role === 'admin')
 
-const {
-  currentPage,
-  pageSize,
-  search,
-  selectedCategory,
-  selectedType,
-  selectedOrdering,
-  products,
-  totalCount,
-  totalPages,
-  categoryOptions,
-  isLoading,
-  isLoadingError,
-  error,
-} = useShopCatalog()
-
 const selectedProduct = ref<Product | null>(null)
 
 const isDetailOpen = ref(false)
 const isProductCreateOpen = ref(false)
 const isProductEditOpen = ref(false)
 const isProductDeleteOpen = ref(false)
+const isCategoryModalOpen = ref(false)
+
+const isImagePreviewOpen = ref(false)
+const previewImageUrl = ref('')
 
 const openProductCreate = () => {
   selectedProduct.value = null
@@ -140,6 +128,32 @@ const openProductDetail = (product: Product) => {
   isDetailOpen.value = true
 }
 
+const openCategoryModal = () => {
+  isCategoryModalOpen.value = true
+}
+
+const openImagePreview = (url: string) => {
+  if (!url) return
+  previewImageUrl.value = url
+  isImagePreviewOpen.value = true
+}
+
+const {
+  currentPage,
+  pageSize,
+  search,
+  selectedCategory,
+  selectedType,
+  selectedOrdering,
+  products,
+  totalCount,
+  totalPages,
+  categoryOptions,
+  isLoading,
+  isLoadingError,
+  error,
+} = useShopCatalog()
+
 const {
   avatarFrames,
   isSavingProduct,
@@ -148,23 +162,8 @@ const {
   confirmProductDelete,
 } = useShopProductAdmin()
 
-const {
-  adminCategories,
-  isCategoryModalOpen,
-  openCategoryModal,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-} = useShopCategoryAdmin(isAdmin)
-
-const isImagePreviewOpen = ref(false)
-const previewImageUrl = ref('')
-
-const openImagePreview = (url: string) => {
-  if (!url) return
-  previewImageUrl.value = url
-  isImagePreviewOpen.value = true
-}
+const { adminCategories, createCategory, updateCategory, deleteCategory } =
+  useShopCategoryAdmin(isAdmin)
 </script>
 
 <style scoped>

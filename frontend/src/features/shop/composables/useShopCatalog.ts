@@ -47,6 +47,7 @@ export function useShopCatalog(initialPageSize = 12) {
   const categoryOptions = computed(() => {
     const set = new Map<number, string>()
     for (const item of products.value) set.set(item.category.id, item.category.name)
+    console.log(set)
     return [
       { value: 'all', label: 'All categories' },
       ...Array.from(set.entries()).map(([id, name]) => ({ value: String(id), label: name })),

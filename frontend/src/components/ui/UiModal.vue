@@ -2,14 +2,19 @@
   <DialogRoot :open="isOpen" @update:open="handleOpenChange">
     <DialogPortal>
       <Transition name="modal-overlay">
-        <DialogOverlay v-if="isOpen" class="modal-backdrop" data-testid="modal-backdrop" />
+        <DialogOverlay
+          v-if="isOpen"
+          ref="modalBackdrop"
+          class="modal-backdrop"
+          data-testid="modal-backdrop"
+        />
       </Transition>
 
       <Transition name="modal">
         <DialogContent
           v-if="isOpen"
           class="modal-content"
-          :style="{ width: `min(100%, ${maxWidth})` }"
+          :style="{ width: `min(100%, ${maxWidth})`, zIndex: 51 + level * 2 }"
           @pointer-down-outside="handlePointerDownOutside"
         >
           <ui-card :scrollable="props.scrollable">
@@ -65,6 +70,7 @@ import {
   DialogClose,
   VisuallyHidden,
 } from 'reka-ui'
+import { ref } from 'vue'
 
 interface Props {
   defaultOpen?: boolean
@@ -86,24 +92,50 @@ if (props.defaultOpen) {
   isOpen.value = true
 }
 
+const level = ref(1)
+
+function getOpenedCount() {
+  return Number(document.documentElement.getAttribute('modals-opened') ?? 1)
+}
+
+function incrementOpenedCount() {
+  level.value += 1
+  document.documentElement.setAttribute('modals-opened', level.value.toString())
+}
+
+function decrementOpenedCount() {
+  if (level.value != 0) level.value -= 1
+  document.documentElement.setAttribute('modals-opened', level.value.toString())
+}
+
 function open() {
   isOpen.value = true
+  incrementOpenedCount()
 }
 
 function close() {
   isOpen.value = false
+  decrementOpenedCount()
   emit('close')
 }
 
 function handleOpenChange(value: boolean) {
   isOpen.value = value
-  if (!value) emit('close')
+
+  if (value) {
+    level.value = getOpenedCount()
+    incrementOpenedCount()
+  } else {
+    decrementOpenedCount()
+    emit('close')
+  }
 }
 
 function handlePointerDownOutside(e: Event) {
   if (!props.closeOnBackdrop) {
     e.preventDefault()
   }
+  decrementOpenedCount()
 }
 
 defineExpose({ open, close, isOpen })
