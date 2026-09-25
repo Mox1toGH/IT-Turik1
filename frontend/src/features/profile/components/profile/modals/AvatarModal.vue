@@ -60,13 +60,13 @@ import {
   toObjectPosition,
   writeImagePosition,
 } from '@/lib/imagePosition'
-import type { User } from '@/api/.ts.schemas'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
 import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import type { UserResponse } from '@/api/backendAPINinja.schemas'
 
 const props = withDefaults(
   defineProps<{
-    user?: User
+    user?: UserResponse
     disabled?: boolean
     showTrigger?: boolean
   }>(),
@@ -136,10 +136,11 @@ const removeAvatar = () => {
 const saveAvatar = () => {
   if (!props.user) return
 
-  if (!selectedAvatar.value) return
+  const avatar = selectedAvatar.value[0]
+  if (!avatar) return
 
   updateAvatar(
-    { data: { avatar: selectedAvatar.value[0] } },
+    { data: { avatar } },
     {
       onSuccess: async () => {
         if (avatarPositionKey.value) {

@@ -130,13 +130,13 @@ import UiModal from '@/components/ui/UiModal.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import { getProductImage } from '../../../lib/getProductImage'
 import { truncateText } from '@/lib/utils'
-import type { Product } from '@/api/.ts.schemas'
 import { useGetMyPointsBalance } from '@/api/points/points'
 import { usePurchaseProduct } from '@/api/shop/shop'
 import { useNotification } from '@/composables/useNotification'
+import type { ProductResponse } from '@/api/backendAPINinja.schemas'
 
 const props = defineProps<{
-  product: Product | null
+  product: ProductResponse | null
 }>()
 const emit = defineEmits<{ preview: [url: string] }>()
 const isOpen = defineModel<boolean>({ default: false })
@@ -172,7 +172,11 @@ function handlePurchase(payload: { productId: number; quantity: number }) {
     { data: { product_id: payload.productId, quantity: payload.quantity } },
     {
       onSuccess: (res) => {
-        showNotification(`Purchase successful. Order #${res.id} (${res.status}).`, 'success')
+        if (res.result_type === 'order') {
+          showNotification(`Purchase successful. Order #${res.id} (${res.status}).`, 'success')
+        } else {
+          showNotification(res.message, 'success') // TODO: fix this shi
+        }
         isOpen.value = false
       },
       onError: (error) => showNotification(error?.message ?? 'Purchase failed.', 'error'),

@@ -68,12 +68,12 @@
                 :size="40"
               />
               <div>
-              <div style="display: flex; justify-content: space-between">
-                <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                <ui-badge class>invited</ui-badge>
-              </div>
+                <div style="display: flex; justify-content: space-between">
+                  <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                  <ui-badge class>invited</ui-badge>
+                </div>
 
-              <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
+                <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
               </div>
             </div>
           </ui-card>
@@ -138,7 +138,7 @@ import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useInviteMemberToTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
-import type { Team, TeamInvitation } from '@/api/.ts.schemas'
+import type { TeamInvitationResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   teamId: number
@@ -147,7 +147,7 @@ interface Props {
 }
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: Team): void
+  (e: 'updateTeam', newTeamValue: TeamResponse): void
 }>()
 
 const { showNotification } = useNotification()
@@ -156,7 +156,7 @@ const props = defineProps<Props>()
 const { data: invitations, isLoading, isLoadingError } = useListTeamInvitationsByTeam(props.teamId)
 
 const uniqueInvitations = computed(() => {
-  const byUserId = new Map<number, TeamInvitation>()
+  const byUserId = new Map<number, TeamInvitationResponse>()
   for (const inv of invitations.value ?? []) {
     const uid = inv.user.id
 
@@ -193,7 +193,7 @@ const resendInvitation = (userId: number) => {
   loadingInvitationIds.value.add(userId)
 
   resendInvitationMutate(
-    { id: props.teamId, data: { user_id: userId } },
+    { pk: props.teamId, data: { user_id: userId } },
     {
       onSuccess: (data) => {
         emit('updateTeam', data)

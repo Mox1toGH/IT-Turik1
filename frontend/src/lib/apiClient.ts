@@ -95,11 +95,15 @@ export const customInstance = <T>(
 ): Promise<T> => {
   let finalConfig = { ...config, ...options }
 
-  if (
-    finalConfig.data &&
-    !(finalConfig.data instanceof FormData) &&
-    containsFile(finalConfig.data)
-  ) {
+  if (finalConfig.data instanceof FormData) {
+    finalConfig = {
+      ...finalConfig,
+      headers: {
+        ...finalConfig.headers,
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  } else if (finalConfig.data && containsFile(finalConfig.data)) {
     finalConfig = {
       ...finalConfig,
       data: toFormData(finalConfig.data as Record<string, unknown>),

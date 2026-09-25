@@ -213,9 +213,9 @@ const pointsError = computed(() =>
   Boolean(pointsBalanceError.value || pointsTransactionsError.value),
 )
 const tournamentPointsEarned = computed(() => {
-  if (!tournament.value?.name || !pointsTransactions.value?.results) return null
+  if (!tournament.value?.name || !pointsTransactions.value?.items) return null
 
-  return pointsTransactions.value.results
+  return pointsTransactions.value.items
     .filter((transaction) => transaction.reason?.includes(tournament.value?.name))
     .reduce((sum, transaction) => sum + (transaction.amount ?? 0), 0)
 })

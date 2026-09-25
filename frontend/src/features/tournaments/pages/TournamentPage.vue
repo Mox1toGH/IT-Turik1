@@ -324,13 +324,16 @@ const resetBannerState = () => {
 }
 
 const saveBanner = () => {
-  if (!selectedBanner.value) return
+  const banner = selectedBanner.value[0]
+  if (!banner) return
+
   writeImagePosition(bannerPositionKey.value, {
     x: bannerPositionX.value,
     y: bannerPositionY.value,
   })
+
   updateBanner(
-    { id, data: { banner: selectedBanner.value[0] } },
+    { id, data: { banner } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')

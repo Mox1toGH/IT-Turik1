@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
+from backend.ninja_exceptions import ValidationError
 
 from points.models import PointsTransaction, UserPointsBalance
 

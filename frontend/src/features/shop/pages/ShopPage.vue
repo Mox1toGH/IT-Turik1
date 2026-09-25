@@ -92,15 +92,14 @@ import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useShopCatalog } from '../composables/useShopCatalog'
 import { useShopProductAdmin } from '../composables/useShopProductAdmin'
 import { useShopCategoryAdmin } from '../composables/useShopCategoryAdmin'
-import type { Product } from '@/api/.ts.schemas.ts'
+import type { ProductResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const { data: profile } = useGetUserProfile()
 const isAdmin = computed(() => profile.value?.role === 'admin')
 
-const selectedProduct = ref<Product | null>(null)
+const selectedProduct = ref<ProductResponse | null>(null)
 
 const isDetailOpen = ref(false)
-const isProductCreateOpen = ref(false)
 const isProductEditOpen = ref(false)
 const isProductDeleteOpen = ref(false)
 const isCategoryModalOpen = ref(false)
@@ -110,20 +109,20 @@ const previewImageUrl = ref('')
 
 const openProductCreate = () => {
   selectedProduct.value = null
-  isProductCreateOpen.value = true
+  isProductEditOpen.value = true
 }
 
-const openProductEdit = (product: Product) => {
+const openProductEdit = (product: ProductResponse) => {
   selectedProduct.value = product
   isProductEditOpen.value = true
 }
 
-const openProductDelete = (product: Product) => {
+const openProductDelete = (product: ProductResponse) => {
   selectedProduct.value = product
   isProductDeleteOpen.value = true
 }
 
-const openProductDetail = (product: Product) => {
+const openProductDetail = (product: ProductResponse) => {
   selectedProduct.value = product
   isDetailOpen.value = true
 }

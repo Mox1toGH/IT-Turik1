@@ -1,6 +1,6 @@
 import { defineConfig } from 'orval'
 
-const ORVAL_INPUT = process.env.ORVAL_INPUT ?? 'http://localhost:8000/api/schema/'
+const ORVAL_INPUT = process.env.ORVAL_INPUT ?? 'http://localhost:8000/api/openapi.json'
 const ORVAL_BASE_URL = process.env.ORVAL_BASE_URL ?? 'http://localhost:8000'
 
 export default defineConfig({

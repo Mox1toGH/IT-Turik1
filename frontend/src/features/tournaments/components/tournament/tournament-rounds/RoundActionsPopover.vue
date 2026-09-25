@@ -69,8 +69,8 @@
 </template>
 
 <script setup lang="ts">
-import type { StatusE43Enum } from '@/api/.ts.schemas'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { RoundStatus } from '@/api/backendAPINinja.schemas'
 import {
   useCloseRoundSubmissions,
   useDeleteRound,
@@ -85,7 +85,7 @@ import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
 interface Props {
   roundId: number
   tournamentId: number
-  status: StatusE43Enum
+  status: RoundStatus
 }
 
 const props = defineProps<Props>()

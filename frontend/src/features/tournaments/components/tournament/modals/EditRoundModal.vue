@@ -161,13 +161,13 @@ import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
-import type { Criterion, Round } from '@/api/.ts.schemas'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
 import EditorModal from '../../create-round/modals/EditorModal.vue'
+import type { CriterionResponse, RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
   modelValue: boolean
-  round: Round
+  round: RoundResponse
 }
 
 interface Form {
@@ -176,7 +176,7 @@ interface Form {
   tech_requirements: JSONContent | null
   description: JSONContent | null
   must_have_requirements: JSONContent | null
-  criteria: Criterion[]
+  criteria: CriterionResponse[]
   start_date: Date
   start_time: string
   end_date: Date

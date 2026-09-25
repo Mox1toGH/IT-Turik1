@@ -29,12 +29,14 @@
           Failed to load tournament history ({{ historyError?.code ?? 'unknown' }}).
         </p>
 
-        <p v-else-if="!historyItems.length" class="text-muted">
-          No tournament history yet.
-        </p>
+        <p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p>
 
         <div v-else class="history-list">
-          <ui-card v-for="item in historyItems" :key="`${item.tournament_id}-${item.team.id}`" class="history-card">
+          <ui-card
+            v-for="item in historyItems"
+            :key="`${item.tournament_id}-${item.team.id}`"
+            class="history-card"
+          >
             <template #header>
               <div class="history-head">
                 <h3 class="history-title">{{ item.tournament_name }}</h3>
@@ -47,7 +49,9 @@
             <div class="history-grid">
               <p><strong>Dates:</strong> {{ formatDateRange(item.start_date, item.end_date) }}</p>
               <p><strong>Team:</strong> {{ item.team.name }}</p>
-              <p><strong>Final place:</strong> {{ item.final_rank ? `#${item.final_rank}` : '-' }}</p>
+              <p>
+                <strong>Final place:</strong> {{ item.final_rank ? `#${item.final_rank}` : '-' }}
+              </p>
               <p><strong>Final score:</strong> {{ formatScore(item.final_score) }}</p>
             </div>
 
@@ -77,7 +81,11 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { useGetUser, useGetUserProfile, useListUserTournamentHistory } from '@/api/accounts/accounts'
+import {
+  useGetUser,
+  useGetUserProfile,
+  useListUserTournamentHistory,
+} from '@/api/accounts/accounts'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,7 +93,9 @@ const { data: viewer } = useGetUserProfile()
 
 const routeUserId = computed(() => Number(route.params.id || 0))
 const isOwnView = computed(() => !route.params.id)
-const targetUserId = computed(() => (isOwnView.value ? Number(viewer.value?.id || 0) : routeUserId.value))
+const targetUserId = computed(() =>
+  isOwnView.value ? Number(viewer.value?.id || 0) : routeUserId.value,
+)
 
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
@@ -100,7 +110,9 @@ const {
 })
 
 const historyItems = computed(() => history.value ?? [])
-const displayUserName = computed(() => viewedUser.value?.full_name || viewedUser.value?.username || 'User')
+const displayUserName = computed(
+  () => viewedUser.value?.full_name || viewedUser.value?.username || 'User',
+)
 
 const goBack = () => {
   if (isOwnView.value) {
@@ -125,11 +137,9 @@ const formatDateRange = (start?: string | null, end?: string | null) => {
   return `${formatDate(start)} - ${formatDate(end)}`
 }
 
-const formatScore = (score?: string | null) => {
-  if (!score) return '-'
-  const normalized = Number(score)
-  if (Number.isNaN(normalized)) return '-'
-  return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(2)
+const formatScore = (score?: number | null) => {
+  if (score === null || score === undefined) return '-'
+  return Number.isInteger(score) ? String(score) : score.toFixed(2)
 }
 
 const statusVariant = (status?: string) => {

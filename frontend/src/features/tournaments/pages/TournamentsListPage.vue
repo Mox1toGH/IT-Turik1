@@ -216,8 +216,8 @@ import ArrowRight from '@/icons/ArrowRight.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { ListTournamentsParams, StatusD67Enum } from '@/api/.ts.schemas'
 import { useListTournaments } from '@/api/tournaments/tournaments'
+import type { ListTournamentsParams, TournamentStatus } from '@/api/backendAPINinja.schemas'
 
 const statusOptions = computed(() => {
   const base = [
@@ -234,7 +234,7 @@ const currentPage = ref(1)
 const pageSize = 12
 const searchInput = ref('')
 const searchQuery = ref('')
-const statusFilter = ref<NonNullable<StatusD67Enum[]>>([])
+const statusFilter = ref<NonNullable<TournamentStatus[]>>([])
 
 const { data: user } = useGetUserProfile()
 const params = computed(() => ({
@@ -254,7 +254,7 @@ const {
 })
 
 const pageItems = computed(() => data.value?.data ?? [])
-const statusBadgeVariant = (status?: StatusD67Enum) => {
+const statusBadgeVariant = (status?: TournamentStatus) => {
   if (status === 'draft') return 'gray'
   if (status === 'finished') return 'gray'
   if (status === 'running') return 'green'

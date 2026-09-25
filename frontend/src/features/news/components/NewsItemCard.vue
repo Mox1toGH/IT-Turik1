@@ -34,18 +34,18 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
-import type { NewsArticle } from '@/api/.ts.schemas'
+import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const COLLAPSE_TEXT_LIMIT = 280
 
 const props = defineProps<{
-  item: NewsArticle
+  item: NewsArticleResponse
   canModify: boolean
 }>()
 
 defineEmits<{
-  edit: [item: NewsArticle]
-  delete: [item: NewsArticle]
+  edit: [item: NewsArticleResponse]
+  delete: [item: NewsArticleResponse]
 }>()
 
 function extractPlainText(value: unknown): string {

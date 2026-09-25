@@ -9,7 +9,7 @@ def custom_exception_handler(exc, context):
 
     normalized_data = _normalize_data(response.data)
     status_code = response.status_code
-    code = _code_for_status(status_code)
+    code = error_code_for_status(status_code)
     message = _extract_message(normalized_data, status_code)
     details = None
 
@@ -93,7 +93,8 @@ def _format_validation_message(data):
     
     # Join all error messages with ". " separator
     if error_messages:
-        return ". ".join(error_messages) + "."
+        message = ". ".join(error_messages)
+        return message if message.endswith(('.', '!', '?')) else f'{message}.'
     
     return None
 
@@ -115,7 +116,7 @@ def _extract_first_string(value):
     return None
 
 
-def _code_for_status(status_code):
+def error_code_for_status(status_code):
     mapping = {
         status.HTTP_400_BAD_REQUEST: 'validation_error',
         status.HTTP_401_UNAUTHORIZED: 'not_authenticated',

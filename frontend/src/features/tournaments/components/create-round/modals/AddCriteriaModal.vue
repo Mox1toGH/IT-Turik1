@@ -9,37 +9,6 @@
     </template>
 
     <div class="criteria-panel">
-      <ui-card v-if="criteriaCount === 0" class="empty-card">
-        <p class="empty-error">No criteria added</p>
-      </ui-card>
-
-      <div v-else class="criteria-list">
-        <ui-card v-for="criterion in criteriaList" :key="criterion.id" class="criteria-card">
-          <template #header>
-            <div class="criteria-card-info">
-              <div class="criteria-card-title">
-                <h3 :title="criterion.name">{{ truncateText(criterion.name, 100) }}</h3>
-                <span class="criteria-score">Max {{ criterion.max_score }}</span>
-              </div>
-              <pre class="criteria-description">{{ criterion.description }}</pre>
-            </div>
-          </template>
-
-          <template #footer>
-            <div class="criteria-card-actions">
-              <ui-button
-                variant="secondary"
-                class="delete-button"
-                type="button"
-                @click="removeCriterion(criterion.id)"
-              >
-                Delete
-              </ui-button>
-            </div>
-          </template>
-        </ui-card>
-      </div>
-
       <ui-card class="add-criteria">
         <template #header>
           <div class="add-criteria-header">
@@ -74,6 +43,37 @@
           </div>
         </template>
       </ui-card>
+
+      <ui-card v-if="criteriaCount === 0" class="empty-card">
+        <p class="empty-error">No criteria added</p>
+      </ui-card>
+
+      <div v-else class="criteria-list">
+        <ui-card v-for="criterion in criteriaList" :key="criterion.id" class="criteria-card">
+          <template #header>
+            <div class="criteria-card-info">
+              <div class="criteria-card-title">
+                <h3 :title="criterion.name">{{ truncateText(criterion.name, 100) }}</h3>
+                <span class="criteria-score">Max {{ criterion.max_score }}</span>
+              </div>
+              <pre class="criteria-description">{{ criterion.description }}</pre>
+            </div>
+          </template>
+
+          <template #footer>
+            <div class="criteria-card-actions">
+              <ui-button
+                variant="secondary"
+                class="delete-button"
+                type="button"
+                @click="removeCriterion(criterion.id)"
+              >
+                Delete
+              </ui-button>
+            </div>
+          </template>
+        </ui-card>
+      </div>
     </div>
   </ui-modal>
 </template>
@@ -87,19 +87,19 @@ import UiModal from '@/components/ui/UiModal.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import { truncateText } from '@/lib/utils'
-import type { Criterion } from '@/api/.ts.schemas'
+import type { CriterionResponse } from '@/api/backendAPINinja.schemas'
 
 const emit = defineEmits<{
   (e: 'blur'): void
 }>()
 
-const modelValue = defineModel<Criterion[]>({ default: () => [] })
+const modelValue = defineModel<CriterionResponse[]>({ default: () => [] })
 
 const isOpen = ref(false)
 const criteriaList = computed(() => modelValue.value ?? [])
 const criteriaCount = computed(() => criteriaList.value.length)
 
-const newCriterion = ref<Omit<Criterion, 'id'>>({
+const newCriterion = ref<Omit<CriterionResponse, 'id'>>({
   name: '',
   description: '',
   max_score: 1,

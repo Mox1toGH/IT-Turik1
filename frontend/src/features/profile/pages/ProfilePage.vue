@@ -321,7 +321,7 @@ const logout = () => {
   gap: 0.6rem;
   min-width: 0;
   min-height: 48px;
-  padding: 0.7rem 0;
+  padding: 0.7rem 0.5rem;
   color: var(--foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);

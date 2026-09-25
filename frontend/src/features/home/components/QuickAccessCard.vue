@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '@/api/.ts.schemas'
+import type { UserResponse } from '@/api/backendAPINinja.schemas'
 import {
   useGetCurrentTask,
   useListMyTeamSubmissions,
@@ -85,7 +85,7 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user?: User
+  user?: UserResponse
   isLoadingUserError: boolean
   isLoadingUser: boolean
 }>()

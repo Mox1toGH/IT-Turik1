@@ -80,17 +80,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Team, User } from '@/api/.ts.schemas'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
+import type { TeamResponse, UserResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  team?: Team
-  user?: User
+  team?: TeamResponse
+  user?: UserResponse
   loading: boolean
   loadingError?: boolean
   searchFilter?: string

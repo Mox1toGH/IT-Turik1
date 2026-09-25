@@ -24,9 +24,9 @@
           <ui-skeleton v-for="i in 4" :key="i" variant="rect" width="100%" height="80px" /></div
       ></template>
       <p v-if="isCertsError" class="text-muted">Failed to load certificates.</p>
-      <p v-else-if="!certsResponse?.results?.length" class="text-muted">No certificates found.</p>
+      <p v-else-if="!certsResponse?.items?.length" class="text-muted">No certificates found.</p>
       <div v-else class="certs-list">
-        <div v-for="cert in certsResponse.results" :key="cert.id" class="cert-item">
+        <div v-for="cert in certsResponse.items" :key="cert.id" class="cert-item">
           <div class="cert-info-main">
             <div class="cert-title-row">
               <strong>{{ cert.tournament_name || 'Tournament' }}</strong
@@ -108,9 +108,9 @@ import UiPagination from '@/components/ui/UiPagination.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 import { useDeleteCertificate, useListCertificates } from '@/api/certificates/certificates'
-import type { Certificate } from '@/api/.ts.schemas'
 import { useNotification } from '@/composables/useNotification'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import type { CertificateResponse } from '@/api/backendAPINinja.schemas'
 
 defineProps<{
   userOptions: Array<{ value: number; label: string }>
@@ -129,7 +129,7 @@ const searchQuery = ref('')
 const isDeleteCertModalOpen = ref(false)
 const certToDeleteCode = ref<string | null>(null)
 
-const openDeleteCert = (certCode: Certificate['unique_code']) => {
+const openDeleteCert = (certCode: CertificateResponse['unique_code']) => {
   certToDeleteCode.value = certCode
   isDeleteCertModalOpen.value = true
 }
@@ -148,8 +148,8 @@ const onDeleteCertConfirm = async () => {
   }
 }
 
-const certToEdit = ref<Certificate | null>(null)
-const openEditCert = (cert: Certificate) => {
+const certToEdit = ref<CertificateResponse | null>(null)
+const openEditCert = (cert: CertificateResponse) => {
   certToEdit.value = cert
 }
 

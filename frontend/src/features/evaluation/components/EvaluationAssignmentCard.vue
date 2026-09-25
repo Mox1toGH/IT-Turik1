@@ -73,10 +73,10 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'
-import type { JuryAssignment } from '@/api/.ts.schemas'
+import type { JuryAssignmentResponse } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
-  assignment: JuryAssignment
+  assignment: JuryAssignmentResponse
 }
 
 const props = defineProps<Props>()

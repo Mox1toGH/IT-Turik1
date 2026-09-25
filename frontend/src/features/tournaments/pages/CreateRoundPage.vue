@@ -239,9 +239,9 @@ interface RoundCriteriaItem {
 interface Form {
   name: string
   passing_count: number
-  tech_requirements: JSONContent | null
-  description: JSONContent | null
-  must_have_requirements: JSONContent | null
+  tech_requirements?: JSONContent
+  description?: JSONContent
+  must_have_requirements?: JSONContent
   criteria: RoundCriteriaItem[]
   start_date: Date
   start_time: string
@@ -252,9 +252,9 @@ interface Form {
 const form = useForm<Form>(CreateRoundSchema, {
   name: '',
   passing_count: 2,
-  description: null,
-  tech_requirements: null,
-  must_have_requirements: null,
+  description: undefined,
+  tech_requirements: undefined,
+  must_have_requirements: undefined,
   criteria: [],
   start_date: new Date(),
   start_time: '00:00',
@@ -278,7 +278,6 @@ function handleSubmit() {
     {
       tournamentPk: tournamentId,
       data: {
-        tournament: tournamentId,
         ...rest,
         start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
         end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),

@@ -56,7 +56,7 @@ import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'
 import { useNotification } from '@/composables/useNotification'
 import { useUpdateNews } from '@/api/news/news'
-import type { NewsArticle } from '@/api/.ts.schemas'
+import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas'
 
 interface EditNewsFields {
   title: string
@@ -67,7 +67,7 @@ interface EditNewsFields {
 const isOpen = defineModel<boolean>({ required: true })
 
 const props = defineProps<{
-  item: NewsArticle | null
+  item: NewsArticleResponse | null
 }>()
 
 const emit = defineEmits<{
@@ -102,7 +102,7 @@ function handleSubmit() {
 
   updateNews(
     {
-      id: props.item.id,
+      articleId: props.item.id,
       data: {
         title: editForm.fields.value.title,
         content: editForm.fields.value.content as JSONContent,
@@ -117,7 +117,11 @@ function handleSubmit() {
       },
       onError(error) {
         for (const [field, errors] of Object.entries(error?.details || {})) {
-          editForm.setError(field as keyof EditNewsFields, errors?.[0] ?? 'Invalid value')
+          const message = Array.isArray(errors) ? errors[0] : errors
+          editForm.setError(
+            field as keyof EditNewsFields,
+            typeof message === 'string' ? message : 'Invalid value',
+          )
         }
         showNotification(error?.message, 'error')
       },

@@ -82,7 +82,7 @@ const { data, isLoading, isLoadingError } = useListMyDigitalInventory()
 const { mutate: equipItem, isPending: isEquipping } = useEquipDigitalInventoryItem()
 const { mutate: unequipItem, isPending: isUnequipping } = useUnequipDigitalInventoryItem()
 
-const items = computed(() => data.value?.results ?? [])
+const items = computed(() => data.value?.items ?? [])
 
 const equip = (inventoryId: number) => {
   equipItem(

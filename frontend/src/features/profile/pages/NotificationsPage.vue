@@ -50,12 +50,12 @@
         <div v-else-if="error" class="error-state">
           <p>Error loading notifications.</p>
         </div>
-        <div v-else-if="notificationsData?.results?.length === 0" class="empty-state">
+        <div v-else-if="notificationsData?.items?.length === 0" class="empty-state">
           <p class="text-muted">You have no notifications.</p>
         </div>
         <div v-else class="notifications-list">
           <div
-            v-for="notification in notificationsData?.results"
+            v-for="notification in notificationsData?.items"
             :key="notification.id"
             :class="['notification-item', { 'is-unread': !notification.is_read }]"
             @click="!notification.is_read && handleMarkRead(notification.id)"
@@ -167,7 +167,7 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
 } from '@/api/notifications/notifications'
-import type { Notification } from '@/api/.ts.schemas'
+import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 
 const isSettingsModalOpen = ref(false)
 const page = ref(1)
@@ -194,13 +194,13 @@ const confirmModalConfig = ref({
 })
 
 const unreadCount = computed(() => {
-  return notificationsData.value?.results?.filter((n) => !n.is_read).length ?? 0
+  return notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0
 })
 
 const hasUnread = computed(() => unreadCount.value > 0)
 
 const hasNotifications = computed(() => {
-  return (notificationsData.value?.results?.length ?? 0) > 0
+  return (notificationsData.value?.items.length ?? 0) > 0
 })
 
 const totalPages = computed(() => {
@@ -217,7 +217,7 @@ const nextPage = () => {
 }
 
 const handleMarkRead = (id: number) => {
-  markAsRead({ id })
+  markAsRead({ notificationId: id })
 }
 
 const handleMarkAllRead = () => {
@@ -234,7 +234,7 @@ const handleDelete = (id: number) => {
     confirmVariant: 'danger',
     onConfirm: () => {
       deleteNotification(
-        { id },
+        { notificationId: id },
         {
           onSuccess: () => {
             showNotification('Notification deleted', 'success')
@@ -267,7 +267,7 @@ const handleDeleteAll = () => {
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: Notification) => {
+const handleNotificationClick = (notification: NotificationResponse) => {
   if (!notification.is_read) {
     handleMarkRead(notification.id)
   }
@@ -278,7 +278,7 @@ const handleNotificationClick = (notification: Notification) => {
   }
 }
 
-const getRedirectUrl = (notification: Notification) => {
+const getRedirectUrl = (notification: NotificationResponse) => {
   const type = notification.event_type
 
   // Only invitations go to /teams — recipient hasn't joined yet

@@ -89,7 +89,7 @@ import {
   getGoogleCalendarStatus,
 } from '@/api/accounts/accounts'
 import { exportToGoogleCalendar, useGetMyCalendar } from '@/api/tournaments/tournaments'
-import type { Event, Round } from '@/api/.ts.schemas'
+import type { EventResponse, RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
 
@@ -134,8 +134,8 @@ async function exportAll() {
   if (isExporting.value) return
   isExporting.value = true
   try {
-    const eventIds = (events.value as Event[]).map((event) => event.id)
-    const roundIds = (rounds.value as Round[]).map((round) => round.id)
+    const eventIds = (events.value as EventResponse[]).map((event) => event.id)
+    const roundIds = (rounds.value as RoundResponse[]).map((round) => round.id)
     await exportToGoogleCalendar({
       event_ids: eventIds,
       round_ids: roundIds,

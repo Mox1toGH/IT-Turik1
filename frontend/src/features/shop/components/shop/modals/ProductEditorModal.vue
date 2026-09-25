@@ -234,20 +234,24 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import type { ShopCategory } from '@/api/services/shop/types'
-import type { AvatarFrame, Product } from '@/api/.ts.schemas'
 import type { CreateAdminProductMutationBody } from '@/api/shop/shop'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import { truncateText } from '@/lib/utils'
+import {
+  CreateAdminProductBodyProductType,
+  type AvatarFrameResponse,
+  type ProductResponse,
+} from '@/api/backendAPINinja.schemas'
 
 interface Props {
   modelValue: boolean
   mode: 'create' | 'edit'
-  product?: Product | null
+  product?: ProductResponse | null
   categories: ShopCategory[]
-  avatarFrames: AvatarFrame[]
+  avatarFrames: AvatarFrameResponse[]
   submitting?: boolean
 }
 
@@ -274,7 +278,7 @@ const form = ref<CreateAdminProductMutationBody>({
   price: 0,
   stock_quantity: 0,
   category_id: 0,
-  product_type: 'physical',
+  product_type: CreateAdminProductBodyProductType.physical,
   avatar_frame_id: undefined,
   avatar_frame_file: undefined,
   digital_asset_url: '',
@@ -321,7 +325,10 @@ const resetForm = () => {
     price: p?.price || 0,
     stock_quantity: p?.stock_quantity || 0,
     category_id: p?.category?.id || props.categories[0]?.id || 0,
-    product_type: p?.product_type || 'physical',
+    product_type:
+      p?.product_type === CreateAdminProductBodyProductType.digital
+        ? CreateAdminProductBodyProductType.digital
+        : CreateAdminProductBodyProductType.physical,
     avatar_frame_id: p?.avatar_frame?.id,
     avatar_frame_file: undefined,
     digital_asset_url: p?.digital_asset_url || '', // kept for backward compatibility

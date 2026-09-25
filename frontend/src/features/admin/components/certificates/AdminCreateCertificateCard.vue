@@ -138,7 +138,7 @@ const handleCreateCertificate = async () => {
         team: form.fields.value.team || null,
         template: form.fields.value.template || null,
         placement: form.fields.value.placement,
-        certificate_number: form.fields.value.certificate_number.trim() || undefined,
+        certificate_number: form.fields.value.certificate_number.trim(),
       },
     })
 

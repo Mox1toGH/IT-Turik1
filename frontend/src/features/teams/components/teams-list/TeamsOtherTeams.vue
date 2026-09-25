@@ -154,7 +154,7 @@ const { mutate: sendJoinRequestMutate } = useCreateTeamJoinRequest()
 const sendJoinRequest = (teamId: number) => {
   loadingIds.value.add(teamId)
   sendJoinRequestMutate(
-    { id: teamId, data: { detail: '' } },
+    { pk: teamId },
     {
       onSuccess: () => {
         showNotification('Join request sent.', 'success')

@@ -152,22 +152,22 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useNotification } from '@/composables/useNotification'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
 import {
   useGenerateRoleActivationCodes,
   useListRoleActivationCodes,
   type GenerateRoleActivationCodesMutationBody,
 } from '@/api/accounts/accounts'
+import type { UserRole } from '@/api/backendAPINinja.schemas'
 
 interface Errors {
-  role: string[]
+  role: UserRole[]
   quantity: string[]
 }
 
 const forbidden = ref(false)
 const errors = ref<Errors | null>(null)
 const restrictedRoles = ['jury', 'organizer', 'admin'] as const
-const selectedRoleFilter = ref<RoleB96Enum | 'all'>('all')
+const selectedRoleFilter = ref<string | 'all'>('all') // role
 const generateForm = ref({
   role: 'jury',
   quantity: '1',
@@ -181,9 +181,7 @@ const {
   isLoadingError,
   error: getRoleCodesError,
 } = useListRoleActivationCodes(
-  computed(() => ({
-    ...(selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {}),
-  })),
+  computed(() => (selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {})),
 )
 
 const codes = computed(() => data.value?.codes || [])

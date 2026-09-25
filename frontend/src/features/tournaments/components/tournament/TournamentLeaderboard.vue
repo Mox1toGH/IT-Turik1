@@ -292,7 +292,7 @@ const canSendCertificates = computed(
 const isTournamentFinished = computed(() => tournament.value?.status === 'finished')
 
 const { data: templatesData, isLoading: isTemplatesLoading } = useListCertificateTemplates()
-const templateOptions = computed(() => templatesData.value?.results ?? [])
+const templateOptions = computed(() => templatesData.value?.items ?? [])
 
 const { data: roundsData } = useListRounds(props.tournamentId)
 const rounds = computed(() => roundsData.value ?? [])

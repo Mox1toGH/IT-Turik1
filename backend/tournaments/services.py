@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ValidationError
 
 from teams.models import TeamMember
 

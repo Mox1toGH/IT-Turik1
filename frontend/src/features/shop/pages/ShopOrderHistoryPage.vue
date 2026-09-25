@@ -63,7 +63,7 @@
             </router-link>
 
             <ui-button
-              v-if="canCancel(order.status)"
+              v-if="canCancel(order.status as ShopOrderStatus)"
               size="sm"
               variant="danger"
               :disabled="isCancelling"
@@ -113,12 +113,12 @@ const { data: txData } = useListMyPointsTransactions({
 })
 const { mutate: cancelOrder, isPending: isCancelling } = useCancelMyOrder()
 
-const orders = computed(() => data.value?.results ?? [])
+const orders = computed(() => data.value?.items ?? [])
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.count || 0) / pageSize.value)))
 
 const transactionsByOrder = computed<Record<number, { id: number }>>(() => {
   const map: Record<number, { id: number }> = {}
-  for (const tx of txData.value?.results ?? []) {
+  for (const tx of txData.value?.items ?? []) {
     if (tx.order_id) map[tx.order_id] = { id: tx.id }
   }
   return map

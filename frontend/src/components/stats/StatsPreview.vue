@@ -36,11 +36,10 @@ import { RouterLink } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
 import UiCard from '../ui/UiCard.vue'
+import type { UserRole } from '@/api/backendAPINinja.schemas.ts'
 
-type UserRole = RoleB96Enum
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
   role?: UserRole

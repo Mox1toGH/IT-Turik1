@@ -33,21 +33,22 @@
       <template v-if="verifyResult">
         <div class="result-grid">
           <p>
-            <span class="label">Name</span><strong>{{ verifyResult.full_name || '-' }}</strong>
+            <span class="label">Name</span><strong>{{ certificateData?.full_name || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Team</span><strong>{{ verifyResult.team_name || '-' }}</strong>
+            <span class="label">Team</span><strong>{{ certificateData?.team_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Tournament</span
-            ><strong>{{ verifyResult.tournament_name || '-' }}</strong>
+            ><strong>{{ certificateData?.tournament_name || '-' }}</strong>
           </p>
           <p>
             <span class="label">Certificate number</span
-            ><strong>{{ verifyResult.certificate_number || '-' }}</strong>
+            ><strong>{{ certificateData?.certificate_number || '-' }}</strong>
           </p>
           <p>
-            <span class="label">Placement</span><strong>{{ verifyResult.placement || '-' }}</strong>
+            <span class="label">Placement</span
+            ><strong>{{ certificateData?.placement || '-' }}</strong>
           </p>
         </div>
       </template>
@@ -61,23 +62,18 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import type { Certificate } from '@/api/.ts.schemas'
 import {
   verifyCertificate,
   type VerifyCertificateQueryResult,
 } from '@/api/certificates/certificates'
+import type { CertificateResponse } from '@/api/backendAPINinja.schemas'
 
 const verifyCode = ref('')
 const verifyResult = ref<VerifyCertificateQueryResult | null>(null)
 const verifyError = ref<string | null>(null)
 
-function isCertificate(result: VerifyCertificateQueryResult): result is Certificate {
-  return 'certificate_number' in result
-}
-
-const certificateData = computed<Certificate | null>(() => {
-  if (verifyResult.value && isCertificate(verifyResult.value)) return verifyResult.value
-  return null
+const certificateData = computed<CertificateResponse | null>(() => {
+  return verifyResult.value?.data ?? null
 })
 
 const isValidResult = computed(() => certificateData.value !== null)

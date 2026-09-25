@@ -86,13 +86,10 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
-import {
-  verifyCertificate,
-  type VerifyCertificateQueryResult,
-} from '@/api/certificates/certificates'
-import type { Certificate } from '@/api/.ts.schemas'
+import { verifyCertificate } from '@/api/certificates/certificates'
+import type { CertificateResponse, CertificateVerifyResponse } from '@/api/backendAPINinja.schemas'
 
-type Result = VerifyCertificateQueryResult & { is_valid?: boolean; message?: string }
+type Result = CertificateVerifyResponse
 
 const route = useRoute()
 const router = useRouter()
@@ -107,10 +104,10 @@ const isValidResult = computed(() => {
 })
 
 const isLoading = ref(false)
-const certificateData = computed<Certificate | null>(() => {
+const certificateData = computed<CertificateResponse | null>(() => {
   if (!result.value) return null
-  const candidate = (result.value as { data?: Certificate }).data
-  return candidate ?? (result.value as unknown as Certificate)
+  const candidate = (result.value as { data?: CertificateResponse }).data
+  return candidate ?? (result.value as unknown as CertificateResponse)
 })
 
 watch(

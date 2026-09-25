@@ -135,7 +135,7 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   const mutate = action === 'accept' ? accept : decline
 
   mutate(
-    { requestId: id, id: props.teamId },
+    { pk: props.teamId, requestId: id },
     {
       onSuccess: () => {
         const pastTense = { accept: 'accepted', decline: 'declined' }

@@ -22,12 +22,12 @@
           Failed to load certificates (code: {{ error?.code ?? 'unknown' }})
         </p>
 
-        <p v-else-if="!certificates?.results?.length || isNotFoundError" class="text-muted">
+        <p v-else-if="!certificates?.items?.length || isNotFoundError" class="text-muted">
           You do not have certificates yet.
         </p>
 
         <div v-else class="list">
-          <ui-card v-for="item in certificates.results" :key="item.id" class="cert-card">
+          <ui-card v-for="item in certificates.items" :key="item.id" class="cert-card">
             <template #header>
               <div class="row-head">
                 <strong>{{ item.tournament_name || 'Tournament' }}</strong>

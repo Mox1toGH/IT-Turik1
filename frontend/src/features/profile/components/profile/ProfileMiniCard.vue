@@ -53,11 +53,11 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import type { User } from '@/api/.ts.schemas'
 import AvatarModal from './modals/AvatarModal.vue'
+import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const props = defineProps<{
-  user?: User
+  user?: UserResponse
   isLoading?: boolean
 }>()
 

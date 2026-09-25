@@ -34,10 +34,10 @@
           Failed to load transactions ({{ rawError?.message || rawError?.code || 'unknown' }}).
         </p>
 
-        <p v-else-if="!transactions?.results?.length" class="text-muted">No transactions yet.</p>
+        <p v-else-if="!transactions?.items?.length" class="text-muted">No transactions yet.</p>
 
         <div v-else class="list">
-          <ui-card v-for="tx in transactions.results" :key="tx.id" class="tx-card">
+          <ui-card v-for="tx in transactions.items" :key="tx.id" class="tx-card">
             <template #header>
               <div class="tx-head">
                 <strong :class="['tx-amount', tx.amount >= 0 ? 'positive' : 'negative']">

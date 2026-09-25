@@ -31,11 +31,11 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import ProductCard from './ProductCard.vue'
-import type { Product } from '@/api/.ts.schemas'
+import type { ProductResponse } from '@/api/backendAPINinja.schemas.ts'
 
 withDefaults(
   defineProps<{
-    products: Product[]
+    products: ProductResponse[]
     isLoading?: boolean
     isError?: boolean
     errorMessage?: string
@@ -46,9 +46,9 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  view: [product: Product]
-  edit: [product: Product]
-  delete: [product: Product]
+  view: [product: ProductResponse]
+  edit: [product: ProductResponse]
+  delete: [product: ProductResponse]
   preview: [url: string]
 }>()
 </script>

@@ -82,7 +82,7 @@ const teamOptions = computed(() => [
 
 const templateOptions = computed(() => [
   { value: 0, label: 'Default template' },
-  ...(allTemplatesResponse.value?.results || []).map((t) => ({
+  ...(allTemplatesResponse.value?.items || []).map((t) => ({
     value: t.id,
     label: t.is_default ? `${t.name} (default)` : t.name,
   })),

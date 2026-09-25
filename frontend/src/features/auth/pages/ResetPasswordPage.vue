@@ -30,13 +30,13 @@
             <span class="label">New password</span>
             <ui-password-field
               v-model="form.new_password"
-              :isInvalid="!!resetError?.details.new_password"
+              :isInvalid="!!resetError?.details?.new_password"
               autocomplete="new-password"
               placeholder="Create a strong password"
               required
             />
-            <small v-if="resetError?.details.new_password" class="error">{{
-              resetError.details.new_password[0]
+            <small v-if="resetError?.details?.new_password" class="error">{{
+              resetError.details.new_password
             }}</small>
             <small v-else class="text-muted">
               Use at least 8 characters, including upper/lowercase letters, a number, and a special
@@ -49,12 +49,12 @@
             <ui-password-field
               v-model="form.confirm_password"
               autocomplete="new-password"
-              :isInvalid="!!resetError?.details.confirm_password"
+              :isInvalid="!!resetError?.details?.confirm_password"
               placeholder="Repeat your new password"
               required
             />
-            <small v-if="resetError?.details.confirm_password" class="error">{{
-              resetError.details.confirm_password[0]
+            <small v-if="resetError?.details?.confirm_password" class="error">{{
+              resetError.details.confirm_password
             }}</small>
           </label>
 
