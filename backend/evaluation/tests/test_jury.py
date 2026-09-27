@@ -30,26 +30,26 @@ class ManualJuryAssignmentApiTests(APITestCase):
         JuryAssignment.objects.create(submission=self.submission1, jury=self.jury3)
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id, self.jury2.id]}, {'submission': self.submission2.id, 'jury': [self.jury1.id, self.jury2.id]}]
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(JuryAssignment.objects.filter(submission__round=self.round_obj).count(), 4)
 
     def test_assign_jury_requires_full_submission_coverage(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id]}]
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_assign_jury_requires_same_jury_count(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id]}, {'submission': self.submission2.id, 'jury': [self.jury1.id, self.jury2.id]}]
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_assign_jury_rejects_non_jury_user(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.non_admin.id]}, {'submission': self.submission2.id, 'jury': [self.non_admin.id]}]
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_assign_jury_rejects_when_round_not_submission_closed(self):
@@ -57,30 +57,30 @@ class ManualJuryAssignmentApiTests(APITestCase):
         self.round_obj.save()
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id]}, {'submission': self.submission2.id, 'jury': [self.jury1.id]}]
         self.client.force_authenticate(self.admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_assign_jury_admin_only(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id]}, {'submission': self.submission2.id, 'jury': [self.jury1.id]}]
         self.client.force_authenticate(self.non_admin)
-        response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_organizer_can_assign_jury_but_jury_cannot(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.jury2.id]}, {'submission': self.submission2.id, 'jury': [self.jury2.id]}]
 
         self.client.force_authenticate(self.organizer)
-        organizer_response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        organizer_response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(organizer_response.status_code, status.HTTP_201_CREATED)
 
         self.client.force_authenticate(self.jury1)
-        jury_response = self.client.post(reverse('round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
+        jury_response = self.client.post(reverse('ninja-api:round_assign_jury', kwargs={'pk': self.round_obj.id}), payload, format='json')
         self.assertEqual(jury_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_available_jury_returns_all_by_default(self):
         JuryAssignment.objects.create(submission=self.submission1, jury=self.jury1)
         self.client.force_authenticate(self.admin)
-        response = self.client.get(reverse('round_available_jury', kwargs={'pk': self.round_obj.id}))
+        response = self.client.get(reverse('ninja-api:round_available_jury', kwargs={'pk': self.round_obj.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         returned_ids = {item['id'] for item in response.data}
         self.assertEqual(returned_ids, {self.jury1.id, self.jury2.id, self.jury3.id})
@@ -88,7 +88,7 @@ class ManualJuryAssignmentApiTests(APITestCase):
     def test_available_jury_excludes_assigned_when_requested(self):
         JuryAssignment.objects.create(submission=self.submission1, jury=self.jury1)
         self.client.force_authenticate(self.admin)
-        response = self.client.get(reverse('round_available_jury', kwargs={'pk': self.round_obj.id}), {'include_assigned': 'false'})
+        response = self.client.get(reverse('ninja-api:round_available_jury', kwargs={'pk': self.round_obj.id}), {'include_assigned': 'false'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         returned_ids = {item['id'] for item in response.data}
         self.assertEqual(returned_ids, {self.jury2.id, self.jury3.id})

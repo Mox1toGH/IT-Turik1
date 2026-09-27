@@ -87,7 +87,7 @@ class GoogleAuthRequest(Schema):
     id_token: str
 
 
-class PasswordResetRequestRequest(Schema):
+class PasswordResetRequest(Schema):
     email: str
 
 
@@ -200,21 +200,10 @@ class TeamUserListResponse(AvatarSchema):
 
 
 class UserUpdateRequest(Schema):
-    email: Optional[str] = None
     full_name: Optional[str] = None
     phone: Optional[str] = None
     city: Optional[str] = None
-
-    @field_validator('email')
-    @classmethod
-    def _valid_email(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-        try:
-            validate_email(value)
-        except DjangoValidationError:
-            raise ValueError('Enter a valid email address.')
-        return value.strip()
+    password: str | None = None
 
 
 class UserAvatarResponse(AvatarSchema):

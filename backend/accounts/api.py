@@ -13,6 +13,9 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+
 from ninja import File, Query, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
@@ -47,7 +50,7 @@ from .schemas import (
     LoginResponse,
     MessageResponse,
     PasswordResetConfirmRequest,
-    PasswordResetRequestRequest,
+    PasswordResetRequest,
     RegisterRequest,
     RegisterResponse,
     RoleActivationCodeGenerateRequest,
@@ -84,16 +87,46 @@ def _check_password_or_400(password: str, user=None) -> None:
     except DjangoValidationError as exc:
         raise HttpError(400, ' '.join(exc.messages))
 
+def send_html_email(
+    subject: str,
+    template_name: str,
+    context: dict,
+    recipient: str,
+) -> None:
+    html_message = render_to_string(template_name, context)
 
-def _send_link_email(user, path: str, subject: str, intro: str) -> None:
+    email = EmailMessage(
+        subject=subject,
+        body=html_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+    )
+    email.content_subtype = "html"
+    email.send()
+
+def _send_link_email(
+    user,
+    path: str,
+    template_name: str,
+    subject: str,
+    intro: str,
+) -> None:
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    base = getattr(settings, 'FRONTEND_URL', '').rstrip('/')
-    send_mail(
-        subject,
-        f'{intro}\n\n{base}/{path}/{uid}/{token}/',
-        getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-        [user.email],
+
+    base = getattr(settings, "FRONTEND_URL", "").rstrip("/")
+    link = f"{base}/{path}/{uid}/{token}/"
+
+    send_html_email(
+        subject=subject,
+        template_name=template_name,
+        context={
+            "username": user.username,
+            "title": subject,
+            "secondary_message": intro,
+            "action_url": link,
+        },
+        recipient=user.email,
     )
 
 
@@ -121,6 +154,7 @@ def _active_counts() -> dict:
     '/register',
     auth=None,
     operation_id='registerUser',
+    url_name="register",
     response={201: RegisterResponse, 400: ErrorResponse},
 )
 def register_user(request, payload: RegisterRequest):
@@ -152,14 +186,25 @@ def register_user(request, payload: RegisterRequest):
                 raise HttpError(400, 'Invalid or already used activation code.')
 
         user.set_password(payload.password)
+        
+        if user.role == 'admin':
+            user.is_staff = True
+            user.is_superuser = True
+
         user.save()
 
         if code is not None:
             code.is_used = True
             code.used_by = user
             code.save(update_fields=['is_used', 'used_by'])
-
-    _send_link_email(user, 'activate', 'Activate your account', 'Follow the link to activate your account:')
+        
+    _send_link_email(
+        user,
+        "activate",
+        "accounts/account_activation_email.html",
+        "Activate your account",
+        "Follow the link to activate your account:",
+    )
     return 201, RegisterResponse.model_validate(user, from_attributes=True)
 
 
@@ -167,6 +212,7 @@ def register_user(request, payload: RegisterRequest):
     '/activate/{uidb64}/{token}',
     auth=None,
     operation_id='activateAccount',
+    url_name="activate",
     response={200: ActivationResponse, 400: ErrorResponse},
 )
 def activate_account(request, uidb64: str, token: str):
@@ -183,6 +229,7 @@ def activate_account(request, uidb64: str, token: str):
     '/login',
     auth=None,
     operation_id='login',
+    url_name="token_obtain_pair",
     response={200: LoginResponse, 401: ErrorResponse},
 )
 def login(request, payload: LoginRequest):
@@ -197,6 +244,7 @@ def login(request, payload: LoginRequest):
     '/token/refresh',
     auth=None,
     operation_id='refreshToken',
+    url_name="token_refresh",
     response={200: TokenRefreshResponse, 401: ErrorResponse},
 )
 def refresh_token(request, payload: TokenRefreshRequest):
@@ -211,6 +259,7 @@ def refresh_token(request, payload: TokenRefreshRequest):
     '/google-login',
     auth=None,
     operation_id='googleAuth',
+    url_name="google_login",
     response={200: GoogleAuthResponse, 400: ErrorResponse},
 )
 def google_auth(request, payload: GoogleAuthRequest):
@@ -221,7 +270,7 @@ def google_auth(request, payload: GoogleAuthRequest):
         info = google_id_token.verify_oauth2_token(
             payload.id_token,
             google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
+            settings.GOOGLE_OAUTH_CLIENT_ID,
         )
     except ValueError:
         raise HttpError(400, 'Invalid Google token.')
@@ -237,7 +286,7 @@ def google_auth(request, payload: GoogleAuthRequest):
         while User.objects.filter(username__iexact=username).exists():
             username = f'{base}{suffix}'
             suffix += 1
-        user = User(username=username, email=email, full_name=info.get('name', ''), is_active=True)
+        user = User(username=username, email=email, full_name=info.get('name', ''), needs_onboarding=True, is_active=True)
         user.set_unusable_password()
         user.save()
     elif not user.is_active:
@@ -247,7 +296,7 @@ def google_auth(request, payload: GoogleAuthRequest):
     return GoogleAuthResponse(
         access=str(refresh.access_token),
         refresh=str(refresh),
-        user=UserResponse.model_validate(user, from_attributes=True, context={'request': request}),
+        user=user,
         onboarding_required=user.needs_onboarding,
     )
 
@@ -260,51 +309,90 @@ def google_auth(request, payload: GoogleAuthRequest):
     '/profile',
     auth=JWTAuth(),
     operation_id='getUserProfile',
+    url_name="profile",
     response={200: UserResponse, 401: ErrorResponse},
 )
 def get_user_profile(request):
     return UserResponse.model_validate(request.user, from_attributes=True, context={'request': request})
 
-
-def _apply_profile_update(request, payload: UserUpdateRequest) -> UserResponse:
-    user = request.user
-    data = payload.model_dump(exclude_unset=True)
-
-    email = data.get('email')
-    if email and User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
-        raise HttpError(400, 'A user with that email already exists.')
-
-    for field, value in data.items():
-        setattr(user, field, value)
-    if data:
-        user.save(update_fields=list(data.keys()))
-    return UserResponse.model_validate(user, from_attributes=True, context={'request': request})
-
-
-@router.put(
-    '/profile',
-    auth=JWTAuth(),
-    operation_id='replaceUserProfile',
-    response={200: UserResponse, 400: ErrorResponse, 401: ErrorResponse},
-)
-def replace_user_profile(request, payload: UserUpdateRequest):
-    return _apply_profile_update(request, payload)
-
-
 @router.patch(
     '/profile',
     auth=JWTAuth(),
     operation_id='updateUserProfile',
+    url_name="profile",
     response={200: UserResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def update_user_profile(request, payload: UserUpdateRequest):
-    return _apply_profile_update(request, payload)
+    user = request.user
+    data = payload.model_dump(exclude_unset=True)
+
+    if "role" in data:
+        raise HttpError(400, "Role cannot be changed.")
+
+    password = data.pop("password", None)
+
+    if (
+        user.needs_onboarding
+        and not user.has_usable_password()
+        and not password
+    ):
+        raise HttpError(
+            400,
+            "Please set a password to complete Google registration."
+        )
+    
+
+    if password:
+        if not (
+            user.needs_onboarding
+            and not user.has_usable_password()
+        ):
+            raise HttpError(
+                400,
+                "Password can only be set during onboarding."
+            )
+
+        _check_password_or_400(password, user)
+
+    for field, value in data.items():
+        setattr(user, field, value)
+
+    if password:
+        user.set_password(password)
+
+    if (
+        user.needs_onboarding
+        and user.role
+        and user.full_name
+        and user.phone
+        and user.city
+        and user.has_usable_password()
+    ):
+        user.needs_onboarding = False
+
+    update_fields = list(data.keys())
+
+    if password:
+        update_fields.append("password")
+
+    if user.needs_onboarding is False:
+        update_fields.append("needs_onboarding")
+
+    if update_fields:
+        user.save(update_fields=list(set(update_fields)))
+
+    return UserResponse.model_validate(
+        user,
+        from_attributes=True,
+        context={"request": request},
+    )
 
 
 @router.delete(
     '/profile',
     auth=JWTAuth(),
     operation_id='deleteUserProfile',
+    url_name="profile",
     response={204: None, 401: ErrorResponse},
 )
 def delete_user_profile(request):
@@ -316,6 +404,7 @@ def delete_user_profile(request):
     '/profile/avatar',
     auth=JWTAuth(),
     operation_id='updateUserAvatar',
+    url_name="profile_avatar",
     response={200: UserAvatarResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def update_user_avatar(request, avatar: UploadedFile = File(...)):
@@ -329,9 +418,10 @@ def update_user_avatar(request, avatar: UploadedFile = File(...)):
 
 
 @router.delete(
-    '/me/avatar',
+    '/profile/avatar',
     auth=JWTAuth(),
     operation_id='deleteUserAvatar',
+    url_name="profile_avatar",
     response={204: None, 401: ErrorResponse},
 )
 def delete_user_avatar(request):
@@ -351,6 +441,7 @@ def delete_user_avatar(request):
     '/google-calendar/status',
     auth=JWTAuth(),
     operation_id='getGoogleCalendarStatus',
+    url_name="google_calendar_status",
     response={200: GoogleCalendarStatusResponse, 401: ErrorResponse},
 )
 def get_google_calendar_status(request):
@@ -361,6 +452,7 @@ def get_google_calendar_status(request):
     '/google-calendar/connect',
     auth=JWTAuth(),
     operation_id='connectGoogleCalendar',
+    url_name="google_calendar_connect",
     response={200: GoogleCalendarConnectResponse, 401: ErrorResponse, 503: ErrorResponse},
 )
 def connect_google_calendar(request):
@@ -388,6 +480,7 @@ def connect_google_calendar(request):
     '/google-calendar/callback',
     auth=JWTAuth(),
     operation_id='callbackGoogleCalendar',
+    url_name="google_calendar_callback",
     response={200: GoogleCalendarStatusResponse, 400: ErrorResponse, 401: ErrorResponse, 503: ErrorResponse},
 )
 def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
@@ -429,6 +522,7 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
     '/google-calendar/disconnect',
     auth=JWTAuth(),
     operation_id='disconnectGoogleCalendar',
+    url_name="google_calendar_disconnect",
     response={200: GoogleCalendarStatusResponse, 401: ErrorResponse},
 )
 def disconnect_google_calendar(request):
@@ -447,6 +541,7 @@ def disconnect_google_calendar(request):
     '/users',
     auth=JWTAuth(),
     operation_id='listUsers',
+    url_name="users",
     response={200: list[TeamUserListResponse], 401: ErrorResponse},
 )
 def list_users(request, filters: UserListFilters = Query(...)):
@@ -468,6 +563,7 @@ def list_users(request, filters: UserListFilters = Query(...)):
     '/users/{int:pk}',
     auth=JWTAuth(),
     operation_id='getUser',
+    url_name="user_detail",
     response={200: UserResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_user(request, pk: int):
@@ -479,6 +575,7 @@ def get_user(request, pk: int):
     '/users/{int:pk}/tournaments-history',
     auth=JWTAuth(),
     operation_id='listUserTournamentHistory',
+    url_name="user_tournaments_history",
     response={200: list[UserTournamentHistoryItemResponse], 401: ErrorResponse, 404: ErrorResponse},
 )
 def list_user_tournament_history(request, pk: int):
@@ -530,24 +627,37 @@ def list_user_tournament_history(request, pk: int):
 # --------------------------------------------------------------------------
 
 @router.post(
-    '/password-reset',
+    "/password-reset",
     auth=None,
-    operation_id='requestPasswordReset',
-    response={200: MessageResponse, 400: ErrorResponse},
+    operation_id="requestPasswordReset",
+    url_name="password_reset_request",
+    response={200: MessageResponse},
 )
-def request_password_reset(request, payload: PasswordResetRequestRequest):
-    user = User.objects.filter(email__iexact=payload.email.strip(), is_active=True).first()
-    if user is not None:
+def request_password_reset(request, payload: PasswordResetRequest):
+    user = User.objects.filter(
+        email__iexact=payload.email.strip(),
+        is_active=True,
+    ).first()
+
+    if user:
         _send_link_email(
-            user, 'reset-password', 'Password reset', 'Follow the link to reset your password:'
+            user,
+            "reset-password",
+            "accounts/password_reset_email.html",
+            "Password reset",
+            "Follow the link to reset your password:",
         )
-    return MessageResponse(message='Password reset email sent successfully.')
+
+    return MessageResponse(
+        message="Password reset email sent successfully."
+    )
 
 
 @router.get(
     '/password-reset/{uidb64}/{token}',
     auth=None,
     operation_id='validatePasswordResetLink',
+    url_name="password_reset_confirm",
     response={200: MessageResponse, 400: ErrorResponse},
 )
 def validate_password_reset_link(request, uidb64: str, token: str):
@@ -561,6 +671,7 @@ def validate_password_reset_link(request, uidb64: str, token: str):
     '/password-reset/{uidb64}/{token}',
     auth=None,
     operation_id='confirmPasswordReset',
+    url_name="password_reset_confirm",
     response={200: MessageResponse, 400: ErrorResponse},
 )
 def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordResetConfirmRequest):
@@ -581,6 +692,7 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
     '/change-password',
     auth=JWTAuth(),
     operation_id='changePassword',
+    url_name="change_password",
     response={200: MessageResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def change_password(request, payload: ChangePasswordRequest):
@@ -604,6 +716,7 @@ def change_password(request, payload: ChangePasswordRequest):
     '/role-codes',
     auth=JWTAuth(),
     operation_id='listRoleActivationCodes',
+    url_name="role_codes_admin",
     response={200: RoleActivationCodeListResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def list_role_activation_codes(request, filters: RoleActivationCodeListFilters = Query(...)):
@@ -624,6 +737,7 @@ def list_role_activation_codes(request, filters: RoleActivationCodeListFilters =
     '/role-codes',
     auth=JWTAuth(),
     operation_id='generateRoleActivationCodes',
+    url_name="role_codes_admin",
     response={201: RoleActivationCodeGenerateResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def generate_role_activation_codes(request, payload: RoleActivationCodeGenerateRequest):

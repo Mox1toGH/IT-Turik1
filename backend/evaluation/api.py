@@ -109,6 +109,7 @@ def _parse_int_list(value: str | None, field_name: str) -> list[int]:
 @router.get(
     '/jury-assignments',
     operation_id='listJuryAssignments',
+    url_name="jury-assignments",
     response={200: list[JuryAssignmentResponse], 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 @paginate(JuryAssignmentPagination)
@@ -139,6 +140,7 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
 @router.get(
     '/jury-assignments/{assignment_id}',
     operation_id='getJuryAssignment',
+    url_name='jury_assignment_detail',
     response={200: JuryAssignmentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_jury_assignment(request, assignment_id: int):
@@ -278,6 +280,7 @@ def _apply_evaluation_update(request, evaluation_id: int, data: dict):
 @router.post(
     '/jury-evaluations',
     operation_id='createJuryEvaluation',
+    url_name='jury_evaluate_create',
     response={201: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
@@ -304,6 +307,7 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
 @router.get(
     '/jury-evaluations/{evaluation_id}',
     operation_id='getJuryEvaluation',
+    url_name='jury_evaluate',
     response={200: SubmissionEvaluationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_jury_evaluation(request, evaluation_id: int):
@@ -324,6 +328,7 @@ def get_jury_evaluation(request, evaluation_id: int):
 @router.put(
     '/jury-evaluations/{evaluation_id}',
     operation_id='replaceJuryEvaluation',
+    url_name='jury_evaluate',
     response={200: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
@@ -336,6 +341,7 @@ def replace_jury_evaluation(request, evaluation_id: int, payload: SubmissionEval
 @router.patch(
     '/jury-evaluations/{evaluation_id}',
     operation_id='updateJuryEvaluation',
+    url_name='jury_evaluate',
     response={200: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
@@ -347,6 +353,7 @@ def update_jury_evaluation(request, evaluation_id: int, payload: SubmissionEvalu
 @router.delete(
     '/jury-evaluations/{evaluation_id}',
     operation_id='deleteJuryEvaluation',
+    url_name='jury_evaluate',
     response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_jury_evaluation(request, evaluation_id: int):
@@ -378,6 +385,7 @@ def delete_jury_evaluation(request, evaluation_id: int):
 @router.post(
     '/rounds/{round_id}/jury-assignments',
     operation_id='assignJuryToRound',
+    url_name='round_assign_jury',
     response={201: AssignJuryResponse, 400: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
@@ -407,6 +415,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
 @router.get(
     '/rounds/{round_id}/available-jury',
     operation_id='listAvailableJury',
+    url_name='round_available_jury',
     response={200: list[AvailableJuryResponse], 400: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
@@ -437,6 +446,7 @@ def list_available_jury(request, round_id: int, include_assigned: bool = True):
 @router.get(
     '/rounds/{round_id}/leaderboard',
     operation_id='getRoundLeaderboard',
+    url_name='round_leaderboard',
     response={200: RoundLeaderboardResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_round_leaderboard(request, round_id: int):
@@ -455,6 +465,7 @@ def get_round_leaderboard(request, round_id: int):
 @router.get(
     '/tournaments/{tournament_id}/leaderboard',
     operation_id='getTournamentLeaderboard',
+    url_name="tournament_leaderboard",
     response={200: TournamentLeaderboardResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_tournament_leaderboard_view(request, tournament_id: int):
@@ -482,6 +493,7 @@ def get_tournament_leaderboard_view(request, tournament_id: int):
 @router.get(
     '/rounds/{round_id}/passing-status',
     operation_id='getRoundPassingStatus',
+    url_name="round_passing_status",
     response={200: RoundPassingStatusResponse, 400: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )

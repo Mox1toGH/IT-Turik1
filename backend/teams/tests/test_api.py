@@ -8,9 +8,9 @@ from teams.models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from tournaments.models import Tournament, TournamentTeamRegistration
 
 class TeamApiTests(APITestCase):
-    teams_url = reverse('teams')
-    users_url = reverse('users')
-    invitations_url = reverse('team_invitations')
+    teams_url = reverse('ninja-api:teams')
+    users_url = reverse('ninja-api:users')
+    invitations_url = reverse('ninja-api:team_invitations')
 
     def setUp(self):
         self.captain = User.objects.create_user(username='captain', email='captain@example.com', password='StrongPass123!')
@@ -45,7 +45,7 @@ class TeamApiTests(APITestCase):
         team = self._create_team({'name': 'Beta', 'email': 'b@e.com', 'member_ids': [self.member.id]})
         inv = TeamInvitation.objects.get(user=self.member)
         self.client.force_authenticate(user=self.member)
-        response = self.client.post(reverse('team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
 
@@ -53,7 +53,7 @@ class TeamApiTests(APITestCase):
         team = self._create_team({'name': 'Decline', 'email': 'dec@e.com', 'member_ids': [self.member.id]})
         inv = TeamInvitation.objects.get(user=self.member)
         self.client.force_authenticate(user=self.member)
-        response = self.client.post(reverse('team_invitation_decline', kwargs={'invitation_id': inv.id}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_invitation_decline', kwargs={'invitation_id': inv.id}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         inv.refresh_from_db()
         self.assertEqual(inv.status, TeamInvitation.STATUS_DECLINED)
@@ -61,15 +61,15 @@ class TeamApiTests(APITestCase):
     def test_captain_cannot_leave_team(self):
         team = self._create_team({'name': 'C', 'email': 'c@e.com'})
         self.client.force_authenticate(user=self.captain)
-        response = self.client.post(reverse('team_leave', kwargs={'pk': team['id']}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_leave', kwargs={'pk': team['id']}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_member_can_leave_team(self):
         team = self._create_team({'name': 'Leave', 'email': 'l@e.com', 'member_ids': [self.member.id]})
         inv = TeamInvitation.objects.get(user=self.member)
         self.client.force_authenticate(user=self.member)
-        self.client.post(reverse('team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
-        response = self.client.post(reverse('team_leave', kwargs={'pk': team['id']}), {}, format='json')
+        self.client.post(reverse('ninja-api:team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_leave', kwargs={'pk': team['id']}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
 
@@ -82,17 +82,17 @@ class TeamApiTests(APITestCase):
     def test_public_team_join_request(self):
         team = self._create_team({'name': 'Public', 'email': 'pub@e.com', 'is_public': True})
         self.client.force_authenticate(user=self.member)
-        response = self.client.post(reverse('team_join_request_create', kwargs={'pk': team['id']}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_join_request_create', kwargs={'pk': team['id']}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(TeamJoinRequest.objects.filter(team_id=team['id'], user=self.member).exists())
 
     def test_captain_can_accept_join_request(self):
         team = self._create_team({'name': 'AcceptJoin', 'email': 'aj@e.com', 'is_public': True})
         self.client.force_authenticate(user=self.member)
-        self.client.post(reverse('team_join_request_create', kwargs={'pk': team['id']}), {}, format='json')
+        self.client.post(reverse('ninja-api:team_join_request_create', kwargs={'pk': team['id']}), {}, format='json')
         req = TeamJoinRequest.objects.get(team_id=team['id'], user=self.member)
         self.client.force_authenticate(user=self.captain)
-        response = self.client.post(reverse('team_join_request_accept', kwargs={'pk': team['id'], 'request_id': req.id}), {}, format='json')
+        response = self.client.post(reverse('ninja-api:team_join_request_accept', kwargs={'pk': team['id'], 'request_id': req.id}), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(TeamMember.objects.filter(team_id=team['id'], user=self.member).exists())
 
@@ -100,17 +100,17 @@ class TeamApiTests(APITestCase):
         team = self._create_team({'name': 'B', 'email': 'b@e.com'})
         self._register_team_in_active_tournament(team_id=team['id'], tournament_status=Tournament.STATUS_RUNNING)
         self.client.force_authenticate(user=self.captain)
-        response = self.client.post(reverse('team_members', kwargs={'pk': team['id']}), {'user_id': self.member.id}, format='json')
+        response = self.client.post(reverse('ninja-api:team_members', kwargs={'pk': team['id']}), {'user_id': self.member.id}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_member_removal_blocked_at_min_members(self):
         team = self._create_team({'name': 'Min', 'email': 'm@e.com', 'member_ids': [self.member.id]})
         inv = TeamInvitation.objects.get(user=self.member)
         self.client.force_authenticate(user=self.member)
-        self.client.post(reverse('team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
+        self.client.post(reverse('ninja-api:team_invitation_accept', kwargs={'invitation_id': inv.id}), {}, format='json')
         self._register_team_in_active_tournament(team_id=team['id'], tournament_status=Tournament.STATUS_RUNNING, min_team_members=2)
         self.client.force_authenticate(user=self.captain)
-        response = self.client.delete(reverse('team_member_detail', kwargs={'pk': team['id'], 'user_id': self.member.id}))
+        response = self.client.delete(reverse('ninja-api:team_member_detail', kwargs={'pk': team['id'], 'user_id': self.member.id}))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_list_users_returns_current_users(self):

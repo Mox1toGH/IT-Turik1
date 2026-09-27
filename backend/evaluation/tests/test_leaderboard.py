@@ -46,7 +46,7 @@ class LeaderboardTests(APITestCase):
         self.round_obj.status = Round.STATUS_EVALUATED
         self.round_obj.save()
         self.client.force_authenticate(self.team_user)
-        response = self.client.get(reverse('tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
+        response = self.client.get(reverse('ninja-api:tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNone(response.data['rankings'][0]['rounds'][0]['jury_breakdown'])
 
@@ -56,14 +56,14 @@ class LeaderboardTests(APITestCase):
         for user in (self.admin, self.organizer, self.jury1):
             with self.subTest(role=user.role):
                 self.client.force_authenticate(user)
-                response = self.client.get(reverse('tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
+                response = self.client.get(reverse('ninja-api:tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
                 self.assertIsNotNone(response.data['rankings'][0]['rounds'][0]['jury_breakdown'])
 
     def test_live_endpoint_returns_403_for_team_if_round_not_evaluated(self):
         self.round_obj.status = Round.STATUS_ACTIVE
         self.round_obj.save()
         self.client.force_authenticate(self.team_user)
-        response = self.client.get(reverse('round_leaderboard', kwargs={'round_id': self.round_obj.id}))
+        response = self.client.get(reverse('ninja-api:round_leaderboard', kwargs={'round_id': self.round_obj.id}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_mark_round_evaluated_eliminates_teams(self):

@@ -1,7 +1,7 @@
 from ninja.security import HttpBearer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class JWTAuth(HttpBearer):
     """Required auth — raises 401 if token missing/invalid."""
@@ -30,3 +30,7 @@ class OptionalJWTAuth(HttpBearer):
         except (InvalidToken, TokenError):
             request.auth = None
             return 'anonymous'  # non-None означає "пропустити", але без юзера
+
+def authenticate(client, user):
+    token = str(RefreshToken.for_user(user).access_token)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")

@@ -97,10 +97,16 @@ class TournamentResponse(Schema):
         return obj.rounds.all()
 
     @staticmethod
-    def resolve_registered_team(obj):
-        # Populated by views._attach_registered_team before the object is returned,
-        # since resolvers don't have access to the request/current user.
-        return getattr(obj, '_registered_team', None)
+    def resolve_registered_team(obj, context):
+        team = context.get("registered_team")
+        return (
+            TeamSummaryResponse.model_validate(
+                team,
+                from_attributes=True,
+            )
+            if team
+            else None
+        )
 
 
 class TournamentListResponse(Schema):

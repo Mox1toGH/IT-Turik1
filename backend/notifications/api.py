@@ -22,7 +22,7 @@ def _emit_unread_count(user):
     emit_unread_count_updated(user.id, Notification.objects.filter(recipient=user, is_read=False).count())
 
 
-@router.get('', operation_id='listNotifications', response={200: list[NotificationResponse], 401: ErrorResponse})
+@router.get('', operation_id='listNotifications', url_name="notification-list", response={200: list[NotificationResponse], 401: ErrorResponse})
 @paginate(PageNumberPagination, page_size=10)
 def list_notifications(request):
     Notification.objects.filter(recipient=request.auth, created_at__lt=timezone.now() - timedelta(days=30)).delete()
@@ -31,7 +31,7 @@ def list_notifications(request):
     return [NotificationResponse.model_validate(notification, from_attributes=True) for notification in queryset]
 
 
-@router.post('/{notification_id}/read', operation_id='markNotificationRead', response={200: DetailResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.post('/{notification_id}/read', operation_id='markNotificationRead', url_name="notification-mark-read", response={200: DetailResponse, 401: ErrorResponse, 404: ErrorResponse})
 def mark_notification_read(request, notification_id: int):
     notification = Notification.objects.filter(id=notification_id, recipient=request.auth, is_read=False).first()
     
@@ -49,7 +49,7 @@ def mark_notification_read(request, notification_id: int):
     )
 
 
-@router.post('/read-all', operation_id='markAllNotificationsRead', response={200: MarkedCountResponse, 401: ErrorResponse})
+@router.post('/read-all', operation_id='markAllNotificationsRead', url_name="notification-mark-all-read", response={200: MarkedCountResponse, 401: ErrorResponse})
 def mark_all_notifications_read(request):
     unread = Notification.objects.filter(recipient=request.auth, is_read=False)
     ids = list(unread.values_list('id', flat=True))
@@ -64,7 +64,7 @@ def mark_all_notifications_read(request):
     )
 
 
-@router.get('/unread-count', operation_id='getUnreadNotificationCount', response={200: UnreadCountResponse, 401: ErrorResponse})
+@router.get('/unread-count', operation_id='getUnreadNotificationCount', url_name="notification-unread-count", response={200: UnreadCountResponse, 401: ErrorResponse})
 def get_unread_count(request):
     unread_count = Notification.objects.filter(recipient=request.auth, is_read=False).count()
     
@@ -73,7 +73,7 @@ def get_unread_count(request):
     )
 
 
-@router.delete('/delete-all', operation_id='deleteAllNotifications', response={200: DeletedCountResponse, 401: ErrorResponse})
+@router.delete('/delete-all', operation_id='deleteAllNotifications', url_name="notification-delete-all", response={200: DeletedCountResponse, 401: ErrorResponse})
 def delete_all_notifications(request):
     notifications = Notification.objects.filter(recipient=request.auth)
     ids = list(notifications.values_list('id', flat=True))
@@ -88,7 +88,7 @@ def delete_all_notifications(request):
     )
 
 
-@router.get('/settings', operation_id='getNotificationSettings', response={200: NotificationSettingsResponse, 401: ErrorResponse})
+@router.get('/settings', operation_id='getNotificationSettings', url_name="notification-settings", response={200: NotificationSettingsResponse, 401: ErrorResponse})
 def get_notification_settings(request):
     for event_type, event in EVENTS.items():
         NotificationConfig.objects.get_or_create(user=request.auth, event_type=event_type, defaults={'is_system_enabled': 'system' in event.channels, 'is_email_enabled': 'email' in event.channels})
@@ -116,12 +116,12 @@ def get_notification_settings(request):
     )
 
 
-@router.put('/settings', operation_id='updateNotificationSettings', response={200: NotificationSettingsResponse, 401: ErrorResponse})
+@router.put('/settings', operation_id='updateNotificationSettings', url_name="notification-settings", response={200: NotificationSettingsResponse, 401: ErrorResponse})
 def update_notification_settings(request):
     return get_notification_settings(request)
 
 
-@router.post('/settings/config/update', operation_id='updateNotificationConfig', response={200: DetailResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.post('/settings/config/update', operation_id='updateNotificationConfig', url_name="notification-settings-config-update", response={200: DetailResponse, 401: ErrorResponse, 404: ErrorResponse})
 def update_notification_config(request, payload: NotificationConfigUpdateRequest):
     config = get_object_or_404(NotificationConfig, user=request.auth, event_type=payload.event_type)
     
@@ -135,7 +135,7 @@ def update_notification_config(request, payload: NotificationConfigUpdateRequest
         detail=f'Setting updated for {payload.event_type}',
     )
 
-@router.post('/settings/global/update', operation_id='updateGlobalNotificationConfig', response={200: DetailResponse, 401: ErrorResponse})
+@router.post('/settings/global/update', operation_id='updateGlobalNotificationConfig', url_name="notification-settings-global-update", response={200: DetailResponse, 401: ErrorResponse})
 def update_global_notification_config(request, payload: GlobalConfigUpdateRequest):
     settings, _ = UserNotificationSettings.objects.get_or_create(user=request.auth)
     settings.emails_disabled_globally = payload.emails_disabled_globally
@@ -146,7 +146,7 @@ def update_global_notification_config(request, payload: GlobalConfigUpdateReques
     )
 
 
-@router.delete('/{notification_id}', operation_id='deleteNotification', response={204: None, 401: ErrorResponse, 404: ErrorResponse})
+@router.delete('/{notification_id}', operation_id='deleteNotification', url_name='notification-delete', response={204: None, 401: ErrorResponse, 404: ErrorResponse})
 def delete_notification(request, notification_id: int):
     notification = Notification.objects.filter(id=notification_id, recipient=request.auth).first()
 

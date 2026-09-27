@@ -58,14 +58,14 @@ class PassingCountTests(APITestCase):
         self.round1.status = Round.STATUS_EVALUATED
         self.round1.save()
         self.client.force_authenticate(self.admin)
-        url = reverse('round_passing_status', kwargs={'pk': self.round1.id})
+        url = reverse('ninja-api:round_passing_status', kwargs={'pk': self.round1.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['passing_count'], 1)
 
     def test_admin_can_manually_disqualify_team(self):
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
+        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
         response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': 'Violation'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.reg1.refresh_from_db()
@@ -76,7 +76,7 @@ class PassingCountTests(APITestCase):
         self.reg1.is_disqualified = True
         self.reg1.save()
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
+        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
         response = self.client.patch(url, {'action': 'reactivate'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.reg1.refresh_from_db()
@@ -85,13 +85,13 @@ class PassingCountTests(APITestCase):
 
     def test_disqualification_action_is_required(self):
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
+        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
         response = self.client.patch(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_disqualify_uses_default_reason_when_empty(self):
         self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
+        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
         response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': ' '}, format='json')
         self.reg1.refresh_from_db()
         self.assertEqual(self.reg1.disqualification_reason, 'Disqualified by admin')

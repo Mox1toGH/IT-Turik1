@@ -31,12 +31,12 @@ def _require_staff(request):
 #   DELETE /certificate-templates/{id}/     -> delete_template     (admin only)
 # =============================================================================
 
-@router.get('/certificate-templates', operation_id='listCertificateTemplates', response={200: list[CertificateTemplateResponse], 401: ErrorResponse}, auth=JWTAuth())
+@router.get('/certificate-templates', operation_id='listCertificateTemplates', url_name="template-list", response={200: list[CertificateTemplateResponse], 401: ErrorResponse}, auth=JWTAuth())
 @paginate(PageNumberPagination, page_size=8)
 def list_templates(request, nopage: str = ''):
     return CertificateTemplate.objects.all().order_by('-created_at')
 
-@router.get('/certificate-templates/{template_id}', operation_id='getCertificateTemplate', response={200: CertificateTemplateResponse, 401: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.get('/certificate-templates/{template_id}', operation_id='getCertificateTemplate', url_name="template_detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def get_template(request, template_id: int):
     template = get_object_or_404(CertificateTemplate, pk=template_id)
     
@@ -47,7 +47,7 @@ def get_template(request, template_id: int):
     )
 
 
-@router.post('/certificate-templates', operation_id='createCertificateTemplate', response={201: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
+@router.post('/certificate-templates', operation_id='createCertificateTemplate', url_name="template-list", response={201: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
 def create_template(request, name: str, is_default: bool = False, image: UploadedFile = File(...)):
     _require_staff(request)
 
@@ -62,8 +62,8 @@ def create_template(request, name: str, is_default: bool = False, image: Uploade
     )
 
 
-@router.put('/certificate-templates/{template_id}', operation_id='replaceCertificateTemplate', response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
-@router.patch('/certificate-templates/{template_id}', operation_id='updateCertificateTemplate', response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.put('/certificate-templates/{template_id}', operation_id='replaceCertificateTemplate', url_name="template-detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.patch('/certificate-templates/{template_id}', operation_id='updateCertificateTemplate', url_name="template-detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def update_template(
     request, template_id: int,
     name: str = None, is_default: bool = None, image: UploadedFile = File(None),
@@ -86,7 +86,7 @@ def update_template(
     )
 
 
-@router.delete('/certificate-templates/{template_id}', operation_id='deleteCertificateTemplate', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.delete('/certificate-templates/{template_id}', operation_id='deleteCertificateTemplate', url_name="template-detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def delete_template(request, template_id: int):
     _require_staff(request)
     template = get_object_or_404(CertificateTemplate, pk=template_id)
@@ -131,13 +131,13 @@ def _visible_certificates(request):
     return queryset.filter(user_id=user.id)
 
 
-@router.get('', operation_id='listCertificates', response={200: list[CertificateResponse], 401: ErrorResponse}, auth=JWTAuth())
+@router.get('', operation_id='listCertificates', url_name="certificate-list", response={200: list[CertificateResponse], 401: ErrorResponse}, auth=JWTAuth())
 @paginate(PageNumberPagination, page_size=6)
 def list_certificates(request, search: str = ''):
     return _visible_certificates(request)
 
 
-@router.get('/{unique_code}', operation_id='getCertificate', response={200: CertificateResponse, 401: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.get('/{unique_code}', operation_id='getCertificate', url_name="certificate-detail", response={200: CertificateResponse, 401: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def get_certificate(request, unique_code: str):
     certificate = get_object_or_404(_visible_certificates(request), unique_code=unique_code)
     
@@ -148,7 +148,7 @@ def get_certificate(request, unique_code: str):
     )
 
 
-@router.post('', operation_id='createCertificate', response={201: CertificateResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
+@router.post('', operation_id='createCertificate', url_name="certificate-list", response={201: CertificateResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
 def create_certificate(request, payload: CertificateRequest):
     _require_staff(request)
 
@@ -167,7 +167,7 @@ def create_certificate(request, payload: CertificateRequest):
     )
 
 
-@router.patch('/{unique_code}', operation_id='updateCertificate', response={200: CertificateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.patch('/{unique_code}', operation_id='updateCertificate', url_name="certificate-detail", response={200: CertificateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def update_certificate(request, unique_code: str, payload: CertificateRequest):
     _require_staff(request)
     certificate = get_object_or_404(Certificate, unique_code=unique_code)
@@ -187,7 +187,7 @@ def update_certificate(request, unique_code: str, payload: CertificateRequest):
     )
 
 
-@router.delete('/{unique_code}', operation_id='deleteCertificate', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
+@router.delete('/{unique_code}', operation_id='deleteCertificate', url_name="certificate-detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def delete_certificate(request, unique_code: str):
     _require_staff(request)
     
@@ -200,6 +200,7 @@ def delete_certificate(request, unique_code: str):
 @router.get(
     '/{unique_code}/view',
     operation_id='viewCertificatePdf',
+    url_name="certificate-view",
     response={200: None, 404: ErrorResponse, 500: ErrorResponse},
     auth=OptionalJWTAuth(),  # public: no auth required, matches AllowAny for this action
 )
@@ -218,7 +219,7 @@ def view_certificate_pdf(request, unique_code: str):
     return response
 
 
-@router.get('/verify/{code}', operation_id='verifyCertificate', response={200: CertificateVerifyResponse}, auth=None)
+@router.get('/verify/{code}', operation_id='verifyCertificate', url_name="certificate-verify", response={200: CertificateVerifyResponse}, auth=None)
 def verify_certificate(request, code: str):
     certificate = Certificate.objects.filter(Q(unique_code=code) | Q(certificate_number=code)).first()
 

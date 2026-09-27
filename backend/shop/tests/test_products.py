@@ -27,8 +27,8 @@ class ProductTests(APITestCase):
             product_type=Product.TYPE_PHYSICAL,
             is_active=True,
         )
-        self.products_url = reverse('shop-products-list')
-        self.product_detail_url = reverse('shop-products-detail', kwargs={'pk': self.product.id})
+        self.products_url = reverse('ninja-api:shop-products-list')
+        self.product_detail_url = reverse('ninja-api:shop-products-detail', kwargs={'pk': self.product.id})
 
     def test_product_list_requires_authentication(self):
         response = self.client.get(self.products_url)

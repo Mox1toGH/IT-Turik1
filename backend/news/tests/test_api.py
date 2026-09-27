@@ -27,7 +27,7 @@ class NewsApiTests(APITestCase):
             password='StrongPass123!',
             role='team',
         )
-        self.list_url = reverse('news_list_create')
+        self.list_url = reverse('ninja-api:news_list_create')
 
     def test_admin_can_create_news(self):
         self.client.force_authenticate(user=self.admin)
@@ -73,7 +73,7 @@ class NewsApiTests(APITestCase):
             created_by=self.admin,
         )
         self.client.force_authenticate(user=self.team_user)
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        detail_url = reverse('ninja-api:news_detail', kwargs={'pk': article.id})
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -95,7 +95,7 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.admin,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        detail_url = reverse('ninja-api:news_detail', kwargs={'pk': article.id})
         self.client.force_authenticate(user=self.team_user)
         update_response = self.client.patch(detail_url, {'title': 'Changed'}, format='json')
         delete_response = self.client.delete(detail_url)
@@ -108,7 +108,7 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.organizer,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        detail_url = reverse('ninja-api:news_detail', kwargs={'pk': article.id})
         self.client.force_authenticate(user=self.organizer)
         update_response = self.client.patch(detail_url, {'title': 'Updated by organizer'}, format='json')
         self.assertEqual(update_response.status_code, status.HTTP_200_OK)
@@ -121,7 +121,7 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.admin,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        detail_url = reverse('ninja-api:news_detail', kwargs={'pk': article.id})
         self.client.force_authenticate(user=self.organizer)
         update_response = self.client.patch(detail_url, {'title': 'Try change'}, format='json')
         self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)

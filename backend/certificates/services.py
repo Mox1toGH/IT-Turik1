@@ -59,7 +59,7 @@ def _build_verification_url(certificate, request=None):
         return f'{frontend_base_url}/certificates/verify/{certificate.unique_code}'
 
     if request:
-        verify_path = reverse('certificate-verify', kwargs={'code': certificate.unique_code})
+        verify_path = reverse('ninja-api:certificate-verify', kwargs={'code': certificate.unique_code})
         return request.build_absolute_uri(verify_path)
 
     return ''

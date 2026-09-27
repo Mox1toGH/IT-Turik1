@@ -8,7 +8,7 @@ class NotificationApiTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='u', email='u@e.com', password='pass')
         self.client.force_authenticate(user=self.user)
-        self.list_url = reverse('notification-list')
+        self.list_url = reverse('ninja-api:notification-list')
 
     def test_list_notifications(self):
         Notification.objects.all().delete()
@@ -19,14 +19,14 @@ class NotificationApiTests(APITestCase):
 
     def test_unread_count(self):
         Notification.objects.create(recipient=self.user, title='T1', event_type='e', is_read=False)
-        url = reverse('notification-unread-count')
+        url = reverse('ninja-api:notification-unread-count')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['unread_count'], 1)
 
     def test_mark_read(self):
         notif = Notification.objects.create(recipient=self.user, title='T1', event_type='e')
-        url = reverse('notification-mark-read', kwargs={'pk': notif.id})
+        url = reverse('ninja-api:notification-mark-read', kwargs={'pk': notif.id})
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         notif.refresh_from_db()
@@ -34,39 +34,39 @@ class NotificationApiTests(APITestCase):
 
     def test_mark_all_read(self):
         Notification.objects.create(recipient=self.user, title='T1', event_type='e')
-        url = reverse('notification-mark-all-read')
+        url = reverse('ninja-api:notification-mark-all-read')
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Notification.objects.filter(recipient=self.user, is_read=False).count(), 0)
 
     def test_delete_notification(self):
         notif = Notification.objects.create(recipient=self.user, title='T1', event_type='e')
-        url = reverse('notification-delete', kwargs={'pk': notif.id})
+        url = reverse('ninja-api:notification-delete', kwargs={'pk': notif.id})
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Notification.objects.filter(id=notif.id).exists())
 
     def test_delete_all_notifications(self):
         Notification.objects.create(recipient=self.user, title='T1', event_type='e')
-        url = reverse('notification-delete-all')
+        url = reverse('ninja-api:notification-delete-all')
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Notification.objects.filter(recipient=self.user).count(), 0)
 
     def test_get_settings(self):
-        url = reverse('notification-settings')
+        url = reverse('ninja-api:notification-settings')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_global_settings(self):
-        url = reverse('notification-settings-global-update')
+        url = reverse('ninja-api:notification-settings-global-update')
         response = self.client.post(url, {'emails_disabled_globally': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.notification_settings.refresh_from_db()
         self.assertTrue(self.user.notification_settings.emails_disabled_globally)
 
     def test_update_event_config(self):
-        url = reverse('notification-settings-config-update')
+        url = reverse('ninja-api:notification-settings-config-update')
         NotificationConfig.objects.create(user=self.user, event_type='test')
         response = self.client.post(url, {'event_type': 'test', 'is_email_enabled': False})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

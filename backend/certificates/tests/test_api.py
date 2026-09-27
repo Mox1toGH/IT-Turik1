@@ -12,7 +12,7 @@ class CertificateApiTests(APITestCase):
         )
         self.user = User.objects.create_user(username='user', email='u@e.com', password='pass')
         self.template = CertificateTemplate.objects.create(name='T')
-        self.list_url = reverse('certificate-list')
+        self.list_url = reverse('ninja-api:certificate-list')
 
     def test_list_certificates_anonymous(self):
         response = self.client.get(self.list_url)
@@ -29,7 +29,7 @@ class CertificateApiTests(APITestCase):
 
     def test_retrieve_certificate_by_uuid(self):
         cert = Certificate.objects.create(placement='1st', user=self.user)
-        url = reverse('certificate-detail', kwargs={'unique_code': cert.unique_code})
+        url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -37,7 +37,7 @@ class CertificateApiTests(APITestCase):
 
     def test_verify_certificate(self):
         cert = Certificate.objects.create(placement='1st')
-        url = reverse('certificate-verify', kwargs={'code': cert.unique_code})
+        url = reverse('ninja-api:certificate-verify', kwargs={'code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -45,13 +45,13 @@ class CertificateApiTests(APITestCase):
 
     def test_view_certificate_action(self):
         cert = Certificate.objects.create(placement='1st', user=self.user)
-        url = reverse('certificate-view', kwargs={'unique_code': cert.unique_code})
+        url = reverse('ninja-api:certificate-view', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_template_list_admin_only(self):
-        url = reverse('template-list')
+        url = reverse('ninja-api:template-list')
         self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         # Templates might be public to view but restricted to create
@@ -59,26 +59,26 @@ class CertificateApiTests(APITestCase):
         pass
 
     def test_create_template_admin_only(self):
-        url = reverse('template-list')
+        url = reverse('ninja-api:template-list')
         self.client.force_authenticate(user=self.user)
         response = self.client.post(url, {'name': 'New T'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_update_certificate_admin_only(self):
         cert = Certificate.objects.create(placement='1st')
-        url = reverse('certificate-detail', kwargs={'unique_code': cert.unique_code})
+        url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.patch(url, {'placement': '2nd'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_certificate_admin_only(self):
         cert = Certificate.objects.create(placement='1st')
-        url = reverse('certificate-detail', kwargs={'unique_code': cert.unique_code})
+        url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
         self.client.force_authenticate(user=self.user)
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_verify_invalid_code(self):
-        url = reverse('certificate-verify', kwargs={'code': 'invalid-uuid'})
+        url = reverse('ninja-api:certificate-verify', kwargs={'code': 'invalid-uuid'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

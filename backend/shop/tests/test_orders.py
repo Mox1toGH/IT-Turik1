@@ -29,8 +29,8 @@ class OrderTests(APITestCase):
             product_type=Product.TYPE_PHYSICAL,
             is_active=True,
         )
-        self.purchase_url = reverse('shop-purchase')
-        self.my_orders_url = reverse('shop-my-orders')
+        self.purchase_url = reverse('ninja-api:shop-purchase')
+        self.my_orders_url = reverse('ninja-api:shop-my-orders')
 
     def test_purchase_success_creates_pending_order_deducts_points_stock_and_links_transaction(self):
         UserPointsBalance.objects.create(user=self.user, balance=200)
@@ -90,7 +90,7 @@ class OrderTests(APITestCase):
         )
         order_id = purchase_response.data['id']
 
-        cancel_url = reverse('shop-my-order-cancel', kwargs={'order_id': order_id})
+        cancel_url = reverse('ninja-api:shop-my-order-cancel', kwargs={'order_id': order_id})
         cancel_response = self.client.post(cancel_url, {}, format='json')
 
         self.assertEqual(cancel_response.status_code, status.HTTP_200_OK)
@@ -113,7 +113,7 @@ class OrderTests(APITestCase):
         order_id = purchase_response.data['id']
 
         self.client.force_authenticate(user=self.user)
-        cancel_url = reverse('shop-my-order-cancel', kwargs={'order_id': order_id})
+        cancel_url = reverse('ninja-api:shop-my-order-cancel', kwargs={'order_id': order_id})
         response = self.client.post(cancel_url, {}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

@@ -52,7 +52,7 @@ class TournamentApiTests(APITestCase):
 
     def test_admin_can_create_tournament(self):
         self.client.force_authenticate(user=self.admin)
-        url = reverse('tournament_manage_create')
+        url = reverse('ninja-api:tournament_manage_create')
         response = self.client.post(url, self.tournament_data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -60,7 +60,7 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(Round.objects.count(), 0)
 
     def test_organizer_can_create_tournament(self):
-        url = reverse('tournament_manage_create')
+        url = reverse('ninja-api:tournament_manage_create')
 
         self.client.force_authenticate(user=self.organizer)
         response = self.client.post(url, self.tournament_data, format='json')
@@ -69,14 +69,14 @@ class TournamentApiTests(APITestCase):
 
     def test_jury_cannot_create_tournament(self):
         self.client.force_authenticate(user=self.jury)
-        url = reverse('tournament_manage_create')
+        url = reverse('ninja-api:tournament_manage_create')
         response = self.client.post(url, self.tournament_data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_non_admin_cannot_create_tournament(self):
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_manage_create')
+        url = reverse('ninja-api:tournament_manage_create')
         response = self.client.post(url, self.tournament_data, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -87,7 +87,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_manage_update', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_manage_update', kwargs={'pk': tournament.id})
         response = self.client.patch(url, {'name': 'Hacked Name'}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -98,7 +98,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.organizer)
-        url = reverse('tournament_manage_update', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_manage_update', kwargs={'pk': tournament.id})
         response = self.client.patch(url, {'name': 'Updated by organizer'}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -109,7 +109,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.jury)
-        url = reverse('tournament_manage_update', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_manage_update', kwargs={'pk': tournament.id})
         response = self.client.patch(url, {'name': 'Updated by jury'}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -120,7 +120,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse('tournament_start_registration', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_start_registration', kwargs={'pk': tournament.id})
         response = self.client.post(url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -133,7 +133,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.jury)
-        url = reverse('tournament_start_registration', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_start_registration', kwargs={'pk': tournament.id})
         response = self.client.post(url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -147,7 +147,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -160,7 +160,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -180,7 +180,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_leave_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -207,7 +207,7 @@ class TournamentApiTests(APITestCase):
         TeamMember.objects.create(team=self.team, user=member)
 
         self.client.force_authenticate(user=member)
-        url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_leave_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -228,7 +228,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -245,7 +245,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         
         round_data = {
             'name': 'Extra Round',
@@ -262,7 +262,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.organizer)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
 
         round_data = {
             'name': 'Organizer Round',
@@ -279,7 +279,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.jury)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
 
         round_data = {
             'name': 'Jury Round',
@@ -310,7 +310,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -337,7 +337,7 @@ class TournamentApiTests(APITestCase):
             password='StrongPass123!',
         )
         self.client.force_authenticate(user=unregistered_user)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -358,7 +358,7 @@ class TournamentApiTests(APITestCase):
         TournamentTeamRegistration.objects.create(tournament=tournament, team=self.team)
         
         self.client.force_authenticate(user=self.captain)
-        url = reverse('submissions')
+        url = reverse('ninja-api:submissions')
         submission_data = {
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
@@ -392,7 +392,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('submissions')
+        url = reverse('ninja-api:submissions')
         submission_data = {
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
@@ -427,7 +427,7 @@ class TournamentApiTests(APITestCase):
         TeamMember.objects.create(team=self.team, user=member)
 
         self.client.force_authenticate(user=member)
-        url = reverse('submissions')
+        url = reverse('ninja-api:submissions')
         submission_data = {
             'round': round_obj.id,
             'github_url': 'https://github.com/test/repo',
@@ -470,7 +470,7 @@ class TournamentApiTests(APITestCase):
         TeamMember.objects.create(team=self.team, user=member)
 
         self.client.force_authenticate(user=member)
-        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        url = reverse('ninja-api:submission_detail', kwargs={'pk': submission.id})
         response = self.client.patch(url, {'description': 'Updated by member'}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -500,7 +500,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('submission_detail', kwargs={'pk': submission.id})
+        url = reverse('ninja-api:submission_detail', kwargs={'pk': submission.id})
         response = self.client.patch(url, {'description': 'Updated by captain'}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -549,7 +549,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -598,7 +598,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -648,7 +648,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -697,7 +697,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -732,7 +732,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=member)
-        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -783,7 +783,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -802,7 +802,7 @@ class TournamentApiTests(APITestCase):
             password='StrongPass123!',
         )
         self.client.force_authenticate(user=outsider)
-        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -813,14 +813,14 @@ class TournamentApiTests(APITestCase):
             status=Tournament.STATUS_RUNNING,
             **self.tournament_data
         )
-        url = reverse('tournament_my_submissions', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_tournament_my_submissions_returns_404_for_missing_tournament(self):
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_my_submissions', kwargs={'pk': 999999})
+        url = reverse('ninja-api:tournament_my_submissions', kwargs={'pk': 999999})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -838,7 +838,7 @@ class TournamentApiTests(APITestCase):
         other_team = Team.objects.create(name='Other Team', email='other@example.com', captain=other_user)
         
         self.client.force_authenticate(user=other_user)
-        url = reverse('tournament_register_team', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': tournament.id})
         response = self.client.post(url, {'team_id': other_team.id}, format='json')
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -863,7 +863,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_register_team', kwargs={'pk': target_tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': target_tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -911,7 +911,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_register_team', kwargs={'pk': target_tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': target_tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -942,7 +942,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_register_team', kwargs={'pk': new_tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': new_tournament.id})
         response = self.client.post(url, {'team_id': self.team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -990,7 +990,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=other_captain)
-        url = reverse('tournament_register_team', kwargs={'pk': new_tournament.id})
+        url = reverse('ninja-api:tournament_register_team', kwargs={'pk': new_tournament.id})
         response = self.client.post(url, {'team_id': other_team.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -1021,7 +1021,7 @@ class TournamentApiTests(APITestCase):
         TeamMember.objects.create(team=self.team, user=extra_member)
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_eligible_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_eligible_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1043,7 +1043,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('team_active_tournament')
+        url = reverse('ninja-api:team_active_tournament')
         response = self.client.get(url, {'team_id': self.team.id})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1065,7 +1065,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('team_active_tournament')
+        url = reverse('ninja-api:team_active_tournament')
         response = self.client.get(url, {'team_id': self.team.id})
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -1102,7 +1102,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1144,7 +1144,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url, {'status': 'all'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1204,7 +1204,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url, {'status': 'disqualified'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1246,7 +1246,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url, {'status': 'active'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1286,7 +1286,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1308,7 +1308,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        url = reverse('team_active_tournament')
+        url = reverse('ninja-api:team_active_tournament')
         response = self.client.get(url, {'team_id': self.team.id})
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -1327,17 +1327,17 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.captain)
-        leave_url = reverse('tournament_leave_team', kwargs={'pk': tournament.id})
+        leave_url = reverse('ninja-api:tournament_leave_team', kwargs={'pk': tournament.id})
         leave_response = self.client.post(leave_url, {'team_id': self.team.id}, format='json')
         self.assertEqual(leave_response.status_code, status.HTTP_200_OK)
 
-        active_url = reverse('team_active_tournament')
+        active_url = reverse('ninja-api:team_active_tournament')
         active_response = self.client.get(active_url, {'team_id': self.team.id})
         self.assertEqual(active_response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_tournament_teams_returns_404_for_missing_tournament(self):
         self.client.force_authenticate(user=self.captain)
-        url = reverse('tournament_teams', kwargs={'pk': 999999})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': 999999})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -1348,7 +1348,7 @@ class TournamentApiTests(APITestCase):
             status=Tournament.STATUS_RUNNING,
             **self.tournament_data
         )
-        url = reverse('tournament_teams', kwargs={'pk': tournament.id})
+        url = reverse('ninja-api:tournament_teams', kwargs={'pk': tournament.id})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1378,7 +1378,7 @@ class TournamentApiTests(APITestCase):
             status=Tournament.STATUS_REGISTRATION,
             **self.tournament_data
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1398,7 +1398,7 @@ class TournamentApiTests(APITestCase):
                 end_date=timezone.now() + timezone.timedelta(days=10),
             )
 
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'page': '1'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total'], 25)
@@ -1418,7 +1418,7 @@ class TournamentApiTests(APITestCase):
                 end_date=timezone.now() + timezone.timedelta(days=10),
             )
 
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'page': '1', 'page_size': '5'})
         self.assertEqual(response.data['total'], 15)
         self.assertEqual(len(response.data['data']), 5)
@@ -1437,7 +1437,7 @@ class TournamentApiTests(APITestCase):
                 end_date=timezone.now() + timezone.timedelta(days=10),
             )
 
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'page': '1', 'page_size': '9999'})
         self.assertEqual(response.data['total'], 150)
         self.assertEqual(len(response.data['data']), 100)
@@ -1448,7 +1448,7 @@ class TournamentApiTests(APITestCase):
             status=Tournament.STATUS_REGISTRATION,
             **self.tournament_data
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url)
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(len(response.data['data']), 1)
@@ -1470,7 +1470,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'searchQuery': 'Alpha'})
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Alpha Cup')
@@ -1492,7 +1492,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'searchQuery': 'Unique keyword'})
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Alpha Cup')
@@ -1514,7 +1514,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'status': 'registration'})
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Reg Tournament')
@@ -1550,7 +1550,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'status': 'registration,running'})
         self.assertEqual(response.data['total'], 2)
 
@@ -1572,7 +1572,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url, {'startAt': today.isoformat()})
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Today Start')
@@ -1594,7 +1594,7 @@ class TournamentApiTests(APITestCase):
             start_date=timezone.now() + timezone.timedelta(days=1),
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url)
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Public Tournament')
@@ -1609,7 +1609,7 @@ class TournamentApiTests(APITestCase):
             end_date=timezone.now() + timezone.timedelta(days=10),
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse('tournaments')
+        url = reverse('ninja-api:tournaments')
         response = self.client.get(url)
         self.assertEqual(response.data['total'], 1)
         self.assertEqual(response.data['data'][0]['name'], 'Draft Tournament')
@@ -1620,7 +1620,7 @@ class TournamentApiTests(APITestCase):
             **self.tournament_data
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         
         round_data = {
             'name': 'Invalid Round',
@@ -1648,7 +1648,7 @@ class TournamentApiTests(APITestCase):
         )
         
         self.client.force_authenticate(user=self.admin)
-        url = reverse('rounds', kwargs={'tournament_pk': tournament.id})
+        url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         
         # Try to create overlapping round via API (starts during first round)
         round2_data = {
@@ -1695,7 +1695,7 @@ class TournamentApiTests(APITestCase):
         )
         
         self.client.force_authenticate(user=self.admin)
-        url = reverse('round_detail', kwargs={'pk': round2.id})
+        url = reverse('ninja-api:round_detail', kwargs={'pk': round2.id})
         
         # Try to update round2 to overlap with round1
         update_data = {
@@ -1731,7 +1731,7 @@ class TournamentApiTests(APITestCase):
         )
 
         self.client.force_authenticate(user=self.admin)
-        url = reverse('round_detail', kwargs={'pk': round1.id})
+        url = reverse('ninja-api:round_detail', kwargs={'pk': round1.id})
         update_data = {
             'tournament': tournament.id,
             'name': 'Round 1',
@@ -1767,7 +1767,7 @@ class TournamentApiTests(APITestCase):
         )
         
         self.client.force_authenticate(user=self.admin)
-        url = reverse('round_detail', kwargs={'pk': round2.id})
+        url = reverse('ninja-api:round_detail', kwargs={'pk': round2.id})
         
         # Try to update round2 to overlap with round1
         update_data = {
@@ -1849,7 +1849,7 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         assign2 = JuryAssignment.objects.create(submission=self.submission, jury=self.jury2)
 
         self.client.force_authenticate(user=self.admin)
-        response = self.client.get(reverse('round_submissions', kwargs={'pk': self.round_obj.id}))
+        response = self.client.get(reverse('ninja-api:round_submissions', kwargs={'pk': self.round_obj.id}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
@@ -1870,7 +1870,7 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         ).update(is_active=False, is_disqualified=True, disqualification_reason='Rules violation')
 
         self.client.force_authenticate(user=self.admin)
-        response = self.client.get(reverse('round_submissions', kwargs={'pk': self.round_obj.id}))
+        response = self.client.get(reverse('ninja-api:round_submissions', kwargs={'pk': self.round_obj.id}))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)

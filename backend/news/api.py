@@ -77,7 +77,7 @@ def list_news(request, page: int = 1, page_size: int = 10):
     )
 
 
-@router.post('', operation_id='createNews', response={201: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+@router.post('', operation_id='createNews', url_name="news_list_create", response={201: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 @transaction.atomic
 def create_news(request, payload: NewsArticleRequest):
     _require_permission(request, Permission.CREATE_NEWS)
@@ -87,7 +87,7 @@ def create_news(request, payload: NewsArticleRequest):
     )
 
 
-@router.get('/{article_id}', operation_id='getNews', response={200: NewsArticleResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/{article_id}', operation_id='getNews', url_name="news_detail", response={200: NewsArticleResponse, 401: ErrorResponse, 404: ErrorResponse})
 def get_news(request, article_id: int):
     return _serialize_article(
         get_object_or_404(
@@ -97,8 +97,8 @@ def get_news(request, article_id: int):
     )
 
 
-@router.put('/{article_id}', operation_id='replaceNews', response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-@router.patch('/{article_id}', operation_id='updateNews', response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.put('/{article_id}', operation_id='replaceNews', url_name="news_detail", response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.patch('/{article_id}', operation_id='updateNews', url_name="news_detail", response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @transaction.atomic
 def update_news(request, article_id: int, payload: NewsArticleRequest):
     article = get_object_or_404(NewsArticle.objects.select_related('created_by'), pk=article_id)
@@ -107,7 +107,7 @@ def update_news(request, article_id: int, payload: NewsArticleRequest):
     return _serialize_article(_save_article(request, article, payload))
 
 
-@router.delete('/{article_id}', operation_id='deleteNews', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.delete('/{article_id}', operation_id='deleteNews', url_name="news_detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_news(request, article_id: int):
     article = get_object_or_404(NewsArticle, pk=article_id)
     _require_permission(request, Permission.DELETE_NEWS, article)

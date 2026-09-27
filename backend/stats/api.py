@@ -35,7 +35,7 @@ def _team_results(team):
     return total, wins, max(total - wins, 0)
 
 
-@router.get('/player', operation_id='getPlayerStats', response={200: PlayerStatsResponse, 401: ErrorResponse})
+@router.get('/player', operation_id='getPlayerStats', url_name='stats-player', response={200: PlayerStatsResponse, 401: ErrorResponse})
 def get_player_stats(request):
     teams = Team.objects.filter(Q(captain=request.auth) | Q(team_members__user=request.auth)).distinct()
     team = teams.order_by('id').first()
@@ -58,7 +58,7 @@ def get_player_stats(request):
     )
 
 
-@router.get('/team/{team_id}', operation_id='getTeamStats', response={200: TeamStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.get('/team/{team_id}', operation_id='getTeamStats', url_name='stats-team', response={200: TeamStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_team_stats(request, team_id: int):
     team = get_object_or_404(Team.objects.prefetch_related('members'), pk=team_id)
     
@@ -93,7 +93,7 @@ def get_team_stats(request, team_id: int):
     )
 
 
-@router.get('/tournament/{tournament_id}', operation_id='getTournamentStats', response={200: TournamentStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.get('/tournament/{tournament_id}', operation_id='getTournamentStats', url_name='stats-tournament', response={200: TournamentStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_tournament_stats(request, tournament_id: int):
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     
@@ -133,7 +133,7 @@ def get_tournament_stats(request, tournament_id: int):
         }
     )
 
-@router.get('/admin', operation_id='getAdminStats', response={200: AdminStatsResponse, 401: ErrorResponse, 403: ErrorResponse})
+@router.get('/admin', operation_id='getAdminStats', url_name='stats-admin', response={200: AdminStatsResponse, 401: ErrorResponse, 403: ErrorResponse})
 def get_admin_stats(request):
     if not is_platform_admin(request.auth):
         raise HttpError(403, 'Admin access required.')

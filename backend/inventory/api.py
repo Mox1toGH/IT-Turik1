@@ -21,13 +21,13 @@ def _inventory_queryset(user):
     ).filter(user=user)
 
 
-@router.get('/my', operation_id='listMyDigitalInventory', response={200: list[DigitalInventoryItemResponse], 401: ErrorResponse})
+@router.get('/my', operation_id='listMyDigitalInventory', url_name="inventory-my", response={200: list[DigitalInventoryItemResponse], 401: ErrorResponse})
 @paginate(PageNumberPagination, page_size=20)
 def list_my_inventory(request):
     return _inventory_queryset(request.auth)
 
 
-@router.post('/equip', operation_id='equipDigitalInventoryItem', response={200: DigitalInventoryItemResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.post('/equip', operation_id='equipDigitalInventoryItem', url_name="inventory-equip", response={200: DigitalInventoryItemResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
 def equip_inventory_item(request, payload: EquipDigitalItemRequest):
     item = get_object_or_404(_inventory_queryset(request.auth), pk=payload.inventory_id)
     
@@ -45,7 +45,7 @@ def equip_inventory_item(request, payload: EquipDigitalItemRequest):
     )
 
 
-@router.post('/unequip', operation_id='unequipDigitalInventoryItem', response={200: DigitalInventoryItemResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.post('/unequip', operation_id='unequipDigitalInventoryItem', url_name="inventory-unequip", response={200: DigitalInventoryItemResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
 def unequip_inventory_item(request, payload: EquipDigitalItemRequest):
     item = get_object_or_404(_inventory_queryset(request.auth), pk=payload.inventory_id)
 

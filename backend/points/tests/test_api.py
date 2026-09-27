@@ -27,11 +27,11 @@ class PointsApiTests(APITestCase):
             is_superuser=True,
         )
 
-        self.my_balance_url = reverse('points-my-balance')
-        self.my_transactions_url = reverse('points-my-transactions')
-        self.admin_balance_url = reverse('points-admin-user-balance', kwargs={'user_id': self.user.id})
-        self.admin_transactions_url = reverse('points-admin-user-transactions', kwargs={'user_id': self.user.id})
-        self.admin_modify_url = reverse('points-admin-user-modify', kwargs={'user_id': self.user.id})
+        self.my_balance_url = reverse('ninja-api:points-my-balance')
+        self.my_transactions_url = reverse('ninja-api:points-my-transactions')
+        self.admin_balance_url = reverse('ninja-api:points-admin-user-balance', kwargs={'user_id': self.user.id})
+        self.admin_transactions_url = reverse('ninja-api:points-admin-user-transactions', kwargs={'user_id': self.user.id})
+        self.admin_modify_url = reverse('ninja-api:points-admin-user-modify', kwargs={'user_id': self.user.id})
 
     def _seed_transactions_for_user(self):
         PointsTransaction.objects.create(user=self.user, amount=30, reason='Bonus')

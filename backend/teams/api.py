@@ -174,6 +174,7 @@ def invite_user_to_team(*, team, user, invited_by):
 @router.get(
     '/',
     operation_id='listTeams',
+    url_name='teams',
     response={200: list[TeamResponse], 401: ErrorResponse},
 )
 def list_teams(request):
@@ -190,6 +191,7 @@ def list_teams(request):
 @router.post(
     '/',
     operation_id='createTeam',
+    url_name='listTeams',
     response={201: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_team(request, payload: TeamCreateRequest):
@@ -222,6 +224,7 @@ def create_team(request, payload: TeamCreateRequest):
 @router.get(
     '/{int:pk}',
     operation_id='getTeam',
+    url_name='team_detail',
     response={200: TeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_team(request, pk: int):
@@ -264,6 +267,7 @@ def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
 @router.put(
     '/{int:pk}',
     operation_id='replaceTeam',
+    url_name='team_detail',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def replace_team(request, pk: int, payload: TeamUpdateRequest):
@@ -273,6 +277,7 @@ def replace_team(request, pk: int, payload: TeamUpdateRequest):
 @router.patch(
     '/{int:pk}',
     operation_id='updateTeam',
+    url_name='team_detail',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def update_team(request, pk: int, payload: TeamUpdateRequest):
@@ -282,6 +287,7 @@ def update_team(request, pk: int, payload: TeamUpdateRequest):
 @router.delete(
     '/{int:pk}',
     operation_id='deleteTeam',
+    url_name='team_detail',
     response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_team(request, pk: int):
@@ -314,6 +320,7 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
 @router.put(
     '/{int:pk}/banner',
     operation_id='teamBannerUpdate',
+    url_name='team_banner',
     response={200: TeamBannerResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def replace_team_banner(request, pk: int, banner: UploadedFile = File(...)):
@@ -323,6 +330,7 @@ def replace_team_banner(request, pk: int, banner: UploadedFile = File(...)):
 @router.patch(
     '/{int:pk}/banner',
     operation_id='teamBannerPartialUpdate',
+    url_name='team_banner',
     response={200: TeamBannerResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def update_team_banner(request, pk: int, banner: UploadedFile = File(...)):
@@ -332,6 +340,7 @@ def update_team_banner(request, pk: int, banner: UploadedFile = File(...)):
 @router.delete(
     '/{int:pk}/banner',
     operation_id='deleteTeamBanner',
+    url_name='team_banner',
     response={200: TeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_team_banner(request, pk: int):
@@ -354,6 +363,7 @@ def delete_team_banner(request, pk: int):
 @router.post(
     '/{int:pk}/members/invite',
     operation_id='inviteMemberToTeam',
+    url_name='team_members',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
@@ -388,6 +398,7 @@ def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
 @router.delete(
     '/{int:pk}/members/{int:user_id}',
     operation_id='removeMemberFromTeam',
+    url_name='team_member_detail',
     response={204: None, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def remove_member_from_team(request, pk: int, user_id: int):
@@ -415,6 +426,7 @@ def remove_member_from_team(request, pk: int, user_id: int):
 @router.post(
     '/{int:pk}/leave',
     operation_id='leaveTeam',
+    url_name='team_leave',
     response={200: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def leave_team(request, pk: int):
@@ -443,6 +455,7 @@ def leave_team(request, pk: int):
 @router.get(
     '/invitations',
     operation_id='listTeamInvitations',
+    url_name='team_invitations',
     response={200: list[TeamInvitationInboxResponse], 401: ErrorResponse},
 )
 def list_team_invitations(request):
@@ -497,6 +510,7 @@ def respond_to_invitation(request, invitation_id: int, new_status: str):
 @router.post(
     '/invitations/{int:invitation_id}/accept',
     operation_id='acceptTeamInvitation',
+    url_name='team_invitation_accept',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def accept_team_invitation(request, invitation_id: int):
@@ -506,6 +520,7 @@ def accept_team_invitation(request, invitation_id: int):
 @router.post(
     '/invitations/{int:invitation_id}/decline',
     operation_id='declineTeamInvitation',
+    url_name='team_invitation_decline',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def decline_team_invitation(request, invitation_id: int):
@@ -519,6 +534,7 @@ def decline_team_invitation(request, invitation_id: int):
 @router.post(
     '/{int:pk}/join-requests',
     operation_id='createTeamJoinRequest',
+    url_name='team_join_request_create',
     response={200: DetailResponse, 201: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def create_team_join_request(request, pk: int):
@@ -579,6 +595,7 @@ def review_join_request(request, pk: int, request_id: int, new_status: str):
 @router.post(
     '/{int:pk}/join-requests/{int:request_id}/accept',
     operation_id='acceptTeamJoinRequest',
+    url_name='team_join_request_accept',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def accept_team_join_request(request, pk: int, request_id: int):
@@ -588,6 +605,7 @@ def accept_team_join_request(request, pk: int, request_id: int):
 @router.post(
     '/{int:pk}/join-requests/{int:request_id}/decline',
     operation_id='declineTeamJoinRequest',
+    url_name='team_join_request_decline',
     response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def decline_team_join_request(request, pk: int, request_id: int):
@@ -601,6 +619,7 @@ def decline_team_join_request(request, pk: int, request_id: int):
 @router.get(
     '/{int:pk}/invitations',
     operation_id='listTeamInvitationsByTeam',
+    url_name='team_invitations_by_team',
     response={200: list[TeamInvitationResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def list_team_invitations_by_team(request, pk: int):
@@ -624,6 +643,7 @@ def list_team_invitations_by_team(request, pk: int):
 @router.get(
     '/{int:pk}/join-requests',
     operation_id='listTeamJoinRequestsByTeam',
+    url_name='team_join_request_create',
     response={200: list[TeamJoinRequestResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def list_team_join_requests_by_team(request, pk: int):

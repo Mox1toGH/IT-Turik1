@@ -57,10 +57,10 @@ class InventoryApiTests(APITestCase):
             is_active=True,
         )
 
-        self.inventory_url = reverse('inventory-my')
-        self.equip_url = reverse('inventory-equip')
-        self.unequip_url = reverse('inventory-unequip')
-        self.purchase_url = reverse('shop-purchase')
+        self.inventory_url = reverse('ninja-api:inventory-my')
+        self.equip_url = reverse('ninja-api:inventory-equip')
+        self.unequip_url = reverse('ninja-api:inventory-unequip')
+        self.purchase_url = reverse('ninja-api:shop-purchase')
 
     def test_my_inventory_list_returns_only_current_user_items(self):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
