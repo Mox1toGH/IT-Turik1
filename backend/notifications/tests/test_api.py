@@ -3,11 +3,12 @@ from rest_framework import status
 from django.urls import reverse
 from notifications.models import Notification, UserNotificationSettings, NotificationConfig
 from accounts.models import User
+from backend.auth import authenticate
 
 class NotificationApiTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='u', email='u@e.com', password='pass')
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         self.list_url = reverse('ninja-api:notification-list')
 
     def test_list_notifications(self):

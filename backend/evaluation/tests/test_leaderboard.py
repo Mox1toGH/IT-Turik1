@@ -9,6 +9,7 @@ from evaluation.leaderboard_service import compute_leaderboard, compute_tourname
 from teams.models import Team
 from tournaments.models import Round, Submission, Tournament, TournamentTeamRegistration
 from tournaments.services import mark_round_evaluated
+from backend.auth import authenticate
 
 class LeaderboardTests(APITestCase):
     def setUp(self):
@@ -45,24 +46,26 @@ class LeaderboardTests(APITestCase):
     def test_team_role_sees_jury_breakdown_null(self):
         self.round_obj.status = Round.STATUS_EVALUATED
         self.round_obj.save()
-        self.client.force_authenticate(self.team_user)
+        authenticate(self.client, self.team_user)
         response = self.client.get(reverse('ninja-api:tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNone(response.data['rankings'][0]['rounds'][0]['jury_breakdown'])
+        self.assertIsNone(data['rankings'][0]['rounds'][0]['jury_breakdown'])
 
     def test_admin_organizer_jury_see_jury_breakdown(self):
         self.round_obj.status = Round.STATUS_EVALUATED
         self.round_obj.save()
         for user in (self.admin, self.organizer, self.jury1):
             with self.subTest(role=user.role):
-                self.client.force_authenticate(user)
+                authenticate(self.client, user)
                 response = self.client.get(reverse('ninja-api:tournament_leaderboard', kwargs={'tournament_id': self.tournament.id}))
-                self.assertIsNotNone(response.data['rankings'][0]['rounds'][0]['jury_breakdown'])
+                data = response.json()
+                self.assertIsNotNone(data['rankings'][0]['rounds'][0]['jury_breakdown'])
 
     def test_live_endpoint_returns_403_for_team_if_round_not_evaluated(self):
         self.round_obj.status = Round.STATUS_ACTIVE
         self.round_obj.save()
-        self.client.force_authenticate(self.team_user)
+        authenticate(self.client, self.team_user)
         response = self.client.get(reverse('ninja-api:round_leaderboard', kwargs={'round_id': self.round_obj.id}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 

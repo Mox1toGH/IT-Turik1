@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from accounts.models import User
 from shop.models import Category, Product, AvatarFrame
+from backend.auth import authenticate
 
 class ProductTests(APITestCase):
     def setUp(self):
@@ -55,7 +56,7 @@ class ProductTests(APITestCase):
             is_active=True,
         )
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(
             self.products_url,
             {
@@ -78,7 +79,7 @@ class ProductTests(APITestCase):
         self.assertFalse(out_of_stock_item['is_available'])
 
     def test_product_detail_for_authenticated_user(self):
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(self.product_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], self.product.id)

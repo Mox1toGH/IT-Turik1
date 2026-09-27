@@ -3,7 +3,7 @@ from rest_framework import status
 from django.urls import reverse
 from certificates.models import Certificate, CertificateTemplate
 from accounts.models import User
-import uuid
+from backend.auth import authenticate
 
 class CertificateApiTests(APITestCase):
     def setUp(self):
@@ -19,18 +19,18 @@ class CertificateApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_create_certificate_admin_only(self):
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.list_url, {'placement': '1st', 'template': self.template.id})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        self.client.force_authenticate(user=self.admin)
+        authenticate(self.client, self.admin)
         response = self.client.post(self.list_url, {'placement': '1st', 'template': self.template.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_retrieve_certificate_by_uuid(self):
         cert = Certificate.objects.create(placement='1st', user=self.user)
         url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['unique_code'], str(cert.unique_code))
@@ -38,7 +38,7 @@ class CertificateApiTests(APITestCase):
     def test_verify_certificate(self):
         cert = Certificate.objects.create(placement='1st')
         url = reverse('ninja-api:certificate-verify', kwargs={'code': cert.unique_code})
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['data']['unique_code'], str(cert.unique_code))
@@ -46,13 +46,13 @@ class CertificateApiTests(APITestCase):
     def test_view_certificate_action(self):
         cert = Certificate.objects.create(placement='1st', user=self.user)
         url = reverse('ninja-api:certificate-view', kwargs={'unique_code': cert.unique_code})
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_template_list_admin_only(self):
         url = reverse('ninja-api:template-list')
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(url)
         # Templates might be public to view but restricted to create
         # self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -60,21 +60,21 @@ class CertificateApiTests(APITestCase):
 
     def test_create_template_admin_only(self):
         url = reverse('ninja-api:template-list')
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(url, {'name': 'New T'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_update_certificate_admin_only(self):
         cert = Certificate.objects.create(placement='1st')
         url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.patch(url, {'placement': '2nd'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_delete_certificate_admin_only(self):
         cert = Certificate.objects.create(placement='1st')
         url = reverse('ninja-api:certificate-detail', kwargs={'unique_code': cert.unique_code})
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 

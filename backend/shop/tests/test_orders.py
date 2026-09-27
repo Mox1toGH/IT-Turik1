@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from points.models import PointsTransaction, UserPointsBalance
 from shop.models import Category, Order, Product
+from backend.auth import authenticate
 
 class OrderTests(APITestCase):
     def setUp(self):
@@ -34,7 +35,7 @@ class OrderTests(APITestCase):
 
     def test_purchase_success_creates_pending_order_deducts_points_stock_and_links_transaction(self):
         UserPointsBalance.objects.create(user=self.user, balance=200)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -56,7 +57,7 @@ class OrderTests(APITestCase):
 
     def test_purchase_rejects_when_insufficient_balance(self):
         UserPointsBalance.objects.create(user=self.user, balance=20)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -69,7 +70,7 @@ class OrderTests(APITestCase):
 
     def test_purchase_rejects_when_insufficient_stock(self):
         UserPointsBalance.objects.create(user=self.user, balance=999)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -82,7 +83,7 @@ class OrderTests(APITestCase):
 
     def test_user_can_cancel_only_own_order_and_get_refund_and_stock_return(self):
         UserPointsBalance.objects.create(user=self.user, balance=300)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         purchase_response = self.client.post(
             self.purchase_url,
             {'product_id': self.product.id, 'quantity': 3},
@@ -104,7 +105,7 @@ class OrderTests(APITestCase):
 
     def test_user_cannot_cancel_other_users_order(self):
         UserPointsBalance.objects.create(user=self.other_user, balance=300)
-        self.client.force_authenticate(user=self.other_user)
+        authenticate(self.client, self.other_user)
         purchase_response = self.client.post(
             self.purchase_url,
             {'product_id': self.product.id, 'quantity': 1},
@@ -112,7 +113,7 @@ class OrderTests(APITestCase):
         )
         order_id = purchase_response.data['id']
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         cancel_url = reverse('ninja-api:shop-my-order-cancel', kwargs={'order_id': order_id})
         response = self.client.post(cancel_url, {}, format='json')
 
@@ -122,13 +123,13 @@ class OrderTests(APITestCase):
         UserPointsBalance.objects.create(user=self.user, balance=500)
         UserPointsBalance.objects.create(user=self.other_user, balance=500)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
 
-        self.client.force_authenticate(user=self.other_user)
+        authenticate(self.client, self.other_user)
         self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(self.my_orders_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

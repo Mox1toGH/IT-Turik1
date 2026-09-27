@@ -5,6 +5,7 @@ from accounts.models import User
 from inventory.models import UserInventory
 from points.models import UserPointsBalance
 from shop.models import AvatarFrame, Category, Product
+from backend.auth import authenticate
 
 class InventoryApiTests(APITestCase):
     def setUp(self):
@@ -66,18 +67,19 @@ class InventoryApiTests(APITestCase):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
         UserInventory.objects.create(user=self.other_user, product=self.second_digital_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(self.inventory_url)
+        data = response.json()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
-        self.assertEqual(response.data['results'][0]['product']['id'], self.digital_product.id)
+        self.assertEqual(data['count'], 1)
+        self.assertEqual(data['items'][0]['product']['id'], self.digital_product.id)
 
     def test_equip_inventory_item_marks_selected_item_equipped_and_unsets_previous(self):
         first_item = UserInventory.objects.create(user=self.user, product=self.digital_product)
         second_item = UserInventory.objects.create(user=self.user, product=self.second_digital_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.equip_url, {'inventory_id': second_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -89,7 +91,7 @@ class InventoryApiTests(APITestCase):
     def test_equip_rejects_non_digital_items(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.physical_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.equip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -97,7 +99,7 @@ class InventoryApiTests(APITestCase):
     def test_unequip_inventory_item(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.digital_product, is_equipped=True)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.unequip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -106,7 +108,7 @@ class InventoryApiTests(APITestCase):
 
     def test_purchase_digital_product_creates_inventory_item(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -122,7 +124,7 @@ class InventoryApiTests(APITestCase):
     def test_purchase_digital_product_rejects_duplicate_ownership(self):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,

@@ -15,6 +15,7 @@ from .models import JuryAssignment, SubmissionEvaluation
 from .realtime import emit_tournament_leaderboard_updated
 
 from backend.schemas import ErrorResponse
+from accounts.schemas import UserRole
 from .schemas import (
     AssignJuryResponse,
     AvailableJuryResponse,
@@ -43,12 +44,12 @@ router = Router(tags=['evaluation'], auth=JWTAuth())
 # =============================================================================
 
 def _require_can_set_results(request):
-    if not request.auth.is_staff:
+    if request.auth.role not in (UserRole.ADMIN, UserRole.ORGANIZER):
         raise HttpError(403, 'You do not have permission to set results.')
 
 
 def _require_can_manage_assignments(request):
-    if not request.auth.is_staff:
+    if request.auth.role not in (UserRole.ADMIN, UserRole.ORGANIZER):
         raise HttpError(403, 'You do not have permission to manage assignments.')
 
 
