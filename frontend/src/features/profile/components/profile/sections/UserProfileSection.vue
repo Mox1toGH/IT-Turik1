@@ -158,7 +158,10 @@
             <div class="active-tournament-content">
               <div>
                 <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
-                <p class="active-tournament-meta">{{ formatDate(user.active_tournament.start_date) }} - {{ formatDate(user.active_tournament.end_date) }}</p>
+                <p class="active-tournament-meta">
+                  {{ formatDate(user.active_tournament.start_date) }} -
+                  {{ formatDate(user.active_tournament.end_date) }}
+                </p>
               </div>
               <ui-button
                 as-link
@@ -191,7 +194,7 @@
           </label>
           <label class="field" v-if="operation !== 'reset'">
             <span class="field-label">Amount</span>
-            <ui-input v-model="amount" type="number" min="0" />
+            <ui-number-input v-model="amount" min="0" />
           </label>
           <label class="field reason-field">
             <span class="field-label">Reason</span>
@@ -222,6 +225,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
@@ -284,7 +288,6 @@ const submitPointsUpdate = async () => {
     showNotification((error as Error)?.message || 'Failed to update points balance.', 'error')
   }
 }
-
 </script>
 
 <style scoped>
@@ -301,7 +304,8 @@ const submitPointsUpdate = async () => {
 
 .meta {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
 }
 
 .details {
@@ -325,7 +329,8 @@ const submitPointsUpdate = async () => {
 
 .item-label {
   color: var(--color-gray-500);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -440,7 +445,8 @@ const submitPointsUpdate = async () => {
 }
 
 .field-label {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
   color: var(--color-gray-500);
   font-weight: 600;
 }

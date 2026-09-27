@@ -1,5 +1,5 @@
 <template>
-  <ui-card :is-error="isLoadingError">
+  <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching invitations (code: {{ invitationsError?.code }})</p>
@@ -8,14 +8,23 @@
 
     <template #header>
       <div class="section-head">
-        <h2>Invitations</h2>
-        <ui-skeleton-loader :loading="inboxLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="70px" />
-          </template>
+        <div>
+          <p class="section-eyebrow">Incoming</p>
+          <h2 class="text-3xl">Invitations</h2>
+          <p class="section-subtitle text-base">Team invitations waiting for your response.</p>
+        </div>
 
-          <span class="text-muted">{{ pendingInboxInvitations?.length ?? 0 }} pending</span>
-        </ui-skeleton-loader>
+        <div class="section-meta">
+          <ui-skeleton-loader :loading="inboxLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="90px" height="38px" />
+            </template>
+
+            <span class="count-pill text-base"
+              >{{ pendingInboxInvitations?.length ?? 0 }} pending</span
+            >
+          </ui-skeleton-loader>
+        </div>
       </div>
     </template>
 
@@ -42,7 +51,15 @@
         </div>
       </template>
 
-      <p v-if="pendingInboxInvitations?.length === 0" class="text-muted">No pending invitations.</p>
+      <div v-if="pendingInboxInvitations?.length === 0" class="empty-row">
+        <div class="empty-icon" aria-hidden="true">+</div>
+        <div class="empty-copy">
+          <h3 class="text-lg">No pending invitations</h3>
+          <p class="text-base">When someone invites you, it will appear here.</p>
+        </div>
+        <a class="empty-link text-sm" href="#other-teams">Browse available teams <span>-></span></a>
+      </div>
+
       <div v-else class="team-grid">
         <ui-card
           v-for="invitation in pendingInboxInvitations"
@@ -141,9 +158,37 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 <style scoped>
 .section-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.7rem;
+  gap: 1rem;
+}
+
+.section-head h2 {
+  margin: 2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.section-head .section-subtitle {
+  margin: 0;
+}
+
+.section-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .team-grid {
@@ -156,6 +201,57 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   padding: 0.95rem;
   background: var(--muted);
   color: var(--muted-foreground);
+}
+
+.empty-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 96px;
+  padding: 1.35rem;
+  border: 1px dashed var(--line-soft);
+  border-radius: 16px;
+  background: var(--background);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.empty-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.empty-copy h3,
+.empty-copy p {
+  margin: 0;
+}
+
+.empty-copy h3 {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.empty-copy p {
+  margin-top: 0.25rem;
+  color: var(--muted-foreground);
+}
+
+.empty-link {
+  color: var(--primary);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .team-meta {
@@ -173,5 +269,22 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .section-head,
+  .empty-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-meta {
+    min-height: 0;
+    align-items: flex-start;
+  }
+
+  .empty-link {
+    white-space: normal;
+  }
 }
 </style>

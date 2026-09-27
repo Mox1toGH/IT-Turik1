@@ -1,5 +1,5 @@
 <template>
-  <div class="user-avatar-wrap" :style="avatarStyle">
+  <div class="user-avatar-wrap" :style="avatarStyle" @click="emit('click', $event)">
     <img
       v-if="avatar"
       :src="avatar"
@@ -29,6 +29,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { readImagePosition, toObjectPosition } from '@/lib/imagePosition'
+
+const emit = defineEmits<{
+  click: [event: MouseEvent]
+}>()
 
 const props = withDefaults(
   defineProps<{

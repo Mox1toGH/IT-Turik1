@@ -131,7 +131,6 @@
       <label class="form-item passing-count-field">
         <span class="form-label">Passing count</span>
         <ui-input
-          type="number"
           v-model.number="form.fields.value.passing_count"
           placeholder="Enter passing teams count"
           :isInvalid="!!form.errors.value.passing_count"

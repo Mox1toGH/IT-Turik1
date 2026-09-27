@@ -1,14 +1,10 @@
 <template>
-  <ui-card class="preview-shell" :is-error="isError">
-    <template #header>
-      <div class="preview-head">
-        <h2>Statistics</h2>
-      </div>
-    </template>
+  <section class="preview-shell" aria-labelledby="stats-preview-title">
+    <div class="preview-head">
+      <h2 id="stats-preview-title">Statistics</h2>
+    </div>
 
-    <template #error>
-      <p class="preview-error">Unable to load stats preview right now.</p>
-    </template>
+    <p v-if="isError" class="preview-error">Unable to load stats preview right now.</p>
 
     <ui-skeleton-loader :loading="isLoading">
       <template #skeleton>
@@ -18,33 +14,31 @@
       </template>
 
       <div class="preview-grid">
-        <div v-for="item in cards" :key="item.label" class="preview-item">
+        <ui-card v-for="item in cards" :key="item.label" class="preview-item">
           <p class="label">{{ item.label }}</p>
           <p class="value">
-            <RouterLink v-if="item.to" :to="item.to" class="value-link">{{
-              item.value
-            }}</RouterLink>
+            <RouterLink v-if="item.to" :to="item.to">{{ item.value }}</RouterLink>
             <span v-else>{{ item.value }}</span>
           </p>
-        </div>
+        </ui-card>
       </div>
 
       <div class="preview-actions">
-        <ui-button as-link to="/stats" variant="secondary" size="sm">View full stats →</ui-button>
+        <ui-button as-link to="/stats" variant="secondary" size="md">View full stats</ui-button>
       </div>
     </ui-skeleton-loader>
-  </ui-card>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import type { RoleB96Enum } from '@/api/.ts.schemas'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
+import UiCard from '../ui/UiCard.vue'
 
 type UserRole = RoleB96Enum
 type TeamRef = { id: number; name: string }
@@ -205,13 +199,6 @@ onMounted(() => {
   gap: 0.6rem;
 }
 
-.preview-item {
-  padding: 0.75rem;
-  border-radius: 12px;
-  border: 1px solid var(--line-soft);
-  background: var(--muted);
-}
-
 .label {
   margin: 0;
   font-size: 0.8rem;
@@ -223,11 +210,6 @@ onMounted(() => {
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--foreground);
-}
-
-.value-link {
-  color: inherit;
-  text-decoration: none;
 }
 
 .value-link:hover {

@@ -1,25 +1,35 @@
 <template>
-  <ui-card class="panel members-panel" :is-error="props.isError">
+  <ui-card class="panel members-panel" variant="form" :is-error="props.isError">
     <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 302px">
+      <div class="empty-state">
         <p>Failed to fetch team members</p>
       </div>
     </template>
 
     <template #header>
-      <header class="panel-head">
-        <h2>Members management</h2>
+      <div class="panel-header">
+        <span class="step-marker">02</span>
+        <div>
+          <h2>Members</h2>
+          <p class="text-muted">Review current members and manage pending invitations.</p>
+        </div>
         <ui-skeleton-loader :loading="props.loading">
           <template #skeleton>
             <ui-skeleton variant="rect" width="100px" />
           </template>
 
-          <span class="text-muted">{{ team?.members.length ?? 0 }} people</span>
+          <ui-card variant="stat" class="members-stat">
+            <strong>{{ team?.members.length ?? 0 }}</strong>
+            <span>People</span>
+          </ui-card>
         </ui-skeleton-loader>
-      </header>
+      </div>
     </template>
 
-    <div class="form-item">
+    <div class="teams-rule" aria-hidden="true"></div>
+
+    <div class="form-item search-field">
+      <p class="form-label">Search members</p>
       <ui-input
         class="search-input"
         v-model="memberSearch"
@@ -33,7 +43,7 @@
         <div class="member-list">
           <ui-card v-for="i in 2" :key="i" class="member-row">
             <template #header>
-              <div style="display: flex; justify-content: space-between; gap: 10px">
+              <div class="member-row-top">
                 <ui-skeleton variant="rect" width="140px" />
                 <ui-skeleton variant="rect" width="120px" />
               </div>
@@ -49,15 +59,20 @@
       </template>
 
       <div class="member-list">
-        <ui-card v-for="member in filteredMembers" :key="`member-${member.id}`" class="member-row">
+        <ui-card
+          v-for="member in filteredMembers"
+          :key="`member-${member.id}`"
+          class="member-row"
+          variant="inset"
+        >
           <div>
-            <div style="display: flex; justify-content: space-between; gap: 10px">
+            <div class="member-row-top">
               <p class="member-name">
                 <RouterLink :to="`/users/${member.id}`" class="member-link">
                   {{ member.username }}
                 </RouterLink>
               </p>
-              <div style="display: flex; align-items: center; gap: 5px">
+              <div class="member-badges">
                 <ui-badge v-if="member.id === team?.captain_id" variant="green">Captain</ui-badge>
               </div>
             </div>
@@ -83,13 +98,16 @@
     </ui-skeleton-loader>
 
     <div class="add-member-box">
-      <h3>Invitations status</h3>
+      <div class="box-header">
+        <h3>Invitations status</h3>
+        <span class="text-muted">{{ invitations?.length ?? 0 }} pending total</span>
+      </div>
 
       <ui-skeleton-loader :loading="props.loading">
         <template #skeleton>
           <div class="member-list">
             <ui-card v-for="i in 2" :key="i" class="member-row">
-              <div style="display: flex; justify-content: space-between; gap: 10px">
+              <div class="member-row-top">
                 <ui-skeleton variant="rect" width="80px" />
                 <ui-skeleton variant="rect" width="100px" />
               </div>
@@ -105,8 +123,9 @@
             v-for="invitation in invitations"
             :key="`inv-${invitation.id}`"
             class="member-row"
+            variant="inset"
           >
-            <div style="display: flex; justify-content: space-between; gap: 10px">
+            <div class="member-row-top">
               <p class="member-name">{{ invitation.user.username }}</p>
 
               <ui-badge v-if="invitation.status === 'declined'" variant="red">
@@ -127,9 +146,13 @@
     </p>
 
     <div class="add-member-box" v-if="!team.is_in_active_tournament">
-      <h3>Invite user</h3>
+      <div class="box-header">
+        <h3>Invite user</h3>
+        <span class="text-muted">Add a new teammate by invitation.</span>
+      </div>
 
       <div class="form-item">
+        <p class="form-label">User</p>
         <ui-select
           placeholder="Select user"
           v-model="addMemberSelection"
@@ -139,9 +162,12 @@
       </div>
 
       <ui-button
+        size="lg"
+        class="invite-btn"
         @click="addMember"
         :disabled="addMemberLoading || isLoadingUsers || !addMemberSelection"
       >
+        <loading-icon v-if="addMemberLoading" />
         {{ addMemberLoading ? 'Sending...' : 'Send invitation' }}
       </ui-button>
     </div>
@@ -208,7 +234,6 @@ const userOptions = computed(() => [
   })) || []),
 ])
 
-// ── Remove member ─────────────────────────────────────────────
 const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
 const removeMember = (member: TeamMember) => {
@@ -232,7 +257,6 @@ const removeMember = (member: TeamMember) => {
   )
 }
 
-// ── Add member ────────────────────────────────────────────────
 const { mutate: addMemberMutate, isPending: addMemberLoading } = useInviteMemberToTeam()
 
 const addMember = () => {
@@ -259,36 +283,73 @@ const addMember = () => {
 </script>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--line-soft);
+.teams-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
 }
 
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
+.members-stat {
+  margin-left: auto;
 }
 
-.search-input {
-  margin-bottom: 12px;
-}
-
-.panel-head h2 {
-  margin: 0;
+.members-stat strong {
+  color: var(--foreground);
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+  font-weight: 800;
 }
 
-.member-row {
-  background-color: var(--muted);
+.members-stat span {
   color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.search-field {
+  margin-top: 0.25rem;
 }
 
 .member-list {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
+}
+
+.member-row.card {
+  gap: 0.65rem;
+  color: var(--muted-foreground);
+}
+
+.member-row-top,
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.member-row-top {
+  align-items: flex-start;
+}
+
+.box-header {
+  align-items: baseline;
+}
+
+.box-header span {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  text-align: right;
+}
+
+.member-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .member-name,
@@ -318,15 +379,39 @@ const addMember = () => {
 }
 
 .add-member-box {
-  margin-top: 0.9rem;
-  border-top: 1px solid var(--line-soft);
-  padding-top: 0.9rem;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
 }
 
 .add-member-box h3 {
   margin: 0;
   font-size: 1rem;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 302px;
+}
+
+@media (max-width: 760px) {
+  .panel-header,
+  .member-row-top,
+  .box-header {
+    flex-direction: column;
+  }
+
+  .box-header span {
+    text-align: left;
+  }
+
+  .remove-member-btn {
+    width: 100%;
+  }
 }
 </style>

@@ -7,10 +7,7 @@
             <p class="section-eyebrow">Certificates</p>
             <h1 class="section-title">My certificates</h1>
           </div>
-          <div class="head-actions">
-            <ui-button variant="secondary" @click="openVerifyPage">Verify certificate</ui-button>
-            <ui-button variant="secondary" @click="goBack">Back to profile</ui-button>
-          </div>
+          <ui-button variant="secondary" @click="openVerifyPage">Verify certificate</ui-button>
         </div>
       </template>
 
@@ -117,10 +114,6 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / pageSize))
 })
 
-const goBack = () => {
-  router.push('/profile')
-}
-
 const openVerifyPage = () => {
   router.push('/certificates/verify')
 }
@@ -157,12 +150,6 @@ const nextPage = () => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-}
-
-.head-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .list {
@@ -249,10 +236,6 @@ const nextPage = () => {
   .head {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .head-actions {
-    width: 100%;
   }
 
   .grid {

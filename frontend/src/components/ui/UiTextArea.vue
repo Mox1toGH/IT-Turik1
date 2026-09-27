@@ -34,14 +34,15 @@ function handleInput(event: Event) {
 .textarea {
   width: 100%;
   border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
-  border-radius: 12px;
-  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
   font: inherit;
+  font-size: 0.84rem;
   line-height: 1.5;
   background: var(--input);
   color: var(--foreground);
   resize: vertical;
-  min-height: 80px;
+  min-height: 64px;
   display: block;
 
   transition:
@@ -52,7 +53,7 @@ function handleInput(event: Event) {
 .textarea:focus {
   outline: none;
   border-color: var(--ring);
-  box-shadow: 0 0 0 3px var(--ring);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .textarea:disabled {

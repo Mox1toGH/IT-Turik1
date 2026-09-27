@@ -1,87 +1,144 @@
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div
-        v-if="modelValue"
-        class="modal-backdrop"
-        data-testid="modal-backdrop"
-        @click.self="handleBackdropClick"
-      >
-        <ui-card
-          role="dialog"
-          aria-modal="true"
-          :scrollable="props.scrollable"
-          :style="{ width: `min(100%, ${maxWidth})` }"
+  <DialogRoot :open="isOpen" @update:open="handleOpenChange">
+    <DialogPortal>
+      <Transition name="modal-overlay">
+        <DialogOverlay
+          v-if="isOpen"
+          ref="modalBackdrop"
+          class="modal-backdrop"
+          data-testid="modal-backdrop"
+        />
+      </Transition>
+
+      <Transition name="modal">
+        <DialogContent
+          v-if="isOpen"
+          class="modal-content"
+          :style="{ width: `min(100%, ${maxWidth})`, zIndex: 51 + level * 2 }"
+          @pointer-down-outside="handlePointerDownOutside"
         >
-          <div class="modal-header">
-            <slot v-if="$slots.title" class="modal-title" name="title" />
+          <ui-card :scrollable="props.scrollable">
+            <div class="modal-header">
+              <DialogTitle v-if="$slots.title" as-child>
+                <span class="modal-title"><slot name="title" /></span>
+              </DialogTitle>
+              <VisuallyHidden v-else as-child>
+                <DialogTitle>Dialog</DialogTitle>
+              </VisuallyHidden>
 
-            <ui-button
-              style="margin-left: auto"
-              variant="secondary"
-              size="sm"
-              @click="close"
-              aria-label="Close"
-            >
-              <CrossIcon />
-            </ui-button>
-          </div>
+              <VisuallyHidden as-child>
+                <DialogDescription>Dialog content</DialogDescription>
+              </VisuallyHidden>
 
-          <slot />
-
-          <template #footer>
-            <div v-if="$slots.footer" class="modal-footer">
-              <slot name="footer" />
+              <DialogClose as-child>
+                <ui-button
+                  style="margin-left: auto"
+                  variant="secondary"
+                  size="sm"
+                  aria-label="Close"
+                >
+                  <CrossIcon />
+                </ui-button>
+              </DialogClose>
             </div>
-          </template>
-        </ui-card>
-      </div>
-    </Transition>
-  </Teleport>
+
+            <slot />
+
+            <template #footer>
+              <div v-if="$slots.footer" class="modal-footer">
+                <slot name="footer" />
+              </div>
+            </template>
+          </ui-card>
+        </DialogContent>
+      </Transition>
+    </DialogPortal>
+  </DialogRoot>
 </template>
 
 <script setup lang="ts">
 import CrossIcon from '@/icons/CrossIcon.vue'
 import UiButton from './UiButton.vue'
-import { onMounted, onUnmounted } from 'vue'
 import UiCard from './UiCard.vue'
+import {
+  DialogRoot,
+  DialogPortal,
+  DialogOverlay,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  VisuallyHidden,
+} from 'reka-ui'
+import { ref } from 'vue'
 
 interface Props {
-  modelValue: boolean
+  defaultOpen?: boolean
   maxWidth?: string
   closeOnBackdrop?: boolean
   scrollable?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  defaultOpen: false,
   maxWidth: '520px',
   closeOnBackdrop: true,
 })
 
-const emit = defineEmits(['update:modelValue', 'close'])
+const emit = defineEmits(['close'])
+const isOpen = defineModel<boolean>({ default: false })
+
+if (props.defaultOpen) {
+  isOpen.value = true
+}
+
+const level = ref(1)
+
+function getOpenedCount() {
+  return Number(document.documentElement.getAttribute('modals-opened') ?? 1)
+}
+
+function incrementOpenedCount() {
+  level.value += 1
+  document.documentElement.setAttribute('modals-opened', level.value.toString())
+}
+
+function decrementOpenedCount() {
+  if (level.value != 0) level.value -= 1
+  document.documentElement.setAttribute('modals-opened', level.value.toString())
+}
+
+function open() {
+  isOpen.value = true
+  incrementOpenedCount()
+}
 
 function close() {
-  emit('update:modelValue', false)
+  isOpen.value = false
+  decrementOpenedCount()
   emit('close')
 }
 
-function handleBackdropClick() {
-  if (props.closeOnBackdrop) close()
-}
+function handleOpenChange(value: boolean) {
+  isOpen.value = value
 
-function handleEscapeKey(e: KeyboardEvent) {
-  if (e.key === 'Escape' && props.modelValue) {
-    close()
+  if (value) {
+    level.value = getOpenedCount()
+    incrementOpenedCount()
+  } else {
+    decrementOpenedCount()
+    emit('close')
   }
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', handleEscapeKey)
-})
+function handlePointerDownOutside(e: Event) {
+  if (!props.closeOnBackdrop) {
+    e.preventDefault()
+  }
+  decrementOpenedCount()
+}
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleEscapeKey)
-})
+defineExpose({ open, close, isOpen })
 </script>
 
 <style scoped>
@@ -90,10 +147,17 @@ onUnmounted(() => {
   inset: 0;
   background: #00000073;
   backdrop-filter: blur(3px);
-  display: grid;
-  place-items: center;
   z-index: 50;
-  padding: 1rem;
+}
+
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 51;
+  max-height: calc(100vh - 2rem);
+  max-width: calc(100vw - 2rem);
 }
 
 .modal-header {
@@ -102,25 +166,8 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 
-.modal-close {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-
-.modal-close:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+.modal-title {
+  display: contents;
 }
 
 .modal-footer {
@@ -139,6 +186,16 @@ onUnmounted(() => {
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: translateY(4px);
+  transform: translate(-50%, calc(-50% + 4px));
+}
+
+.modal-overlay-enter-active,
+.modal-overlay-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.modal-overlay-enter-from,
+.modal-overlay-leave-to {
+  opacity: 0;
 }
 </style>

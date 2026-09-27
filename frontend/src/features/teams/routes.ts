@@ -33,12 +33,12 @@ export const teamsRoutes = [
     path: '/teams/:id/edit',
     component: () => import('./pages/TeamEditPage.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureTeamExists(to.params.id),
+    beforeEnter: (to: { params: { id: number } }) => ensureTeamExists(to.params.id),
   },
   {
     path: '/teams/:id',
     component: () => import('./pages/TeamDetailPage.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureTeamExists(to.params.id),
+    beforeEnter: (to: { params: { id: number } }) => ensureTeamExists(to.params.id),
   },
 ]

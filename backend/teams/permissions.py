@@ -2,7 +2,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from backend.permissions import is_platform_admin
 
-
+# TODO: fix this so team memebr cant create team
 class IsNotPlatformAdmin(BasePermission):
     message = 'Platform admins cannot manage teams.'
 

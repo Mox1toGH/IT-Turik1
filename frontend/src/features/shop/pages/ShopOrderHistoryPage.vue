@@ -1,16 +1,36 @@
 <template>
-  <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">Shop</p>
-            <h1 class="section-title">My Orders</h1>
-          </div>
-          <ui-button variant="secondary" as-link to="/profile">Back to Profile</ui-button>
+  <section class="orders-page page-shell">
+    <header class="orders-hero">
+      <div class="orders-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Shop</span>
+          <span aria-hidden="true">/</span>
+          <span>My Orders</span>
         </div>
-      </template>
 
+        <h1 class="text-6xl">My Orders</h1>
+        <p class="section-subtitle text-xl">
+          Track your purchases, statuses, and related points transactions.
+        </p>
+      </div>
+
+      <div class="hero-actions">
+        <ui-skeleton-loader :loading="isLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="148px" height="45px" />
+          </template>
+
+          <ui-card variant="stat" class="orders-stat-card">
+            <span class="text-sm">Total orders:</span>
+            <strong class="text-xl">{{ data?.count ?? 0 }}</strong>
+          </ui-card>
+        </ui-skeleton-loader>
+      </div>
+    </header>
+
+    <div class="orders-rule" aria-hidden="true"></div>
+
+    <section class="orders-section">
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
           <ui-skeleton v-for="i in 5" :key="i" variant="rect" width="100%" />
@@ -53,18 +73,16 @@
             </ui-button>
           </ui-card>
 
-          <div v-if="totalPages > 1" class="pagination">
-            <ui-button variant="secondary" :disabled="page === 1" @click="page -= 1"
-              >Prev</ui-button
-            >
-            <span>Page {{ page }} / {{ totalPages }}</span>
-            <ui-button variant="secondary" :disabled="page === totalPages" @click="page += 1"
-              >Next</ui-button
-            >
-          </div>
+          <ui-pagination
+            v-if="totalPages > 1"
+            v-model="page"
+            :total-items="orders.length"
+            :page-size="pageSize"
+            :show-summary="false"
+          />
         </div>
       </ui-skeleton-loader>
-    </ui-card>
+    </section>
   </section>
 </template>
 
@@ -73,6 +91,7 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -121,41 +140,133 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 </script>
 
 <style scoped>
-.head {
+.orders-page {
+  gap: 1.4rem;
+  padding: 1.6rem 0 2rem;
+}
+
+.orders-hero {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.orders-hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.orders-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.orders-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
 }
+
+.orders-stat-card {
+  display: flex;
+}
+
+.orders-stat-card strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.orders-stat-card span {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.orders-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--line-soft);
+}
+
+.orders-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .list {
   display: grid;
   gap: 10px;
 }
+
 .order-card {
   background: var(--muted);
 }
+
 .order-head {
   display: flex;
   justify-content: space-between;
   gap: 8px;
   align-items: center;
 }
+
 .tx-link {
   color: var(--brand-700);
   font-weight: 700;
   text-decoration: none;
 }
-.pagination {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-}
+
 @media (max-width: 760px) {
-  .head {
+  .orders-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .orders-hero {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .orders-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .orders-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
   }
 }
 </style>

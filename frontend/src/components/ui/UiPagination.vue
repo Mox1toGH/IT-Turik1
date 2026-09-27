@@ -1,48 +1,55 @@
 <template>
-  <nav class="pagination" aria-label="Pagination">
+  <PaginationRoot
+    class="pagination"
+    aria-label="Pagination"
+    :page="currentPage"
+    :total="totalItems"
+    :items-per-page="pageSize"
+    :sibling-count="siblingCount"
+    show-edges
+    @update:page="(value) => emit('update:modelValue', value)"
+  >
     <div v-if="showSummary" class="summary">
       Showing {{ fromItem }}-{{ toItem }} of {{ totalItems }}
     </div>
 
-    <div class="controls">
-      <ui-button
-        size="sm"
-        variant="secondary"
-        :disabled="currentPage <= 1"
-        @click="emit('update:modelValue', currentPage - 1)"
-      >
-        Prev
-      </ui-button>
+    <PaginationList v-slot="{ items }" class="controls">
+      <PaginationPrev as-child>
+        <ui-button size="sm" variant="secondary" :disabled="currentPage <= 1">Prev</ui-button>
+      </PaginationPrev>
 
-      <button
-        v-for="item in pageItems"
-        :key="`page-${item}`"
-        type="button"
-        class="page-pill"
-        :class="{ active: item === currentPage, ellipsis: item === '...' }"
-        :disabled="item === '...'"
-        @click="onPageClick(item)"
+      <template
+        v-for="(item, index) in items"
+        :key="item.type === 'page' ? `page-${item.value}` : `ellipsis-${index}`"
       >
-        {{ item }}
-      </button>
+        <PaginationListItem v-if="item.type === 'page'" v-bind="item" class="page-pill">
+          {{ item.value }}
+        </PaginationListItem>
+        <PaginationEllipsis v-else :index="index" class="page-pill ellipsis">
+          ...
+        </PaginationEllipsis>
+      </template>
 
-      <ui-button
-        size="sm"
-        variant="secondary"
-        :disabled="currentPage >= totalPages"
-        @click="emit('update:modelValue', currentPage + 1)"
-      >
-        Next
-      </ui-button>
-    </div>
-  </nav>
+      <PaginationNext as-child>
+        <ui-button size="sm" variant="secondary" :disabled="currentPage >= totalPages"
+          >Next</ui-button
+        >
+      </PaginationNext>
+    </PaginationList>
+  </PaginationRoot>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import {
+  PaginationRoot,
+  PaginationList,
+  PaginationListItem,
+  PaginationEllipsis,
+  PaginationPrev,
+  PaginationNext,
+} from 'reka-ui'
 import UiButton from './UiButton.vue'
-
-type PaginationItem = number | '...'
 
 interface Props {
   modelValue: number
@@ -61,8 +68,14 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: number): void
 }>()
 
-const totalPages = computed(() => Math.max(1, Math.ceil(props.totalItems / Math.max(props.pageSize, 1))))
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(props.totalItems / Math.max(props.pageSize, 1))),
+)
 const currentPage = computed(() => Math.min(Math.max(props.modelValue, 1), totalPages.value))
+
+const siblingCount = computed(() =>
+  Math.max(1, Math.floor((Math.max(3, props.maxVisible) - 3) / 2)),
+)
 
 const fromItem = computed(() => {
   if (!props.totalItems) return 0
@@ -73,34 +86,6 @@ const toItem = computed(() => {
   if (!props.totalItems) return 0
   return Math.min(currentPage.value * props.pageSize, props.totalItems)
 })
-
-const pageItems = computed<PaginationItem[]>(() => {
-  const total = totalPages.value
-  const maxVisible = Math.max(3, props.maxVisible)
-
-  if (total <= maxVisible) {
-    return Array.from({ length: total }, (_, index) => index + 1)
-  }
-
-  const middleSlots = maxVisible - 2
-  let start = Math.max(2, currentPage.value - Math.floor(middleSlots / 2))
-  const end = Math.min(total - 1, start + middleSlots - 1)
-  start = Math.max(2, end - middleSlots + 1)
-
-  const items: PaginationItem[] = [1]
-
-  if (start > 2) items.push('...')
-  for (let page = start; page <= end; page += 1) items.push(page)
-  if (end < total - 1) items.push('...')
-
-  items.push(total)
-  return items
-})
-
-function onPageClick(item: PaginationItem) {
-  if (item === '...') return
-  emit('update:modelValue', item)
-}
 </script>
 
 <style scoped>
@@ -144,7 +129,7 @@ function onPageClick(item: PaginationItem) {
   border-color: var(--primary);
 }
 
-.page-pill.active {
+.page-pill[data-selected] {
   background: var(--primary);
   color: var(--primary-foreground);
   border-color: var(--primary);

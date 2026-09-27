@@ -1,5 +1,11 @@
 <template>
-  <button class="avatar-edit-btn" type="button" @click="isOpen = true" :disabled="disabled">
+  <button
+    v-if="showTrigger"
+    class="avatar-edit-btn"
+    type="button"
+    @click="isOpen = true"
+    :disabled="disabled"
+  >
     <AvatarEditIcon />
   </button>
 
@@ -20,7 +26,7 @@
       <div v-else class="avatar-empty">No avatar</div>
 
       <p v-if="previewUrl" class="position-hint">Drag image to choose avatar position</p>
-      <input type="file" accept="image/*" @change="onAvatarChange" />
+      <ui-file-drop v-model="selectedAvatar" accept="image/*" />
     </div>
 
     <template #footer>
@@ -56,14 +62,19 @@ import {
 } from '@/lib/imagePosition'
 import type { User } from '@/api/.ts.schemas'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
+import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 
-const props = defineProps<{
-  user?: User
-  disabled?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    user?: User
+    disabled?: boolean
+    showTrigger?: boolean
+  }>(),
+  { showTrigger: true },
+)
 
 const isOpen = ref(false)
-const selectedAvatar = ref<File | null>(null)
+const selectedAvatar = ref<File[]>([])
 const selectedAvatarUrl = ref('')
 const avatarPositionKey = computed(() =>
   props.user?.id ? `image-position:avatar:user:${props.user.id}` : '',
@@ -87,12 +98,18 @@ const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useUpdateUserAvata
 const { mutate: removeAvatarRequest, isPending: isRemovingAvatar } = useDeleteUserAvatar()
 const isUpdating = computed(() => isUpdatingAvatar.value || isRemovingAvatar.value)
 
+const open = () => {
+  if (!props.disabled) isOpen.value = true
+}
+
+defineExpose({ open })
+
 const closeModal = () => {
   isOpen.value = false
 }
 
 const resetState = () => {
-  selectedAvatar.value = null
+  selectedAvatar.value = []
   const saved = readImagePosition(avatarPositionKey.value)
   positionX.value = saved.x
   positionY.value = saved.y
@@ -101,11 +118,6 @@ const resetState = () => {
     selectedAvatarUrl.value = ''
   }
   closeModal()
-}
-
-const onAvatarChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedAvatar.value = target.files?.[0] || null
 }
 
 const removeAvatar = () => {
@@ -127,7 +139,7 @@ const saveAvatar = () => {
   if (!selectedAvatar.value) return
 
   updateAvatar(
-    { data: { avatar: selectedAvatar.value } },
+    { data: { avatar: selectedAvatar.value[0] } },
     {
       onSuccess: async () => {
         if (avatarPositionKey.value) {
@@ -173,13 +185,15 @@ const onPreviewPointerDown = (event: PointerEvent) => {
   target.addEventListener('pointercancel', handleUp)
 }
 
-watch(selectedAvatar, (file) => {
+watch(selectedAvatar, (files) => {
+  const firstFile = files[0]
+
   if (selectedAvatarUrl.value) {
     URL.revokeObjectURL(selectedAvatarUrl.value)
     selectedAvatarUrl.value = ''
   }
-  if (file) {
-    selectedAvatarUrl.value = URL.createObjectURL(file)
+  if (firstFile) {
+    selectedAvatarUrl.value = URL.createObjectURL(firstFile)
   }
 })
 

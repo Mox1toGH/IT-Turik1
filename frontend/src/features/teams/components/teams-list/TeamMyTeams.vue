@@ -1,5 +1,5 @@
 <template>
-  <ui-card :isError="isLoadingError">
+  <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching my teams (code: {{ teamsError?.code }})</p>
@@ -8,14 +8,21 @@
 
     <template #header>
       <div class="section-head">
-        <h2>My teams</h2>
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="70px" />
-          </template>
+        <div>
+          <p class="section-eyebrow">Your workspace</p>
+          <h2 class="text-3xl">My teams</h2>
+          <p class="section-subtitle text-base">Teams where you are a member or captain.</p>
+        </div>
 
-          <span class="text-muted">{{ myTeams?.length ?? 0 }} joined</span>
-        </ui-skeleton-loader>
+        <div class="section-meta">
+          <ui-skeleton-loader :loading="isLoadingTeams">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="82px" height="38px" />
+            </template>
+
+            <span class="count-pill text-base">{{ myTeams?.length ?? 0 }} joined</span>
+          </ui-skeleton-loader>
+        </div>
       </div>
     </template>
 
@@ -43,7 +50,13 @@
         </div>
       </template>
 
-      <p v-if="myTeams?.length === 0" class="text-muted">You are not a member of any team yet.</p>
+      <div v-if="myTeams?.length === 0" class="empty-row">
+        <div class="empty-icon" aria-hidden="true">+</div>
+        <div class="empty-copy">
+          <h3 class="text-lg">No joined teams</h3>
+          <p class="text-base">Create a team or request to join an available workspace.</p>
+        </div>
+      </div>
 
       <div v-else class="team-grid">
         <ui-card v-for="team in myTeamsPageItems" :key="`my-${team.id}`" class="team-item">
@@ -66,7 +79,7 @@
           </div>
 
           <template #footer>
-            <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`"
+            <ui-button asLink variant="default" size="sm" :to="`/teams/${team.id}`"
               >Open workspace</ui-button
             >
           </template>
@@ -74,15 +87,13 @@
       </div>
     </ui-skeleton-loader>
 
-    <div v-if="myPages > 1" class="pagination">
-      <ui-button size="sm" variant="secondary" :disabled="myPage === 1" @click="myPage -= 1">
-        Prev
-      </ui-button>
-      <span>Page {{ myPage }} / {{ myPages }}</span>
-      <ui-button size="sm" variant="secondary" :disabled="myPage === myPages" @click="myPage += 1">
-        Next
-      </ui-button>
-    </div>
+    <ui-pagination
+      v-if="myPages > 1"
+      v-model="myPage"
+      :total-items="myTeams?.length ?? 0"
+      :page-size="TEAMS_PER_PAGE"
+      :show-summary="false"
+    />
   </ui-card>
 </template>
 
@@ -90,6 +101,7 @@
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiPagination from '@/components/ui/UiPagination.vue'
 import { computed, ref } from 'vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
@@ -126,9 +138,37 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 <style scoped>
 .section-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.7rem;
+  gap: 1rem;
+}
+
+.section-head h2 {
+  margin: 2rem 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.section-head .section-subtitle {
+  margin: 0;
+}
+
+.section-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .team-grid {
@@ -140,6 +180,49 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 .team-item {
   padding: 0.95rem;
   background: var(--muted);
+}
+
+.empty-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 96px;
+  padding: 1.35rem;
+  border: 1px dashed var(--line-soft);
+  border-radius: 16px;
+  background: var(--background);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.empty-copy {
+  min-width: 0;
+}
+
+.empty-copy h3,
+.empty-copy p {
+  margin: 0;
+}
+
+.empty-copy h3 {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.empty-copy p {
+  margin-top: 0.25rem;
+  color: var(--muted-foreground);
 }
 
 .team-header {
@@ -163,10 +246,16 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
   max-width: 100%;
 }
 
-.pagination {
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+@media (max-width: 700px) {
+  .section-head,
+  .empty-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-meta {
+    min-height: 0;
+    align-items: flex-start;
+  }
 }
 </style>

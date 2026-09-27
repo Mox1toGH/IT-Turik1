@@ -1,23 +1,3 @@
-import { getUser } from '@/api/accounts/accounts'
-
-const parsePositiveId = (rawId: unknown): number | null => {
-  const value = Number(rawId)
-  if (!Number.isInteger(value) || value <= 0) return null
-  return value
-}
-
-const ensureUserExists = async (rawId: unknown) => {
-  const id = parsePositiveId(rawId)
-  if (!id) return { name: 'not-found' as const }
-
-  try {
-    await getUser(id)
-    return true
-  } catch {
-    return { name: 'not-found' as const }
-  }
-}
-
 export const profileRoutes = [
   {
     path: '/profile',
@@ -26,40 +6,32 @@ export const profileRoutes = [
   },
   {
     path: '/users/:id',
-    component: () => import('@/features/profile/pages/UserProfilePage.vue'),
+    component: () => import('./components/profile/sections/UserProfileSection.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureUserExists(to.params.id),
   },
   {
     path: '/users/:id/points',
-    component: () => import('@/features/profile/pages/TransactionHistoryPage.vue'),
+    component: () => import('./components/profile/sections/TransactionHistorySection.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureUserExists(to.params.id),
   },
   {
     path: '/users/:id/tournaments-history',
-    component: () => import('@/features/profile/pages/UserTournamentHistoryPage.vue'),
-    meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureUserExists(to.params.id),
-  },
-  {
-    path: '/profile/edit',
-    component: () => import('./pages/EditProfilePage.vue'),
+    component: () => import('./components/profile/sections/UserTournamentHistorySection.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/profile/certificates',
-    component: () => import('./pages/CertificatesPage.vue'),
+    component: () => import('./components/profile/sections/CertificatesSection.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/complete-profile',
-    component: () => import('./pages/CompleteProfilePage.vue'),
+    component: () => import('./components/profile/sections/CompleteProfileSection.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/activate/:uid/:token',
-    component: () => import('./pages/ActivateProfilePage.vue'),
+    component: () => import('./components/profile/sections/ActivateProfileSection.vue'),
     meta: { requiresGuest: true },
   },
   {
@@ -69,12 +41,12 @@ export const profileRoutes = [
   },
   {
     path: '/profile/points',
-    component: () => import('./pages/TransactionHistoryPage.vue'),
+    component: () => import('./components/profile/sections/TransactionHistorySection.vue'),
     meta: { requiresAuth: true },
   },
   {
     path: '/profile/tournaments-history',
-    component: () => import('./pages/UserTournamentHistoryPage.vue'),
+    component: () => import('./components/profile/sections/UserTournamentHistorySection.vue'),
     meta: { requiresAuth: true },
   },
 ]
