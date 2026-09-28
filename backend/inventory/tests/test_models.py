@@ -53,16 +53,17 @@ class InventoryModelTests(TestCase):
 
     def test_on_delete_cascade_product(self):
         UserInventory.objects.create(user=self.user, product=self.product)
-        # Note: Product on_delete is usually PROTECT in related fields, 
-        # but let's check UserInventory model.
-        # If it's CASCADE, it will delete the inventory item.
-        # Checking inventory/models.py... actually I didn't check it yet.
-        pass
+        self.product.delete()
+        self.assertEqual(UserInventory.objects.count(), 0)
 
     def test_meta_ordering(self):
-        # Just a placeholder for another test to reach 10
-        self.assertTrue(True)
-
-    def test_inventory_list_ordering(self):
-        # Just a placeholder
-        self.assertTrue(True)
+        first = UserInventory.objects.create(user=self.user, product=self.product)
+        p2 = Product.objects.create(
+            name='P2',
+            price=5,
+            stock_quantity=5,
+            category=self.category
+        )
+        second = UserInventory.objects.create(user=self.user, product=p2)
+        items = list(UserInventory.objects.all())
+        self.assertEqual(items, [second, first])

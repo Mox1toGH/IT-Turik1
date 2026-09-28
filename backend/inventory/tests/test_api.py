@@ -63,17 +63,48 @@ class InventoryApiTests(APITestCase):
         self.unequip_url = reverse('ninja-api:inventory-unequip')
         self.purchase_url = reverse('ninja-api:shop-purchase')
 
-    def test_my_inventory_list_returns_only_current_user_items(self):
+    def test_my_inventory_returns_only_authenticated_user_items(self):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
         UserInventory.objects.create(user=self.other_user, product=self.second_digital_product)
 
         authenticate(self.client, self.user)
+
         response = self.client.get(self.inventory_url)
         data = response.json()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data['count'], 1)
-        self.assertEqual(data['items'][0]['product']['id'], self.digital_product.id)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["id"], self.user.inventory.first().id)
+        self.assertEqual(data["items"][0]["product"]["id"], self.digital_product.id)
+
+    def test_my_inventory_returns_empty_list_when_user_has_no_items(self):
+        UserInventory.objects.create(user=self.other_user, product=self.second_digital_product)
+
+        authenticate(self.client, self.user)
+
+        response = self.client.get(self.inventory_url)
+        data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data["count"], 0)
+        self.assertEqual(data["items"], [])
+
+    def test_my_inventory_requires_authentication(self):
+        response = self.client.get(self.inventory_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_my_inventory_contains_product_data(self):
+        UserInventory.objects.create(user=self.user, product=self.digital_product)
+
+        authenticate(self.client, self.user)
+
+        response = self.client.get(self.inventory_url)
+        product = response.json()["items"][0]["product"]
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(product["id"], self.digital_product.id)
+        self.assertEqual(product["name"], self.digital_product.name)
 
     def test_equip_inventory_item_marks_selected_item_equipped_and_unsets_previous(self):
         first_item = UserInventory.objects.create(user=self.user, product=self.digital_product)
@@ -121,6 +152,27 @@ class InventoryApiTests(APITestCase):
             UserInventory.objects.filter(user=self.user, product=self.digital_product).exists()
         )
 
+    def test_unequip_non_digital_item_returns_400(self):
+        item = UserInventory.objects.create(
+            user=self.user,
+            product=self.physical_product,
+            is_equipped=True,
+        )
+
+        authenticate(self.client, self.user)
+
+        response = self.client.post(
+            self.unequip_url,
+            {"inventory_id": item.id},
+            format="json",
+        )
+
+        data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(data["message"], "Only digital items can be unequipped.")
+
+    # TODO: maybe move this test to shop feature? cuz it definatly test his implementation
     def test_purchase_digital_product_rejects_duplicate_ownership(self):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
         UserPointsBalance.objects.create(user=self.user, balance=500)
@@ -132,4 +184,27 @@ class InventoryApiTests(APITestCase):
             format='json',
         )
 
+        data = response.json()
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(data["code"], "validation_error")
+        self.assertEqual(
+            data["message"],
+            "product_id: You already own this digital item.",
+        )
+        self.assertEqual(
+            data["details"],
+            {"product_id": "You already own this digital item."},
+        )
+
+        self.assertEqual(
+            UserInventory.objects.filter(
+                user=self.user,
+                product=self.digital_product,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            UserPointsBalance.objects.get(user=self.user).balance,
+            500,
+        )

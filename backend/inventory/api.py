@@ -14,7 +14,6 @@ from .schemas import DigitalInventoryItemResponse, EquipDigitalItemRequest
 
 router = Router(tags=['inventory'], auth=JWTAuth())
 
-
 def _inventory_queryset(user):
     return UserInventory.objects.select_related('product', 'product__category').prefetch_related(
         'product__images'
@@ -48,6 +47,9 @@ def equip_inventory_item(request, payload: EquipDigitalItemRequest):
 @router.post('/unequip', operation_id='unequipDigitalInventoryItem', url_name="inventory-unequip", response={200: DigitalInventoryItemResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
 def unequip_inventory_item(request, payload: EquipDigitalItemRequest):
     item = get_object_or_404(_inventory_queryset(request.auth), pk=payload.inventory_id)
+
+    if item.product.product_type != Product.TYPE_DIGITAL:
+        raise HttpError(400, 'Only digital items can be unequipped.')
 
     if not item.is_equipped:
         raise HttpError(400, 'Item is not equipped.')
