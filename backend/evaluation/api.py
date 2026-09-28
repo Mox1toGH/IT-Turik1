@@ -15,7 +15,7 @@ from .models import JuryAssignment, SubmissionEvaluation
 from .realtime import emit_tournament_leaderboard_updated
 
 from backend.schemas import ErrorResponse
-from accounts.schemas import UserRole
+from backend.permissions import Permission, has_permission
 from .schemas import (
     AssignJuryResponse,
     AvailableJuryResponse,
@@ -33,29 +33,15 @@ from .services import get_available_jury, replace_round_jury_assignments, try_au
 
 router = Router(tags=['evaluation'], auth=JWTAuth())
 
-
-# =============================================================================
-# Permissions
-#
-# DRF permission classes don't plug into Ninja, so they become plain guards
-# (same pattern as _require_staff in the certificates app).
-# TODO: port the real logic of tournaments.permissions.CanSetResults /
-# CanManageAssignments here. Until then both fail closed (staff only).
-# =============================================================================
-
-def _require_can_set_results(request):
-    if request.auth.role not in (UserRole.ADMIN, UserRole.ORGANIZER):
-        raise HttpError(403, 'You do not have permission to set results.')
+def _require_evaluation_access(request):
+    if not has_permission(request.auth, Permission.MANAGE_EVALUATIONS):
+        raise HttpError(403, 'You do not have permission to manage evaluations.')
 
 
-def _require_can_manage_assignments(request):
-    if request.auth.role not in (UserRole.ADMIN, UserRole.ORGANIZER):
+def _require_assignment_management(request):
+    if not has_permission(request.auth, Permission.MANAGE_ASSIGNMENTS):
         raise HttpError(403, 'You do not have permission to manage assignments.')
 
-
-# =============================================================================
-# Pagination (DRF PageNumberPagination + extra `evaluated_count`)
-# =============================================================================
 
 class JuryAssignmentPagination(PaginationBase):
     class Input(Schema):
@@ -95,16 +81,19 @@ def _own_assignments(user):
     )
 
 
-def _parse_int_list(value: str | None, field_name: str) -> list[int]:
+def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
     if not value:
         return []
-    items = [item.strip() for item in value.split(',') if item.strip()]
-    parsed = []
-    for item in items:
-        if not item.isdigit():
-            raise HttpError(400, f'{field_name}: Expected comma-separated positive integers.')
-        parsed.append(int(item))
-    return parsed
+
+    try:
+        ids = [int(item.strip()) for item in value.split(',') if item.strip()]
+    except ValueError:
+        raise HttpError(400, f'{field_name}: IDs must be positive numbers.')
+
+    if any(id <= 0 for id in ids):
+        raise HttpError(400, f'{field_name}: IDs must be positive numbers.')
+
+    return ids
 
 
 @router.get(
@@ -115,18 +104,18 @@ def _parse_int_list(value: str | None, field_name: str) -> list[int]:
 )
 @paginate(JuryAssignmentPagination)
 def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
-    _require_can_set_results(request)
+    _require_assignment_management(request)
 
     qs = _own_assignments(request.auth).order_by('-created_at', '-id')
 
     if filters.round_id:
         qs = qs.filter(submission__round_id=filters.round_id)
 
-    round_ids = _parse_int_list(filters.round_ids, 'round_ids')
+    round_ids = _parse_ids_list(filters.round_ids, 'round_ids')
     if round_ids:
         qs = qs.filter(submission__round_id__in=round_ids)
 
-    tournament_ids = _parse_int_list(filters.tournament_ids, 'tournament_ids')
+    tournament_ids = _parse_ids_list(filters.tournament_ids, 'tournament_ids')
     if tournament_ids:
         qs = qs.filter(submission__round__tournament_id__in=tournament_ids)
 
@@ -136,26 +125,6 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
         qs = qs.filter(evaluation__isnull=True)
 
     return qs
-
-
-@router.get(
-    '/jury-assignments/{assignment_id}',
-    operation_id='getJuryAssignment',
-    url_name='jury_assignment_detail',
-    response={200: JuryAssignmentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
-)
-def get_jury_assignment(request, assignment_id: int):
-    _require_can_set_results(request)
- 
-    assignment = get_object_or_404(
-        _own_assignments(request.auth),
-        pk=assignment_id,
-    )
-
-    return JuryAssignmentResponse.model_validate(
-        assignment,
-        from_attributes=True,
-    )
 
 
 # =============================================================================
@@ -174,24 +143,20 @@ def _own_evaluations(user):
     ).filter(assignment__jury=user)
 
 
-def _get_assignable_assignment(user, assignment_id: int, exclude_evaluation_id: int | None = None):
-    """Equivalent of SubmissionEvaluationSerializer.validate_assignment."""
+def _get_assignment(user, assignment_id: int):
     assignment = (
         JuryAssignment.objects
         .select_related('submission', 'submission__round')
         .filter(pk=assignment_id)
         .first()
     )
+
     if assignment is None:
-        raise HttpError(400, f'assignment: Invalid pk "{assignment_id}" - object does not exist.')
+        raise HttpError(400, 'Assignment not found.')
+
     if assignment.jury_id != user.id:
         raise HttpError(400, 'You are not assigned to this submission.')
 
-    existing = SubmissionEvaluation.objects.filter(assignment=assignment)
-    if exclude_evaluation_id is not None:
-        existing = existing.exclude(pk=exclude_evaluation_id)
-    if existing.exists():
-        raise HttpError(400, 'This submission is already evaluated.')
     return assignment
 
 
@@ -250,34 +215,6 @@ def _after_evaluation_saved(evaluation, reason: str):
     )
 
 
-def _apply_evaluation_update(request, evaluation_id: int, data: dict):
-    evaluation = get_object_or_404(_own_evaluations(request.auth), pk=evaluation_id)
-    assignment = evaluation.assignment
-
-    if data.get('assignment') is not None:
-        assignment = _get_assignable_assignment(
-            request.auth, data['assignment'], exclude_evaluation_id=evaluation.pk,
-        )
-        evaluation.assignment = assignment
-
-    _check_tournament(assignment, data.get('tournament_id'))
-
-    if data.get('scores') is not None:
-        evaluation.scores = _build_scores(assignment.submission.round, data['scores'])
-
-    if 'comment' in data and data['comment'] is not None:
-        evaluation.comment = data['comment']
-
-    evaluation.save()
-    _after_evaluation_saved(evaluation, 'evaluation_updated')
-
-    return SubmissionEvaluationResponse.model_validate(
-        evaluation,
-        from_attributes=True,
-        context={"request": request},
-    )
-
-
 @router.post(
     '/jury-evaluations',
     operation_id='createJuryEvaluation',
@@ -285,16 +222,18 @@ def _apply_evaluation_update(request, evaluation_id: int, data: dict):
     response={201: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
-    _require_can_set_results(request)
-    data = payload.dict()
+    _require_evaluation_access(request)
+    _check_tournament(assignment, payload.tournament_id)
 
-    assignment = _get_assignable_assignment(request.auth, data['assignment'])
-    _check_tournament(assignment, data['tournament_id'])
+    assignment = _get_assignment(request.auth, payload.assignment)
+    
+    if SubmissionEvaluation.objects.filter(assignment=payload.assignment).exists():
+        raise HttpError(400, 'This submission is already evaluated.')
 
     evaluation = SubmissionEvaluation.objects.create(
         assignment=assignment,
-        scores=_build_scores(assignment.submission.round, data['scores']),
-        comment=data['comment'],
+        scores=_build_scores(assignment.submission.round, payload.scores),
+        comment=payload.comment,
     )
     _after_evaluation_saved(evaluation, 'evaluation_created')
 
@@ -312,7 +251,7 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     response={200: SubmissionEvaluationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_jury_evaluation(request, evaluation_id: int):
-    _require_can_set_results(request)
+    _require_evaluation_access(request)
 
     evaluation = get_object_or_404(
         _own_evaluations(request.auth),
@@ -326,29 +265,64 @@ def get_jury_evaluation(request, evaluation_id: int):
     )
 
 
-@router.put(
-    '/jury-evaluations/{evaluation_id}',
-    operation_id='replaceJuryEvaluation',
-    url_name='jury_evaluate',
-    response={200: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse,
-              403: ErrorResponse, 404: ErrorResponse},
-)
-def replace_jury_evaluation(request, evaluation_id: int, payload: SubmissionEvaluationRequest):
-    _require_can_set_results(request)
-    # exclude_unset: an omitted `comment` keeps its current value (same as DRF PUT)
-    return _apply_evaluation_update(request, evaluation_id, payload.dict(exclude_unset=True))
-
-
 @router.patch(
     '/jury-evaluations/{evaluation_id}',
     operation_id='updateJuryEvaluation',
     url_name='jury_evaluate',
-    response={200: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse,
-              403: ErrorResponse, 404: ErrorResponse},
+    response={
+        200: SubmissionEvaluationResponse,
+        400: ErrorResponse,
+        401: ErrorResponse,
+        403: ErrorResponse,
+        404: ErrorResponse,
+    },
 )
-def update_jury_evaluation(request, evaluation_id: int, payload: SubmissionEvaluationPatchRequest):
-    _require_can_set_results(request)
-    return _apply_evaluation_update(request, evaluation_id, payload.dict(exclude_unset=True))
+def update_jury_evaluation(
+    request,
+    evaluation_id: int,
+    payload: SubmissionEvaluationPatchRequest,
+):
+    _require_evaluation_access(request)
+
+    evaluation = get_object_or_404(
+        _own_evaluations(request.auth),
+        pk=evaluation_id,
+    )
+
+    round = evaluation.assignment.submission.round
+    round = evaluation.assignment.submission.round
+
+    if round.status == Round.STATUS_EVALUATED:
+        raise HttpError(
+            400,
+            'Cannot update evaluation after round evaluation is completed.',
+        )
+    
+    data = payload.model_dump(exclude_unset=True)
+
+    assignment = evaluation.assignment
+
+    if data.get('scores') is not None:
+        evaluation.scores = _build_scores(
+            assignment.submission.round,
+            data['scores'],
+        )
+
+    if 'comment' in data and data['comment'] is not None:
+        evaluation.comment = data['comment']
+
+    evaluation.save()
+
+    _after_evaluation_saved(
+        evaluation,
+        'evaluation_updated',
+    )
+
+    return SubmissionEvaluationResponse.model_validate(
+        evaluation,
+        from_attributes=True,
+        context={"request": request},
+    )
 
 
 @router.delete(
@@ -358,7 +332,7 @@ def update_jury_evaluation(request, evaluation_id: int, payload: SubmissionEvalu
     response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_jury_evaluation(request, evaluation_id: int):
-    _require_can_set_results(request)
+    _require_evaluation_access(request)
     evaluation = get_object_or_404(_own_evaluations(request.auth), pk=evaluation_id)
 
     submission = evaluation.assignment.submission
@@ -391,15 +365,14 @@ def delete_jury_evaluation(request, evaluation_id: int):
               403: ErrorResponse, 404: ErrorResponse},
 )
 def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentItemRequest]):
-    _require_can_manage_assignments(request)
+    _require_assignment_management(request)
     round_obj = get_object_or_404(Round, pk=round_id)
 
-    # Replaces PrimaryKeyRelatedField(queryset=Submission.objects.all())
     submission_ids = [item.submission for item in payload]
     submissions = Submission.objects.in_bulk(submission_ids)
     missing = sorted(set(submission_ids) - set(submissions))
     if missing:
-        raise HttpError(400, f'submission: Invalid pk(s) - object does not exist: {missing}')
+        raise HttpError(400, 'One or more submissions do not exist.')
 
     items = [
         {'submission': submissions[item.submission], 'jury': item.jury}
@@ -421,7 +394,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
               403: ErrorResponse, 404: ErrorResponse},
 )
 def list_available_jury(request, round_id: int, include_assigned: bool = True):
-    _require_can_manage_assignments(request)
+    _require_assignment_management(request)
     round_obj = get_object_or_404(Round, pk=round_id)
 
     return [
@@ -499,7 +472,6 @@ def get_tournament_leaderboard_view(request, tournament_id: int):
               403: ErrorResponse, 404: ErrorResponse},
 )
 def get_round_passing_status(request, round_id: int):
-    _require_can_manage_assignments(request)
     round_obj = get_object_or_404(Round.objects.select_related('tournament'), pk=round_id)
 
     if round_obj.status not in {Round.STATUS_SUBMISSION_CLOSED, Round.STATUS_EVALUATED}:
