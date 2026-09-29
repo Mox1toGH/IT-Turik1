@@ -14,6 +14,8 @@ from backend.permissions import is_platform_admin
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import (
     DetailResponse,
     InviteMemberRequest,
@@ -69,19 +71,19 @@ def get_accessible_team(request, pk):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.is_public or is_team_member(team, request.auth) or is_platform_admin(request.auth):
         return team
-    raise HttpError(403, 'You do not have access to this private team.')
+    raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have access to this private team.')
 
 
 def deny_platform_admin_write(request):
     # Replaces IsNotPlatformAdminOrReadOnly for non-safe methods.
     if is_platform_admin(request.auth):
-        raise HttpError(403, 'Platform administrators have read-only access.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Platform administrators have read-only access.')
 
 
 def assert_can_create_team(user):
     # Replaces CanCreateTeam. TODO: put your original permission logic here.
     if is_platform_admin(user) or user.role != 'team':
-        raise HttpError(403, 'You do not have permission to create a team.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to create a team.')
 
 
 def normalize_telegram(value: str) -> str:
@@ -89,8 +91,8 @@ def normalize_telegram(value: str) -> str:
     if not normalized:
         return ''
     if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{4,31}', normalized):
-        raise HttpError(
-            400,
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
             'Telegram username must be 5-32 chars, start with a letter, and contain only letters, digits, or _.',
         )
     return normalized
@@ -101,8 +103,8 @@ def normalize_discord(value: str) -> str:
     if not normalized:
         return ''
     if not re.fullmatch(r'(?=.{2,32}$)[A-Za-z0-9._]+(?:#[0-9]{4})?', normalized):
-        raise HttpError(
-            400,
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
             'Discord username must be 2-32 chars and may contain letters, digits, ".", "_" and optional #1234.',
         )
     return normalized
@@ -115,7 +117,7 @@ def validate_member_ids(value):
     existing_ids = set(User.objects.filter(id__in=unique_ids).values_list('id', flat=True))
     missing_ids = [user_id for user_id in unique_ids if user_id not in existing_ids]
     if missing_ids:
-        raise HttpError(400, f'Users not found: {missing_ids}')
+        raise_api_error(HTTPStatus.BAD_REQUEST, f'Users not found: {missing_ids}')
     return unique_ids
 
 
@@ -236,7 +238,7 @@ def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
     deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can modify this team.')
+        raise_api_error(403, 'Only captain can modify this team.')
 
     data = payload.model_dump(exclude_unset=True, exclude_none=True)
     member_ids = data.pop('member_ids', None)
@@ -294,7 +296,7 @@ def delete_team(request, pk: int):
     deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can modify this team.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team.')
     team.delete()
     return 204, None
 
@@ -307,9 +309,9 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
     deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can modify this team banner.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team banner.')
     if not (banner.content_type or '').startswith('image/'):
-        raise HttpError(400, 'Upload a valid image.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Upload a valid image.')
 
     team.banner = banner
     team.save(update_fields=['banner'])
@@ -347,7 +349,7 @@ def delete_team_banner(request, pk: int):
     deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can modify this team banner.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team banner.')
 
     if team.banner:
         team.banner.delete(save=False)
@@ -369,23 +371,23 @@ def delete_team_banner(request, pk: int):
 def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can manage members.')
+        raise_api_error(403, 'Only captain can manage members.')
 
     assert_team_not_in_active_tournament(team)
 
     if not payload.user_id:
-        raise HttpError(400, 'user_id is required.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'user_id is required.')
 
     user = get_object_or_404(User, id=payload.user_id)
     if user.id == team.captain_id:
-        raise HttpError(400, 'Captain is already on the team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Captain is already on the team.')
 
     if TeamMember.objects.filter(team=team, user=user).exists():
-        raise HttpError(400, 'User is already a team member.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'User is already a team member.')
 
     invitation, created = invite_user_to_team(team=team, user=user, invited_by=request.auth)
     if not invitation:
-        raise HttpError(400, 'Unable to invite this user.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Unable to invite this user.')
 
     invitation_received.send(sender=invite_member_to_team, invitation=invitation)
 
@@ -404,17 +406,17 @@ def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
 def remove_member_from_team(request, pk: int, user_id: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can manage members.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can manage members.')
 
     if team.captain_id == user_id:
-        raise HttpError(400, 'Captain cannot be removed from team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Captain cannot be removed from team.')
 
     assert_can_remove_member(team)
 
     removed_user = get_object_or_404(User, id=user_id)
     deleted_count, _ = TeamMember.objects.filter(team=team, user_id=user_id).delete()
     if deleted_count == 0:
-        raise HttpError(404, 'User is not a team member.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'User is not a team member.')
 
     member_removed.send(sender=remove_member_from_team, team=team, user=removed_user)
 
@@ -433,11 +435,11 @@ def leave_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
 
     if team.captain_id == request.auth.id:
-        raise HttpError(400, 'Captain cannot leave the team. Transfer captain role or delete the team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Captain cannot leave the team. Transfer captain role or delete the team.')
 
     deleted_count, _ = TeamMember.objects.filter(team=team, user=request.auth).delete()
     if deleted_count == 0:
-        raise HttpError(400, 'You are not a team member of this team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'You are not a team member of this team.')
 
     member_left.send(sender=leave_team, team=team, user=request.auth)
 
@@ -477,7 +479,7 @@ def respond_to_invitation(request, invitation_id: int, new_status: str):
     )
 
     if invitation.status != TeamInvitation.STATUS_INVITED:
-        raise HttpError(400, 'This invitation is already processed.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'This invitation is already processed.')
 
     now = timezone.now()
 
@@ -542,17 +544,17 @@ def create_team_join_request(request, pk: int):
     assert_team_not_in_active_tournament(team)
 
     if not team.is_public:
-        raise HttpError(400, 'Join requests are available only for public teams.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Join requests are available only for public teams.')
 
     if is_team_member(team, request.auth):
-        raise HttpError(400, 'You are already in this team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'You are already in this team.')
 
     if TeamInvitation.objects.filter(
         team=team,
         user=request.auth,
         status=TeamInvitation.STATUS_INVITED,
     ).exists():
-        raise HttpError(400, 'You already have an invitation to this team.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'You already have an invitation to this team.')
 
     join_request = TeamJoinRequest.objects.create(
         team=team,
@@ -568,11 +570,11 @@ def create_team_join_request(request, pk: int):
 def review_join_request(request, pk: int, request_id: int, new_status: str):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id:
-        raise HttpError(403, 'Only captain can review join requests.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can review join requests.')
 
     join_request = get_object_or_404(TeamJoinRequest, id=request_id, team=team)
     if join_request.status != TeamJoinRequest.STATUS_PENDING:
-        raise HttpError(400, 'This join request is already processed.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'This join request is already processed.')
 
     if new_status == TeamJoinRequest.STATUS_ACCEPTED:
         assert_team_not_in_active_tournament(team)
@@ -625,7 +627,7 @@ def decline_team_join_request(request, pk: int, request_id: int):
 def list_team_invitations_by_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id and not is_platform_admin(request.auth):
-        raise HttpError(403, 'Only captain or admin can view team invitations.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain or admin can view team invitations.')
 
     member_ids = {member.id for member in team.members.all()}
     member_ids.add(team.captain_id)
@@ -649,7 +651,7 @@ def list_team_invitations_by_team(request, pk: int):
 def list_team_join_requests_by_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id and not is_platform_admin(request.auth):
-        raise HttpError(403, 'Only captain or admin can view team join requests.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain or admin can view team join requests.')
 
     queryset = (
         TeamJoinRequest.objects.filter(team=team)

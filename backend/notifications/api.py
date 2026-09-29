@@ -13,6 +13,8 @@ from .models import Notification, NotificationConfig, UserNotificationSettings
 from .realtime import emit_notifications_deleted, emit_read_status_changed, emit_unread_count_updated
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import DeletedCountResponse, DetailResponse, GlobalConfigUpdateRequest, MarkedCountResponse, NotificationConfigUpdateRequest, NotificationResponse, NotificationSettingsResponse, UnreadCountResponse
 
 router = Router(tags=['notifications'], auth=JWTAuth())
@@ -36,7 +38,7 @@ def mark_notification_read(request, notification_id: int):
     notification = Notification.objects.filter(id=notification_id, recipient=request.auth, is_read=False).first()
     
     if notification is None:
-        raise HttpError(404, 'Notification not found or already read.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'Notification not found or already read.')
     
     notification.is_read = True
     notification.save(update_fields=['is_read'])
@@ -151,7 +153,7 @@ def delete_notification(request, notification_id: int):
     notification = Notification.objects.filter(id=notification_id, recipient=request.auth).first()
 
     if notification is None:
-        raise HttpError(404, 'Notification not found.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'Notification not found.')
     notification.delete()
 
     emit_notifications_deleted(request.auth.id, [notification_id])

@@ -187,7 +187,6 @@ class InventoryApiTests(APITestCase):
         data = response.json()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(data["code"], "validation_error")
         self.assertEqual(
             data["message"],
             "product_id: You already own this digital item.",

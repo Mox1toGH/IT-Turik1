@@ -3,7 +3,6 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 
 from ninja import Query, Router, Schema
-from ninja.errors import HttpError
 from ninja.pagination import PaginationBase, paginate
 
 from backend.auth import JWTAuth
@@ -15,6 +14,8 @@ from .models import JuryAssignment, SubmissionEvaluation
 from .realtime import emit_tournament_leaderboard_updated
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from backend.permissions import Permission, has_permission
 from .schemas import (
     AssignJuryResponse,
@@ -35,12 +36,12 @@ router = Router(tags=['evaluation'], auth=JWTAuth())
 
 def _require_evaluation_access(request):
     if not has_permission(request.auth, Permission.MANAGE_EVALUATIONS):
-        raise HttpError(403, 'You do not have permission to manage evaluations.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to manage evaluations.')
 
 
 def _require_assignment_management(request):
     if not has_permission(request.auth, Permission.MANAGE_ASSIGNMENTS):
-        raise HttpError(403, 'You do not have permission to manage assignments.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to manage assignments.')
 
 
 class JuryAssignmentPagination(PaginationBase):
@@ -88,10 +89,10 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
     try:
         ids = [int(item.strip()) for item in value.split(',') if item.strip()]
     except ValueError:
-        raise HttpError(400, f'{field_name}: IDs must be positive numbers.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, f'{field_name}: IDs must be positive numbers.')
 
     if any(id <= 0 for id in ids):
-        raise HttpError(400, f'{field_name}: IDs must be positive numbers.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, f'{field_name}: IDs must be positive numbers.')
 
     return ids
 
@@ -100,7 +101,7 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
     '/jury-assignments',
     operation_id='listJuryAssignments',
     url_name="jury-assignments",
-    response={200: list[JuryAssignmentResponse], 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
+    response={200: list[JuryAssignmentResponse], HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 @paginate(JuryAssignmentPagination)
 def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
@@ -152,24 +153,24 @@ def _get_assignment(user, assignment_id: int):
     )
 
     if assignment is None:
-        raise HttpError(400, 'Assignment not found.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Assignment not found.')
 
     if assignment.jury_id != user.id:
-        raise HttpError(400, 'You are not assigned to this submission.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'You are not assigned to this submission.')
 
     return assignment
 
 
 def _check_tournament(assignment, tournament_id: int | None):
     if tournament_id is not None and assignment.submission.round.tournament_id != tournament_id:
-        raise HttpError(400, 'tournament_id: Assignment does not belong to this tournament.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'tournament_id: Assignment does not belong to this tournament.')
 
 
 def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
     """Validate scores against the round's criteria and enrich them with criterion names."""
     criteria = round_obj.criteria
     if not criteria:
-        raise HttpError(400, 'scores: Round has no evaluation criteria.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'scores: Round has no evaluation criteria.')
 
     criteria_by_id = {c['id']: c for c in criteria}
     seen: set[str] = set()
@@ -179,14 +180,14 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
         c_id = item['criterion_id']
         criterion = criteria_by_id.get(c_id)
         if criterion is None:
-            raise HttpError(400, f'scores: Invalid criterion_id: {c_id}')
+            raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Invalid criterion_id: {c_id}')
         if c_id in seen:
-            raise HttpError(400, f'scores: Duplicate criterion_id: {c_id}')
+            raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Duplicate criterion_id: {c_id}')
 
         score = item['score']
         max_score = criterion['max_score']
         if score < 0 or score > max_score:
-            raise HttpError(400, f'scores: Invalid score for {c_id}. Must be between 0 and {max_score}')
+            raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Invalid score for {c_id}. Must be between 0 and {max_score}')
 
         seen.add(c_id)
         enriched.append({
@@ -197,7 +198,7 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
 
     missing = set(criteria_by_id) - seen
     if missing:
-        raise HttpError(400, f'scores: Missing scores for criteria: {", ".join(sorted(missing))}')
+        raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Missing scores for criteria: {", ".join(sorted(missing))}')
 
     return enriched
 
@@ -219,7 +220,7 @@ def _after_evaluation_saved(evaluation, reason: str):
     '/jury-evaluations',
     operation_id='createJuryEvaluation',
     url_name='jury_evaluate_create',
-    response={201: SubmissionEvaluationResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
+    response={201: SubmissionEvaluationResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     _require_evaluation_access(request)
@@ -228,7 +229,7 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     assignment = _get_assignment(request.auth, payload.assignment)
     
     if SubmissionEvaluation.objects.filter(assignment=payload.assignment).exists():
-        raise HttpError(400, 'This submission is already evaluated.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'This submission is already evaluated.')
 
     evaluation = SubmissionEvaluation.objects.create(
         assignment=assignment,
@@ -271,7 +272,7 @@ def get_jury_evaluation(request, evaluation_id: int):
     url_name='jury_evaluate',
     response={
         200: SubmissionEvaluationResponse,
-        400: ErrorResponse,
+        HTTPStatus.BAD_REQUEST: ErrorResponse,
         401: ErrorResponse,
         403: ErrorResponse,
         404: ErrorResponse,
@@ -293,8 +294,8 @@ def update_jury_evaluation(
     round = evaluation.assignment.submission.round
 
     if round.status == Round.STATUS_EVALUATED:
-        raise HttpError(
-            400,
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
             'Cannot update evaluation after round evaluation is completed.',
         )
     
@@ -361,7 +362,7 @@ def delete_jury_evaluation(request, evaluation_id: int):
     '/rounds/{round_id}/jury-assignments',
     operation_id='assignJuryToRound',
     url_name='round_assign_jury',
-    response={201: AssignJuryResponse, 400: ErrorResponse, 401: ErrorResponse,
+    response={201: AssignJuryResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
 def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentItemRequest]):
@@ -372,7 +373,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
     submissions = Submission.objects.in_bulk(submission_ids)
     missing = sorted(set(submission_ids) - set(submissions))
     if missing:
-        raise HttpError(400, 'One or more submissions do not exist.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'One or more submissions do not exist.')
 
     items = [
         {'submission': submissions[item.submission], 'jury': item.jury}
@@ -390,7 +391,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
     '/rounds/{round_id}/available-jury',
     operation_id='listAvailableJury',
     url_name='round_available_jury',
-    response={200: list[AvailableJuryResponse], 400: ErrorResponse, 401: ErrorResponse,
+    response={200: list[AvailableJuryResponse], HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
 def list_available_jury(request, round_id: int, include_assigned: bool = True):
@@ -426,7 +427,7 @@ def list_available_jury(request, round_id: int, include_assigned: bool = True):
 def get_round_leaderboard(request, round_id: int):
     round_obj = Round.objects.select_related('tournament').filter(id=round_id).first()
     if not round_obj:
-        raise HttpError(404, 'Round not found.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'Round not found.')
 
     rankings = get_leaderboard(round_id=round_id, requesting_user=request.auth)
     return {
@@ -445,10 +446,10 @@ def get_round_leaderboard(request, round_id: int):
 def get_tournament_leaderboard_view(request, tournament_id: int):
     tournament = Tournament.objects.filter(id=tournament_id).first()
     if not tournament:
-        raise HttpError(404, 'Tournament not found.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'Tournament not found.')
 
     if not Round.objects.filter(tournament_id=tournament_id).exists():
-        raise HttpError(404, 'No rounds found for this tournament.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'No rounds found for this tournament.')
 
     rankings = get_tournament_leaderboard(tournament_id=tournament_id, requesting_user=request.auth)
     return {
@@ -468,14 +469,14 @@ def get_tournament_leaderboard_view(request, tournament_id: int):
     '/rounds/{round_id}/passing-status',
     operation_id='getRoundPassingStatus',
     url_name="round_passing_status",
-    response={200: RoundPassingStatusResponse, 400: ErrorResponse, 401: ErrorResponse,
+    response={200: RoundPassingStatusResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
 def get_round_passing_status(request, round_id: int):
     round_obj = get_object_or_404(Round.objects.select_related('tournament'), pk=round_id)
 
     if round_obj.status not in {Round.STATUS_SUBMISSION_CLOSED, Round.STATUS_EVALUATED}:
-        raise HttpError(400, 'Round must be submission_closed or evaluated to check passing status.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Round must be submission_closed or evaluated to check passing status.')
 
     result = compute_leaderboard(round_obj.id)
     team_ids = [row['team_id'] for row in result]

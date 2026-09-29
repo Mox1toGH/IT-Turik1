@@ -7,10 +7,12 @@ from ninja.files import UploadedFile
 from ninja.errors import HttpError
 from ninja.pagination import paginate, PageNumberPagination
 
-from backend.auth import JWTAuth, OptionalJWTAuth  # твій auth-backend для Ninja
+from backend.auth import JWTAuth, OptionalJWTAuth
 from .models import Certificate, CertificateTemplate
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import CertificateResponse, CertificateRequest, CertificateTemplateResponse, CertificateVerifyResponse
 from .services import generate_certificate_pdf
 
@@ -52,7 +54,13 @@ def create_template(request, name: str, is_default: bool = False, image: Uploade
     _require_staff(request)
 
     if not name.strip():
-        raise HttpError(400, 'name is required.')
+         raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Validation failed.",
+            {
+                "name": "Name is required.",
+            },
+        )
 
     template = CertificateTemplate.objects.create(name=name, is_default=is_default, image=image)
     return 201, CertificateTemplateResponse.model_validate(
@@ -202,7 +210,7 @@ def delete_certificate(request, unique_code: str):
     operation_id='viewCertificatePdf',
     url_name="certificate-view",
     response={200: None, 404: ErrorResponse, 500: ErrorResponse},
-    auth=OptionalJWTAuth(),  # public: no auth required, matches AllowAny for this action
+    auth=OptionalJWTAuth(),
 )
 def view_certificate_pdf(request, unique_code: str):
     certificate = get_object_or_404(Certificate, unique_code=unique_code)

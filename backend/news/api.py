@@ -13,6 +13,8 @@ from notifications.services import NotificationService
 from .models import NewsArticle
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import NewsArticleRequest, NewsArticleResponse, NewsListResponse
 
 router = Router(tags=['news'], auth=JWTAuth())
@@ -33,9 +35,9 @@ def _serialize_article(article):
 
 def _require_permission(request, permission, article=None):
     if not has_permission(request.auth, permission):
-        raise HttpError(403, 'News permission required.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'News permission required.')
     if article and request.auth.role == 'organizer' and article.created_by_id != request.auth.id:
-        raise HttpError(403, 'You can manage only your own articles.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You can manage only your own articles.')
 
 
 def _save_article(request, article, payload):
@@ -47,7 +49,7 @@ def _save_article(request, article, payload):
     try:
         article.full_clean()
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
     
     article.save()
     

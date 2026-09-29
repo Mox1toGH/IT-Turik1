@@ -12,8 +12,8 @@ from backend.auth import authenticate
 
 @override_settings(GOOGLE_OAUTH_CLIENT_ID='test-google-client-id')
 class GoogleAuthViewTests(APITestCase):
-    url = reverse('ninja-api:google_login')
 
+    url = reverse('ninja-api:google_login')
     @patch('accounts.serializers.id_token.verify_oauth2_token')
     def test_google_login_creates_user_and_returns_jwt(self, mocked_verify):
         mocked_verify.return_value = {

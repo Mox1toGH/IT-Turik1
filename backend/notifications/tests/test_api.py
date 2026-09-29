@@ -70,6 +70,7 @@ class NotificationApiTests(APITestCase):
         url = reverse('ninja-api:notification-settings-config-update')
         NotificationConfig.objects.create(user=self.user, event_type='test')
         response = self.client.post(url, {'event_type': 'test', 'is_email_enabled': False})
+        print(response.json())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         config = NotificationConfig.objects.get(user=self.user, event_type='test')
         self.assertFalse(config.is_email_enabled)

@@ -12,6 +12,8 @@ from notifications.services import NotificationService
 from .models import PointsTransaction, UserPointsBalance
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import ModifyPointsRequest, ModifyPointsResponse, PointsBalanceResponse, PointsTransactionResponse
 from .services import apply_points_modification
 
@@ -21,12 +23,12 @@ router = Router(tags=['points'], auth=JWTAuth())
 
 def _require_admin(request):
     if not is_platform_admin(request.auth):
-        raise HttpError(403, 'Only admins can manage points.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only admins can manage points.')
 
 
 def _ordered_transactions(queryset, ordering: str):
     if ordering not in {'created_at', '-created_at', 'amount', '-amount'}:
-        raise HttpError(400, 'Unsupported ordering. Use created_at, -created_at, amount, or -amount.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Unsupported ordering. Use created_at, -created_at, amount, or -amount.')
     return queryset.order_by(ordering, '-id')
 
 

@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from accounts.models import User, RoleActivationCode
-from backend.permissions import Permission, user_has_permission
+from backend.permissions import Permission, has_permission
 from backend.auth import authenticate
 
 class UserRoleTests(APITestCase):
@@ -20,9 +20,9 @@ class UserRoleTests(APITestCase):
         jury = User.objects.create_user(
             username='permission-jury', email='permission-jury@example.com', password='StrongPass123!', role='jury', is_active=True,
         )
-        self.assertTrue(user_has_permission(admin, Permission.CREATE_TOURNAMENT))
-        self.assertTrue(user_has_permission(organizer, Permission.CREATE_TOURNAMENT))
-        self.assertFalse(user_has_permission(jury, Permission.CREATE_TOURNAMENT))
+        self.assertTrue(has_permission(admin, Permission.CREATE_TOURNAMENT))
+        self.assertTrue(has_permission(organizer, Permission.CREATE_TOURNAMENT))
+        self.assertFalse(has_permission(jury, Permission.CREATE_TOURNAMENT))
 
     def test_create_superuser_uses_admin_role(self):
         user = User.objects.create_superuser(username='root', email='r@e.com', password='P')

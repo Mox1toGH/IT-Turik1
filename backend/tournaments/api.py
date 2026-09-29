@@ -19,6 +19,8 @@ from notifications.services import NotificationService
 from teams.models import Team
 
 from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import (
     ActiveTournamentResponse, ArchiveStandingResponse, CriterionResponse, CurrentTaskResponse, EligibleTeamResponse,
     CalendarEventResponse, CalendarExportErrorResponse, CalendarRoundResponse, DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
@@ -74,7 +76,7 @@ def _criteria_data(criteria):
 
 def _require(request, permission):
     if not has_permission(request.auth, permission):
-        raise HttpError(403, 'Tournament permission required.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Tournament permission required.')
 
 
 def _validation_error(error):
@@ -83,7 +85,7 @@ def _validation_error(error):
         message = next(iter(message_dict.values()), ['Invalid input data.'])[0]
     else:
         message = error.messages[0] if getattr(error, 'messages', None) else 'Invalid input data.'
-    raise HttpError(400, str(message)) from None
+    raise_api_error(HTTPStatus.BAD_REQUEST, str(message))
 
 
 def _validate_model(instance):
@@ -258,7 +260,7 @@ def disqualify_team_from_tournament(request, id: int, registration_pk: int, payl
         event_type = 'tournament_team_reactivated'
         action = 'activated'
     else:
-        raise HttpError(400, 'action must be "disqualify" or "reactivate".')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'action must be "disqualify" or "reactivate".')
 
     registration.save(update_fields=['is_active', 'is_disqualified', 'disqualification_reason'])
     NotificationService.notify(
@@ -290,7 +292,7 @@ def list_my_team_submissions(request, id: int):
         .first()
     )
     if registration is None:
-        raise HttpError(404, 'No team participation found for this tournament.')
+        raise_api_error(404, 'No team participation found for this tournament.')
     return _submission_responses(
         _submissions().filter(round__tournament=tournament, team_id=registration.team_id)
     )
@@ -353,10 +355,10 @@ def send_tournament_certificates(request, tournament_id: int, payload: SendTourn
     _require(request, Permission.MANAGE_PARTICIPANTS)
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     if tournament.status != Tournament.STATUS_FINISHED:
-        raise HttpError(400, 'Certificates can be sent only after tournament is finished.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Certificates can be sent only after tournament is finished.')
     mode = payload.mode.strip().lower()
     if mode not in {'missing', 'resend'}:
-        raise HttpError(400, 'mode must be "missing" or "resend".')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'mode must be "missing" or "resend".')
     template = get_object_or_404(CertificateTemplate, pk=payload.template_id)
     registrations = TournamentTeamRegistration.objects.filter(
         tournament=tournament, is_active=True, is_disqualified=False
@@ -390,12 +392,12 @@ def send_tournament_certificates(request, tournament_id: int, payload: SendTourn
 @router.post('/my-calendar/export-to-google', operation_id='exportToGoogleCalendar', url_name='export_to_google_calendar', response={200: ExportToGoogleCalendarResponse, 400: ErrorResponse, 401: ErrorResponse})
 def export_to_google_calendar(request, payload: ExportToGoogleCalendarRequest):
     if not request.auth.google_calendar_connected:
-        raise HttpError(400, 'Google Calendar is not connected. Please connect first.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Google Calendar is not connected. Please connect first.')
     service = _get_calendar_service(request.auth)
     if not service:
-        raise HttpError(400, 'Failed to connect to Google Calendar. Please reconnect.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Failed to connect to Google Calendar. Please reconnect.')
     if not payload.event_ids and not payload.round_ids:
-        raise HttpError(400, 'Provide event_ids or round_ids to export.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Provide event_ids or round_ids to export.')
 
     created = []
     errors = []
@@ -440,7 +442,7 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     sync_time_based_statuses()
     
     if page < 1 or page_size < 1:
-        raise HttpError(400, 'page and page_size must be positive integers.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'page and page_size must be positive integers.')
     
     queryset = _visible_tournaments(request)
     if searchQuery:
@@ -654,7 +656,7 @@ def get_active_tournament(request, team_id: int):
     registration = TournamentTeamRegistration.objects.select_related('tournament').filter(team_id=team_id, is_active=True, tournament__status__in=[Tournament.STATUS_REGISTRATION, Tournament.STATUS_RUNNING]).first()
     
     if registration is None:
-        raise HttpError(404, 'Active tournament not found for this team.')
+        raise_api_error(HTTPStatus.NOT_FOUND, 'Active tournament not found for this team.')
     
     return ActiveTournamentResponse.model_validate(registration.tournament, from_attributes=True)
 
@@ -779,7 +781,7 @@ def create_submission(request, payload: SubmissionCreateRequest):
     team = Team.objects.filter(captain=request.auth).filter(tournament_registrations__tournament=round_obj.tournament, tournament_registrations__is_active=True).first()
     
     if team is None:
-        raise HttpError(400, 'Only team captain can create submissions for an active registered team in this tournament.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Only team captain can create submissions for an active registered team in this tournament.')
     submission = Submission(team=team, round=round_obj, created_by=request.auth, **payload.model_dump(exclude={'round'}))
     
     _validate_model(submission)
@@ -787,7 +789,7 @@ def create_submission(request, payload: SubmissionCreateRequest):
     try:
         submission.save()
     except IntegrityError:
-        raise HttpError(400, 'Only one submission per team per round is allowed.') from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Only one submission per team per round is allowed.')
     
     return 201, _submissions().get(pk=submission.pk)
 
@@ -835,7 +837,7 @@ def get_current_task(request, tournament_id: int | None = None):
 
     round_obj = queryset.first()
     if round_obj is None:
-        raise HttpError(404, 'No active task found.')
+        raise_api_error(404, 'No active task found.')
     return CurrentTaskResponse.model_validate(round_obj, from_attributes=True)
 
 

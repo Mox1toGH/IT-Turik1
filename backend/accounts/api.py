@@ -7,7 +7,6 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -38,6 +37,8 @@ from .google_calendar import (
 )
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import (
     ActivationResponse,
     ChangePasswordRequest,
@@ -85,7 +86,13 @@ def _check_password_or_400(password: str, user=None) -> None:
     try:
         validate_password(password, user=user)
     except DjangoValidationError as exc:
-        raise HttpError(400, ' '.join(exc.messages))
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Password validation failed.",
+            {
+                "password": exc.messages[0]
+            },
+        )
 
 def send_html_email(
     subject: str,
@@ -136,7 +143,10 @@ def _is_platform_admin(user) -> bool:
 
 def _require_admin(request) -> None:
     if not _is_platform_admin(request.user):
-        raise HttpError(403, 'Admin access required.')
+        raise_api_error(
+            HTTPStatus.FORBIDDEN,
+            'Admin access required.'
+        )
 
 
 def _active_counts() -> dict:
@@ -159,9 +169,22 @@ def _active_counts() -> dict:
 )
 def register_user(request, payload: RegisterRequest):
     if User.objects.filter(username__iexact=payload.username).exists():
-        raise HttpError(400, 'A user with that username already exists.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Validation failed.",
+            {
+               "username": "A user with that username already exists."
+            },
+        )
+
     if User.objects.filter(email__iexact=payload.email).exists():
-        raise HttpError(400, 'A user with that email already exists.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Validation failed.",
+            {
+                "email": "A user with that email already exists."
+            },
+        )
 
     user = User(
         username=payload.username,
@@ -183,7 +206,13 @@ def register_user(request, payload: RegisterRequest):
                 .first()
             )
             if code is None:
-                raise HttpError(400, 'Invalid or already used activation code.')
+                raise_api_error(
+                    HTTPStatus.BAD_REQUEST,
+                    "Validation failed.",
+                    {
+                        "activation_code": "Invalid or already used activation code."
+                    }
+                )
 
         user.set_password(payload.password)
         
@@ -218,7 +247,10 @@ def register_user(request, payload: RegisterRequest):
 def activate_account(request, uidb64: str, token: str):
     user = _get_user_by_uid(uidb64)
     if user is None or not default_token_generator.check_token(user, token):
-        raise HttpError(400, 'Activation link is invalid or expired.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Activation link is invalid or expired."
+        )
 
     user.is_active = True
     user.save(update_fields=['is_active'])
@@ -235,7 +267,7 @@ def activate_account(request, uidb64: str, token: str):
 def login(request, payload: LoginRequest):
     user = authenticate(request, username=payload.username, password=payload.password)
     if user is None:
-        raise HttpError(401, 'No active account found with the given credentials.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'No active account found with the given credentials.')
     refresh = RefreshToken.for_user(user)
     return LoginResponse(access=str(refresh.access_token), refresh=str(refresh))
 
@@ -252,7 +284,10 @@ def refresh_token(request, payload: TokenRefreshRequest):
         refresh = RefreshToken(payload.refresh)
         return TokenRefreshResponse(access=str(refresh.access_token))
     except TokenError:
-        raise HttpError(401, 'Token is invalid or expired.')
+        raise_api_error(
+            HTTPStatus.UNAUTHORIZED,
+            "Token is invalid or expired."
+        )
 
 
 @router.post(
@@ -273,11 +308,17 @@ def google_auth(request, payload: GoogleAuthRequest):
             settings.GOOGLE_OAUTH_CLIENT_ID,
         )
     except ValueError:
-        raise HttpError(400, 'Invalid Google token.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Google authentication failed. Please try again.",
+        )
 
     email = info.get('email')
     if not email or not info.get('email_verified', False):
-        raise HttpError(400, 'Google account email is not verified.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            'Google account email is not verified.'
+        )
 
     user = User.objects.filter(email__iexact=email).first()
     if user is None:
@@ -290,7 +331,10 @@ def google_auth(request, payload: GoogleAuthRequest):
         user.set_unusable_password()
         user.save()
     elif not user.is_active:
-        raise HttpError(400, 'This account is inactive.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            'This account is inactive.'
+        )
 
     refresh = RefreshToken.for_user(user)
     return GoogleAuthResponse(
@@ -327,7 +371,10 @@ def update_user_profile(request, payload: UserUpdateRequest):
     data = payload.model_dump(exclude_unset=True)
 
     if "role" in data:
-        raise HttpError(400, "Role cannot be changed.")
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Role cannot be changed."
+        )
 
     password = data.pop("password", None)
 
@@ -336,8 +383,8 @@ def update_user_profile(request, payload: UserUpdateRequest):
         and not user.has_usable_password()
         and not password
     ):
-        raise HttpError(
-            400,
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
             "Please set a password to complete Google registration."
         )
     
@@ -347,8 +394,8 @@ def update_user_profile(request, payload: UserUpdateRequest):
             user.needs_onboarding
             and not user.has_usable_password()
         ):
-            raise HttpError(
-                400,
+            raise_api_error(
+                HTTPStatus.BAD_REQUEST,
                 "Password can only be set during onboarding."
             )
 
@@ -409,7 +456,10 @@ def delete_user_profile(request):
 )
 def update_user_avatar(request, avatar: UploadedFile = File(...)):
     if not (avatar.content_type or '').startswith('image/'):
-        raise HttpError(400, 'Upload a valid image.')
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            'Upload a valid image.'
+        )
 
     user = request.user
     user.avatar = avatar
@@ -457,7 +507,7 @@ def get_google_calendar_status(request):
 )
 def connect_google_calendar(request):
     if not settings.GOOGLE_OAUTH_CLIENT_SECRET:
-        raise HttpError(503, 'Google Calendar integration is not configured.')
+        raise_api_error(HTTPStatus.SERVICE_UNAVAILABLE, 'Google Calendar integration is not configured.')
 
     code_verifier = _generate_code_verifier()
     params = {
@@ -498,9 +548,7 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
             },
         )
         if token_response.status_code != 200:
-            error_data = token_response.json()
-            message = error_data.get('error_description', error_data.get('error', 'Unknown error'))
-            raise HttpError(400, f'Token exchange failed: {message}')
+            raise_api_error(HTTPStatus.BAD_REQUEST,  "Authentication failed. Please try again.")
 
         tokens = token_response.json()
         user = request.user
@@ -510,12 +558,20 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
         }
         user.google_calendar_connected = True
         user.save(update_fields=['google_calendar_token', 'google_calendar_connected'])
-        _sync_all_calendar_items(user)
+        
+        try:
+            _sync_all_calendar_items(user)
+        except Exception:
+            raise_api_error(
+                HTTPStatus.BAD_REQUEST,
+                "Failed to connect Google Calendar. Please try again.",
+            )
+
         return GoogleCalendarStatusResponse(connected=True)
     except HttpError:
         raise
     except Exception as exc:
-        raise HttpError(400, f'Failed to connect: {exc}') from exc
+        raise raise_api_error(HTTPStatus.BAD_REQUEST, "Failed to connect Google Calendar. Please try again.",) from exc
 
 
 @router.post(
@@ -663,7 +719,7 @@ def request_password_reset(request, payload: PasswordResetRequest):
 def validate_password_reset_link(request, uidb64: str, token: str):
     user = _get_user_by_uid(uidb64)
     if user is None or not default_token_generator.check_token(user, token):
-        raise HttpError(400, 'Password reset link is invalid or expired.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Password reset link is invalid or expired.')
     return MessageResponse(message='Password reset link is valid.')
 
 
@@ -677,10 +733,10 @@ def validate_password_reset_link(request, uidb64: str, token: str):
 def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordResetConfirmRequest):
     user = _get_user_by_uid(uidb64)
     if user is None or not default_token_generator.check_token(user, token):
-        raise HttpError(400, 'Password reset link is invalid or expired.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Password reset link is invalid or expired.')
 
     if payload.new_password != payload.confirm_password:
-        raise HttpError(400, 'Passwords do not match.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Passwords do not match.')
     _check_password_or_400(payload.new_password, user)
 
     user.set_password(payload.new_password)
@@ -698,9 +754,9 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
 def change_password(request, payload: ChangePasswordRequest):
     user = request.user
     if not user.check_password(payload.current_password):
-        raise HttpError(400, 'Current password is incorrect.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Current password is incorrect.')
     if payload.new_password != payload.confirm_password:
-        raise HttpError(400, 'Passwords do not match.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Passwords do not match.')
     _check_password_or_400(payload.new_password, user)
 
     user.set_password(payload.new_password)

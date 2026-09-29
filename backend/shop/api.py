@@ -15,6 +15,8 @@ from notifications.services import NotificationService
 from .models import AvatarFrame, Category, Order, Product, ProductImage
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import AvatarFrameRequest, AvatarFrameResponse, CategoryRequest, CategoryResponse, OrderResponse, OrderStatusRequest, ProductRequest, ProductResponse, PurchaseDigitalResponse, PurchaseOrderResponse, PurchaseRequest
 from .services import cancel_order, create_order_purchase
 
@@ -23,7 +25,7 @@ router = Router(tags=['shop'], auth=JWTAuth())
 
 def _require_admin(request):
     if not is_platform_admin(request.auth):
-        raise HttpError(403, 'Admin access required.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Admin access required.')
 
 
 def _products(active_only=False):
@@ -39,7 +41,7 @@ def _product_filters(queryset, search: str | None, category: int | None, product
     if product_type:
         queryset = queryset.filter(product_type=product_type)
     if ordering not in {'name', '-name', 'price', '-price'}:
-        raise HttpError(400, 'Unsupported ordering. Use name, -name, price, or -price.')
+        raise_api_error(400, 'Unsupported ordering. Use name, -name, price, or -price.')
     return queryset.annotate(available_sort=Case(When(stock_quantity__gt=0, then=Value(0)), default=Value(1), output_field=IntegerField())).order_by('available_sort', ordering, 'id')
 
 
@@ -93,9 +95,9 @@ def purchase_product(request, payload: PurchaseRequest):
     try:
         order = create_order_purchase(user=request.auth, product_id=payload.product_id, quantity=payload.quantity)
     except Product.DoesNotExist:
-        raise HttpError(400, 'Active product not found.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Active product not found.')
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
     
     if order is None:
         return 201, PurchaseDigitalResponse(
@@ -118,11 +120,11 @@ def cancel_my_order(request, order_id: int):
     order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
 
     if order.user_id != request.auth.id:
-        raise HttpError(403, 'You can cancel only your own orders.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You can cancel only your own orders.')
     try:
         return cancel_order(order=order, cancelled_by=request.auth)
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
 
 
 @router.get('/admin/categories', operation_id='listAdminCategories', url_name='shop-admin-categories-list-create', response={200: list[CategoryResponse], 401: ErrorResponse, 403: ErrorResponse})
@@ -140,7 +142,7 @@ def create_admin_category(request, payload: CategoryRequest):
     try:
         category = Category.objects.create(name=payload.name)
     except IntegrityError:
-        raise HttpError(400, 'A category with this name already exists.') from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'A category with this name already exists.')
 
     return 201, CategoryResponse.model_validate(
         category,
@@ -168,7 +170,7 @@ def update_admin_category(request, category_id: int, payload: CategoryRequest):
     try:
         category.save()
     except IntegrityError:
-        raise HttpError(400, 'A category with this name already exists.') from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'A category with this name already exists.')
     
     return CategoryResponse.model_validate(
         category,
@@ -207,7 +209,7 @@ def create_admin_product(
             from_attributes=True,
         )
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
 
 
 @router.get('/admin/products/{product_id}', operation_id='getAdminProduct', url_name='shop-admin-products-detail', response={200: ProductResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -242,7 +244,7 @@ def update_admin_product(
             from_attributes=True,
         )
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
 
 
 @router.delete('/admin/products/{product_id}', operation_id='deleteAdminProduct', url_name='shop-admin-products-detail', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -292,7 +294,7 @@ def cancel_admin_order(request, order_id: int):
     try:
         cancelled = cancel_order(order=order, cancelled_by=request.auth)
     except ValidationError as exc:
-        raise HttpError(400, exc.message_dict) from None
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
     NotificationService.notify(recipients=[cancelled.user], event_type='shop_order_status_changed', context={'order_id': cancelled.id, 'product_name': cancelled.product.name, 'order_status': cancelled.status})
     
     return OrderResponse.model_validate(

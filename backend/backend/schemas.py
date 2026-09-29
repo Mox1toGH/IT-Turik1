@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 
 from ninja import Schema
 
@@ -36,6 +35,5 @@ class CalendarEventType(str, Enum):
     EVENT = 'event'
 
 class ErrorResponse(Schema):
-    code: str
     message: str
-    details: dict[str, list[str]] | None  = None
+    details: dict[str, str] | None  = None

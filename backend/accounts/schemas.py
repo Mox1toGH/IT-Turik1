@@ -49,12 +49,13 @@ class RegisterRequest(Schema):
     @field_validator('email')
     @classmethod
     def _valid_email(cls, value: str) -> str:
+        value = value.strip()
+        
         try:
             validate_email(value)
         except DjangoValidationError:
             raise ValueError('Enter a valid email address.')
-        return value.strip()
-
+        return value
 
 class RegisterResponse(Schema):
     username: str

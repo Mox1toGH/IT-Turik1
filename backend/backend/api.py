@@ -1,7 +1,7 @@
 from ninja import NinjaAPI
-from ninja.errors import HttpError
+from ninja.errors import HttpError, ValidationError as NinjaValidationError
 
-from backend.ninja_exceptions import error_code_for_status
+from .schemas import ErrorResponse
 from certificates.api import router as certificates_router
 from evaluation.api import router as evaluation_router
 from accounts.api import router as accounts_router
@@ -19,15 +19,32 @@ api = NinjaAPI(title='Backend API (Ninja)', urls_namespace='ninja-api')
 
 @api.exception_handler(HttpError)
 def http_error_handler(request, exc):
-    details = getattr(exc, 'details', None)
     return api.create_response(
         request,
-        {
-            'code': error_code_for_status(exc.status_code),
-            'message': str(exc),
-            'details': details,
-        },
+        exc.message,
         status=exc.status_code,
+    )
+
+@api.exception_handler(NinjaValidationError)
+def validation_error_handler(request, exc):
+    details = {}
+
+    for error in exc.errors:
+        loc = error.get("loc", [])
+        message = error.get("msg", "Invalid value.")
+
+        if loc:
+            field = loc[-1]
+            details[field] = message
+
+    return api.create_response(
+        request,
+        ErrorResponse(
+            code="validation_error",
+            message="Validation failed.",
+            details=details or None,
+        ).model_dump(),
+        status=400,
     )
 
 api.add_router('/certificates', certificates_router)

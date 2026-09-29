@@ -14,6 +14,8 @@ from teams.models import Team
 from tournaments.models import Submission, Tournament, TournamentTeamRegistration
 
 from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
 from .schemas import AdminStatsResponse, PlayerStatsResponse, TeamStatsResponse, TournamentStatsResponse
 
 router = Router(tags=['stats'], auth=JWTAuth())
@@ -63,7 +65,7 @@ def get_team_stats(request, team_id: int):
     team = get_object_or_404(Team.objects.prefetch_related('members'), pk=team_id)
     
     if request.auth.id != team.captain_id and not team.members.filter(id=request.auth.id).exists() and not is_platform_admin(request.auth):
-        raise HttpError(403, 'Only team members or admins can view team stats.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Only team members or admins can view team stats.')
     
     total, wins, losses = _team_results(team)
     members = list(team.members.all())
@@ -98,7 +100,7 @@ def get_tournament_stats(request, tournament_id: int):
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     
     if not (is_platform_admin(request.auth) or tournament.created_by_id == request.auth.id):
-        raise HttpError(403, 'Only organizer or admin can view tournament stats.')
+        raise_api_error(403, 'Only organizer or admin can view tournament stats.')
     
     registrations = TournamentTeamRegistration.objects.filter(tournament=tournament, is_active=True)
     team_ids = list(registrations.values_list('team_id', flat=True))
@@ -136,7 +138,7 @@ def get_tournament_stats(request, tournament_id: int):
 @router.get('/admin', operation_id='getAdminStats', url_name='stats-admin', response={200: AdminStatsResponse, 401: ErrorResponse, 403: ErrorResponse})
 def get_admin_stats(request):
     if not is_platform_admin(request.auth):
-        raise HttpError(403, 'Admin access required.')
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Admin access required.')
     
     now = timezone.now()
     
