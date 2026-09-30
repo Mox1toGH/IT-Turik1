@@ -46,23 +46,26 @@ class PointsApiTests(APITestCase):
     def test_my_balance_returns_zero_if_missing(self):
         authenticate(self.client, self.user)
         response = self.client.get(self.my_balance_url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance'], 0)
+        self.assertEqual(data['balance'], 0)
 
     def test_my_transactions_returns_only_current_user_transactions(self):
         authenticate(self.client, self.user)
         PointsTransaction.objects.create(user=self.user, amount=15, reason='My tx')
         PointsTransaction.objects.create(user=self.other_user, amount=99, reason='Other tx')
         response = self.client.get(self.my_transactions_url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(data['count'], 1)
 
     def test_my_transactions_support_ordering_by_amount(self):
         authenticate(self.client, self.user)
         self._seed_transactions_for_user()
         response = self.client.get(self.my_transactions_url, {'ordering': 'amount'})
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        amounts = [item['amount'] for item in response.data['results']]
+        amounts = [item['amount'] for item in data['items']]
         self.assertEqual(amounts, sorted(amounts))
 
     def test_my_transactions_reject_invalid_ordering(self):
@@ -75,15 +78,17 @@ class PointsApiTests(APITestCase):
         for index in range(3):
             PointsTransaction.objects.create(user=self.user, amount=index + 1, reason=f'Tx {index + 1}')
         response = self.client.get(self.my_transactions_url, {'page_size': 2})
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(len(data['items']), 2)
 
     def test_admin_can_view_any_user_balance(self):
         UserPointsBalance.objects.create(user=self.user, balance=77)
         authenticate(self.client, self.admin)
         response = self.client.get(self.admin_balance_url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance'], 77)
+        self.assertEqual(data['balance'], 77)
 
     def test_non_admin_cannot_view_admin_balance_endpoint(self):
         authenticate(self.client, self.user)
@@ -94,35 +99,40 @@ class PointsApiTests(APITestCase):
         authenticate(self.client, self.admin)
         self._seed_transactions_for_user()
         response = self.client.get(self.admin_transactions_url, {'ordering': '-amount'})
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 3)
+        self.assertEqual(data['count'], 3)
 
     def test_admin_modify_add_updates_balance(self):
         authenticate(self.client, self.admin)
         response = self.client.post(self.admin_modify_url, {'operation': 'add', 'amount': 25, 'reason': 'Bonus'}, format='json')
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance']['balance'], 25)
+        self.assertEqual(data['balance']['balance'], 25)
 
     def test_admin_modify_subtract_updates_balance(self):
         authenticate(self.client, self.admin)
         UserPointsBalance.objects.create(user=self.user, balance=40)
         response = self.client.post(self.admin_modify_url, {'operation': 'subtract', 'amount': 12, 'reason': 'Penalty'}, format='json')
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance']['balance'], 28)
+        self.assertEqual(data['balance']['balance'], 28)
 
     def test_admin_modify_set_updates_balance(self):
         authenticate(self.client, self.admin)
         UserPointsBalance.objects.create(user=self.user, balance=10)
         response = self.client.post(self.admin_modify_url, {'operation': 'set', 'amount': 50, 'reason': 'Set'}, format='json')
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance']['balance'], 50)
+        self.assertEqual(data['balance']['balance'], 50)
 
     def test_admin_modify_reset_updates_balance(self):
         authenticate(self.client, self.admin)
         UserPointsBalance.objects.create(user=self.user, balance=19)
         response = self.client.post(self.admin_modify_url, {'operation': 'reset', 'reason': 'Reset'}, format='json')
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['balance']['balance'], 0)
+        self.assertEqual(data['balance']['balance'], 0)
 
     def test_non_admin_cannot_modify_balance(self):
         authenticate(self.client, self.user)
