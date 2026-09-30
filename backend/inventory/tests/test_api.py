@@ -171,39 +171,3 @@ class InventoryApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(data["message"], "Only digital items can be unequipped.")
-
-    # TODO: maybe move this test to shop feature? cuz it definatly test his implementation
-    def test_purchase_digital_product_rejects_duplicate_ownership(self):
-        UserInventory.objects.create(user=self.user, product=self.digital_product)
-        UserPointsBalance.objects.create(user=self.user, balance=500)
-        authenticate(self.client, self.user)
-
-        response = self.client.post(
-            self.purchase_url,
-            {'product_id': self.digital_product.id, 'quantity': 1},
-            format='json',
-        )
-
-        data = response.json()
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            data["message"],
-            "product_id: You already own this digital item.",
-        )
-        self.assertEqual(
-            data["details"],
-            {"product_id": "You already own this digital item."},
-        )
-
-        self.assertEqual(
-            UserInventory.objects.filter(
-                user=self.user,
-                product=self.digital_product,
-            ).count(),
-            1,
-        )
-        self.assertEqual(
-            UserPointsBalance.objects.get(user=self.user).balance,
-            500,
-        )
