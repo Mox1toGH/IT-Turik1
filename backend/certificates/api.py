@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 
-from ninja import Router, File
+from ninja import Form, Router, File
 from ninja.files import UploadedFile
 from ninja.errors import HttpError
 from ninja.pagination import paginate, PageNumberPagination
@@ -13,7 +13,7 @@ from .models import Certificate, CertificateTemplate
 from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
 from http import HTTPStatus
-from .schemas import CertificateResponse, CertificateRequest, CertificateTemplateResponse, CertificateVerifyResponse
+from .schemas import CertificateTemplateRequest, CertificateResponse, CertificateRequest, CertificateTemplateResponse
 from .services import generate_certificate_pdf
 
 router = Router(tags=['certificates'])
@@ -50,10 +50,10 @@ def get_template(request, template_id: int):
 
 
 @router.post('/certificate-templates', operation_id='createCertificateTemplate', url_name="template-list", response={201: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
-def create_template(request, name: str, is_default: bool = False, image: UploadedFile = File(...)):
+def create_template(request, data: Form[CertificateTemplateRequest], image: UploadedFile = File(...)):
     _require_staff(request)
 
-    if not name.strip():
+    if not data.name.strip():
          raise_api_error(
             HTTPStatus.BAD_REQUEST,
             "Validation failed.",
@@ -62,7 +62,7 @@ def create_template(request, name: str, is_default: bool = False, image: Uploade
             },
         )
 
-    template = CertificateTemplate.objects.create(name=name, is_default=is_default, image=image)
+    template = CertificateTemplate.objects.create(name=data.name, is_default=data.is_default, image=image)
     return 201, CertificateTemplateResponse.model_validate(
         template,
         from_attributes=True,
@@ -227,18 +227,15 @@ def view_certificate_pdf(request, unique_code: str):
     return response
 
 
-@router.get('/verify/{code}', operation_id='verifyCertificate', url_name="certificate-verify", response={200: CertificateVerifyResponse}, auth=None)
+@router.get('/verify/{code}', operation_id='verifyCertificate', url_name="certificate-verify", response={200: CertificateResponse, 404: ErrorResponse}, auth=None)
 def verify_certificate(request, code: str):
     certificate = Certificate.objects.filter(Q(unique_code=code) | Q(certificate_number=code)).first()
 
     if certificate is None:
-        return {'is_valid': False, 'message': 'Certificate not found.'}
+        raise_api_error(
+            HTTPStatus.NOT_FOUND,
+            'Certificate not found.'
+        )
 
-    return CertificateVerifyResponse(
-        is_valid=True,
-        data=CertificateResponse.model_validate(
-            certificate,
-            from_attributes=True,
-            context={'request': request},
-        ),
-    )
+    return certificate
+    

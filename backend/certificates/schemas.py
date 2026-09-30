@@ -1,8 +1,13 @@
 from datetime import datetime
+from uuid import UUID
 from typing import Optional
 
 from backend.media import absolute_media_url
 from ninja import Schema
+
+class CertificateTemplateRequest(Schema):
+    name: str
+    is_default: bool = False
 
 class CertificateTemplateResponse(Schema):
     id: int
@@ -28,7 +33,7 @@ class CertificateTemplateRequest(Schema):
 
 class CertificateResponse(Schema):
     id: int
-    unique_code: str
+    unique_code: UUID
     user: int | None
     full_name: str
     team: int | None
@@ -76,9 +81,3 @@ class CertificateRequest(Schema):
     placement: str
     certificate_number: str = ''
     template: int | None = None
-
-
-class CertificateVerifyResponse(Schema):
-    is_valid: bool
-    data: CertificateResponse | None = None
-    message: str | None = None

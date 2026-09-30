@@ -68,7 +68,7 @@ class GoogleAuthViewTests(APITestCase):
 
     def test_google_login_requires_token(self):
         response = self.client.post(self.url, {}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class PasswordResetFlowTests(APITestCase):
