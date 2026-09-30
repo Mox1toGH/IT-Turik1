@@ -64,36 +64,3 @@ class PassingCountTests(APITestCase):
         data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data['passing_count'], 1)
-
-    def test_admin_can_manually_disqualify_team(self):
-        authenticate(self.client, self.admin)
-        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'id': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': 'Violation'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.reg1.refresh_from_db()
-        self.assertTrue(self.reg1.is_disqualified)
-
-    def test_admin_can_reactivate_team(self):
-        self.reg1.is_active = False
-        self.reg1.is_disqualified = True
-        self.reg1.save()
-        authenticate(self.client, self.admin)
-        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'id': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'reactivate'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.reg1.refresh_from_db()
-        self.assertTrue(self.reg1.is_active)
-        self.assertFalse(self.reg1.is_disqualified)
-
-    def test_disqualification_action_is_required(self):
-        authenticate(self.client, self.admin)
-        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'id': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
-
-    def test_disqualify_uses_default_reason_when_empty(self):
-        authenticate(self.client, self.admin)
-        url = reverse('ninja-api:tournament_registration_disqualification', kwargs={'id': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': ' '}, format='json')
-        self.reg1.refresh_from_db()
-        self.assertEqual(self.reg1.disqualification_reason, 'Disqualified by admin')

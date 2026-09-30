@@ -22,17 +22,17 @@ from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRe
 from backend.errors import raise_api_error
 from http import HTTPStatus
 from .schemas import (
-    ActiveTournamentResponse, ArchiveStandingResponse, CriterionResponse, CurrentTaskResponse, EligibleTeamResponse,
-    CalendarEventResponse, CalendarExportErrorResponse, CalendarRoundResponse, DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
+    ActiveTournamentResponse, CurrentTaskResponse, EligibleTeamResponse,
+    CalendarEventResponse, CalendarRoundResponse, DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
     ExportToGoogleCalendarResponse, MyCalendarResponse,
     EventCreateRequest, EventListResponse, EventResponse, EventUpdateRequest, IconResponse, OwnSubmissionResponse,
-    RoundCreateRequest, RoundResponse, RoundShortResponse, RoundUpdateRequest,
-    SubmissionAssignmentResponse, SubmissionCreateRequest, SubmissionEvaluationResponse,
-    SubmissionListResponse, SubmissionResponse, SubmissionUpdateRequest, TeamMemberResponse, TeamRegistrationRequest,
-    TeamRegistrationResponse, TeamSummaryResponse, TournamentArchiveDetailResponse,
+    RoundCreateRequest, RoundResponse, RoundUpdateRequest,
+    SubmissionCreateRequest,
+    SubmissionListResponse, SubmissionResponse, SubmissionUpdateRequest, TeamRegistrationRequest,
+    TeamRegistrationResponse, TournamentArchiveDetailResponse,
     TournamentArchiveListResponse, TournamentCreateRequest, TournamentListResponse,
     TournamentCertificateDeliveryStatusResponse, TournamentResponse, TournamentTeamResponse, TournamentUpdateRequest,
-    RoundShortResponse, SendTournamentCertificatesRequest, SendTournamentCertificatesResponse,
+    SendTournamentCertificatesRequest, SendTournamentCertificatesResponse,
 )
 from .services import (
     close_submissions_on_round, delete_round, leave_team_from_tournament,
@@ -56,15 +56,6 @@ def _submissions():
     return Submission.objects.select_related('team', 'round', 'round__tournament').prefetch_related(
         'jury_assignments__jury', 'jury_assignments__evaluation'
     )
-
-
-def _submission_responses(queryset):
-    # Ninja wraps schemas inside list responses a second time, which bypasses
-    # their resolvers. A root model keeps the pre-resolved child schemas intact.
-    return SubmissionListResponse.model_construct(root=[
-        SubmissionResponse.from_orm(submission)
-        for submission in queryset
-    ])
 
 
 def _criteria_data(criteria):
@@ -293,14 +284,24 @@ def list_my_team_submissions(request, id: int):
     )
     if registration is None:
         raise_api_error(404, 'No team participation found for this tournament.')
-    return _submission_responses(
-        _submissions().filter(round__tournament=tournament, team_id=registration.team_id)
+
+    queryset = _submissions().filter(round__tournament=tournament, team_id=registration.team_id)
+
+    return SubmissionListResponse.model_construct(
+        root=[
+            SubmissionResponse.model_validate(
+                submission,
+                from_attributes=True,
+            )
+            for submission in queryset
+        ]
     )
 
 
 @router.get('/rounds/{id}/submissions', operation_id='listRoundSubmissions', url_name='round_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def list_round_submissions(request, id: int):
-    _require(request, Permission.SET_RESULTS)
+    # TODO: ADD NEW SUBMISSIONS PERMISSION
+    # _require(request, Permission.SET_RESULTS)
     round_obj = get_object_or_404(Round, pk=id)
     queryset = (
         _submissions()
@@ -310,7 +311,15 @@ def list_round_submissions(request, id: int):
             team__tournament_registrations__is_disqualified=True,
         )
     )
-    return _submission_responses(queryset)
+    return SubmissionListResponse.model_construct(
+        root=[
+            SubmissionResponse.model_validate(
+                submission,
+                from_attributes=True,
+            )
+            for submission in queryset
+        ]
+    )
 
 
 @router.get('/my-calendar', operation_id='getMyCalendar', url_name="my_calendar", response={200: MyCalendarResponse, 401: ErrorResponse})
@@ -486,7 +495,15 @@ def list_tournament_archive_submissions(request, id: int):
     get_object_or_404(Tournament, pk=id, status=Tournament.STATUS_FINISHED)
     queryset = _submissions().filter(round__tournament_id=id)
 
-    return _submission_responses(queryset)
+    return SubmissionListResponse.model_construct(
+        root=[
+            SubmissionResponse.model_validate(
+                submission,
+                from_attributes=True,
+            )
+            for submission in queryset
+        ]
+    )
 
 
 @router.get('/{int:id}', auth=None, operation_id='getTournament', url_name='tournament_detail', response={200: TournamentResponse, 404: ErrorResponse})
@@ -543,21 +560,6 @@ def _save_tournament(request, pk, payload):
     tournament.save()
 
     return tournament
-
-
-@router.put('/manage/{id}', operation_id='replaceTournament', url_name='tournament_manage_update', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-def replace_tournament(request, id: int, payload: TournamentCreateRequest):
-    tournament = _save_tournament(request, id, payload),
-
-    registered_team = _get_registered_team(tournament, request)
-    
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
 
 
 @router.patch('/manage/{id}', operation_id='updateTournament', url_name='tournament_manage_update', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -708,11 +710,6 @@ def _save_round(request, pk, payload):
     return round_obj
 
 
-@router.put('/rounds/{id}', operation_id='replaceRound', url_name='round_detail', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-def replace_round(request, id: int, payload: RoundCreateRequest):
-    return _save_round(request, id, payload)
-
-
 @router.patch('/rounds/{id}', operation_id='updateRound', url_name='round_detail', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_round(request, id: int, payload: RoundUpdateRequest):
     return _save_round(request, id, payload)
@@ -802,18 +799,24 @@ def get_submission(request, id: int):
 
 
 def _save_submission(request, pk, payload):
-    submission = get_object_or_404(_submissions().filter(team__captain_id=request.auth.id), pk=pk)
+    submission = get_object_or_404(_submissions(), pk=pk)
+
+    if submission.team.captain_id != request.auth.id:
+        raise HttpError(
+            400,
+            {
+                "code": "validation_error",
+                "message": "Only team captain can update submission",
+                "details": {
+                    "team": "Only team captain can update submission"
+                },
+            },
+        )
     
     _update_model(submission, payload.model_dump(exclude_unset=True))
     submission.save()
     
     return _submissions().get(pk=submission.pk)
-
-
-@router.put('/submissions/{id}', operation_id='replaceSubmission', url_name='submission_detail', response={200: SubmissionResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
-def replace_submission(request, id: int, payload: SubmissionCreateRequest):
-    return _save_submission(request, id, SubmissionUpdateRequest(**payload.model_dump(exclude={'round'})))
-
 
 @router.patch('/submissions/{id}', operation_id='updateSubmission', url_name='submission_detail', response={200: SubmissionResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
 def update_submission(request, id: int, payload: SubmissionUpdateRequest):
@@ -823,7 +826,15 @@ def update_submission(request, id: int, payload: SubmissionUpdateRequest):
 @router.get('/{id}/submissions', operation_id='listTournamentSubmissions', url_name='tournament_submissions', response={200: SubmissionListResponse, 401: ErrorResponse})
 def list_tournament_submissions(request, id: int):
     queryset = _submissions().filter(round__tournament_id=id)
-    return _submission_responses(queryset)
+    return SubmissionListResponse.model_construct(
+        root=[
+            SubmissionResponse.model_validate(
+                submission,
+                from_attributes=True,
+            )
+            for submission in queryset
+        ]
+    )
 
 
 @router.get('/current-task', operation_id='getCurrentTask', url_name='current_task', response={200: CurrentTaskResponse, 401: ErrorResponse, 404: ErrorResponse})
