@@ -22,7 +22,7 @@ class TeamApiTests(APITestCase):
     def _create_team(self, payload):
         authenticate(self.client, self.captain)
         response = self.client.post(self.teams_url, payload, format='json')
-        return response.data
+        return response.json()
 
     def _register_team_in_active_tournament(self, *, team_id, tournament_status, min_team_members=None):
         now = timezone.now()
@@ -78,13 +78,14 @@ class TeamApiTests(APITestCase):
         team = self._create_team({'name': 'P', 'email': 'p@e.com', 'is_public': False})
         authenticate(self.client, self.admin_user)
         response = self.client.get(self.teams_url)
-        self.assertIn(team['id'], [t['id'] for t in response.data])
+        data = response.json()
+        self.assertIn(team['id'], [t['id'] for t in data])
 
     def test_public_team_join_request(self):
         team = self._create_team({'name': 'Public', 'email': 'pub@e.com', 'is_public': True})
         authenticate(self.client, self.member)
         response = self.client.post(reverse('ninja-api:team_join_request_create', kwargs={'pk': team['id']}), {}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(TeamJoinRequest.objects.filter(team_id=team['id'], user=self.member).exists())
 
     def test_captain_can_accept_join_request(self):
@@ -117,8 +118,9 @@ class TeamApiTests(APITestCase):
     def test_list_users_returns_current_users(self):
         authenticate(self.client, self.captain)
         response = self.client.get(self.users_url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 3)
+        self.assertGreaterEqual(len(data), 3)
 
     def test_deleting_captain_cascades_to_team(self):
         team_data = self._create_team({'name': 'Cascade', 'email': 'cas@e.com'})

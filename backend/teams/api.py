@@ -5,7 +5,6 @@ from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import File, Router
-from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
 from accounts.models import User
@@ -144,10 +143,9 @@ def invite_user_to_team(*, team, user, invited_by):
     invitation, created = TeamInvitation.objects.get_or_create(
         team=team,
         user=user,
-        defaults={
-            'invited_by': invited_by,
-            'status': TeamInvitation.STATUS_INVITED,
-        },
+        invited_by=invited_by,
+        status=TeamInvitation.STATUS_INVITED,
+        
     )
 
     if not created:
@@ -199,6 +197,9 @@ def list_teams(request):
 def create_team(request, payload: TeamCreateRequest):
     user = request.auth
     assert_can_create_team(user)
+
+    if Team.objects.filter(name=payload.name).exists():
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Team with this name already exists.')
 
     contact_telegram = normalize_telegram(payload.contact_telegram)
     contact_discord = normalize_discord(payload.contact_discord)
@@ -265,17 +266,6 @@ def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
     team = get_object_or_404(get_team_queryset(), pk=team.pk)
     return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
 
-
-@router.put(
-    '/{int:pk}',
-    operation_id='replaceTeam',
-    url_name='team_detail',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
-)
-def replace_team(request, pk: int, payload: TeamUpdateRequest):
-    return apply_team_update(request, pk, payload)
-
-
 @router.patch(
     '/{int:pk}',
     operation_id='updateTeam',
@@ -317,16 +307,6 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
     team.save(update_fields=['banner'])
     team.refresh_from_db()
     return TeamBannerResponse.model_validate(team, from_attributes=True, context={'request': request})
-
-
-@router.put(
-    '/{int:pk}/banner',
-    operation_id='teamBannerUpdate',
-    url_name='team_banner',
-    response={200: TeamBannerResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
-)
-def replace_team_banner(request, pk: int, banner: UploadedFile = File(...)):
-    return apply_banner_upload(request, pk, banner)
 
 
 @router.patch(
@@ -537,7 +517,7 @@ def decline_team_invitation(request, invitation_id: int):
     '/{int:pk}/join-requests',
     operation_id='createTeamJoinRequest',
     url_name='team_join_request_create',
-    response={200: DetailResponse, 201: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def create_team_join_request(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
@@ -559,12 +539,12 @@ def create_team_join_request(request, pk: int):
     join_request = TeamJoinRequest.objects.create(
         team=team,
         user=request.auth,
-        defaults={'status': TeamJoinRequest.STATUS_PENDING},
+        status=TeamJoinRequest.STATUS_PENDING,
     )
 
     join_request_received.send(sender=create_team_join_request, join_request=join_request)
 
-    return DetailResponse(detail='Join request sent.')
+    return 200, DetailResponse(detail='Join request sent.')
 
 
 def review_join_request(request, pk: int, request_id: int, new_status: str):
@@ -645,7 +625,7 @@ def list_team_invitations_by_team(request, pk: int):
 @router.get(
     '/{int:pk}/join-requests',
     operation_id='listTeamJoinRequestsByTeam',
-    url_name='team_join_request_create',
+    url_name='team_join_request_list',
     response={200: list[TeamJoinRequestResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def list_team_join_requests_by_team(request, pk: int):

@@ -83,7 +83,7 @@ class TeamResponse(Schema):
     organization: str = ''
     contact_telegram: str = ''
     contact_discord: str = ''
-    banner: str = ''
+    banner: str | None = None
     members: list[TeamMemberResponse]
     is_member: bool
     can_request_to_join: bool
