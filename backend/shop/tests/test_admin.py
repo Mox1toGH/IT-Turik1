@@ -43,9 +43,10 @@ class ShopAdminTests(APITestCase):
         authenticate(self.client, self.admin)
 
         categories_url = reverse('ninja-api:shop-admin-categories-list-create')
-        create_category = self.client.post(categories_url, {'name': 'Accessories'}, format='json')
-        self.assertEqual(create_category.status_code, status.HTTP_201_CREATED)
-        new_category_id = create_category.data['id']
+        response = self.client.post(categories_url, {'name': 'Accessories'}, format='json')
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_category_id = data['id']
 
         products_url = reverse('ninja-api:shop-admin-products-list-create')
         create_product = self.client.post(
@@ -91,8 +92,9 @@ class ShopAdminTests(APITestCase):
     def test_admin_can_list_orders_filter_change_status_and_cancel(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
         authenticate(self.client, self.user)
-        purchase = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
-        order_id = purchase.data['id']
+        response = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
+        data = response.json()
+        order_id = data['id']
 
         authenticate(self.client, self.admin)
         update_status_url = reverse('ninja-api:shop-admin-orders-status', kwargs={'order_id': order_id})
@@ -111,8 +113,9 @@ class ShopAdminTests(APITestCase):
     def test_team_user_cannot_update_order_status(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
         authenticate(self.client, self.user)
-        purchase = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
-        order_id = purchase.data['id']
+        response = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
+        data = response.json()
+        order_id = data['id']
 
         update_status_url = reverse('ninja-api:shop-admin-orders-status', kwargs={'order_id': order_id})
         response = self.client.patch(update_status_url, {'status': Order.STATUS_CONFIRMED}, format='json')

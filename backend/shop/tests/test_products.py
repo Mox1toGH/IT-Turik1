@@ -29,7 +29,7 @@ class ProductTests(APITestCase):
             is_active=True,
         )
         self.products_url = reverse('ninja-api:shop-products-list')
-        self.product_detail_url = reverse('ninja-api:shop-products-detail', kwargs={'pk': self.product.id})
+        self.product_detail_url = reverse('ninja-api:shop-products-detail', kwargs={'product_id': self.product.id})
 
     def test_product_list_requires_authentication(self):
         response = self.client.get(self.products_url)
@@ -67,19 +67,23 @@ class ProductTests(APITestCase):
             },
         )
 
+        data = response.json()
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 2)
-        results = response.data['results']
+        self.assertEqual(data['count'], 2)
+        results = data['items']
         self.assertEqual(results[0]['name'], 'Mouse')
         self.assertEqual(results[1]['name'], 'Keyboard')
 
         out_of_stock_response = self.client.get(self.products_url, {'ordering': 'name'})
+        out_of_stock_response_data = out_of_stock_response.json()
         self.assertEqual(out_of_stock_response.status_code, status.HTTP_200_OK)
-        out_of_stock_item = [item for item in out_of_stock_response.data['results'] if item['name'] == 'Airdrop Code'][0]
+        out_of_stock_item = [item for item in out_of_stock_response_data['items'] if item['name'] == 'Airdrop Code'][0]
         self.assertFalse(out_of_stock_item['is_available'])
 
     def test_product_detail_for_authenticated_user(self):
         authenticate(self.client, self.user)
         response = self.client.get(self.product_detail_url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['id'], self.product.id)
+        self.assertEqual(data['id'], self.product.id)

@@ -82,7 +82,7 @@ def list_products(request, search: str | None = None, category: int | None = Non
 
 @router.get('/products/{product_id}', operation_id='getProduct', url_name='shop-products-detail', response={200: ProductResponse, 401: ErrorResponse, 404: ErrorResponse})
 def get_product(request, product_id: int):
-    product = get_object_or_404(_products(active_only=True), pk=product_id),
+    product = get_object_or_404(_products(active_only=True), pk=product_id)
     
     return ProductResponse.model_validate(
         product,
@@ -104,10 +104,7 @@ def purchase_product(request, payload: PurchaseRequest):
             message='Digital product purchased successfully and added to your inventory.'
         )
 
-    return 201, PurchaseOrderResponse.model_validate(
-        order,
-        from_attributes=True,
-    )
+    return 201, order
 
 @router.get('/orders/my', operation_id='listMyOrders', url_name='shop-my-orders', response={200: list[OrderResponse], 401: ErrorResponse})
 @paginate(PageNumberPagination, page_size=20)
@@ -160,7 +157,6 @@ def get_admin_category(request, category_id: int):
     )
 
 
-@router.put('/admin/categories/{category_id}', operation_id='replaceAdminCategory', url_name='shop-admin-categories-detail', response={200: CategoryResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @router.patch('/admin/categories/{category_id}', operation_id='updateAdminCategory', response={200: CategoryResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_admin_category(request, category_id: int, payload: CategoryRequest):
     _require_admin(request)
@@ -222,7 +218,6 @@ def get_admin_product(request, product_id: int):
     )
 
 
-@router.put('/admin/products/{product_id}', operation_id='replaceAdminProduct', url_name='shop-admin-products-detail', response={200: ProductResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @router.patch('/admin/products/{product_id}', operation_id='updateAdminProduct', url_name='shop-admin-products-detail', response={200: ProductResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_admin_product(
     request,
@@ -340,7 +335,6 @@ def get_admin_avatar_frame(request, frame_id: int):
     )
 
 
-@router.put('/admin/avatar-frames/{frame_id}', operation_id='replaceAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @router.patch('/admin/avatar-frames/{frame_id}', operation_id='updateAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_admin_avatar_frame(request, frame_id: int, payload: AvatarFrameRequest):
     _require_admin(request)
