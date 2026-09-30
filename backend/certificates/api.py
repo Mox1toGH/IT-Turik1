@@ -7,7 +7,7 @@ from ninja.files import UploadedFile
 from ninja.errors import HttpError
 from ninja.pagination import paginate, PageNumberPagination
 
-from backend.auth import JWTAuth, OptionalJWTAuth
+from backend.auth import JWTAuth
 from .models import Certificate, CertificateTemplate
 
 from backend.schemas import ErrorResponse
@@ -210,7 +210,7 @@ def delete_certificate(request, unique_code: str):
     operation_id='viewCertificatePdf',
     url_name="certificate-view",
     response={200: None, 404: ErrorResponse, 500: ErrorResponse},
-    auth=OptionalJWTAuth(),
+    auth=None,
 )
 def view_certificate_pdf(request, unique_code: str):
     certificate = get_object_or_404(Certificate, unique_code=unique_code)

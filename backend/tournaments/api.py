@@ -446,7 +446,7 @@ def export_to_google_calendar(request, payload: ExportToGoogleCalendarRequest):
     return ExportToGoogleCalendarResponse(created=created, errors=errors)
 
 
-@router.get('', auth=None, operation_id='listTournaments', url_name='tournaments', response={200: TournamentListResponse, 400: ErrorResponse})
+@router.get('', operation_id='listTournaments', url_name='tournaments', response={200: TournamentListResponse, 400: ErrorResponse})
 def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: str | None = None, status: str | None = None):
     sync_time_based_statuses()
     
@@ -462,13 +462,13 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     total = queryset.count()
     size = min(page_size, 100)
     page_items = queryset[(page - 1) * size:page * size]
-    
-    # TournamentResponse.from_orm runs Ninja's field resolvers. Constructing the
-    # enclosing schema normally re-wraps each child in DjangoGetter and loses them.
+
+
     return TournamentListResponse.model_construct(
         data=[
-            TournamentResponse.from_orm(
+            TournamentResponse.model_validate(
                 _attach_registered_team(tournament, request),
+                from_attributes=True,
             )
             for tournament in page_items
         ],
@@ -506,7 +506,7 @@ def list_tournament_archive_submissions(request, id: int):
     )
 
 
-@router.get('/{int:id}', auth=None, operation_id='getTournament', url_name='tournament_detail', response={200: TournamentResponse, 404: ErrorResponse})
+@router.get('/{int:id}', operation_id='getTournament', url_name='tournament_detail', response={200: TournamentResponse, 404: ErrorResponse})
 def get_tournament(request, id: int):
     tournament = get_object_or_404(_visible_tournaments(request), pk=id)
 
@@ -564,7 +564,7 @@ def _save_tournament(request, pk, payload):
 
 @router.patch('/manage/{id}', operation_id='updateTournament', url_name='tournament_manage_update', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_tournament(request, id: int, payload: TournamentUpdateRequest):
-    tournament =_save_tournament(request, id, payload),
+    tournament =_save_tournament(request, id, payload)
     
     registered_team = _get_registered_team(tournament, request)
     
@@ -823,15 +823,25 @@ def update_submission(request, id: int, payload: SubmissionUpdateRequest):
     return _save_submission(request, id, payload)
 
 
-@router.get('/{id}/submissions', operation_id='listTournamentSubmissions', url_name='tournament_submissions', response={200: SubmissionListResponse, 401: ErrorResponse})
+@router.get('/{id}/submissions', operation_id='listTournamentSubmissions', url_name='tournament_submissions',
+            response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})
 def list_tournament_submissions(request, id: int):
-    queryset = _submissions().filter(round__tournament_id=id)
+    tournament = get_object_or_404(Tournament, pk=id)
+
+    disqualified_teams = TournamentTeamRegistration.objects.filter(
+        tournament=tournament,
+        is_disqualified=True,
+    ).values('team_id')
+
+    queryset = (
+        _submissions()
+        .filter(round__tournament=tournament)
+        .exclude(team_id__in=disqualified_teams)
+    )
+
     return SubmissionListResponse.model_construct(
         root=[
-            SubmissionResponse.model_validate(
-                submission,
-                from_attributes=True,
-            )
+            SubmissionResponse.model_validate(submission, from_attributes=True)
             for submission in queryset
         ]
     )
