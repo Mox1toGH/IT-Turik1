@@ -17,7 +17,7 @@
 
     <template #error>
       <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament info (code: {{ tournamentInfoError?.code }})</p>
+        <p>Error while fetching tournament info</p>
       </div>
     </template>
 
@@ -176,12 +176,7 @@ interface Props {
 const props = defineProps<Props>()
 const isDesciptionOpen = ref(false)
 
-const {
-  data: tournament,
-  isLoading,
-  error: tournamentInfoError,
-  isError,
-} = useGetTournament(props.tournamentId)
+const { data: tournament, isLoading, isError } = useGetTournament(props.tournamentId)
 const { data: profile } = useGetUserProfile()
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },

@@ -2,7 +2,7 @@
   <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 200px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ teamsError?.code }})</p>
+        <p>Error while fetching invitations</p>
       </div>
     </template>
 
@@ -126,7 +126,7 @@ const OTHER_TEAMS_PER_PAGE = 8
 type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useListTeams()
+const { data: teams, isLoading: isLoadingTeams, isLoadingError } = useListTeams()
 
 const { showNotification } = useNotification()
 

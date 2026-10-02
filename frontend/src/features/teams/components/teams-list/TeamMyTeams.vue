@@ -2,7 +2,7 @@
   <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching my teams (code: {{ teamsError?.code }})</p>
+        <p>Error while fetching my teams</p>
       </div>
     </template>
 
@@ -114,7 +114,7 @@ const TEAMS_PER_PAGE = 8
 type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useListTeams()
+const { data: teams, isLoading: isLoadingTeams, isLoadingError } = useListTeams()
 
 const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {

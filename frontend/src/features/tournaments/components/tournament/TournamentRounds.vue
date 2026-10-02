@@ -31,7 +31,7 @@
 
       <ui-card v-if="isError">
         <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching rounds (code: {{ roundsError?.code }})</p>
+          <p>Error while fetching rounds</p>
         </div>
       </ui-card>
 
@@ -146,7 +146,7 @@ const { data: user } = useGetUserProfile()
 const router = useRouter()
 const route = useRoute()
 
-const { data, isLoading, error: roundsError, isError } = useListRounds(props.tournamentId)
+const { data, isLoading, isError } = useListRounds(props.tournamentId)
 const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
 const rounds = computed(() => data.value ?? [])

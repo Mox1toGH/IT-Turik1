@@ -3,7 +3,7 @@
     <ui-card :is-error="isLoadingError">
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
+          <p>Error while fetching profile info</p>
         </div>
       </template>
 
@@ -238,7 +238,7 @@ import { useGetAdminUserPointsBalance, useModifyUserPointsBalance } from '@/api/
 const route = useRoute()
 const router = useRouter()
 const userId = computed(() => Number(route.params.id))
-const { data: user, isLoading, isLoadingError, error: profileError } = useGetUser(userId)
+const { data: user, isLoading, isLoadingError } = useGetUser(userId)
 const { data: viewer } = useGetUserProfile()
 const isAdmin = computed(() => viewer.value?.role === 'admin')
 const { showNotification } = useNotification()

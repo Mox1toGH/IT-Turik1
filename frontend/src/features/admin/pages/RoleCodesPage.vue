@@ -103,7 +103,7 @@
               v-if="isLoadingError"
               style="display: flex; height: 120px; justify-content: center; align-items: center"
             >
-              <p>Error while fetching role codes (code: {{ getRoleCodesError?.code }})</p>
+              <p>Error while fetching role codes</p>
             </div>
 
             <template v-else>

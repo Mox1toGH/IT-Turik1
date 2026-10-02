@@ -43,7 +43,7 @@
 
     <section class="tournaments-section">
       <div v-if="isError" class="error-state">
-        <p>Error while fetching tournaments (code: {{ tournamentsError?.code }})</p>
+        <p>Error while fetching tournaments</p>
       </div>
 
       <ui-card v-else variant="panel" class="tournaments-panel">
@@ -243,13 +243,7 @@ const params = computed(() => ({
   page_size: pageSize,
   status: statusFilter.value.join(','),
 })) as unknown as Ref<ListTournamentsParams>
-const {
-  data,
-  isLoading,
-  isFetching,
-  error: tournamentsError,
-  isError,
-} = useListTournaments(params, {
+const { data, isLoading, isFetching, isError } = useListTournaments(params, {
   query: { staleTime: 1000 * 60 * 5 },
 })
 

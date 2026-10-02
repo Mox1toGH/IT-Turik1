@@ -2,7 +2,7 @@
   <ui-card variant="panel" :isError="isLoadingError">
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ invitationsError?.code }})</p>
+        <p>Error while fetching invitations</p>
       </div>
     </template>
 
@@ -119,12 +119,7 @@ import {
 
 const { showNotification } = useNotification()
 
-const {
-  data: inboxInvitations,
-  isLoading: inboxLoading,
-  isLoadingError,
-  error: invitationsError,
-} = useListTeamInvitations()
+const { data: inboxInvitations, isLoading: inboxLoading, isLoadingError } = useListTeamInvitations()
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
