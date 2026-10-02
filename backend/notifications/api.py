@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
-from ninja.errors import HttpError
 from ninja.pagination import PageNumberPagination, paginate
 
 from backend.auth import JWTAuth

@@ -73,14 +73,7 @@ def get_accessible_team(request, pk):
     raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have access to this private team.')
 
 
-def deny_platform_admin_write(request):
-    # Replaces IsNotPlatformAdminOrReadOnly for non-safe methods.
-    if is_platform_admin(request.auth):
-        raise_api_error(HTTPStatus.FORBIDDEN, 'Platform administrators have read-only access.')
-
-
 def assert_can_create_team(user):
-    # Replaces CanCreateTeam. TODO: put your original permission logic here.
     if is_platform_admin(user) or user.role != 'team':
         raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to create a team.')
 
@@ -236,7 +229,6 @@ def get_team(request, pk: int):
 
 
 def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
-    deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
         raise_api_error(403, 'Only captain can modify this team.')
@@ -283,7 +275,6 @@ def update_team(request, pk: int, payload: TeamUpdateRequest):
     response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_team(request, pk: int):
-    deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
         raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team.')
@@ -296,7 +287,6 @@ def delete_team(request, pk: int):
 # --------------------------------------------------------------------------
 
 def apply_banner_upload(request, pk: int, banner: UploadedFile):
-    deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
         raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team banner.')
@@ -326,7 +316,6 @@ def update_team_banner(request, pk: int, banner: UploadedFile = File(...)):
     response={200: TeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_team_banner(request, pk: int):
-    deny_platform_admin_write(request)
     team = get_accessible_team(request, pk)
     if team.captain_id != request.auth.id:
         raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team banner.')

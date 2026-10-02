@@ -3,11 +3,10 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from ninja import Router
-from ninja.errors import HttpError
 
 from accounts.models import User
 from backend.auth import JWTAuth
-from backend.permissions import Permission, has_permission
+from backend.permissions import Permission, require_permission
 from notifications.services import NotificationService
 
 from .models import NewsArticle
@@ -33,13 +32,6 @@ def _serialize_article(article):
     )
 
 
-def _require_permission(request, permission, article=None):
-    if not has_permission(request.auth, permission):
-        raise_api_error(HTTPStatus.FORBIDDEN, 'News permission required.')
-    if article and request.auth.role == 'organizer' and article.created_by_id != request.auth.id:
-        raise_api_error(HTTPStatus.FORBIDDEN, 'You can manage only your own articles.')
-
-
 @router.get('', operation_id='listNews', response={200: NewsListResponse, 401: ErrorResponse})
 def list_news(request, page: int = 1, page_size: int = 10):
     page = max(page, 1)
@@ -59,7 +51,7 @@ def list_news(request, page: int = 1, page_size: int = 10):
 @router.post('', operation_id='createNews', url_name="news_list_create", response={201: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 @transaction.atomic
 def create_news(request, payload: NewsArticleRequest):
-    _require_permission(request, Permission.CREATE_NEWS)
+    require_permission(request, Permission.CREATE_NEWS)
 
     data = payload.model_dump()
     send_notification = data.pop('send_notification', False)
@@ -98,8 +90,11 @@ def get_news(request, article_id: int):
 @router.patch('/{article_id}', operation_id='updateNews', url_name="news_detail", response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @transaction.atomic
 def update_news(request, article_id: int, payload: NewsArticlePatchRequest):
+    require_permission(request, Permission.EDIT_NEWS)
     article = get_object_or_404(NewsArticle.objects.select_related('created_by'), pk=article_id)
-    _require_permission(request, Permission.EDIT_NEWS, article)
+
+    if article and request.auth.role == 'organizer' and article.created_by_id != request.auth.id:
+            raise_api_error(HTTPStatus.FORBIDDEN, 'You can manage only your own articles.')
 
     data = payload.model_dump(exclude_unset=True)
     send_notification = data.pop('send_notification', False)
@@ -128,8 +123,11 @@ def update_news(request, article_id: int, payload: NewsArticlePatchRequest):
 
 @router.delete('/{article_id}', operation_id='deleteNews', url_name="news_detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_news(request, article_id: int):
+    require_permission(request, Permission.DELETE_NEWS)
     article = get_object_or_404(NewsArticle, pk=article_id)
-    _require_permission(request, Permission.DELETE_NEWS, article)
+
+    if article and request.auth.role == 'organizer' and article.created_by_id != request.auth.id:
+            raise_api_error(HTTPStatus.FORBIDDEN, 'You can manage only your own articles.')
     
     article.delete()
     return 204, None

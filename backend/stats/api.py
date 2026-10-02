@@ -4,7 +4,6 @@ from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
-from ninja.errors import HttpError
 
 from accounts.models import User
 from backend.auth import JWTAuth

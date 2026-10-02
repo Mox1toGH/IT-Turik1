@@ -16,7 +16,7 @@ from .realtime import emit_tournament_leaderboard_updated
 from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
 from http import HTTPStatus
-from backend.permissions import Permission, has_permission
+from backend.permissions import Permission, require_permission
 from .schemas import (
     AssignJuryResponse,
     AvailableJuryResponse,
@@ -33,15 +33,6 @@ from .schemas import (
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
 
 router = Router(tags=['evaluation'], auth=JWTAuth())
-
-def _require_evaluation_access(request):
-    if not has_permission(request.auth, Permission.MANAGE_EVALUATIONS):
-        raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to manage evaluations.')
-
-
-def _require_assignment_management(request):
-    if not has_permission(request.auth, Permission.MANAGE_ASSIGNMENTS):
-        raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have permission to manage assignments.')
 
 
 class JuryAssignmentPagination(PaginationBase):
@@ -105,7 +96,7 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
 )
 @paginate(JuryAssignmentPagination)
 def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
-    _require_assignment_management(request)
+    require_permission(request, Permission.MANAGE_ASSIGNMENTS)
 
     qs = _own_assignments(request.auth).order_by('-created_at', '-id')
 
@@ -223,7 +214,7 @@ def _after_evaluation_saved(evaluation, reason: str):
     response={201: SubmissionEvaluationResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
-    _require_evaluation_access(request)
+    require_permission(request, Permission.MANAGE_EVALUATIONS)
     _check_tournament(assignment, payload.tournament_id)
 
     assignment = _get_assignment(request.auth, payload.assignment)
@@ -252,7 +243,7 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     response={200: SubmissionEvaluationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_jury_evaluation(request, evaluation_id: int):
-    _require_evaluation_access(request)
+    require_permission(request, Permission.MANAGE_EVALUATIONS)
 
     evaluation = get_object_or_404(
         _own_evaluations(request.auth),
@@ -283,7 +274,7 @@ def update_jury_evaluation(
     evaluation_id: int,
     payload: SubmissionEvaluationPatchRequest,
 ):
-    _require_evaluation_access(request)
+    require_permission(request, Permission.MANAGE_EVALUATIONS)
 
     evaluation = get_object_or_404(
         _own_evaluations(request.auth),
@@ -333,7 +324,7 @@ def update_jury_evaluation(
     response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_jury_evaluation(request, evaluation_id: int):
-    _require_evaluation_access(request)
+    require_permission(request, Permission.MANAGE_EVALUATIONS)
     evaluation = get_object_or_404(_own_evaluations(request.auth), pk=evaluation_id)
 
     submission = evaluation.assignment.submission
@@ -366,7 +357,7 @@ def delete_jury_evaluation(request, evaluation_id: int):
               403: ErrorResponse, 404: ErrorResponse},
 )
 def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentItemRequest]):
-    _require_assignment_management(request)
+    require_permission(request, Permission.MANAGE_ASSIGNMENTS)
     round_obj = get_object_or_404(Round, pk=round_id)
 
     submission_ids = [item.submission for item in payload]
@@ -395,7 +386,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
               403: ErrorResponse, 404: ErrorResponse},
 )
 def list_available_jury(request, round_id: int, include_assigned: bool = True):
-    _require_assignment_management(request)
+    require_permission(request, Permission.MANAGE_ASSIGNMENTS)
     round_obj = get_object_or_404(Round, pk=round_id)
 
     return [

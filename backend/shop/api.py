@@ -4,7 +4,6 @@ from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404
 
 from ninja import File, Form, Router
-from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import PageNumberPagination, paginate
 

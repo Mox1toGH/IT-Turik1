@@ -449,12 +449,6 @@ class CurrentTaskResponse(Schema):
         return obj.end_date
 
 
-class IconResponse(Schema):
-    id: int
-    name: str
-    path: str
-
-
 class EventResponse(Schema):
     id: int
     tournament: int

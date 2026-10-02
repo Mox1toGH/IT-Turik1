@@ -12,16 +12,12 @@ from .models import Certificate, CertificateTemplate
 
 from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
+from backend.permissions import Permission, require_permission
 from http import HTTPStatus
 from .schemas import CertificateTemplateRequest, CertificateResponse, CertificateRequest, CertificateTemplateResponse
 from .services import generate_certificate_pdf
 
 router = Router(tags=['certificates'])
-
-def _require_staff(request):
-    if not request.auth.is_staff:
-        raise HttpError(403, 'Only admins can perform this action.')
-
 
 # =============================================================================
 # CertificateTemplateViewSet — equivalent
@@ -36,6 +32,7 @@ def _require_staff(request):
 @router.get('/certificate-templates', operation_id='listCertificateTemplates', url_name="template-list", response={200: list[CertificateTemplateResponse], 401: ErrorResponse}, auth=JWTAuth())
 @paginate(PageNumberPagination, page_size=8)
 def list_templates(request, nopage: str = ''):
+    require_permission(request, Permission.MANAGE_CERTIFICATE_TEMPLATES)
     return CertificateTemplate.objects.all().order_by('-created_at')
 
 @router.get('/certificate-templates/{template_id}', operation_id='getCertificateTemplate', url_name="template_detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
@@ -51,7 +48,7 @@ def get_template(request, template_id: int):
 
 @router.post('/certificate-templates', operation_id='createCertificateTemplate', url_name="template-list", response={201: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
 def create_template(request, data: Form[CertificateTemplateRequest], image: UploadedFile = File(...)):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATE_TEMPLATES)
 
     if not data.name.strip():
          raise_api_error(
@@ -70,13 +67,12 @@ def create_template(request, data: Form[CertificateTemplateRequest], image: Uplo
     )
 
 
-@router.put('/certificate-templates/{template_id}', operation_id='replaceCertificateTemplate', url_name="template-detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 @router.patch('/certificate-templates/{template_id}', operation_id='updateCertificateTemplate', url_name="template-detail", response={200: CertificateTemplateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def update_template(
     request, template_id: int,
     name: str = None, is_default: bool = None, image: UploadedFile = File(None),
 ):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATE_TEMPLATES)
     template = get_object_or_404(CertificateTemplate, pk=template_id)
 
     if name is not None:
@@ -96,7 +92,7 @@ def update_template(
 
 @router.delete('/certificate-templates/{template_id}', operation_id='deleteCertificateTemplate', url_name="template-detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def delete_template(request, template_id: int):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATE_TEMPLATES)
     template = get_object_or_404(CertificateTemplate, pk=template_id)
     template.delete()
     return 204, None
@@ -158,7 +154,7 @@ def get_certificate(request, unique_code: str):
 
 @router.post('', operation_id='createCertificate', url_name="certificate-list", response={201: CertificateResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse}, auth=JWTAuth())
 def create_certificate(request, payload: CertificateRequest):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATES)
 
     certificate = Certificate.objects.create(
         user_id=payload.user,
@@ -177,7 +173,7 @@ def create_certificate(request, payload: CertificateRequest):
 
 @router.patch('/{unique_code}', operation_id='updateCertificate', url_name="certificate-detail", response={200: CertificateResponse, 401: ErrorResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def update_certificate(request, unique_code: str, payload: CertificateRequest):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATES)
     certificate = get_object_or_404(Certificate, unique_code=unique_code)
 
     certificate.user_id = payload.user
@@ -197,7 +193,7 @@ def update_certificate(request, unique_code: str, payload: CertificateRequest):
 
 @router.delete('/{unique_code}', operation_id='deleteCertificate', url_name="certificate-detail", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse}, auth=JWTAuth())
 def delete_certificate(request, unique_code: str):
-    _require_staff(request)
+    require_permission(request, Permission.MANAGE_CERTIFICATES)
     
     certificate = get_object_or_404(Certificate, unique_code=unique_code)
     certificate.delete()

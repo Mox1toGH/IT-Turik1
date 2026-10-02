@@ -5,27 +5,26 @@ from django.db import IntegrityError
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from ninja import File, Router
-from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
 from accounts.models import User
 from accounts.google_calendar import _get_calendar_service
 from backend.auth import JWTAuth
-from backend.permissions import Permission, has_permission
+from backend.permissions import Permission, require_permission, has_permission
 from backend.schemas import ErrorResponse
 from certificates.models import Certificate, CertificateTemplate
 from evaluation.leaderboard_service import get_tournament_leaderboard
 from notifications.services import NotificationService
 from teams.models import Team
 
-from .models import Event, Icon, Round, Submission, Tournament, TournamentTeamRegistration
+from .models import Event, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.errors import raise_api_error
 from http import HTTPStatus
 from .schemas import (
     ActiveTournamentResponse, CurrentTaskResponse, EligibleTeamResponse,
     CalendarEventResponse, CalendarRoundResponse, DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
     ExportToGoogleCalendarResponse, MyCalendarResponse,
-    EventCreateRequest, EventListResponse, EventResponse, EventUpdateRequest, IconResponse, OwnSubmissionResponse,
+    EventCreateRequest, EventListResponse, EventResponse, EventUpdateRequest, OwnSubmissionResponse,
     RoundCreateRequest, RoundResponse, RoundUpdateRequest,
     SubmissionCreateRequest,
     SubmissionListResponse, SubmissionResponse, SubmissionUpdateRequest, TeamRegistrationRequest,
@@ -63,11 +62,6 @@ def _criteria_data(criteria):
         criterion.model_dump() if hasattr(criterion, 'model_dump') else criterion
         for criterion in criteria
     ]
-
-
-def _require(request, permission):
-    if not has_permission(request.auth, permission):
-        raise_api_error(HTTPStatus.FORBIDDEN, 'Tournament permission required.')
 
 
 def _validation_error(error):
@@ -179,7 +173,7 @@ def _team_participants(team: Team) -> list[User]:
 
 @router.patch('/manage/{id}/banner', operation_id='updateTournamentBanner', url_name='tournament_manage_banner', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_tournament_banner(request, id: int, banner: UploadedFile = File(...)):
-    _require(request, Permission.EDIT_TOURNAMENT)
+    require_permission(request, Permission.EDIT_TOURNAMENT)
     tournament = get_object_or_404(Tournament, pk=id)
     
     tournament.banner = banner
@@ -198,7 +192,7 @@ def update_tournament_banner(request, id: int, banner: UploadedFile = File(...))
 
 @router.delete('/manage/{id}/banner', operation_id='deleteTournamentBanner', url_name='tournament_manage_banner', response={200: TournamentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_tournament_banner(request, id: int):
-    _require(request, Permission.EDIT_TOURNAMENT)
+    require_permission(request, Permission.EDIT_TOURNAMENT)
     tournament = get_object_or_404(Tournament, pk=id)
     
     if tournament.banner:
@@ -220,7 +214,7 @@ def delete_tournament_banner(request, id: int):
 
 @router.get('/{id}/registrations/{registration_pk}', operation_id='getTournamentTeamRegistration', url_name='tournament_registration_detail', response={200: TeamRegistrationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_tournament_team_registration(request, id: int, registration_pk: int):
-    _require(request, Permission.MANAGE_PARTICIPANTS)
+    require_permission(request, Permission.MANAGE_PARTICIPANTS)
     registration = get_object_or_404(
         TournamentTeamRegistration.objects.select_related('team'),
         pk=registration_pk,
@@ -231,7 +225,7 @@ def get_tournament_team_registration(request, id: int, registration_pk: int):
 
 @router.patch('/{id}/registrations/{registration_pk}/disqualification', operation_id='disqualifyTeamFromTournament', url_name='tournament_registration_disqualification', response={200: DisqualificationResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def disqualify_team_from_tournament(request, id: int, registration_pk: int, payload: DisqualificationRequest):
-    _require(request, Permission.MANAGE_PARTICIPANTS)
+    require_permission(request, Permission.MANAGE_PARTICIPANTS)
     registration = get_object_or_404(
         TournamentTeamRegistration.objects.select_related('team__captain', 'tournament')
         .prefetch_related('team__members'),
@@ -300,8 +294,6 @@ def list_my_team_submissions(request, id: int):
 
 @router.get('/rounds/{id}/submissions', operation_id='listRoundSubmissions', url_name='round_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def list_round_submissions(request, id: int):
-    # TODO: ADD NEW SUBMISSIONS PERMISSION
-    # _require(request, Permission.SET_RESULTS)
     round_obj = get_object_or_404(Round, pk=id)
     queryset = (
         _submissions()
@@ -340,7 +332,7 @@ def get_my_calendar(request):
 
 @router.get('/{tournament_id}/certificates/delivery-status', operation_id='getTournamentCertificateDeliveryStatus', url_name='tournament_certificate_delivery_status', response={200: TournamentCertificateDeliveryStatusResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_tournament_certificate_delivery_status(request, tournament_id: int):
-    _require(request, Permission.MANAGE_PARTICIPANTS)
+    require_permission(request, Permission.MANAGE_PARTICIPANTS)
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     registrations = TournamentTeamRegistration.objects.filter(
         tournament=tournament, is_active=True, is_disqualified=False
@@ -361,7 +353,7 @@ def get_tournament_certificate_delivery_status(request, tournament_id: int):
 
 @router.post('/{tournament_id}/send-certificates', operation_id='sendTournamentCertificates', url_name='tournament_send_certificates', response={200: SendTournamentCertificatesResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def send_tournament_certificates(request, tournament_id: int, payload: SendTournamentCertificatesRequest):
-    _require(request, Permission.MANAGE_PARTICIPANTS)
+    require_permission(request, Permission.MANAGE_PARTICIPANTS)
     tournament = get_object_or_404(Tournament, pk=tournament_id)
     if tournament.status != Tournament.STATUS_FINISHED:
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Certificates can be sent only after tournament is finished.')
@@ -522,7 +514,7 @@ def get_tournament(request, id: int):
 
 @router.post('/manage', operation_id='createTournament', url_name='tournament_manage_create', response={201: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 def create_tournament(request, payload: TournamentCreateRequest):
-    _require(request, Permission.CREATE_TOURNAMENT)
+    require_permission(request, Permission.CREATE_TOURNAMENT)
     tournament = _validate_model(Tournament(created_by=request.auth, **payload.model_dump()))
     tournament.save()
     
@@ -539,7 +531,7 @@ def create_tournament(request, payload: TournamentCreateRequest):
 
 @router.get('/manage/{id}', operation_id='getTournamentForUpdate', url_name='tournament_manage_update', response={200: TournamentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_tournament_for_update(request, id: int):
-    _require(request, Permission.VIEW_TOURNAMENT)
+    require_permission(request, Permission.VIEW_TOURNAMENT)
     tournament = get_object_or_404(Tournament, pk=id)
     
     registered_team = _get_registered_team(tournament, request)
@@ -554,7 +546,7 @@ def get_tournament_for_update(request, id: int):
 
 
 def _save_tournament(request, pk, payload):
-    _require(request, Permission.EDIT_TOURNAMENT)
+    require_permission(request, Permission.EDIT_TOURNAMENT)
 
     tournament = _update_model(get_object_or_404(Tournament, pk=pk), payload.model_dump(exclude_unset=True))
     tournament.save()
@@ -579,7 +571,7 @@ def update_tournament(request, id: int, payload: TournamentUpdateRequest):
 
 @router.delete('/manage/{id}', operation_id='deleteTournament', url_name='tournament_manage_update', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_tournament(request, id: int):
-    _require(request, Permission.DELETE_TOURNAMENT)
+    require_permission(request, Permission.DELETE_TOURNAMENT)
     get_object_or_404(Tournament, pk=id).delete()
     
     return 204, None
@@ -587,7 +579,7 @@ def delete_tournament(request, id: int):
 
 @router.post('/{id}/start-registration', operation_id='startTournamentRegistration', url_name='tournament_start_registration', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def start_tournament_registration(request, id: int):
-    _require(request, Permission.EDIT_TOURNAMENT)
+    require_permission(request, Permission.EDIT_TOURNAMENT)
     
     try:
         tournament = start_registration(get_object_or_404(Tournament, pk=id))
@@ -678,7 +670,7 @@ def list_rounds(request, tournament_pk: int, status: str | None = None):
 
 @router.post('/{tournament_pk}/rounds', operation_id='createRound', url_name='rounds', response={201: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def create_round(request, tournament_pk: int, payload: RoundCreateRequest):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     
     tournament = get_object_or_404(Tournament, pk=tournament_pk)
     data = payload.model_dump()
@@ -698,7 +690,7 @@ def get_round(request, id: int):
 
 
 def _save_round(request, pk, payload):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     values = payload.model_dump(exclude_unset=True)
     
     if 'criteria' in values and values['criteria'] is not None:
@@ -717,7 +709,7 @@ def update_round(request, id: int, payload: RoundUpdateRequest):
 
 @router.delete('/rounds/{id}', operation_id='deleteRound', url_name='round_detail', response={204: None, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_round_view(request, id: int):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     
     try:
         delete_round(get_object_or_404(_rounds(), pk=id))
@@ -729,7 +721,7 @@ def delete_round_view(request, id: int):
 
 @router.post('/rounds/{id}/start', operation_id='startRound', url_name='round_start', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def start_round_view(request, id: int):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     
     try:
         round_obj = start_round(get_object_or_404(_rounds(), pk=id))
@@ -741,7 +733,7 @@ def start_round_view(request, id: int):
 
 @router.post('/rounds/{id}/close-submissions', url_name='round_close_submissions', operation_id='closeRoundSubmissions', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def close_round_submissions(request, id: int):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     
     try:
         round_obj = close_submissions_on_round(get_object_or_404(_rounds(), pk=id))
@@ -753,7 +745,7 @@ def close_round_submissions(request, id: int):
 
 @router.post('/rounds/{id}/mark-evaluated', operation_id='markRoundEvaluated', url_name='round_mark_evaluated', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def mark_round_evaluated_view(request, id: int):
-    _require(request, Permission.SET_RESULTS)
+    require_permission(request, Permission.MANAGE_ROUNDS)
     
     try:
         round_obj = mark_round_evaluated(get_object_or_404(_rounds(), pk=id))
@@ -802,15 +794,12 @@ def _save_submission(request, pk, payload):
     submission = get_object_or_404(_submissions(), pk=pk)
 
     if submission.team.captain_id != request.auth.id:
-        raise HttpError(
-            400,
+        raise_api_error(
+            HTTPStatus.BAD_REQUEST,
+            "Only team captain can update submission",
             {
-                "code": "validation_error",
-                "message": "Only team captain can update submission",
-                "details": {
-                    "team": "Only team captain can update submission"
-                },
-            },
+                "team": "Only team captain can update submission"
+            }
         )
     
     _update_model(submission, payload.model_dump(exclude_unset=True))
@@ -862,13 +851,7 @@ def get_current_task(request, tournament_id: int | None = None):
     return CurrentTaskResponse.model_validate(round_obj, from_attributes=True)
 
 
-@router.get('/icons', operation_id='listIcons', url_name='icon_list', response={200: list[IconResponse], 401: ErrorResponse})
-def list_icons(request):
-    return [IconResponse.model_validate(icon, from_attributes=True) for icon in Icon.objects.all()]
-
-
 def _save_event(request, payload, instance=None):
-    _require(request, Permission.MANAGE_ROUNDS)
     values = payload.model_dump(exclude_unset=True)
     if 'tournament' in values:
         values['tournament_id'] = values.pop('tournament')
@@ -910,12 +893,13 @@ def get_event(request, id: int):
 
 @router.patch('/events/{id}', operation_id='updateEvent', url_name="event", response={200: EventResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_event(request, id: int, payload: EventUpdateRequest):
+    require_permission(request, Permission.MANAGE_EVENTS)
     return EventResponse.model_validate(_save_event(request, payload, get_object_or_404(Event, pk=id)), from_attributes=True)
 
 
 @router.delete('/events/{id}', operation_id='deleteEvent', url_name="event", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def delete_event(request, id: int):
-    _require(request, Permission.MANAGE_ROUNDS)
+    require_permission(request, Permission.MANAGE_EVENTS)
     get_object_or_404(Event, pk=id).delete()
     
     return 204, None

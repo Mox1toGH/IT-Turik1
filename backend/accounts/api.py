@@ -19,6 +19,7 @@ from ninja import File, Query, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from backend.auth import JWTAuth
+from backend.permissions import Permission, require_permission
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -139,14 +140,6 @@ def _send_link_email(
 
 def _is_platform_admin(user) -> bool:
     return bool(user and user.is_authenticated and (user.is_superuser or user.role == 'admin'))
-
-
-def _require_admin(request) -> None:
-    if not _is_platform_admin(request.user):
-        raise_api_error(
-            HTTPStatus.FORBIDDEN,
-            'Admin access required.'
-        )
 
 
 def _active_counts() -> dict:
@@ -776,7 +769,7 @@ def change_password(request, payload: ChangePasswordRequest):
     response={200: RoleActivationCodeListResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def list_role_activation_codes(request, filters: RoleActivationCodeListFilters = Query(...)):
-    _require_admin(request)
+    require_permission(request, Permission.MANAGE_ROLE_CODES)
 
     queryset = RoleActivationCode.objects.select_related('created_by', 'used_by').order_by('-created_at')
     role = (filters.role or '').strip()
@@ -797,7 +790,7 @@ def list_role_activation_codes(request, filters: RoleActivationCodeListFilters =
     response={201: RoleActivationCodeGenerateResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def generate_role_activation_codes(request, payload: RoleActivationCodeGenerateRequest):
-    _require_admin(request)
+    require_permission(request, Permission.MANAGE_ROLE_CODES)
 
     with transaction.atomic():
         codes = [
