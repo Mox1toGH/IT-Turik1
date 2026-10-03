@@ -1,4 +1,5 @@
 import secrets
+import logging
 from urllib.parse import urlencode
 
 import requests as http_requests
@@ -32,9 +33,9 @@ from .google_calendar import (
     GOOGLE_AUTH_URI,
     GOOGLE_TOKEN_URI,
     SCOPES,
-    _generate_code_challenge,
-    _generate_code_verifier,
-    _sync_all_calendar_items,
+    generate_code_challenge,
+    generate_code_verifier,
+    sync_all_calendar_items,
 )
 
 from backend.schemas import ErrorResponse
@@ -75,6 +76,8 @@ router = Router(tags=['accounts'])
 # --------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 def _get_user_by_uid(uidb64: str):
     try:
@@ -227,6 +230,12 @@ def register_user(request, payload: RegisterRequest):
         "Activate your account",
         "Follow the link to activate your account:",
     )
+
+    logger.info(
+        'User registered',
+        extra={'user_id': request.user.id, 'role': user.role}
+    )
+
     return 201, RegisterResponse.model_validate(user, from_attributes=True)
 
 
@@ -247,6 +256,9 @@ def activate_account(request, uidb64: str, token: str):
 
     user.is_active = True
     user.save(update_fields=['is_active'])
+
+    logger.info('User account activated', extra={'user_id': user.id})
+    
     return ActivationResponse(status='success', message='Account activated!')
 
 
@@ -260,8 +272,14 @@ def activate_account(request, uidb64: str, token: str):
 def login(request, payload: LoginRequest):
     user = authenticate(request, username=payload.username, password=payload.password)
     if user is None:
+        logger.warning('Failed login attempt', extra={'username': payload.username})
+        
         raise_api_error(HTTPStatus.FORBIDDEN, 'No active account found with the given credentials.')
+
     refresh = RefreshToken.for_user(user)
+
+    logger.info('User logged in', extra={'user_id': user.id})
+
     return LoginResponse(access=str(refresh.access_token), refresh=str(refresh))
 
 
@@ -314,6 +332,8 @@ def google_auth(request, payload: GoogleAuthRequest):
         )
 
     user = User.objects.filter(email__iexact=email).first()
+    is_new_user = user is None
+
     if user is None:
         base = email.split('@')[0]
         username, suffix = base, 1
@@ -330,6 +350,15 @@ def google_auth(request, payload: GoogleAuthRequest):
         )
 
     refresh = RefreshToken.for_user(user)
+
+    logger.info(
+        'User authenticated with Google',
+        extra={
+            'user_id': user.id,
+            'new_user': is_new_user
+        }
+    )
+        
     return GoogleAuthResponse(
         access=str(refresh.access_token),
         refresh=str(refresh),
@@ -400,14 +429,17 @@ def update_user_profile(request, payload: UserUpdateRequest):
     if password:
         user.set_password(password)
 
-    if (
+    completed_onboarding = (
         user.needs_onboarding
         and user.role
         and user.full_name
         and user.phone
         and user.city
         and user.has_usable_password()
-    ):
+    )
+
+    if completed_onboarding:
+        logger.info('User onboarding completed', extra={'user_id': user.id})
         user.needs_onboarding = False
 
     update_fields = list(data.keys())
@@ -419,7 +451,15 @@ def update_user_profile(request, payload: UserUpdateRequest):
         update_fields.append("needs_onboarding")
 
     if update_fields:
-        user.save(update_fields=list(set(update_fields)))
+        unique_fields = list(set(update_fields))
+        user.save(update_fields=unique_fields)
+        logger.info(
+            'User profile updated',
+            extra={
+                'user_id': user.id,
+                'fields': unique_fields,
+            }
+        )
 
     return UserResponse.model_validate(
         user,
@@ -436,6 +476,8 @@ def update_user_profile(request, payload: UserUpdateRequest):
     response={204: None, 401: ErrorResponse},
 )
 def delete_user_profile(request):
+    logger.info('User account deleted', extra={'user_id': request.auth.id})
+
     request.user.delete()
     return 204, None
 
@@ -457,6 +499,11 @@ def update_user_avatar(request, avatar: UploadedFile = File(...)):
     user = request.user
     user.avatar = avatar
     user.save(update_fields=['avatar'])
+    
+    logger.info('User avatar updated', extra={
+        'user_id': user.id
+    })
+
     return UserAvatarResponse.model_validate(user, from_attributes=True, context={'request': request})
 
 
@@ -473,6 +520,11 @@ def delete_user_avatar(request):
         user.avatar.delete(save=False)
         user.avatar = None
         user.save(update_fields=['avatar'])
+
+        logger.info('User avatar deleted', extra={
+            'user_id': user.id
+        })
+
     return 204, None
 
 
@@ -502,7 +554,7 @@ def connect_google_calendar(request):
     if not settings.GOOGLE_OAUTH_CLIENT_SECRET:
         raise_api_error(HTTPStatus.SERVICE_UNAVAILABLE, 'Google Calendar integration is not configured.')
 
-    code_verifier = _generate_code_verifier()
+    code_verifier = generate_code_verifier()
     params = {
         'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
         'redirect_uri': settings.GOOGLE_CALENDAR_REDIRECT_URI,
@@ -510,12 +562,15 @@ def connect_google_calendar(request):
         'scope': ' '.join(SCOPES),
         'access_type': 'offline',
         'prompt': 'consent',
-        'code_challenge': _generate_code_challenge(code_verifier),
+        'code_challenge': generate_code_challenge(code_verifier),
         'code_challenge_method': 'S256',
     }
 
     request.user.google_calendar_token = {'_code_verifier': code_verifier}
     request.user.save(update_fields=['google_calendar_token'])
+ 
+    logger.info('Google Calendar authorization started', extra={'user_id': request.user.id})
+ 
     return GoogleCalendarConnectResponse(auth_url=f'{GOOGLE_AUTH_URI}?{urlencode(params)}')
 
 
@@ -553,8 +608,10 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
         user.save(update_fields=['google_calendar_token', 'google_calendar_connected'])
         
         try:
-            _sync_all_calendar_items(user)
+            sync_all_calendar_items(user)
         except Exception:
+            logger.exception('Google Calendar synchronization failed', extra={'user_id': user.id})
+             
             raise_api_error(
                 HTTPStatus.BAD_REQUEST,
                 "Failed to connect Google Calendar. Please try again.",
@@ -564,6 +621,7 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
     except HttpError:
         raise
     except Exception as exc:
+        logger.exception('Unexpected Google Calendar connection error', extra={'user_id': request.user.id})
         raise raise_api_error(HTTPStatus.BAD_REQUEST, "Failed to connect Google Calendar. Please try again.",) from exc
 
 
@@ -579,6 +637,9 @@ def disconnect_google_calendar(request):
     user.google_calendar_token = None
     user.google_calendar_connected = False
     user.save(update_fields=['google_calendar_token', 'google_calendar_connected'])
+
+    logger.info('Google Calendar disconnected', extra={'user_id': user.id})
+
     return GoogleCalendarStatusResponse(connected=False)
 
 
@@ -697,6 +758,8 @@ def request_password_reset(request, payload: PasswordResetRequest):
             "Follow the link to reset your password:",
         )
 
+        logger.info('Password reset requested', extra={'user_id': user.id})
+
     return MessageResponse(
         message="Password reset email sent successfully."
     )
@@ -734,6 +797,9 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
 
     user.set_password(payload.new_password)
     user.save(update_fields=['password'])
+
+    logger.info('Password reset completed', extra={'user_id': request.user.id})
+    
     return MessageResponse(message='Password has been reset successfully.')
 
 
@@ -747,6 +813,11 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
 def change_password(request, payload: ChangePasswordRequest):
     user = request.user
     if not user.check_password(payload.current_password):
+        logger.warning('Password change failed reason=incorrect_current_password', extra={
+            'user_id': request.user.id,
+            'reason': 'incorrect_current_password'
+        })
+
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Current password is incorrect.')
     if payload.new_password != payload.confirm_password:
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Passwords do not match.')
@@ -754,6 +825,9 @@ def change_password(request, payload: ChangePasswordRequest):
 
     user.set_password(payload.new_password)
     user.save(update_fields=['password'])
+
+    logger.info('Password changed', extra={'user_id': user.id})
+
     return MessageResponse(message='Password changed successfully.')
 
 
@@ -801,6 +875,15 @@ def generate_role_activation_codes(request, payload: RoleActivationCodeGenerateR
             )
             for _ in range(payload.count)
         ]
+
+    logger.info(
+        'Role activation codes generated: admin_user_id=%s role=%s count=%s',
+        extra={
+            'user_id': request.user.id,
+            'role': payload.role,
+            'count': payload.count
+        }
+    )
 
     return 201, RoleActivationCodeGenerateResponse(
         created=[RoleActivationCodeResponse.model_validate(c, from_attributes=True) for c in codes],

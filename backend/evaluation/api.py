@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from django.shortcuts import get_object_or_404
@@ -31,6 +32,8 @@ from .schemas import (
     TournamentLeaderboardResponse,
 )
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
+
+logger = logging.getLogger(__name__)
 
 router = Router(tags=['evaluation'], auth=JWTAuth())
 
@@ -80,9 +83,17 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
     try:
         ids = [int(item.strip()) for item in value.split(',') if item.strip()]
     except ValueError:
+        logger.warning('Invalid field value (non-integer)', extra={
+            'field_name': field_name,
+            'value': value
+        })
         raise_api_error(HTTPStatus.BAD_REQUEST, f'{field_name}: IDs must be positive numbers.')
 
     if any(id <= 0 for id in ids):
+        logger.warning('Invalid field value (non-positive ID)', extra={
+            'field_name': field_name,
+            'value': value
+        })
         raise_api_error(HTTPStatus.BAD_REQUEST, f'{field_name}: IDs must be positive numbers.')
 
     return ids
@@ -97,6 +108,13 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
 @paginate(JuryAssignmentPagination)
 def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
     require_permission(request, Permission.MANAGE_ASSIGNMENTS)
+    logger.debug(
+        'Listing jury assignments',
+        extra={
+            'user_id': request.auth.id,
+            'filters': filters.dict() if hasattr(filters, 'dict') else filters,             
+        }
+    )
 
     qs = _own_assignments(request.auth).order_by('-created_at', '-id')
 
@@ -144,9 +162,20 @@ def _get_assignment(user, assignment_id: int):
     )
 
     if assignment is None:
+        logger.warning('Assignment not found', extra={
+            'assigment_id': assignment_id,
+            'user_id': user.id
+        })
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Assignment not found.')
 
     if assignment.jury_id != user.id:
+        logger.warning(
+            'User is not the assigned juror', extra={
+                'assigment_id': assignment_id,
+                'user_id': user.id,
+                'jury_id': assignment.jury_id
+            }
+        )
         raise_api_error(HTTPStatus.BAD_REQUEST, 'You are not assigned to this submission.')
 
     return assignment
@@ -154,6 +183,14 @@ def _get_assignment(user, assignment_id: int):
 
 def _check_tournament(assignment, tournament_id: int | None):
     if tournament_id is not None and assignment.submission.round.tournament_id != tournament_id:
+        logger.warning(
+            'Tournament mismatch',
+            extra={
+                'assigment_id': assignment.id,
+                'expected_tournament_id': tournament_id,
+                'actual_tournament_id': assignment.submission.round.tournament_id
+            }
+        )
         raise_api_error(HTTPStatus.BAD_REQUEST, 'tournament_id: Assignment does not belong to this tournament.')
 
 
@@ -161,6 +198,9 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
     """Validate scores against the round's criteria and enrich them with criterion names."""
     criteria = round_obj.criteria
     if not criteria:
+        logger.warning('Round has no evaluation criteria', extra={
+            'round_id': round_obj.id
+        })
         raise_api_error(HTTPStatus.BAD_REQUEST, 'scores: Round has no evaluation criteria.')
 
     criteria_by_id = {c['id']: c for c in criteria}
@@ -171,13 +211,30 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
         c_id = item['criterion_id']
         criterion = criteria_by_id.get(c_id)
         if criterion is None:
+            logger.warning('Invalid criterion_id', extra={
+                'round_id': round_obj.id,
+                'criterion_id': c_id
+            })
             raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Invalid criterion_id: {c_id}')
         if c_id in seen:
+            logger.warning('Duplicate criterion_id', extra={
+                'round_id': round_obj.id,
+                'criterion_id': c_id
+            })
             raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Duplicate criterion_id: {c_id}')
 
         score = item['score']
         max_score = criterion['max_score']
         if score < 0 or score > max_score:
+            logger.warning(
+                'Score out of range',
+                extra={
+                    'round_id': round_obj.id,
+                    'criterion_id': c_id,
+                    'score': score,
+                    'max_score': max_score
+                }
+            )
             raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Invalid score for {c_id}. Must be between 0 and {max_score}')
 
         seen.add(c_id)
@@ -189,6 +246,10 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
 
     missing = set(criteria_by_id) - seen
     if missing:
+        logger.warning('Missing criteria scores', extra={
+            'round_id': round_obj.id,
+            'missing': sorted(missing)
+        })
         raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Missing scores for criteria: {", ".join(sorted(missing))}')
 
     return enriched
@@ -197,7 +258,25 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
 def _after_evaluation_saved(evaluation, reason: str):
     submission = evaluation.assignment.submission
     round_obj = submission.round
-    try_auto_evaluate_round(round_obj)
+    logger.debug(
+        'Post-evaluation hooks',
+        extra={
+            'reason': reason,
+            'evaluation_id': evaluation.id,
+            'round_id': round_obj.id
+        }
+    )
+    try:
+        try_auto_evaluate_round(round_obj)
+    except Exception:
+        logger.exception(
+            'Auto-evaluation of round failed',
+            extra={
+                'round_id': round_obj.id,
+                'evaluation_id': evaluation.id
+            }
+        )
+        raise
     emit_tournament_leaderboard_updated(
         tournament_id=round_obj.tournament_id,
         round_id=round_obj.id,
@@ -215,17 +294,39 @@ def _after_evaluation_saved(evaluation, reason: str):
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
-    _check_tournament(assignment, payload.tournament_id)
+
+    logger.info(
+        'Creating evaluation',
+        extra={
+            'user_id': request.auth.id,
+            'assigment_id': payload.assignment
+        }
+    )
 
     assignment = _get_assignment(request.auth, payload.assignment)
-    
+    _check_tournament(assignment, payload.tournament_id)
+
     if SubmissionEvaluation.objects.filter(assignment=payload.assignment).exists():
+        logger.warning(
+            'Evaluation already exists',
+            request.auth.id, payload.assignment,
+        )
         raise_api_error(HTTPStatus.BAD_REQUEST, 'This submission is already evaluated.')
 
     evaluation = SubmissionEvaluation.objects.create(
         assignment=assignment,
         scores=_build_scores(assignment.submission.round, payload.scores),
         comment=payload.comment,
+    )
+    logger.info(
+        'Evaluation created',
+        extra={
+            'evaluation_id': evaluation.id,
+            'assigment_id': assignment.id,
+            'submission_id': assignment.submission_id,
+            'round_id': assignment.submission.round_id,
+            'user_id': request.auth.id
+        }
     )
     _after_evaluation_saved(evaluation, 'evaluation_created')
 
@@ -244,6 +345,10 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
 )
 def get_jury_evaluation(request, evaluation_id: int):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
+    logger.debug('Fetching evaluation', extra={
+        'evaluation_id': evaluation_id,
+        'user_id': request.auth.id
+    })
 
     evaluation = get_object_or_404(
         _own_evaluations(request.auth),
@@ -275,6 +380,10 @@ def update_jury_evaluation(
     payload: SubmissionEvaluationPatchRequest,
 ):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
+    logger.info('Updating evaluation', extra={
+        'evaluation_id': evaluation_id,
+        'user_id': request.auth.id
+    })
 
     evaluation = get_object_or_404(
         _own_evaluations(request.auth),
@@ -282,14 +391,21 @@ def update_jury_evaluation(
     )
 
     round = evaluation.assignment.submission.round
-    round = evaluation.assignment.submission.round
 
     if round.status == Round.STATUS_EVALUATED:
+        logger.warning(
+            'Update rejected, round already evaluated',
+            extra={
+                'evaluation_id': evaluation_id,
+                'round_id': round.id,
+                'user_id': request.auth.id
+            }
+        )
         raise_api_error(
             HTTPStatus.BAD_REQUEST,
             'Cannot update evaluation after round evaluation is completed.',
         )
-    
+
     data = payload.model_dump(exclude_unset=True)
 
     assignment = evaluation.assignment
@@ -304,6 +420,15 @@ def update_jury_evaluation(
         evaluation.comment = data['comment']
 
     evaluation.save()
+    logger.info(
+        'Evaluation updated',
+        extra={
+            'evaluation_id': evaluation_id,
+            'round_id': round.id,
+            'user_id': request.auth.id,
+            'fields': sorted(data.keys())
+        }
+    )
 
     _after_evaluation_saved(
         evaluation,
@@ -325,12 +450,25 @@ def update_jury_evaluation(
 )
 def delete_jury_evaluation(request, evaluation_id: int):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
+    logger.info('Deleting evaluation', extra={
+        'evaluation_id': evaluation_id,
+        'user_id': request.auth.id
+    })
     evaluation = get_object_or_404(_own_evaluations(request.auth), pk=evaluation_id)
 
     submission = evaluation.assignment.submission
     round_obj = submission.round
     deleted_id = evaluation.id
     evaluation.delete()
+    logger.info(
+        'Evaluation deleted',
+        extra={
+            'evaluation_id': evaluation_id,
+            'submission_id': submission.id,
+            'round_id': round_obj.id,
+            'user_id': request.auth.id
+        }
+    )
 
     emit_tournament_leaderboard_updated(
         tournament_id=round_obj.tournament_id,
@@ -358,12 +496,28 @@ def delete_jury_evaluation(request, evaluation_id: int):
 )
 def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentItemRequest]):
     require_permission(request, Permission.MANAGE_ASSIGNMENTS)
+    logger.info(
+        'Replacing jury assignments',
+        extra={
+            'round_id': round_id,
+            'user_id': request.auth.id,
+            'items': len(payload)
+        }
+    )
     round_obj = get_object_or_404(Round, pk=round_id)
 
     submission_ids = [item.submission for item in payload]
     submissions = Submission.objects.in_bulk(submission_ids)
     missing = sorted(set(submission_ids) - set(submissions))
+    
     if missing:
+        logger.warning(
+            'Assignment rejected, unknown submissions',
+            extra={
+                'round_id': round_id,
+                'missing_ids': missing
+            }
+        )
         raise_api_error(HTTPStatus.BAD_REQUEST, 'One or more submissions do not exist.')
 
     items = [
@@ -371,6 +525,14 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
         for item in payload
     ]
     created_count = replace_round_jury_assignments(round_obj, items)
+    logger.info(
+        'Jury assignments replaced',
+        extra={
+            'round_id': round_id,
+            'created': created_count,
+            'user_id': request.auth.id
+        }
+    )
 
     return 201, AssignJuryResponse.model_validate({
         'status': 'Assignments replaced.',
@@ -387,6 +549,14 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
 )
 def list_available_jury(request, round_id: int, include_assigned: bool = True):
     require_permission(request, Permission.MANAGE_ASSIGNMENTS)
+    logger.debug(
+        'Listing available jury',
+        extra={
+            'round_id': round_id,
+            'include_assigned': include_assigned,
+            'user_id': request.auth.id
+        }
+    )
     round_obj = get_object_or_404(Round, pk=round_id)
 
     return [
@@ -416,8 +586,15 @@ def list_available_jury(request, round_id: int, include_assigned: bool = True):
     response={200: RoundLeaderboardResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_round_leaderboard(request, round_id: int):
+    logger.debug('Fetching round leaderboard',extra={
+        'round_id': round_id,
+        'user_id': request.auth.id
+    })
     round_obj = Round.objects.select_related('tournament').filter(id=round_id).first()
     if not round_obj:
+        logger.warning('Round not found for leaderboard', extra={
+            'round_id': round_id,
+        })
         raise_api_error(HTTPStatus.NOT_FOUND, 'Round not found.')
 
     rankings = get_leaderboard(round_id=round_id, requesting_user=request.auth)
@@ -435,11 +612,21 @@ def get_round_leaderboard(request, round_id: int):
     response={200: TournamentLeaderboardResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_tournament_leaderboard_view(request, tournament_id: int):
+    logger.debug('Fetching tournament leaderboard', extra={
+        'tournament_id': tournament_id,
+        'user_id': request.auth.id
+    })
     tournament = Tournament.objects.filter(id=tournament_id).first()
     if not tournament:
+        logger.warning('Tournament not found for leaderboard: tournament_id=%s', extra={
+            'tournament_id': tournament_id,
+        })
         raise_api_error(HTTPStatus.NOT_FOUND, 'Tournament not found.')
 
     if not Round.objects.filter(tournament_id=tournament_id).exists():
+        logger.warning('No rounds for tournament leaderboard', extra={
+            'tournament_id': tournament_id,
+        })
         raise_api_error(HTTPStatus.NOT_FOUND, 'No rounds found for this tournament.')
 
     rankings = get_tournament_leaderboard(tournament_id=tournament_id, requesting_user=request.auth)
@@ -464,9 +651,20 @@ def get_tournament_leaderboard_view(request, tournament_id: int):
               403: ErrorResponse, 404: ErrorResponse},
 )
 def get_round_passing_status(request, round_id: int):
+    logger.debug('Fetching passing status', extra={
+        'round_id': round_id,
+        'user_id': request.auth.id
+    })
     round_obj = get_object_or_404(Round.objects.select_related('tournament'), pk=round_id)
 
     if round_obj.status not in {Round.STATUS_SUBMISSION_CLOSED, Round.STATUS_EVALUATED}:
+        logger.warning(
+            'Passing status rejected, invalid round status',
+            extra={
+                'round_id': round_id,
+                'status': round_obj.status
+            }
+        )
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Round must be submission_closed or evaluated to check passing status.')
 
     result = compute_leaderboard(round_obj.id)
@@ -484,6 +682,14 @@ def get_round_passing_status(request, round_id: int):
     results_list = []
     for row in result:
         reg = registrations.get(row['team_id'])
+        if reg is None:
+            logger.warning(
+                'Team on leaderboard has no tournament registration',
+                extra={
+                    'round_id': round_id,
+                    'team_id': row['team_id']
+                }
+            )
         results_list.append({
             'rank': row['rank'],
             'team_id': row['team_id'],
@@ -495,6 +701,15 @@ def get_round_passing_status(request, round_id: int):
             'disqualification_reason': reg.disqualification_reason if reg else None,
             'registration_id': reg.id if reg else None,
         })
+
+    logger.debug(
+        'Passing status computed',
+        extra={
+            'round_id': round_id,
+            'total_teams': len(result),
+            'passing_count': passing_count
+        }
+    )
 
     return {
         'round_id': round_obj.id,

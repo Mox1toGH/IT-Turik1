@@ -1,7 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from .serializers import NotificationSerializer
+from .schemas import NotificationResponse
 
 
 def _group_name(user_id: int) -> str:
@@ -26,7 +26,9 @@ def emit_notification_created(notification) -> None:
     _send(
         notification.recipient_id,
         'notification.created',
-        {'notification': NotificationSerializer(notification).data},
+        {'notification': NotificationResponse.model_validate(
+            notification, from_attributes=True
+        ).model_dump(mode='json'),},
     )
 
 

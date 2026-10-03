@@ -4,7 +4,7 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from accounts.google_calendar import _get_calendar_service
+from accounts.google_calendar import get_calendar_service
 from .models import Event, Round, TournamentTeamRegistration
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def sync_event_to_google_calendar(sender, instance, created, **kwargs):
 
     for user in users:
         try:
-            service = _get_calendar_service(user)
+            service = get_calendar_service(user)
             if not service:
                 logger.warning('Could not get calendar service for user %s', user.id)
                 continue
@@ -104,7 +104,7 @@ def sync_round_to_google_calendar(sender, instance, created, **kwargs):
 
     for user in users:
         try:
-            service = _get_calendar_service(user)
+            service = get_calendar_service(user)
             if not service:
                 logger.warning('Could not get calendar service for user %s', user.id)
                 continue

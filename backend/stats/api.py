@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from django.db.models import Avg, Count, Q
@@ -17,6 +18,8 @@ from backend.errors import raise_api_error
 from http import HTTPStatus
 from .schemas import AdminStatsResponse, PlayerStatsResponse, TeamStatsResponse, TournamentStatsResponse
 
+logger = logging.getLogger(__name__)
+
 router = Router(tags=['stats'], auth=JWTAuth())
 
 
@@ -32,21 +35,29 @@ def _team_results(team):
     entries = LeaderboardEntry.objects.filter(team=team, round__isnull=True)
     total = entries.values('tournament_id').distinct().count()
     wins = entries.filter(rank=1).values('tournament_id').distinct().count()
-    
+
     return total, wins, max(total - wins, 0)
 
 
 @router.get('/player', operation_id='getPlayerStats', url_name='stats-player', response={200: PlayerStatsResponse, 401: ErrorResponse})
 def get_player_stats(request):
+    logger.debug('Fetching player stats', extra={
+        'user_id': request.auth.id
+    })
     teams = Team.objects.filter(Q(captain=request.auth) | Q(team_members__user=request.auth)).distinct()
     team = teams.order_by('id').first()
-    
+
     tournament_ids = TournamentTeamRegistration.objects.filter(team__in=teams, is_active=True).values_list('tournament_id', flat=True).distinct()
     total = tournament_ids.count()
-    
+
     wins = LeaderboardEntry.objects.filter(round__isnull=True, rank=1, team__in=teams).values('tournament_id').distinct().count()
     average = SubmissionEvaluation.objects.filter(assignment__submission__team__in=teams).aggregate(value=Avg('final_score'))['value']
-    
+
+    if team is None:
+        logger.debug('Player has no teams', extra={
+            'user_id': request.auth.id
+        })
+
     return PlayerStatsResponse.model_validate(
         {
             'total_tournaments': total,
@@ -61,24 +72,36 @@ def get_player_stats(request):
 
 @router.get('/team/{team_id}', operation_id='getTeamStats', url_name='stats-team', response={200: TeamStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_team_stats(request, team_id: int):
+    logger.debug('Fetching team stats', extra={
+        'team_id': team_id,
+        'user_id': request.auth.id
+    })
     team = get_object_or_404(Team.objects.prefetch_related('members'), pk=team_id)
-    
+
     if request.auth.id != team.captain_id and not team.members.filter(id=request.auth.id).exists() and not is_platform_admin(request.auth):
+        logger.warning('Team stats access denied', extra={
+            'team_id': team_id,
+            'user_id': request.auth.id
+        })
         raise_api_error(HTTPStatus.FORBIDDEN, 'Only team members or admins can view team stats.')
-    
+
     total, wins, losses = _team_results(team)
     members = list(team.members.all())
     top_player = None
-    
+
     if members:
         scores = []
         for player in members:
             average = SubmissionEvaluation.objects.filter(assignment__submission__team=team, assignment__submission__created_by=player).aggregate(value=Avg('final_score'))['value']
-            scores.append({'id': player.id, 'username': player.username, 'average_evaluation_score': _round2(average)})    
+            scores.append({'id': player.id, 'username': player.username, 'average_evaluation_score': _round2(average)})
         top_player = max(scores, key=lambda item: (item['average_evaluation_score'], -item['id']))
-    
+    else:
+        logger.debug('Team has no members', extra={
+        'team_id': team_id,
+     })
+
     average = SubmissionEvaluation.objects.filter(assignment__submission__team=team).aggregate(value=Avg('final_score'))['value']
-    
+
     return TeamStatsResponse.model_validate(
         {
             'team_id': team.id,
@@ -96,18 +119,31 @@ def get_team_stats(request, team_id: int):
 
 @router.get('/tournament/{tournament_id}', operation_id='getTournamentStats', url_name='stats-tournament', response={200: TournamentStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def get_tournament_stats(request, tournament_id: int):
+    logger.debug('Fetching tournament stats', extra={
+        'tournament_id': tournament_id,
+        'user_id': request.auth.id
+    })
     tournament = get_object_or_404(Tournament, pk=tournament_id)
-    
+
     if not (is_platform_admin(request.auth) or tournament.created_by_id == request.auth.id):
+        logger.warning('Tournament stats access denied', extra={
+            'tournament_id': tournament_id,
+            'user_id': request.auth.id
+        })
         raise_api_error(403, 'Only organizer or admin can view tournament stats.')
-    
+
     registrations = TournamentTeamRegistration.objects.filter(tournament=tournament, is_active=True)
     team_ids = list(registrations.values_list('team_id', flat=True))
     total = len(team_ids)
     submissions = Submission.objects.filter(round__tournament=tournament)
     average = SubmissionEvaluation.objects.filter(assignment__submission__round__tournament=tournament).aggregate(value=Avg('final_score'))['value']
     top = LeaderboardEntry.objects.filter(tournament=tournament, round__isnull=True).select_related('team').order_by('rank', '-average_score')[:3]
-    
+
+    if not tournament.max_teams:
+        logger.debug('Tournament has no max_teams, fill_rate will be 0', extra={
+            'tournament_id': tournament_id,
+        })
+
     return TournamentStatsResponse.model_validate(
         {
             'tournament_id': tournament.id,
@@ -137,10 +173,16 @@ def get_tournament_stats(request, tournament_id: int):
 @router.get('/admin', operation_id='getAdminStats', url_name='stats-admin', response={200: AdminStatsResponse, 401: ErrorResponse, 403: ErrorResponse})
 def get_admin_stats(request):
     if not is_platform_admin(request.auth):
+        logger.warning('Admin stats access denied', extra={
+            'user_id': request.auth.id
+        })
         raise_api_error(HTTPStatus.FORBIDDEN, 'Admin access required.')
-    
+
+    logger.info('Admin stats requested', extra={
+        'user_id': request.auth.id
+    })
     now = timezone.now()
-    
+
     return AdminStatsResponse.model_validate(
         {
             'total_users': User.objects.count(),

@@ -8,25 +8,24 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 logger = logging.getLogger(__name__)
-
 SCOPES = ['https://www.googleapis.com/auth/calendar.events']
 
 GOOGLE_AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_URI = 'https://oauth2.googleapis.com/token'
 
 
-def _generate_code_verifier():
+def generate_code_verifier():
     """Generate a PKCE code verifier (43-128 chars, URL-safe base64)."""
     return base64.urlsafe_b64encode(os.urandom(40)).rstrip(b'=').decode('ascii')
 
 
-def _generate_code_challenge(verifier):
+def generate_code_challenge(verifier):
     """Generate a PKCE S256 code challenge from a verifier."""
     digest = hashlib.sha256(verifier.encode('ascii')).digest()
     return base64.urlsafe_b64encode(digest).rstrip(b'=').decode('ascii')
 
 
-def _get_calendar_service(user):
+def get_calendar_service(user):
     token_data = user.google_calendar_token
 
     if not token_data:
@@ -77,7 +76,7 @@ def _get_calendar_service(user):
     )
 
 
-def _sync_all_calendar_items(user):
+def sync_all_calendar_items(user):
     """Sync all existing events and rounds from user's tournaments to Google Calendar."""
     import datetime
 
@@ -90,7 +89,7 @@ def _sync_all_calendar_items(user):
         TournamentTeamRegistration,
     )
 
-    service = _get_calendar_service(user)
+    service = get_calendar_service(user)
 
     if not service:
         raise RuntimeError('Google Calendar is not connected.')

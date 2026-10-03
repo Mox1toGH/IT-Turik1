@@ -12,6 +12,7 @@ class JWTAuth(HttpBearer):
             user = JWTAuthentication().get_user(validated_token)
         except (InvalidToken, TokenError):
             return None
+        # TODO: remove request.auth, use user instead
         request.auth = user
         request.user = user
         return user
