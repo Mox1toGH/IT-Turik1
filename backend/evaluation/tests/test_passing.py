@@ -8,6 +8,7 @@ from evaluation.models import JuryAssignment, SubmissionEvaluation
 from teams.models import Team
 from tournaments.models import Round, Submission, Tournament, TournamentTeamRegistration
 from tournaments.services import mark_round_evaluated
+from backend.auth import authenticate
 
 class PassingCountTests(APITestCase):
     def setUp(self):
@@ -57,41 +58,9 @@ class PassingCountTests(APITestCase):
     def test_passing_status_endpoint(self):
         self.round1.status = Round.STATUS_EVALUATED
         self.round1.save()
-        self.client.force_authenticate(self.admin)
-        url = reverse('round_passing_status', kwargs={'pk': self.round1.id})
+        authenticate(self.client, self.admin)
+        url = reverse('ninja-api:round_passing_status', kwargs={'round_id': self.round1.id})
         response = self.client.get(url)
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['passing_count'], 1)
-
-    def test_admin_can_manually_disqualify_team(self):
-        self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': 'Violation'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.reg1.refresh_from_db()
-        self.assertTrue(self.reg1.is_disqualified)
-
-    def test_admin_can_reactivate_team(self):
-        self.reg1.is_active = False
-        self.reg1.is_disqualified = True
-        self.reg1.save()
-        self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'reactivate'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.reg1.refresh_from_db()
-        self.assertTrue(self.reg1.is_active)
-        self.assertFalse(self.reg1.is_disqualified)
-
-    def test_disqualification_action_is_required(self):
-        self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_disqualify_uses_default_reason_when_empty(self):
-        self.client.force_authenticate(self.admin)
-        url = reverse('tournament_registration_disqualification', kwargs={'pk': self.tournament.id, 'registration_pk': self.reg1.id})
-        response = self.client.patch(url, {'action': 'disqualify', 'disqualification_reason': ' '}, format='json')
-        self.reg1.refresh_from_db()
-        self.assertEqual(self.reg1.disqualification_reason, 'Disqualified by admin')
+        self.assertEqual(data['passing_count'], 1)

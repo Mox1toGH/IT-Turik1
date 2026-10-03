@@ -49,10 +49,10 @@ import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { truncateText } from '@/lib/utils'
-import type { Team } from '@/api/.ts.schemas'
 import { useDeleteTeam } from '@/api/teams/teams'
+import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 interface Props {
-  team?: Team
+  team?: TeamResponse
   disabled?: boolean
 }
 
@@ -89,7 +89,7 @@ const handleDeleteTeam = async () => {
   hideNotification()
 
   deleteTeam(
-    { id: props.team.id },
+    { pk: props.team.id },
     {
       onSuccess: () => {
         closeDeleteModal()

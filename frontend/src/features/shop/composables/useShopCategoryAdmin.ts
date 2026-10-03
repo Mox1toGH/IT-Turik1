@@ -11,7 +11,7 @@ export function useShopCategoryAdmin(enabled: Ref<boolean>) {
   const { showNotification } = useNotification()
 
   const { data: adminCategoryData } = useListAdminCategories(void 0, { query: { enabled } })
-  const adminCategories = computed(() => adminCategoryData.value?.results ?? [])
+  const adminCategories = computed(() => adminCategoryData.value?.items ?? [])
 
   const { mutate: createCategoryMutation } = useCreateAdminCategory()
   const { mutate: updateCategoryMutation } = useUpdateAdminCategory()
@@ -27,13 +27,13 @@ export function useShopCategoryAdmin(enabled: Ref<boolean>) {
 
   const updateCategory = (payload: { id: number; name: string }) =>
     updateCategoryMutation(
-      { id: payload.id, data: { name: payload.name } },
+      { categoryId: payload.id, data: { name: payload.name } },
       { onSuccess: () => showNotification('Category updated.', 'success'), onError },
     )
 
   const deleteCategory = (id: number) =>
     removeCategoryMutation(
-      { id },
+      { categoryId: id },
       { onSuccess: () => showNotification('Category deleted.', 'success'), onError },
     )
 

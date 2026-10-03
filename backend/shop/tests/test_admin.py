@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from points.models import UserPointsBalance
 from shop.models import Category, Order, Product, AvatarFrame
+from backend.auth import authenticate
 
 class ShopAdminTests(APITestCase):
     def setUp(self):
@@ -36,17 +37,18 @@ class ShopAdminTests(APITestCase):
             svg_file='avatar-frames/test.svg',
             is_active=True,
         )
-        self.purchase_url = reverse('shop-purchase')
+        self.purchase_url = reverse('ninja-api:shop-purchase')
 
     def test_admin_can_crud_category_and_product(self):
-        self.client.force_authenticate(user=self.admin)
+        authenticate(self.client, self.admin)
 
-        categories_url = reverse('shop-admin-categories-list-create')
-        create_category = self.client.post(categories_url, {'name': 'Accessories'}, format='json')
-        self.assertEqual(create_category.status_code, status.HTTP_201_CREATED)
-        new_category_id = create_category.data['id']
+        categories_url = reverse('ninja-api:shop-admin-categories-list-create')
+        response = self.client.post(categories_url, {'name': 'Accessories'}, format='json')
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_category_id = data['id']
 
-        products_url = reverse('shop-admin-products-list-create')
+        products_url = reverse('ninja-api:shop-admin-products-list-create')
         create_product = self.client.post(
             products_url,
             {
@@ -62,10 +64,10 @@ class ShopAdminTests(APITestCase):
         self.assertEqual(create_product.status_code, status.HTTP_201_CREATED)
 
     def test_admin_can_create_digital_product_with_asset_url(self):
-        self.client.force_authenticate(user=self.admin)
+        authenticate(self.client, self.admin)
         digital_category, _ = Category.objects.get_or_create(name='Digital Goods')
 
-        products_url = reverse('shop-admin-products-list-create')
+        products_url = reverse('ninja-api:shop-admin-products-list-create')
         response = self.client.post(
             products_url,
             {
@@ -82,37 +84,39 @@ class ShopAdminTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_non_admin_cannot_access_admin_shop_endpoints(self):
-        self.client.force_authenticate(user=self.user)
-        admin_categories_url = reverse('shop-admin-categories-list-create')
+        authenticate(self.client, self.user)
+        admin_categories_url = reverse('ninja-api:shop-admin-categories-list-create')
         response = self.client.get(admin_categories_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_can_list_orders_filter_change_status_and_cancel(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
-        purchase = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
-        order_id = purchase.data['id']
+        authenticate(self.client, self.user)
+        response = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
+        data = response.json()
+        order_id = data['id']
 
-        self.client.force_authenticate(user=self.admin)
-        update_status_url = reverse('shop-admin-orders-status', kwargs={'order_id': order_id})
+        authenticate(self.client, self.admin)
+        update_status_url = reverse('ninja-api:shop-admin-orders-status', kwargs={'order_id': order_id})
         update_response = self.client.patch(update_status_url, {'status': Order.STATUS_CONFIRMED}, format='json')
         self.assertEqual(update_response.status_code, status.HTTP_200_OK)
 
-        cancel_url = reverse('shop-admin-orders-cancel', kwargs={'order_id': order_id})
+        cancel_url = reverse('ninja-api:shop-admin-orders-cancel', kwargs={'order_id': order_id})
         cancel_response = self.client.post(cancel_url, {}, format='json')
         self.assertEqual(cancel_response.status_code, status.HTTP_200_OK)
 
     def test_unauthenticated_cannot_access_admin_orders(self):
-        url = reverse('shop-admin-orders-list')
+        url = reverse('ninja-api:shop-admin-orders-list')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_team_user_cannot_update_order_status(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
-        purchase = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
-        order_id = purchase.data['id']
+        authenticate(self.client, self.user)
+        response = self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
+        data = response.json()
+        order_id = data['id']
 
-        update_status_url = reverse('shop-admin-orders-status', kwargs={'order_id': order_id})
+        update_status_url = reverse('ninja-api:shop-admin-orders-status', kwargs={'order_id': order_id})
         response = self.client.patch(update_status_url, {'status': Order.STATUS_CONFIRMED}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

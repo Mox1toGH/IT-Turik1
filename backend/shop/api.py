@@ -1,0 +1,591 @@
+import logging
+
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.db.models import Case, IntegerField, Value, When
+from django.shortcuts import get_object_or_404
+
+from ninja import File, Form, Router
+from ninja.files import UploadedFile
+from ninja.pagination import PageNumberPagination, paginate
+
+from backend.auth import JWTAuth
+from backend.permissions import is_platform_admin
+from notifications.services import NotificationService
+
+from .models import AvatarFrame, Category, Order, Product, ProductImage
+
+from backend.schemas import ErrorResponse
+from backend.errors import raise_api_error
+from http import HTTPStatus
+from .schemas import AvatarFrameRequest, AvatarFrameResponse, CategoryRequest, CategoryResponse, OrderResponse, OrderStatusRequest, ProductRequest, ProductResponse, PurchaseDigitalResponse, PurchaseOrderResponse, PurchaseRequest
+from .services import cancel_order, create_order_purchase
+
+logger = logging.getLogger(__name__)
+
+router = Router(tags=['shop'], auth=JWTAuth())
+
+
+def _validation_details(exc):
+    """Best-effort extraction of validation messages for logging."""
+    return getattr(exc, 'message_dict', None) or exc.messages
+
+
+def _require_admin(request):
+    if not is_platform_admin(request.auth):
+        logger.warning(
+            'Admin access denied',
+            extra={'user_id': request.auth.id, 'request_path': request.path},
+        )
+        raise_api_error(HTTPStatus.FORBIDDEN, 'Admin access required.')
+
+
+def _products(active_only=False):
+    queryset = Product.objects.select_related('category', 'avatar_frame').prefetch_related('images')
+    return queryset.filter(is_active=True) if active_only else queryset
+
+
+def _product_filters(queryset, search: str | None, category: int | None, product_type: str | None, ordering: str = 'name'):
+    if search:
+        queryset = queryset.filter(name__icontains=search)
+    if category:
+        queryset = queryset.filter(category_id=category)
+    if product_type:
+        queryset = queryset.filter(product_type=product_type)
+    if ordering not in {'name', '-name', 'price', '-price'}:
+        logger.warning('Unsupported product ordering', extra={'ordering': ordering})
+        raise_api_error(400, 'Unsupported ordering. Use name, -name, price, or -price.')
+    return queryset.annotate(available_sort=Case(When(stock_quantity__gt=0, then=Value(0)), default=Value(1), output_field=IntegerField())).order_by('available_sort', ordering, 'id')
+
+
+def _save_product(product, payload, uploaded_images=None, avatar_frame_file=None):
+    data = payload.model_dump()
+    category = get_object_or_404(Category, pk=data.pop('category_id'))
+    avatar_frame_id = data.pop('avatar_frame_id')
+    avatar_frame = get_object_or_404(AvatarFrame.objects.filter(is_active=True), pk=avatar_frame_id) if avatar_frame_id else None
+    for field, value in data.items():
+        setattr(product, field, value)
+    product.category = category
+    product.avatar_frame = avatar_frame
+
+    if avatar_frame_file and product.product_type == Product.TYPE_DIGITAL:
+        frame, created = AvatarFrame.objects.get_or_create(
+            name=product.name,
+            defaults={'svg_file': avatar_frame_file},
+        )
+        if not created:
+            frame.svg_file = avatar_frame_file
+            frame.save(update_fields=['svg_file', 'updated_at'])
+        product.avatar_frame = frame
+        logger.info(
+            'Avatar frame created from product upload' if created
+            else 'Avatar frame file replaced from product upload',
+            extra={'frame_id': frame.id, 'product_name': product.name},
+        )
+
+    product.full_clean()
+    product.save()
+
+    image_count = 0
+    for image in uploaded_images or []:
+        ProductImage.objects.create(product=product, image=image)
+        image_count += 1
+    if image_count:
+        logger.debug(
+            'Product images added',
+            extra={'product_id': product.id, 'image_count': image_count},
+        )
+
+    return product
+
+
+@router.get('/products', operation_id='listProducts', url_name='shop-products-list', response={200: list[ProductResponse], 400: ErrorResponse, 401: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_products(request, search: str | None = None, category: int | None = None, product_type: str | None = None, ordering: str = 'name'):
+    logger.debug(
+        'Listing products',
+        extra={
+            'search': search,
+            'category_id': category,
+            'product_type': product_type,
+            'ordering': ordering,
+        },
+    )
+    return _product_filters(_products(active_only=True), search, category, product_type, ordering)
+
+
+@router.get('/products/{product_id}', operation_id='getProduct', url_name='shop-products-detail', response={200: ProductResponse, 401: ErrorResponse, 404: ErrorResponse})
+def get_product(request, product_id: int):
+    logger.debug('Fetching product', extra={'product_id': product_id})
+    product = get_object_or_404(_products(active_only=True), pk=product_id)
+
+    return ProductResponse.model_validate(
+        product,
+        from_attributes=True,
+    )
+
+
+@router.post('/purchase', operation_id='purchaseProduct', url_name='shop-purchase', response={201: PurchaseOrderResponse | PurchaseDigitalResponse, 400: ErrorResponse, 401: ErrorResponse})
+def purchase_product(request, payload: PurchaseRequest):
+    logger.info(
+        'Purchase requested',
+        extra={
+            'user_id': request.auth.id,
+            'product_id': payload.product_id,
+            'quantity': payload.quantity,
+        },
+    )
+    try:
+        order = create_order_purchase(user=request.auth, product_id=payload.product_id, quantity=payload.quantity)
+    except Product.DoesNotExist:
+        logger.warning(
+            'Purchase rejected, active product not found',
+            extra={'user_id': request.auth.id, 'product_id': payload.product_id},
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Active product not found.')
+    except ValidationError as exc:
+        logger.warning(
+            'Purchase rejected',
+            extra={
+                'user_id': request.auth.id,
+                'product_id': payload.product_id,
+                'quantity': payload.quantity,
+                'reason': _validation_details(exc),
+            },
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
+    except Exception:
+        logger.exception(
+            'Purchase failed unexpectedly',
+            extra={
+                'user_id': request.auth.id,
+                'product_id': payload.product_id,
+                'quantity': payload.quantity,
+            },
+        )
+        raise
+
+    if order is None:
+        logger.info(
+            'Digital product purchased',
+            extra={'user_id': request.auth.id, 'product_id': payload.product_id},
+        )
+        return 201, PurchaseDigitalResponse(
+            message='Digital product purchased successfully and added to your inventory.'
+        )
+
+    logger.info(
+        'Order created',
+        extra={
+            'order_id': order.id,
+            'user_id': request.auth.id,
+            'product_id': payload.product_id,
+            'quantity': payload.quantity,
+        },
+    )
+    return 201, order
+
+@router.get('/orders/my', operation_id='listMyOrders', url_name='shop-my-orders', response={200: list[OrderResponse], 401: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_my_orders(request):
+    logger.debug('Listing own orders', extra={'user_id': request.auth.id})
+    return Order.objects.select_related('user', 'product', 'product__category', 'product__avatar_frame').prefetch_related('product__images').filter(user=request.auth)
+
+
+@router.post('/orders/my/{order_id}/cancel', operation_id='cancelMyOrder', url_name='shop-my-order-cancel', response={200: OrderResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def cancel_my_order(request, order_id: int):
+    logger.info(
+        'Order cancellation requested',
+        extra={'order_id': order_id, 'user_id': request.auth.id},
+    )
+    order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
+
+    if order.user_id != request.auth.id:
+        logger.warning(
+            'Order cancellation rejected, not owner',
+            extra={
+                'order_id': order_id,
+                'user_id': request.auth.id,
+                'owner_id': order.user_id,
+            },
+        )
+        raise_api_error(HTTPStatus.FORBIDDEN, 'You can cancel only your own orders.')
+    try:
+        cancelled = cancel_order(order=order, cancelled_by=request.auth)
+    except ValidationError as exc:
+        logger.warning(
+            'Order cancellation rejected',
+            extra={
+                'order_id': order_id,
+                'user_id': request.auth.id,
+                'reason': _validation_details(exc),
+            },
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
+    logger.info('Order cancelled', extra={'order_id': order_id, 'user_id': request.auth.id})
+    return cancelled
+
+
+@router.get('/admin/categories', operation_id='listAdminCategories', url_name='shop-admin-categories-list-create', response={200: list[CategoryResponse], 401: ErrorResponse, 403: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_admin_categories(request):
+    _require_admin(request)
+    logger.debug('Listing categories', extra={'user_id': request.auth.id})
+
+    return Category.objects.all()
+
+
+@router.post('/admin/categories', operation_id='createAdminCategory', url_name='shop-admin-categories-list-create', response={201: CategoryResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+def create_admin_category(request, payload: CategoryRequest):
+    _require_admin(request)
+
+    try:
+        category = Category.objects.create(name=payload.name)
+    except IntegrityError:
+        logger.warning(
+            'Category creation rejected, duplicate name',
+            extra={'category_name': payload.name, 'user_id': request.auth.id},
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'A category with this name already exists.')
+    logger.info(
+        'Category created',
+        extra={
+            'category_id': category.id,
+            'category_name': category.name,
+            'user_id': request.auth.id,
+        },
+    )
+
+    return 201, CategoryResponse.model_validate(
+        category,
+        from_attributes=True,
+    )
+
+
+@router.get('/admin/categories/{category_id}', operation_id='getAdminCategory', url_name='shop-admin-categories-detail', response={200: CategoryResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def get_admin_category(request, category_id: int):
+    _require_admin(request)
+    logger.debug('Fetching category', extra={'category_id': category_id})
+
+    return CategoryResponse.model_validate(
+        get_object_or_404(Category, pk=category_id),
+        from_attributes=True,
+    )
+
+
+@router.patch('/admin/categories/{category_id}', operation_id='updateAdminCategory', response={200: CategoryResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_admin_category(request, category_id: int, payload: CategoryRequest):
+    _require_admin(request)
+
+    category = get_object_or_404(Category, pk=category_id)
+    category.name = payload.name
+    try:
+        category.save()
+    except IntegrityError:
+        logger.warning(
+            'Category update rejected, duplicate name',
+            extra={
+                'category_id': category_id,
+                'category_name': payload.name,
+                'user_id': request.auth.id,
+            },
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'A category with this name already exists.')
+    logger.info(
+        'Category updated',
+        extra={
+            'category_id': category_id,
+            'category_name': category.name,
+            'user_id': request.auth.id,
+        },
+    )
+
+    return CategoryResponse.model_validate(
+        category,
+        from_attributes=True,
+    )
+
+
+@router.delete('/admin/categories/{category_id}', operation_id='deleteAdminCategory', url_name='shop-admin-categories-detail', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_admin_category(request, category_id: int):
+    _require_admin(request)
+    get_object_or_404(Category, pk=category_id).delete()
+    logger.info(
+        'Category deleted',
+        extra={'category_id': category_id, 'user_id': request.auth.id},
+    )
+
+    return 204, None
+
+
+@router.get('/admin/products', operation_id='listAdminProducts', url_name='shop-admin-products-list-create', response={200: list[ProductResponse], 401: ErrorResponse, 403: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_admin_products(request, search: str | None = None, category: int | None = None, product_type: str | None = None):
+    _require_admin(request)
+    logger.debug(
+        'Listing admin products',
+        extra={
+            'search': search,
+            'category_id': category,
+            'product_type': product_type,
+        },
+    )
+
+    return _product_filters(_products(), search, category, product_type)
+
+
+@router.post('/admin/products', operation_id='createAdminProduct', url_name='shop-admin-products-list-create', response={201: ProductResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+def create_admin_product(
+    request,
+    payload: Form[ProductRequest],
+    uploaded_images: list[UploadedFile] = File(None),
+    avatar_frame_file: UploadedFile | None = File(None),
+):
+    _require_admin(request)
+    logger.info(
+        'Creating product',
+        extra={
+            'user_id': request.auth.id,
+            'image_count': len(uploaded_images or []),
+            'has_avatar_frame_file': bool(avatar_frame_file),
+        },
+    )
+
+    try:
+        product = _save_product(Product(), payload, uploaded_images, avatar_frame_file)
+    except ValidationError as exc:
+        logger.warning(
+            'Product creation rejected',
+            extra={'user_id': request.auth.id, 'reason': _validation_details(exc)},
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
+    logger.info(
+        'Product created',
+        extra={'product_id': product.id, 'user_id': request.auth.id},
+    )
+    return 201, ProductResponse.model_validate(product, from_attributes=True)
+
+
+@router.get('/admin/products/{product_id}', operation_id='getAdminProduct', url_name='shop-admin-products-detail', response={200: ProductResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def get_admin_product(request, product_id: int):
+    _require_admin(request)
+    logger.debug('Fetching admin product', extra={'product_id': product_id})
+
+    return ProductResponse.model_validate(
+        get_object_or_404(_products(), pk=product_id),
+        from_attributes=True,
+    )
+
+
+@router.patch('/admin/products/{product_id}', operation_id='updateAdminProduct', url_name='shop-admin-products-detail', response={200: ProductResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_admin_product(
+    request,
+    product_id: int,
+    payload: Form[ProductRequest],
+    uploaded_images: list[UploadedFile] = File(None),
+    avatar_frame_file: UploadedFile | None = File(None),
+):
+    _require_admin(request)
+    logger.info(
+        'Updating product',
+        extra={
+            'product_id': product_id,
+            'user_id': request.auth.id,
+            'image_count': len(uploaded_images or []),
+            'has_avatar_frame_file': bool(avatar_frame_file),
+        },
+    )
+
+    try:
+        product = _save_product(
+            get_object_or_404(_products(), pk=product_id),
+            payload,
+            uploaded_images,
+            avatar_frame_file,
+        )
+    except ValidationError as exc:
+        logger.warning(
+            'Product update rejected',
+            extra={
+                'product_id': product_id,
+                'user_id': request.auth.id,
+                'reason': _validation_details(exc),
+            },
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
+    logger.info(
+        'Product updated',
+        extra={'product_id': product_id, 'user_id': request.auth.id},
+    )
+    return ProductResponse.model_validate(product, from_attributes=True)
+
+
+@router.delete('/admin/products/{product_id}', operation_id='deleteAdminProduct', url_name='shop-admin-products-detail', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_admin_product(request, product_id: int):
+    _require_admin(request)
+    product = get_object_or_404(_products(), pk=product_id)
+
+    if product.orders.exists() or product.owned_by_users.exists():
+        product.is_active = False
+        product.save(update_fields=['is_active', 'updated_at'])
+        logger.info(
+            'Product deactivated, has orders or owners',
+            extra={'product_id': product_id, 'user_id': request.auth.id},
+        )
+    else:
+        product.delete()
+        logger.info(
+            'Product deleted',
+            extra={'product_id': product_id, 'user_id': request.auth.id},
+        )
+
+    return 204, None
+
+
+@router.get('/admin/orders', operation_id='listAdminOrders', url_name='shop-admin-orders-list', response={200: list[OrderResponse], 401: ErrorResponse, 403: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_admin_orders(request, status: str | None = None, user: int | None = None):
+    _require_admin(request)
+    logger.debug(
+        'Listing admin orders',
+        extra={'status': status, 'filter_user_id': user},
+    )
+    queryset = Order.objects.select_related('user', 'product', 'product__category', 'product__avatar_frame').prefetch_related('product__images')
+
+    return queryset.filter(status=status) if status else queryset.filter(user_id=user) if user else queryset
+
+
+@router.patch('/admin/orders/{order_id}/status', operation_id='updateAdminOrderStatus', url_name='shop-admin-orders-status', response={200: OrderResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_admin_order_status(request, order_id: int, payload: OrderStatusRequest):
+    _require_admin(request)
+
+    order = get_object_or_404(Order.objects.select_related('user', 'product'), pk=order_id)
+    previous_status = order.status
+    order.status = payload.status
+    order.save(update_fields=['status', 'updated_at'])
+    logger.info(
+        'Order status changed',
+        extra={
+            'order_id': order_id,
+            'previous_status': previous_status,
+            'new_status': order.status,
+            'user_id': request.auth.id,
+        },
+    )
+
+    NotificationService.notify(recipients=[order.user], event_type='shop_order_status_changed', context={'order_id': order.id, 'product_name': order.product.name, 'order_status': order.status})
+
+    return OrderResponse.model_validate(
+        order,
+        from_attributes=True,
+    )
+
+
+@router.post('/admin/orders/{order_id}/cancel', operation_id='cancelAdminOrder', url_name='shop-admin-orders-cancel', response={200: OrderResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def cancel_admin_order(request, order_id: int):
+    _require_admin(request)
+    logger.info(
+        'Admin order cancellation requested',
+        extra={'order_id': order_id, 'user_id': request.auth.id},
+    )
+    order = get_object_or_404(Order.objects.select_related('user', 'product'), pk=order_id)
+
+    try:
+        cancelled = cancel_order(order=order, cancelled_by=request.auth)
+    except ValidationError as exc:
+        logger.warning(
+            'Admin order cancellation rejected',
+            extra={
+                'order_id': order_id,
+                'user_id': request.auth.id,
+                'reason': _validation_details(exc),
+            },
+        )
+        raise_api_error(HTTPStatus.BAD_REQUEST, exc.message_dict)
+    logger.info(
+        'Order cancelled by admin',
+        extra={'order_id': order_id, 'user_id': request.auth.id},
+    )
+    NotificationService.notify(recipients=[cancelled.user], event_type='shop_order_status_changed', context={'order_id': cancelled.id, 'product_name': cancelled.product.name, 'order_status': cancelled.status})
+
+    return OrderResponse.model_validate(
+        cancelled,
+        from_attributes=True,
+    )
+
+
+@router.get('/avatar-frames', operation_id='listAvatarFrames', url_name='shop-admin-avatar-frames-list-create', response={200: list[AvatarFrameResponse], 401: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_avatar_frames(request, search: str | None = None):
+    logger.debug('Listing avatar frames', extra={'search': search})
+    queryset = AvatarFrame.objects.filter(is_active=True)
+
+    return queryset.filter(name__icontains=search).order_by('name') if search else queryset.order_by('name')
+
+
+@router.get('/admin/avatar-frames', operation_id='listAdminAvatarFrames', url_name='shop-admin-avatar-frames-list-create', response={200: list[AvatarFrameResponse], 401: ErrorResponse, 403: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_admin_avatar_frames(request, search: str | None = None):
+    _require_admin(request)
+    logger.debug('Listing admin avatar frames', extra={'search': search})
+    queryset = AvatarFrame.objects.all()
+
+    return queryset.filter(name__icontains=search).order_by('name', 'id') if search else queryset.order_by('name', 'id')
+
+
+@router.post('/admin/avatar-frames', operation_id='createAdminAvatarFrame', url_name='shop-admin-avatar-frames-list-create', response={201: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+def create_admin_avatar_frame(request, payload: AvatarFrameRequest):
+    _require_admin(request)
+
+    frame = AvatarFrame.objects.create(**payload.model_dump())
+    logger.info(
+        'Avatar frame created',
+        extra={'frame_id': frame.id, 'user_id': request.auth.id},
+    )
+
+    return 201, AvatarFrameResponse.model_validate(
+        frame,
+        from_attributes=True,
+    )
+
+
+@router.get('/admin/avatar-frames/{frame_id}', operation_id='getAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def get_admin_avatar_frame(request, frame_id: int):
+    _require_admin(request)
+    logger.debug('Fetching avatar frame', extra={'frame_id': frame_id})
+
+    return AvatarFrameResponse.model_validate(
+        get_object_or_404(AvatarFrame, pk=frame_id),
+        from_attributes=True,
+    )
+
+
+@router.patch('/admin/avatar-frames/{frame_id}', operation_id='updateAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_admin_avatar_frame(request, frame_id: int, payload: AvatarFrameRequest):
+    _require_admin(request)
+    frame = get_object_or_404(AvatarFrame, pk=frame_id)
+
+    for field, value in payload.model_dump().items():
+        setattr(frame, field, value)
+    frame.save()
+    logger.info(
+        'Avatar frame updated',
+        extra={'frame_id': frame_id, 'user_id': request.auth.id},
+    )
+
+    return AvatarFrameResponse.model_validate(
+        frame,
+        from_attributes=True,
+    )
+
+
+@router.delete('/admin/avatar-frames/{frame_id}', operation_id='deleteAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_admin_avatar_frame(request, frame_id: int):
+    _require_admin(request)
+    get_object_or_404(AvatarFrame, pk=frame_id).delete()
+    logger.info(
+        'Avatar frame deleted',
+        extra={'frame_id': frame_id, 'user_id': request.auth.id},
+    )
+
+    return 204, None

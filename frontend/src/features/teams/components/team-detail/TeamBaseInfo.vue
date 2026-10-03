@@ -146,12 +146,12 @@ import { useNotification } from '@/composables/useNotification'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
-import type { Team } from '@/api/.ts.schemas'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  team?: Team
+  team?: TeamResponse
   loading: boolean
   loadingError?: boolean
   isCaptain: boolean
@@ -182,7 +182,7 @@ const sendJoinRequest = () => {
   hideNotification()
 
   sendJoinRequestMutate(
-    { id: props.team?.id, data: { detail: '' } },
+    { pk: props.team?.id },
     {
       onSuccess: () => {
         emit('deleted')
@@ -203,7 +203,7 @@ const leaveTeam = () => {
   hideNotification()
 
   leaveTeamMutate(
-    { id: props.team.id },
+    { pk: props.team.id },
     {
       onSuccess: () => {
         emit('leave')

@@ -143,7 +143,7 @@ const {
   })),
 )
 
-const assignments = computed(() => assignmentsResponse.value?.results ?? [])
+const assignments = computed(() => assignmentsResponse.value?.items ?? [])
 const tournaments = computed(() => tournamentsResponse.value?.data ?? [])
 
 const evaluationStatusOptions = [

@@ -185,16 +185,16 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import type { Team, TeamMember } from '@/api/.ts.schemas'
 import {
   useInviteMemberToTeam,
   useListTeamInvitationsByTeam,
   useRemoveMemberFromTeam,
 } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
+import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  team: Team
+  team: TeamResponse
   loading: boolean
   isError?: boolean
 }
@@ -236,13 +236,13 @@ const userOptions = computed(() => [
 
 const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
-const removeMember = (member: TeamMember) => {
+const removeMember = (member: TeamMemberResponse) => {
   if (!props.team) return
   if (member.id === props.team.captain_id) return
   kickLoadingIds.value.add(member.id)
 
   removeMemberMutate(
-    { id: props.team.id, userId: member.id },
+    { pk: props.team.id, userId: member.id },
     {
       onSuccess: () => {
         showNotification('Member removed.', 'success')
@@ -268,7 +268,7 @@ const addMember = () => {
   }
 
   addMemberMutate(
-    { id: props.team.id, data: { user_id: Number(addMemberSelection.value) } },
+    { pk: props.team.id, data: { user_id: Number(addMemberSelection.value) } },
     {
       onSuccess: () => {
         addMemberSelection.value = null

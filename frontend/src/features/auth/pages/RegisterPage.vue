@@ -216,16 +216,16 @@ import { useNotification } from '@/composables/useNotification'
 import { useUserStore } from '@/stores/user'
 import { useForm } from '@/composables/useForm'
 import { RegisterSchema } from '@/schemas/auth.schema'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
 import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
 import { useRouter } from 'vue-router'
+import type { UserRole } from '@/api/backendAPINinja.schemas'
 
 interface Form {
   username: string
   full_name: string
   email: string
   password: string
-  role: RoleB96Enum
+  role: UserRole
   redeem_code: string
   phone: string
   city: string

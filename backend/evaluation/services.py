@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
+from backend.ninja_exceptions import ValidationError
 from accounts.models import User
 from notifications.services import NotificationService
 from tournaments.models import Round

@@ -111,11 +111,11 @@ import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 
 import { useListEvents } from '@/api/tournaments/tournaments'
-import type { StatusD67Enum } from '@/api/.ts.schemas'
+import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
   tournamentId: number
-  tournamentStatus: StatusD67Enum
+  tournamentStatus: TournamentStatus
 }
 
 const props = defineProps<Props>()

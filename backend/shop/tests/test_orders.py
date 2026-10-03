@@ -3,7 +3,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from accounts.models import User
 from points.models import PointsTransaction, UserPointsBalance
-from shop.models import Category, Order, Product
+from shop.models import Category, Order, Product, AvatarFrame
+from inventory.models import UserInventory
+from backend.auth import authenticate
 
 class OrderTests(APITestCase):
     def setUp(self):
@@ -29,12 +31,60 @@ class OrderTests(APITestCase):
             product_type=Product.TYPE_PHYSICAL,
             is_active=True,
         )
-        self.purchase_url = reverse('shop-purchase')
-        self.my_orders_url = reverse('shop-my-orders')
+        self.avatar_frame = AvatarFrame.objects.create(
+            name=f'Inventory Frame {self.user.username}',
+            svg_file='avatar-frames/inventory.svg',
+            is_active=True,
+        )
+        self.digital_product = Product.objects.create(
+            name='Digital Badge',
+            description='Digital item',
+            price=20,
+            stock_quantity=10,
+            category=self.category,
+            product_type=Product.TYPE_DIGITAL,
+            avatar_frame=self.avatar_frame,
+            is_active=True,
+        )
+        self.purchase_url = reverse('ninja-api:shop-purchase')
+        self.my_orders_url = reverse('ninja-api:shop-my-orders')
+
+    def test_purchase_digital_product_rejects_duplicate_ownership(self):
+            UserInventory.objects.create(user=self.user, product=self.digital_product)
+            UserPointsBalance.objects.create(user=self.user, balance=500)
+            authenticate(self.client, self.user)
+    
+            response = self.client.post(
+                self.purchase_url,
+                {'product_id': self.digital_product.id, 'quantity': 1},
+                format='json',
+            )
+    
+            data = response.json()
+
+    
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                data,
+                "product_id: You already own this digital item.",
+            )
+    
+            self.assertEqual(
+                UserInventory.objects.filter(
+                    user=self.user,
+                    product=self.digital_product,
+                ).count(),
+                1,
+            )
+            self.assertEqual(
+                UserPointsBalance.objects.get(user=self.user).balance,
+                500,
+            )
+    
 
     def test_purchase_success_creates_pending_order_deducts_points_stock_and_links_transaction(self):
         UserPointsBalance.objects.create(user=self.user, balance=200)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -42,8 +92,10 @@ class OrderTests(APITestCase):
             format='json',
         )
 
+        data = response.json()
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        order = Order.objects.get(id=response.data['id'])
+        order = Order.objects.get(id=data['id'])
         self.product.refresh_from_db()
         balance = UserPointsBalance.objects.get(user=self.user)
         purchase_tx = PointsTransaction.objects.get(order=order)
@@ -56,7 +108,7 @@ class OrderTests(APITestCase):
 
     def test_purchase_rejects_when_insufficient_balance(self):
         UserPointsBalance.objects.create(user=self.user, balance=20)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -69,7 +121,7 @@ class OrderTests(APITestCase):
 
     def test_purchase_rejects_when_insufficient_stock(self):
         UserPointsBalance.objects.create(user=self.user, balance=999)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -82,17 +134,17 @@ class OrderTests(APITestCase):
 
     def test_user_can_cancel_only_own_order_and_get_refund_and_stock_return(self):
         UserPointsBalance.objects.create(user=self.user, balance=300)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         purchase_response = self.client.post(
             self.purchase_url,
             {'product_id': self.product.id, 'quantity': 3},
             format='json',
         )
-        order_id = purchase_response.data['id']
+        purchase_response_data = purchase_response.json()
+        order_id = purchase_response_data['id']
 
-        cancel_url = reverse('shop-my-order-cancel', kwargs={'order_id': order_id})
+        cancel_url = reverse('ninja-api:shop-my-order-cancel', kwargs={'order_id': order_id})
         cancel_response = self.client.post(cancel_url, {}, format='json')
-
         self.assertEqual(cancel_response.status_code, status.HTTP_200_OK)
         order = Order.objects.get(id=order_id)
         self.product.refresh_from_db()
@@ -104,16 +156,17 @@ class OrderTests(APITestCase):
 
     def test_user_cannot_cancel_other_users_order(self):
         UserPointsBalance.objects.create(user=self.other_user, balance=300)
-        self.client.force_authenticate(user=self.other_user)
+        authenticate(self.client, self.other_user)
         purchase_response = self.client.post(
             self.purchase_url,
             {'product_id': self.product.id, 'quantity': 1},
             format='json',
         )
-        order_id = purchase_response.data['id']
+        purchase_response_data = purchase_response.json()
+        order_id = purchase_response_data['id']
 
-        self.client.force_authenticate(user=self.user)
-        cancel_url = reverse('shop-my-order-cancel', kwargs={'order_id': order_id})
+        authenticate(self.client, self.user)
+        cancel_url = reverse('ninja-api:shop-my-order-cancel', kwargs={'order_id': order_id})
         response = self.client.post(cancel_url, {}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -122,14 +175,16 @@ class OrderTests(APITestCase):
         UserPointsBalance.objects.create(user=self.user, balance=500)
         UserPointsBalance.objects.create(user=self.other_user, balance=500)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
 
-        self.client.force_authenticate(user=self.other_user)
+        authenticate(self.client, self.other_user)
         self.client.post(self.purchase_url, {'product_id': self.product.id, 'quantity': 1}, format='json')
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.get(self.my_orders_url)
 
+        data = response.json()
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(data['count'], 1)

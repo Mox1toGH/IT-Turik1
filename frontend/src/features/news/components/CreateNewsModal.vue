@@ -107,7 +107,11 @@ function handleSubmit() {
       },
       onError(error) {
         for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof CreateNewsFields, errors?.[0] ?? 'Invalid value')
+          const message = Array.isArray(errors) ? errors[0] : errors
+          form.setError(
+            field as keyof CreateNewsFields,
+            typeof message === 'string' ? message : 'Invalid value',
+          )
         }
         showNotification(error?.message, 'error')
       },

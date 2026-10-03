@@ -117,15 +117,15 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LockIcon from '@/icons/LockIcon.vue'
 import { ref } from 'vue'
 import { truncateText } from '@/lib/utils'
-import type { Team } from '@/api/.ts.schemas'
 import { useUpdateTeam } from '@/api/teams/teams'
+import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  team?: Team
+  team?: TeamResponse
 }
 
 const emit = defineEmits<{
-  (e: 'changedTeamVisibility', newTeamValue: Team): void
+  (e: 'changedTeamVisibility', newTeamValue: TeamResponse): void
 }>()
 
 const props = defineProps<Props>()
@@ -146,7 +146,7 @@ const confirmChangeVisibility = async () => {
   hideNotification()
 
   changeTeamVisibility(
-    { id: props.team.id, data: { is_public: selectedVisibility.value } },
+    { pk: props.team.id, data: { is_public: selectedVisibility.value } },
     {
       onSuccess: (data) => {
         showNotification(

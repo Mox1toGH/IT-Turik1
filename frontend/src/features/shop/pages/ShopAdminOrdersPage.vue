@@ -115,7 +115,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { useNotification } from '@/composables/useNotification'
-import type { ShopOrderStatus } from '@/api/services/shop/types'
+import type { ListAdminOrdersParams } from '@/api/backendAPINinja.schemas'
 import { useCancelAdminOrder, useListAdminOrders, useUpdateAdminOrderStatus } from '@/api/shop/shop'
 
 const { showNotification } = useNotification()
@@ -128,19 +128,24 @@ watch([statusFilter, userFilter], () => {
   page.value = 1
 })
 
-// TODO: add "all" option to backend
-const { data, isLoading, isLoadingError, error } = useListAdminOrders(
-  computed(() => ({
+const orderParams = ref<ListAdminOrdersParams>({})
+
+watch([page, pageSize, statusFilter, userFilter], () => {
+  const userId = Number(userFilter.value)
+  orderParams.value = {
     page: page.value,
     page_size: pageSize.value,
     status: statusFilter.value === 'all' ? '' : statusFilter.value,
-    user: userFilter.value || undefined,
-  })),
-)
+    user: Number.isInteger(userId) && userId > 0 ? userId : undefined,
+  }
+}, { immediate: true })
+
+// TODO: add "all" option to backend
+const { data, isLoading, isLoadingError, error } = useListAdminOrders(orderParams)
 const { mutate: updateStatus } = useUpdateAdminOrderStatus()
 const { mutate: cancelOrder, isPending: isCancelling } = useCancelAdminOrder()
 
-const orders = computed(() => data.value?.results ?? [])
+const orders = computed(() => data.value?.items ?? [])
 const totalPages = computed(() => Math.max(1, Math.ceil((data.value?.count || 0) / pageSize.value)))
 
 const statusOptions = [
@@ -159,7 +164,7 @@ const mutableStatusOptions = [
   { value: 'completed', label: 'Completed' },
 ]
 
-const canCancel = (status: ShopOrderStatus) => ['pending', 'confirmed'].includes(status)
+const canCancel = (status: string) => ['pending', 'confirmed'].includes(status)
 
 const changeStatus = (
   orderId: number,

@@ -131,13 +131,13 @@ import UiCard from '@/components/ui/UiCard.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
 import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
 import { useNotification } from '@/composables/useNotification'
+import type { UserRole } from '@/api/backendAPINinja.schemas'
 
 interface Form {
   username: string
-  role: RoleB96Enum
+  role: UserRole
   redeem_code: string
   password: string
   full_name: string
@@ -150,7 +150,7 @@ const { data: user } = useGetUserProfile()
 
 const form = useForm<Form>(CompleteProfileSchema, {
   username: user.value?.username ?? '',
-  role: user.value?.role ?? 'team',
+  role: (user.value?.role as UserRole) ?? 'team',
   redeem_code: '',
   password: '',
   full_name: user.value?.full_name ?? '',

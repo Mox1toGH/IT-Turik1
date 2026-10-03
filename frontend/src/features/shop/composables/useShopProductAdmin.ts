@@ -7,18 +7,18 @@ import {
   type CreateAdminProductMutationBody,
 } from '@/api/shop/shop'
 import { useNotification } from '@/composables/useNotification'
-import type { Product } from '@/api/.ts.schemas'
+import type { ProductResponse } from '@/api/backendAPINinja.schemas'
 
 export function useShopProductAdmin() {
   const { showNotification } = useNotification()
 
   const { data: avatarFramesData } = useListAvatarFrames()
-  const avatarFrames = computed(() => avatarFramesData.value?.results ?? [])
+  const avatarFrames = computed(() => avatarFramesData.value?.items ?? [])
 
   const isProductFormOpen = ref(false)
-  const editingProduct = ref<Product | null>(null)
+  const editingProduct = ref<ProductResponse | null>(null)
   const isProductDeleteOpen = ref(false)
-  const deletingProduct = ref<Product | null>(null)
+  const deletingProduct = ref<ProductResponse | null>(null)
 
   const { mutate: createProduct, isPending: isCreatingProduct } = useCreateAdminProduct()
   const { mutate: updateProduct, isPending: isUpdatingProduct } = useUpdateAdminProduct()
@@ -32,12 +32,12 @@ export function useShopProductAdmin() {
     isProductFormOpen.value = true
   }
 
-  const openProductEdit = (product: Product) => {
+  const openProductEdit = (product: ProductResponse) => {
     editingProduct.value = product
     isProductFormOpen.value = true
   }
 
-  const openProductDelete = (product: Product) => {
+  const openProductDelete = (product: ProductResponse) => {
     deletingProduct.value = product
     isProductDeleteOpen.value = true
   }
@@ -58,7 +58,7 @@ export function useShopProductAdmin() {
     }
 
     updateProduct(
-      { id: editingProduct.value.id, data: body },
+      { productId: editingProduct.value.id, data: body },
       {
         onSuccess: () => {
           isProductFormOpen.value = false
@@ -72,7 +72,7 @@ export function useShopProductAdmin() {
   const confirmProductDelete = () => {
     if (!deletingProduct.value) return
     deleteProduct(
-      { id: deletingProduct.value.id },
+      { productId: deletingProduct.value.id },
       {
         onSuccess: () => {
           isProductDeleteOpen.value = false

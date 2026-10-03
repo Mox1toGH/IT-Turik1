@@ -41,7 +41,7 @@
             v-for="notification in unreadNotifications"
             :key="notification.id"
             class="notification-item is-unread"
-            @click="markAsRead({ id: notification.id })"
+            @click="markAsRead({ notificationId: notification.id })"
           >
             <div class="item-content">
               <div class="item-title-row">
@@ -133,7 +133,7 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
 } from '@/api/notifications/notifications'
-import type { Notification } from '@/api/.ts.schemas'
+import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 import { useNotification } from '@/composables/useNotification'
 
 const isOpen = ref(false)
@@ -159,11 +159,11 @@ const confirmModalConfig = ref({
 const { showNotification } = useNotification()
 
 const unreadNotifications = computed(() => {
-  return notifications.value?.results?.filter((n) => !n.is_read) || []
+  return notifications.value?.items.filter((n) => !n.is_read) || []
 })
 
 const hasUnread = computed(() => unreadNotifications.value.length > 0)
-const hasNotifications = computed(() => (notifications.value?.results?.length ?? 0) > 0)
+const hasNotifications = computed(() => (notifications.value?.items.length ?? 0) > 0)
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value
@@ -186,7 +186,7 @@ const handleDelete = (id: number) => {
     confirmVariant: 'danger',
     onConfirm: () => {
       deleteNotification(
-        { id },
+        { notificationId: id },
         {
           onSuccess: () => {
             isConfirmModalOpen.value = false
@@ -217,9 +217,9 @@ const handleDeleteAll = () => {
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: Notification) => {
+const handleNotificationClick = (notification: NotificationResponse) => {
   if (!notification.is_read) {
-    markAsRead({ id: notification.id })
+    markAsRead({ notificationId: notification.id })
   }
 
   const url = getRedirectUrl(notification)
@@ -229,7 +229,7 @@ const handleNotificationClick = (notification: Notification) => {
   }
 }
 
-const getRedirectUrl = (notification: Notification) => {
+const getRedirectUrl = (notification: NotificationResponse) => {
   const type = notification.event_type
 
   // Only invitations go to /teams — recipient hasn't joined yet

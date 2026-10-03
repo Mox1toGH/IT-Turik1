@@ -36,7 +36,7 @@ export function useShopCatalog(initialPageSize = 12) {
     })),
   )
 
-  const products = computed(() => data.value?.results ?? [])
+  const products = computed(() => data.value?.items ?? [])
   const totalCount = computed(() => data.value?.count ?? 0)
   const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize.value)))
 
@@ -47,7 +47,6 @@ export function useShopCatalog(initialPageSize = 12) {
   const categoryOptions = computed(() => {
     const set = new Map<number, string>()
     for (const item of products.value) set.set(item.category.id, item.category.name)
-    console.log(set)
     return [
       { value: 'all', label: 'All categories' },
       ...Array.from(set.entries()).map(([id, name]) => ({ value: String(id), label: name })),

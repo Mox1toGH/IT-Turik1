@@ -57,11 +57,11 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useCertificatesUpdate } from '@/api/certificates/certificates'
-import type { Certificate } from '@/api/.ts.schemas'
+import { useUpdateCertificate } from '@/api/certificates/certificates'
+import type { CertificateResponse } from '@/api/backendAPINinja.schemas'
 
 const props = defineProps<{
-  cert: Certificate | null
+  cert: CertificateResponse | null
   userOptions: Array<{ value: number; label: string }>
   tournamentOptions: Array<{ value: number; label: string }>
   teamOptions: Array<{ value: number; label: string }>
@@ -69,12 +69,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:cert', value: Certificate | null): void
+  (e: 'update:cert', value: CertificateResponse | null): void
   (e: 'updated'): void
 }>()
 
 const { showNotification } = useNotification()
-const { mutateAsync: updateCert, isPending: isUpdating } = useCertificatesUpdate()
+const { mutateAsync: updateCert, isPending: isUpdating } = useUpdateCertificate()
 
 const open = computed({
   get: () => props.cert !== null,

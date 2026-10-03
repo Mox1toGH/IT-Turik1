@@ -9,7 +9,7 @@
 
       <template #header>
         <div class="submissions-header">
-          <ui-skeleton-loader :loading="isLoading">
+          <ui-skeleton-loader :loading="isLoadingRound">
             <template #skeleton>
               <ui-skeleton variant="rect" width="150px" />
             </template>
@@ -148,11 +148,11 @@ import {
   useListAvailableJury,
   type AssignJuryToRoundMutationBody,
 } from '@/api/evaluation/evaluation'
-import type { StatusD67Enum } from '@/api/.ts.schemas'
+import type { TournamentStatus } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   tournamentId: number
-  tournamentStatus: StatusD67Enum
+  tournamentStatus: TournamentStatus
 }
 
 const props = defineProps<Props>()
@@ -196,6 +196,7 @@ const {
 )
 
 const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
+const isLoadingRound = computed(() => tournamentLoading.value)
 const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
 const isError = computed(
   () => noClosedRound.value || tournamentError.value || submissionsError.value,
@@ -257,7 +258,7 @@ const handleAssignJury = () => {
 
   assign(
     {
-      id: closedRound.value?.id,
+      roundId: closedRound.value?.id,
       data: payload as unknown as AssignJuryToRoundMutationBody,
     },
     {

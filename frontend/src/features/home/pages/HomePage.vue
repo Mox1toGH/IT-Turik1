@@ -84,7 +84,7 @@ const isTeamRole = computed(() => user.value?.role === 'team')
 
 const heroStats = computed(() => [
   { label: 'Role', value: user.value?.role ?? '-' },
-  { label: 'Teams', value: String(user.value?.teams?.length ?? 0) },
+  // { label: 'Teams', value: String(user.value?.teams?.length ?? 0) },
 ])
 </script>
 

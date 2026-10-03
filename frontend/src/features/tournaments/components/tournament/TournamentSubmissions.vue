@@ -250,7 +250,7 @@ import { truncateText } from '@/lib/utils'
 import { computed, ref } from 'vue'
 import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
-import type { StatusE43Enum } from '@/api/.ts.schemas'
+import type { RoundStatus } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
   tournamentId: number
@@ -288,10 +288,10 @@ const filteredSubmissions = computed(() => {
   )
 })
 
-const submissionStatus = (roundStatus?: StatusE43Enum) => {
+const submissionStatus = (roundStatus?: RoundStatus) => {
   return roundStatus === 'active' ? 'Active' : 'Closed'
 }
-const badgeVariant = (roundStatus?: StatusE43Enum): Variants => {
+const badgeVariant = (roundStatus?: RoundStatus): Variants => {
   return roundStatus === 'active' ? 'primary' : 'red'
 }
 

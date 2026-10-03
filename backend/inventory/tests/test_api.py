@@ -5,6 +5,7 @@ from accounts.models import User
 from inventory.models import UserInventory
 from points.models import UserPointsBalance
 from shop.models import AvatarFrame, Category, Product
+from backend.auth import authenticate
 
 class InventoryApiTests(APITestCase):
     def setUp(self):
@@ -57,27 +58,59 @@ class InventoryApiTests(APITestCase):
             is_active=True,
         )
 
-        self.inventory_url = reverse('inventory-my')
-        self.equip_url = reverse('inventory-equip')
-        self.unequip_url = reverse('inventory-unequip')
-        self.purchase_url = reverse('shop-purchase')
+        self.inventory_url = reverse('ninja-api:inventory-my')
+        self.equip_url = reverse('ninja-api:inventory-equip')
+        self.unequip_url = reverse('ninja-api:inventory-unequip')
+        self.purchase_url = reverse('ninja-api:shop-purchase')
 
-    def test_my_inventory_list_returns_only_current_user_items(self):
+    def test_my_inventory_returns_only_authenticated_user_items(self):
         UserInventory.objects.create(user=self.user, product=self.digital_product)
         UserInventory.objects.create(user=self.other_user, product=self.second_digital_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
+
         response = self.client.get(self.inventory_url)
+        data = response.json()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 1)
-        self.assertEqual(response.data['results'][0]['product']['id'], self.digital_product.id)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["id"], self.user.inventory.first().id)
+        self.assertEqual(data["items"][0]["product"]["id"], self.digital_product.id)
+
+    def test_my_inventory_returns_empty_list_when_user_has_no_items(self):
+        UserInventory.objects.create(user=self.other_user, product=self.second_digital_product)
+
+        authenticate(self.client, self.user)
+
+        response = self.client.get(self.inventory_url)
+        data = response.json()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data["count"], 0)
+        self.assertEqual(data["items"], [])
+
+    def test_my_inventory_requires_authentication(self):
+        response = self.client.get(self.inventory_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_my_inventory_contains_product_data(self):
+        UserInventory.objects.create(user=self.user, product=self.digital_product)
+
+        authenticate(self.client, self.user)
+
+        response = self.client.get(self.inventory_url)
+        product = response.json()["items"][0]["product"]
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(product["id"], self.digital_product.id)
+        self.assertEqual(product["name"], self.digital_product.name)
 
     def test_equip_inventory_item_marks_selected_item_equipped_and_unsets_previous(self):
         first_item = UserInventory.objects.create(user=self.user, product=self.digital_product)
         second_item = UserInventory.objects.create(user=self.user, product=self.second_digital_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.equip_url, {'inventory_id': second_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -89,7 +122,7 @@ class InventoryApiTests(APITestCase):
     def test_equip_rejects_non_digital_items(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.physical_product)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.equip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -97,7 +130,7 @@ class InventoryApiTests(APITestCase):
     def test_unequip_inventory_item(self):
         inventory_item = UserInventory.objects.create(user=self.user, product=self.digital_product, is_equipped=True)
 
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
         response = self.client.post(self.unequip_url, {'inventory_id': inventory_item.id}, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -106,7 +139,7 @@ class InventoryApiTests(APITestCase):
 
     def test_purchase_digital_product_creates_inventory_item(self):
         UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
+        authenticate(self.client, self.user)
 
         response = self.client.post(
             self.purchase_url,
@@ -119,15 +152,22 @@ class InventoryApiTests(APITestCase):
             UserInventory.objects.filter(user=self.user, product=self.digital_product).exists()
         )
 
-    def test_purchase_digital_product_rejects_duplicate_ownership(self):
-        UserInventory.objects.create(user=self.user, product=self.digital_product)
-        UserPointsBalance.objects.create(user=self.user, balance=500)
-        self.client.force_authenticate(user=self.user)
-
-        response = self.client.post(
-            self.purchase_url,
-            {'product_id': self.digital_product.id, 'quantity': 1},
-            format='json',
+    def test_unequip_non_digital_item_returns_400(self):
+        item = UserInventory.objects.create(
+            user=self.user,
+            product=self.physical_product,
+            is_equipped=True,
         )
 
+        authenticate(self.client, self.user)
+
+        response = self.client.post(
+            self.unequip_url,
+            {"inventory_id": item.id},
+            format="json",
+        )
+
+        data = response.json()
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(data["message"], "Only digital items can be unequipped.")

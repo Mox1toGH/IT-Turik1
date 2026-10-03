@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell profile-page">
     <div v-if="isLoadingError" class="error-state">
-      <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
+      <p>Error while fetching profile info</p>
     </div>
 
     <template v-else>
@@ -160,7 +160,7 @@ type ProfileSection =
   | 'certificates'
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
+const { data: user, isLoading, isLoadingError } = useGetUserProfile()
 const router = useRouter()
 const isDeleting = ref(false)
 const activeSection = ref<ProfileSection>('overview')
@@ -321,7 +321,7 @@ const logout = () => {
   gap: 0.6rem;
   min-width: 0;
   min-height: 48px;
-  padding: 0.7rem 0;
+  padding: 0.7rem 0.5rem;
   color: var(--foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);

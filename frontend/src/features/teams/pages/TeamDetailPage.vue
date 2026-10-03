@@ -345,13 +345,16 @@ const resetBannerState = () => {
 }
 
 const saveBanner = () => {
-  if (!selectedBanner.value) return
+  const banner = selectedBanner.value[0]
+  if (!banner) return
+
   writeImagePosition(bannerPositionKey.value, {
     x: bannerPositionX.value,
     y: bannerPositionY.value,
   })
+
   updateBanner(
-    { id: teamId, data: { banner: selectedBanner.value[0] } },
+    { pk: teamId, data: { banner } },
     {
       onSuccess: () => {
         showNotification('Banner updated.', 'success')
@@ -366,7 +369,7 @@ const saveBanner = () => {
 
 const removeBanner = () => {
   removeTeamBanner(
-    { id: teamId },
+    { pk: teamId },
     {
       onSuccess: () => {
         clearImagePosition(bannerPositionKey.value)

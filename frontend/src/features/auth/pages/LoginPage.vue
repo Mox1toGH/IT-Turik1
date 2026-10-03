@@ -74,7 +74,7 @@ import { useUserStore } from '@/stores/user'
 import { useLogin } from '@/api/accounts/accounts'
 import { useForm } from '@/composables/useForm'
 import { LoginSchema } from '@/schemas/auth.schema'
-import type { LoginResponse } from '@/api/.ts.schemas'
+import type { LoginResponse } from '@/api/backendAPINinja.schemas'
 
 const store = useUserStore()
 

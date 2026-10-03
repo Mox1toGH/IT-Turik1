@@ -147,7 +147,7 @@
               v-model="form.fields.value.member_ids!"
               :isLoading="isLoadingUsers"
               :isError="isLoadingError || !!form.errors.value.member_ids"
-              :error="`Error while fetching users (code: ${usersError?.code})`"
+              :error="`Error while fetching users`"
               :multiple="true"
               :options="
                 createCandidateUsers?.map((u) => ({
@@ -256,7 +256,7 @@ const contactSummary = computed(() => {
   return 'Not set'
 })
 
-const { data: users, isLoading: isLoadingUsers, error: usersError, isLoadingError } = useListUsers()
+const { data: users, isLoading: isLoadingUsers, isLoadingError } = useListUsers()
 const { mutate: createTeam, isPending: isCreatingTeam } = useCreateTeam()
 
 const handleFormSubmit = () => {

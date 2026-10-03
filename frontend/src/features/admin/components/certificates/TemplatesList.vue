@@ -77,8 +77,6 @@
                     <TrashIcon class="icon-mini" />
                   </button>
                 </div>
-
-                <EditTemplateModal :template="templateToEdit" v-model="isEditOpen" />
               </div>
             </template>
 
@@ -95,6 +93,8 @@
         />
       </div>
     </ui-skeleton-loader>
+
+    <EditTemplateModal :template="templateToEdit" v-model="isEditOpen" />
   </ui-card>
 
   <UiConfirmModal
@@ -127,14 +127,19 @@ import {
   useDeleteCertificateTemplate,
   useListCertificateTemplates,
 } from '@/api/certificates/certificates'
-import type { CertificateTemplate } from '@/api/.ts.schemas'
+import type { CertificateTemplateResponse } from '@/api/backendAPINinja.schemas'
 import EditTemplateModal from './EditTemplateModal.vue'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 
 const isDeleteModalOpen = ref(false)
 const templateToDeleteId = ref<number | null>(null)
 
-const openDelete = (templateId: CertificateTemplate['id']) => {
+const openDelete = (templateId: CertificateTemplateResponse['id']) => {
+  if (!Number.isInteger(templateId)) {
+    showNotification('Unable to delete a template without an ID.', 'error')
+    return
+  }
+
   templateToDeleteId.value = templateId
   isDeleteModalOpen.value = true
 }
@@ -145,16 +150,17 @@ const onDeleteConfirm = async () => {
   if (templateToDeleteId.value === null) return
 
   try {
-    await deleteTemplate({ id: templateToDeleteId.value })
+    await deleteTemplate({ templateId: templateToDeleteId.value })
     showNotification('Template deleted successfully.', 'success')
     isDeleteModalOpen.value = false
+    templateToDeleteId.value = null
   } catch {
     showNotification('Failed to delete template.', 'error')
   }
 }
 
 const isEditOpen = ref(false)
-const templateToEdit = ref<CertificateTemplate>()
+const templateToEdit = ref<CertificateTemplateResponse>()
 
 const templatesPage = ref(1)
 const templatesPageSize = 8
@@ -164,10 +170,10 @@ const {
   isLoading: isTemplatesLoading,
   isLoadingError: isTemplatesError,
 } = useListCertificateTemplates(
-  computed(() => ({ page: templatesPage.value, pageSize: templatesPageSize })),
+  computed(() => ({ page: templatesPage.value, page_size: templatesPageSize })),
 )
 
-const paginatedTemplates = computed(() => data.value?.results || [])
+const paginatedTemplates = computed(() => data.value?.items || [])
 const totalTemplatePages = computed(() => {
   const total = data.value?.count || 0
   return Math.max(1, Math.ceil(total / templatesPageSize))
@@ -191,10 +197,9 @@ async function submit() {
   try {
     await uploadTemplate({
       data: {
-        name: form.name,
         image: form.files[0],
-        is_default: form.is_default,
       },
+      params: { name: form.name, is_default: form.is_default },
     })
 
     form.name = ''
@@ -207,7 +212,12 @@ async function submit() {
   }
 }
 
-function handleEditTemplate(template: CertificateTemplate) {
+function handleEditTemplate(template: CertificateTemplateResponse) {
+  if (!Number.isInteger(template.id)) {
+    showNotification('Unable to edit a template without an ID.', 'error')
+    return
+  }
+
   templateToEdit.value = template
   isEditOpen.value = true
 }

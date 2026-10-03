@@ -99,22 +99,22 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import NewsItemCard from './NewsItemCard.vue'
-import type { NewsArticle } from '@/api/.ts.schemas'
+import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 
 defineProps<{
   isLoading: boolean
   isError: boolean
   errorCode?: number | string
-  items: NewsArticle[]
+  items: NewsArticleResponse[]
   totalNews: number
   totalPages: number
   pageSize: number
-  canModify: (item: NewsArticle) => boolean
+  canModify: (item: NewsArticleResponse) => boolean
 }>()
 
 defineEmits<{
-  edit: [item: NewsArticle]
-  delete: [item: NewsArticle]
+  edit: [item: NewsArticleResponse]
+  delete: [item: NewsArticleResponse]
 }>()
 
 const currentPageModel = defineModel<number>('currentPage', { required: true })

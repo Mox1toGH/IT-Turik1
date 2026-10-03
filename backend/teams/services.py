@@ -1,4 +1,4 @@
-from rest_framework.exceptions import ValidationError
+from backend.ninja_exceptions import ValidationError
 
 
 def get_active_tournament_registration(team):

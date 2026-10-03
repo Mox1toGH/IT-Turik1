@@ -23,12 +23,12 @@
             <ui-input
               v-model="email"
               type="email"
-              :is-invalid="!!error?.details.email"
+              :is-invalid="!!error?.details?.email"
               autocomplete="email"
               placeholder="name@mail.com"
               required
             />
-            <small v-if="error?.details.email" class="error">{{ error.details.email }}</small>
+            <small v-if="error?.details?.email" class="error">{{ error.details.email }}</small>
           </label>
 
           <div class="footer-actions">

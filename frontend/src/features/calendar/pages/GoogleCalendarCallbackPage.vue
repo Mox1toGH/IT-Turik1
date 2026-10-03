@@ -53,7 +53,7 @@ onMounted(async () => {
     isSuccess.value = true
     isProcessing.value = false
     setTimeout(() => router.push('/calendar'), 1500)
-  } catch (e) {
+  } catch (_error) {
     isProcessing.value = false
     errorMessage.value = 'Failed to connect. Please try again.'
   }

@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 from notifications.models import NotificationDeliveryTask
 from news.models import NewsArticle
+from backend.auth import authenticate
 
 class NewsApiTests(APITestCase):
     def setUp(self):
@@ -27,10 +28,10 @@ class NewsApiTests(APITestCase):
             password='StrongPass123!',
             role='team',
         )
-        self.list_url = reverse('news_list_create')
+        self.list_url = reverse('ninja-api:news_list_create')
 
     def test_admin_can_create_news(self):
-        self.client.force_authenticate(user=self.admin)
+        authenticate(self.client, self.admin)
         response = self.client.post(
             self.list_url,
             {
@@ -43,7 +44,7 @@ class NewsApiTests(APITestCase):
         self.assertEqual(NewsArticle.objects.count(), 1)
 
     def test_organizer_can_create_news(self):
-        self.client.force_authenticate(user=self.organizer)
+        authenticate(self.client, self.organizer)
         response = self.client.post(
             self.list_url,
             {
@@ -55,7 +56,7 @@ class NewsApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_team_user_cannot_create_news(self):
-        self.client.force_authenticate(user=self.team_user)
+        authenticate(self.client, self.team_user)
         response = self.client.post(
             self.list_url,
             {
@@ -72,13 +73,13 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.admin,
         )
-        self.client.force_authenticate(user=self.team_user)
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
+        authenticate(self.client, self.team_user)
+        detail_url = reverse('ninja-api:news_detail', kwargs={'article_id': article.id})
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_news_list_is_paginated(self):
-        self.client.force_authenticate(user=self.team_user)
+        authenticate(self.client, self.team_user)
         for i in range(12):
             NewsArticle.objects.create(
                 title=f'News {i}',
@@ -86,8 +87,9 @@ class NewsApiTests(APITestCase):
                 created_by=self.admin,
             )
         response = self.client.get(self.list_url, {'page': 1, 'page_size': 10})
+        data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 12)
+        self.assertEqual(data['count'], 12)
 
     def test_team_user_cannot_update_or_delete_news(self):
         article = NewsArticle.objects.create(
@@ -95,8 +97,8 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.admin,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
-        self.client.force_authenticate(user=self.team_user)
+        detail_url = reverse('ninja-api:news_detail', kwargs={'article_id': article.id})
+        authenticate(self.client, self.team_user)
         update_response = self.client.patch(detail_url, {'title': 'Changed'}, format='json')
         delete_response = self.client.delete(detail_url)
         self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
@@ -108,8 +110,8 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.organizer,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
-        self.client.force_authenticate(user=self.organizer)
+        detail_url = reverse('ninja-api:news_detail', kwargs={'article_id': article.id})
+        authenticate(self.client, self.organizer)
         update_response = self.client.patch(detail_url, {'title': 'Updated by organizer'}, format='json')
         self.assertEqual(update_response.status_code, status.HTTP_200_OK)
         delete_response = self.client.delete(detail_url)
@@ -121,13 +123,13 @@ class NewsApiTests(APITestCase):
             content={'type': 'doc', 'content': []},
             created_by=self.admin,
         )
-        detail_url = reverse('news_detail', kwargs={'pk': article.id})
-        self.client.force_authenticate(user=self.organizer)
+        detail_url = reverse('ninja-api:news_detail', kwargs={'article_id': article.id})
+        authenticate(self.client, self.organizer)
         update_response = self.client.patch(detail_url, {'title': 'Try change'}, format='json')
         self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_news_with_send_notification_creates_notifications(self):
-        self.client.force_authenticate(user=self.admin)
+        authenticate(self.client, self.admin)
         response = self.client.post(
             self.list_url,
             {

@@ -2,7 +2,7 @@ from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db.models import Avg, Sum
-from rest_framework.exceptions import PermissionDenied
+from ninja.errors import HttpError
 
 from tournaments.models import Round, Tournament
 from tournaments.models import TournamentTeamRegistration
@@ -159,7 +159,10 @@ def get_leaderboard(round_id: int, requesting_user) -> list[dict]:
         result = compute_leaderboard(round_id)
     else:
         if not is_privileged:
-            raise PermissionDenied('Leaderboard is not available for this round yet.')
+             raise HttpError(
+                403,
+                'Leaderboard is not available for this round yet.'
+            )
         result = compute_leaderboard(round_id)
 
     if requesting_user.role == 'team':
@@ -248,7 +251,10 @@ def get_tournament_leaderboard(tournament_id: int, requesting_user) -> list[dict
         result = compute_tournament_leaderboard(tournament_id)
     else:
         if not is_privileged:
-            raise PermissionDenied('Tournament leaderboard is not available yet.')
+            raise HttpError(
+                403,
+                'Tournament leaderboard is not available yet.'
+            )
         result = compute_tournament_leaderboard(tournament_id)
 
     if requesting_user.role == 'team':

@@ -34,19 +34,19 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '@/api/.ts.schemas'
+import type { UserResponse } from '@/api/backendAPINinja.schemas'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user?: User
+  user?: UserResponse
   isLoadingUser: boolean
   isLoadingUserError: boolean
 }>()
 
-const teamNames = computed(() => props.user?.teams.map((team) => team.name).join(', '))
+const teamNames = computed(() => (props.user?.teams ?? []).map((team) => team.name).join(', '))
 
 const accountDetails = computed(() => [
   { label: 'Username', value: props.user?.username || '-' },

@@ -170,10 +170,11 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
-import type { Team } from '@/api/.ts.schemas'
 import { useUpdateTeam } from '@/api/teams/teams'
+import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+
 interface Props {
-  team?: Team
+  team?: TeamResponse
   loading: boolean
   isError?: boolean
 }
@@ -199,7 +200,7 @@ const handleSubmit = () => {
   isSavingChanges.value = true
 
   updateTeam(
-    { id: props.team.id, data: form.fields.value },
+    { pk: props.team.id, data: form.fields.value },
     {
       onSuccess: () => {
         showNotification('Team updated successfully.', 'success')

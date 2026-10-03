@@ -44,17 +44,17 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import { getProductImage } from '../../lib/getProductImage'
 import { truncateText } from '@/lib/utils'
-import type { Product } from '@/api/.ts.schemas'
+import type { ProductResponse } from '@/api/backendAPINinja.schemas'
 
 const props = defineProps<{
-  product: Product
+  product: ProductResponse
   isAdmin?: boolean
 }>()
 
 const emit = defineEmits<{
-  view: [product: Product]
-  edit: [product: Product]
-  delete: [product: Product]
+  view: [product: ProductResponse]
+  edit: [product: ProductResponse]
+  delete: [product: ProductResponse]
   preview: [url: string]
 }>()
 

@@ -29,10 +29,14 @@ import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
+import type {
+  AdminStatsResponse,
+  PlayerStatsResponse,
+  TeamStatsResponse,
+  UserResponse,
+} from '@/api/backendAPINinja.schemas.ts'
 
-import type { User, AdminStats as AdminStatsResponse, PlayerStats as PlayerStatsResponse, TeamStats as TeamStatsResponse } from '@/api/.ts.schemas'
-
-type ProfileLike = User
+type ProfileLike = UserResponse
 
 interface Props {
   user?: ProfileLike | null

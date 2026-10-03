@@ -14,7 +14,7 @@
 
     <template #error>
       <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament teams (code: {{ error?.code }})</p>
+        <p>Error while fetching tournament teams</p>
       </div>
     </template>
 
@@ -72,17 +72,14 @@ const { data: tournament } = useGetTournament(props.tournamentId)
 const {
   data: activeTeams,
   isLoading: isActiveTeamsLoading,
-  error: activeTeamsError,
   isError: isActiveTeamsError,
 } = useListTournamentTeams(props.tournamentId, { status: 'all' })
 const {
   data: teams,
   isLoading: isTeamsLoading,
-  error: disqualifiedTeamsError,
   isError: isDisqualifiedTeamsError,
 } = useListTournamentTeams(props.tournamentId, { status: 'disqualified' })
 const isError = computed(() => isActiveTeamsError.value || isDisqualifiedTeamsError.value)
-const error = computed(() => activeTeamsError.value || disqualifiedTeamsError.value)
 
 const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()

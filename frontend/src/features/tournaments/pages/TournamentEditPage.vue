@@ -22,7 +22,7 @@
 
     <div v-if="isError" class="error-state">
       <ui-card>
-        <p>Error while fetching tournament (code: {{ error?.code }})</p>
+        <p>Error while fetching tournament</p>
       </ui-card>
     </div>
 
@@ -281,7 +281,7 @@ const form = useForm<Form>(EditTournamentSchema, {
   min_team_members: 2,
 })
 
-const { data: tournament, isLoading, isFetching, error, isError } = useGetTournament(tournamentId)
+const { data: tournament, isLoading, isFetching, isError } = useGetTournament(tournamentId)
 
 const { mutate: editTournament, isPending } = useUpdateTournament()
 
@@ -518,7 +518,7 @@ const handleSubmit = () => {
   min-height: 3.2rem;
   margin: 0;
   overflow: hidden;
-  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 

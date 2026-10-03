@@ -14,14 +14,14 @@
       </div>
     </div>
 
-    <div v-if="evaluation.comment" class="comment-box">
+    <div v-if="evaluation?.comment" class="comment-box">
       <p class="comment-label">Comment</p>
-      <p class="comment">{{ evaluation.comment }}</p>
+      <p class="comment">{{ evaluation?.comment }}</p>
     </div>
 
     <div class="metric">
       <div class="metric-head">
-        <p><strong>Total:</strong> {{ evaluation.total_score }}</p>
+        <p><strong>Total:</strong> {{ evaluation?.total_score }}</p>
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
@@ -37,11 +37,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
-import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
+import type { CriterionResponse, JuryAssignmentResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  evaluation: JuryAssignment['evaluation']
-  criteria: readonly Criterion[]
+  evaluation: JuryAssignmentResponse['evaluation']
+  criteria: readonly CriterionResponse[]
 }
 
 const props = defineProps<Props>()
@@ -55,7 +55,7 @@ const maxScore = computed(() =>
 
 const scoreByCriterion = computed(() => {
   const map = new Map<string, number>()
-  props.evaluation.scores.forEach((item) => {
+  props.evaluation?.scores.forEach((item) => {
     map.set(item.criterion_id, Number(item.score || 0))
   })
   return map
@@ -93,7 +93,7 @@ const usedSegments = computed(() => {
 
 const totalPercent = computed(() => {
   if (!maxScore.value) return 0
-  const clamped = Math.max(0, Math.min(Number(props.evaluation.total_score || 0), maxScore.value))
+  const clamped = Math.max(0, Math.min(Number(props.evaluation?.total_score || 0), maxScore.value))
   return (clamped / maxScore.value) * 100
 })
 </script>

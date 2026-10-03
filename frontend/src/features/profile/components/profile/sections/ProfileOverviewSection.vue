@@ -85,14 +85,14 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
-import type { User } from '@/api/.ts.schemas'
 import { useGetMyPointsBalance } from '@/api/points/points'
 import { formatDate } from '@/lib/date'
 import ProfileMiniCard from '../ProfileMiniCard.vue'
 import EditProfileModal from '../modals/EditProfile/EditProfileModal.vue'
+import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const props = defineProps<{
-  user?: User
+  user?: UserResponse
   isLoading?: boolean
 }>()
 

@@ -60,7 +60,6 @@
 </template>
 
 <script setup lang="ts">
-import type { TournamentPublic, TournamentTeamRegistrationList } from '@/api/.ts.schemas'
 import { truncateText } from '@/lib/utils'
 import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
 import { ref } from 'vue'
@@ -71,10 +70,11 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import AddTeamIcon from '@/icons/AddTeamIcon.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
+import type { TournamentResponse, TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
-  tournament?: TournamentPublic
-  team: TournamentTeamRegistrationList
+  tournament?: TournamentResponse
+  team: TournamentTeamResponse
   isAdmin: boolean
   isDisqualified?: boolean
 }
@@ -89,14 +89,14 @@ const confirmModalConfirmMessage = ref<string | undefined>()
 const confirmModalVariant = ref<'default' | 'danger'>('default')
 const disqualificationReason = ref('')
 const pendingAction = ref<{
-  team: TournamentTeamRegistrationList
+  team: TournamentTeamResponse
   action: 'activated' | 'disqualified'
 } | null>(null)
 
 const { showNotification } = useNotification()
 const { mutate: updateRegistration, isPending: isUpdating } = useDisqualifyTeamFromTournament()
 
-function openDisqualifyModal(team: TournamentTeamRegistrationList) {
+function openDisqualifyModal(team: TournamentTeamResponse) {
   pendingAction.value = { team, action: 'disqualified' }
   disqualificationReason.value = ''
   confirmModalTitle.value = `Disqualify ${truncateText(team.name, 10)}`
@@ -105,7 +105,7 @@ function openDisqualifyModal(team: TournamentTeamRegistrationList) {
   showConfirmModal.value = true
 }
 
-function openReactivateModal(team: TournamentTeamRegistrationList) {
+function openReactivateModal(team: TournamentTeamResponse) {
   pendingAction.value = { team, action: 'activated' }
   confirmModalTitle.value = `Reactivate ${truncateText(team.name, 10)}`
   confirmModalConfirmText.value = 'Reactivate'

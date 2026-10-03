@@ -49,10 +49,10 @@ import UiFileDrop from '@/components/ui/UiFileDrop.vue'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import { useNotification } from '@/composables/useNotification'
 import { useUpdateCertificateTemplate } from '@/api/certificates/certificates'
-import type { CertificateTemplate } from '@/api/.ts.schemas'
+import type { CertificateTemplateResponse } from '@/api/backendAPINinja.schemas'
 
 const props = defineProps<{
-  template?: CertificateTemplate
+  template?: CertificateTemplateResponse
 }>()
 
 const { showNotification } = useNotification()
@@ -82,12 +82,11 @@ async function submit() {
 
   try {
     await updateTemplate({
-      id: props.template.id,
+      templateId: props.template.id,
       data: {
-        name: form.name,
         image: form.files[0] || undefined,
-        is_default: form.is_default,
       },
+      params: { name: form.name, is_default: form.is_default },
     })
 
     showNotification('Template updated successfully.', 'success')

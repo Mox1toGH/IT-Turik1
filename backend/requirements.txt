@@ -1,11 +1,9 @@
 Django
-djangorestframework
 django-cors-headers
-djangorestframework-simplejwt
 requests
 google-auth
 python-dotenv
-drf-spectacular
+python-json-logger
 channels
 
 Pillow
