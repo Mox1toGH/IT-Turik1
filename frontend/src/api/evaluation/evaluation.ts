@@ -33,7 +33,6 @@ import type {
   AvailableJuryResponse,
   ErrorResponse,
   JuryAssignmentItemRequest,
-  JuryAssignmentResponse,
   ListAvailableJuryParams,
   ListJuryAssignmentsParams,
   PagedJuryAssignmentResponse,
@@ -111,74 +110,6 @@ export function useListJuryAssignments<TData = Awaited<ReturnType<typeof listJur
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListJuryAssignmentsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
-
-  return query;
-}
-
-
-
-
-/**
- * @summary Get Jury Assignment
- */
-export const getJuryAssignment = (
-    assignmentId: MaybeRef<number>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      assignmentId = unref(assignmentId);
-      
-      return customInstance<JuryAssignmentResponse>(
-      {url: `http://localhost:8000/api/evaluation/jury-assignments/${assignmentId}`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getGetJuryAssignmentQueryKey = (assignmentId?: MaybeRef<number>,) => {
-    return [
-    'http:','localhost:8000','api','evaluation','jury-assignments',assignmentId
-    ] as const;
-    }
-
-    
-export const getGetJuryAssignmentQueryOptions = <TData = Awaited<ReturnType<typeof getJuryAssignment>>, TError = ErrorType<ErrorResponse>>(assignmentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJuryAssignment>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  getGetJuryAssignmentQueryKey(assignmentId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJuryAssignment>>> = ({ signal }) => getJuryAssignment(assignmentId, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: computed(() => !!(unref(assignmentId))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJuryAssignment>>, TError, TData> 
-}
-
-export type GetJuryAssignmentQueryResult = NonNullable<Awaited<ReturnType<typeof getJuryAssignment>>>
-export type GetJuryAssignmentQueryError = ErrorType<ErrorResponse>
-
-
-/**
- * @summary Get Jury Assignment
- */
-
-export function useGetJuryAssignment<TData = Awaited<ReturnType<typeof getJuryAssignment>>, TError = ErrorType<ErrorResponse>>(
- assignmentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJuryAssignment>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetJuryAssignmentQueryOptions(assignmentId,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -323,71 +254,6 @@ export function useGetJuryEvaluation<TData = Awaited<ReturnType<typeof getJuryEv
 
 
 /**
- * @summary Replace Jury Evaluation
- */
-export const replaceJuryEvaluation = (
-    evaluationId: MaybeRef<number>,
-    submissionEvaluationRequest: MaybeRef<SubmissionEvaluationRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      evaluationId = unref(evaluationId);
-submissionEvaluationRequest = unref(submissionEvaluationRequest);
-      
-      return customInstance<SubmissionEvaluationResponse>(
-      {url: `http://localhost:8000/api/evaluation/jury-evaluations/${evaluationId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: submissionEvaluationRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceJuryEvaluationMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{evaluationId: number;data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{evaluationId: number;data: BodyType<SubmissionEvaluationRequest>}, TContext> => {
-
-const mutationKey = ['replaceJuryEvaluation'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceJuryEvaluation>>, {evaluationId: number;data: BodyType<SubmissionEvaluationRequest>}> = (props) => {
-          const {evaluationId,data} = props ?? {};
-
-          return  replaceJuryEvaluation(evaluationId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceJuryEvaluationMutationResult = NonNullable<Awaited<ReturnType<typeof replaceJuryEvaluation>>>
-    export type ReplaceJuryEvaluationMutationBody = BodyType<SubmissionEvaluationRequest>
-    export type ReplaceJuryEvaluationMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace Jury Evaluation
- */
-export const useReplaceJuryEvaluation = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceJuryEvaluation>>, TError,{evaluationId: number;data: BodyType<SubmissionEvaluationRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceJuryEvaluation>>,
-        TError,
-        {evaluationId: number;data: BodyType<SubmissionEvaluationRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceJuryEvaluationMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Jury Evaluation
  */
 export const updateJuryEvaluation = (

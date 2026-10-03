@@ -43,7 +43,7 @@ import type {
   LoginResponse,
   MessageResponse,
   PasswordResetConfirmRequest,
-  PasswordResetRequestRequest,
+  PasswordResetRequest,
   RegisterRequest,
   RegisterResponse,
   RoleActivationCodeGenerateRequest,
@@ -455,69 +455,6 @@ export function useGetUserProfile<TData = Awaited<ReturnType<typeof getUserProfi
 
 
 /**
- * @summary Replace User Profile
- */
-export const replaceUserProfile = (
-    userUpdateRequest: MaybeRef<UserUpdateRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      userUpdateRequest = unref(userUpdateRequest);
-      
-      return customInstance<UserResponse>(
-      {url: `http://localhost:8000/api/accounts/profile`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: userUpdateRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceUserProfileMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext> => {
-
-const mutationKey = ['replaceUserProfile'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceUserProfile>>, {data: BodyType<UserUpdateRequest>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  replaceUserProfile(data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceUserProfileMutationResult = NonNullable<Awaited<ReturnType<typeof replaceUserProfile>>>
-    export type ReplaceUserProfileMutationBody = BodyType<UserUpdateRequest>
-    export type ReplaceUserProfileMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace User Profile
- */
-export const useReplaceUserProfile = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceUserProfile>>, TError,{data: BodyType<UserUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceUserProfile>>,
-        TError,
-        {data: BodyType<UserUpdateRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceUserProfileMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update User Profile
  */
 export const updateUserProfile = (
@@ -715,7 +652,7 @@ export const deleteUserAvatar = (
       
       
       return customInstance<void>(
-      {url: `http://localhost:8000/api/accounts/me/avatar`, method: 'DELETE'
+      {url: `http://localhost:8000/api/accounts/profile/avatar`, method: 'DELETE'
     },
       options);
     }
@@ -1232,24 +1169,24 @@ export function useListUserTournamentHistory<TData = Awaited<ReturnType<typeof l
  * @summary Request Password Reset
  */
 export const requestPasswordReset = (
-    passwordResetRequestRequest: MaybeRef<PasswordResetRequestRequest>,
+    passwordResetRequest: MaybeRef<PasswordResetRequest>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
-      passwordResetRequestRequest = unref(passwordResetRequestRequest);
+      passwordResetRequest = unref(passwordResetRequest);
       
       return customInstance<MessageResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: passwordResetRequestRequest, signal
+      data: passwordResetRequest, signal
     },
       options);
     }
   
 
 
-export const getRequestPasswordResetMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext> => {
+export const getRequestPasswordResetMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext> => {
 
 const mutationKey = ['requestPasswordReset'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1261,7 +1198,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: BodyType<PasswordResetRequestRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: BodyType<PasswordResetRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  requestPasswordReset(data,requestOptions)
@@ -1273,18 +1210,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
-    export type RequestPasswordResetMutationBody = BodyType<PasswordResetRequestRequest>
-    export type RequestPasswordResetMutationError = ErrorType<ErrorResponse>
+    export type RequestPasswordResetMutationBody = BodyType<PasswordResetRequest>
+    export type RequestPasswordResetMutationError = ErrorType<unknown>
 
     /**
  * @summary Request Password Reset
  */
-export const useRequestPasswordReset = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequestRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRequestPasswordReset = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof requestPasswordReset>>,
         TError,
-        {data: BodyType<PasswordResetRequestRequest>},
+        {data: BodyType<PasswordResetRequest>},
         TContext
       > => {
 

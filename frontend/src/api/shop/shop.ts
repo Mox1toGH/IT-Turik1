@@ -51,7 +51,6 @@ import type {
   ProductResponse,
   PurchaseProduct201,
   PurchaseRequest,
-  ReplaceAdminProductBody,
   UpdateAdminProductBody
 } from '../backendAPINinja.schemas';
 
@@ -662,71 +661,6 @@ export const useUpdateAdminCategory = <TError = ErrorType<ErrorResponse>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Update Admin Category
- */
-export const replaceAdminCategory = (
-    categoryId: MaybeRef<number>,
-    categoryRequest: MaybeRef<CategoryRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      categoryId = unref(categoryId);
-categoryRequest = unref(categoryRequest);
-      
-      return customInstance<CategoryResponse>(
-      {url: `http://localhost:8000/api/shop/admin/categories/${categoryId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: categoryRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceAdminCategoryMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{categoryId: number;data: BodyType<CategoryRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{categoryId: number;data: BodyType<CategoryRequest>}, TContext> => {
-
-const mutationKey = ['replaceAdminCategory'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceAdminCategory>>, {categoryId: number;data: BodyType<CategoryRequest>}> = (props) => {
-          const {categoryId,data} = props ?? {};
-
-          return  replaceAdminCategory(categoryId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceAdminCategoryMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminCategory>>>
-    export type ReplaceAdminCategoryMutationBody = BodyType<CategoryRequest>
-    export type ReplaceAdminCategoryMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Admin Category
- */
-export const useReplaceAdminCategory = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminCategory>>, TError,{categoryId: number;data: BodyType<CategoryRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceAdminCategory>>,
-        TError,
-        {categoryId: number;data: BodyType<CategoryRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceAdminCategoryMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Delete Admin Category
  */
 export const deleteAdminCategory = (
@@ -1106,99 +1040,6 @@ export const useUpdateAdminProduct = <TError = ErrorType<ErrorResponse>,
       > => {
 
       const mutationOptions = getUpdateAdminProductMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Update Admin Product
- */
-export const replaceAdminProduct = (
-    productId: MaybeRef<number>,
-    replaceAdminProductBody: MaybeRef<ReplaceAdminProductBody>,
- options?: SecondParameter<typeof customInstance>,) => {
-      productId = unref(productId);
-replaceAdminProductBody = unref(replaceAdminProductBody);
-      const formData = new FormData();
-formData.append(`name`, replaceAdminProductBody.name)
-if(replaceAdminProductBody.description !== undefined) {
- formData.append(`description`, replaceAdminProductBody.description)
- }
-formData.append(`price`, replaceAdminProductBody.price.toString())
-if(replaceAdminProductBody.stock_quantity !== undefined) {
- formData.append(`stock_quantity`, replaceAdminProductBody.stock_quantity.toString())
- }
-formData.append(`category_id`, replaceAdminProductBody.category_id.toString())
-if(replaceAdminProductBody.product_type !== undefined) {
- formData.append(`product_type`, replaceAdminProductBody.product_type)
- }
-if(replaceAdminProductBody.avatar_frame_id !== undefined && replaceAdminProductBody.avatar_frame_id !== null) {
- formData.append(`avatar_frame_id`, replaceAdminProductBody.avatar_frame_id.toString())
- }
-if(replaceAdminProductBody.digital_asset_url !== undefined) {
- formData.append(`digital_asset_url`, replaceAdminProductBody.digital_asset_url)
- }
-if(replaceAdminProductBody.is_active !== undefined) {
- formData.append(`is_active`, replaceAdminProductBody.is_active.toString())
- }
-if(replaceAdminProductBody.uploaded_images !== undefined) {
- replaceAdminProductBody.uploaded_images.forEach(value => formData.append(`uploaded_images`, value));
- }
-if(replaceAdminProductBody.avatar_frame_file !== undefined && replaceAdminProductBody.avatar_frame_file !== null) {
- formData.append(`avatar_frame_file`, replaceAdminProductBody.avatar_frame_file)
- }
-
-      return customInstance<ProductResponse>(
-      {url: `http://localhost:8000/api/shop/admin/products/${productId}`, method: 'PUT',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData
-    },
-      options);
-    }
-  
-
-
-export const getReplaceAdminProductMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{productId: number;data: BodyType<ReplaceAdminProductBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{productId: number;data: BodyType<ReplaceAdminProductBody>}, TContext> => {
-
-const mutationKey = ['replaceAdminProduct'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceAdminProduct>>, {productId: number;data: BodyType<ReplaceAdminProductBody>}> = (props) => {
-          const {productId,data} = props ?? {};
-
-          return  replaceAdminProduct(productId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceAdminProductMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminProduct>>>
-    export type ReplaceAdminProductMutationBody = BodyType<ReplaceAdminProductBody>
-    export type ReplaceAdminProductMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Admin Product
- */
-export const useReplaceAdminProduct = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminProduct>>, TError,{productId: number;data: BodyType<ReplaceAdminProductBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceAdminProduct>>,
-        TError,
-        {productId: number;data: BodyType<ReplaceAdminProductBody>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceAdminProductMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1791,71 +1632,6 @@ export const useUpdateAdminAvatarFrame = <TError = ErrorType<ErrorResponse>,
       > => {
 
       const mutationOptions = getUpdateAdminAvatarFrameMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Update Admin Avatar Frame
- */
-export const replaceAdminAvatarFrame = (
-    frameId: MaybeRef<number>,
-    avatarFrameRequest: MaybeRef<AvatarFrameRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      frameId = unref(frameId);
-avatarFrameRequest = unref(avatarFrameRequest);
-      
-      return customInstance<AvatarFrameResponse>(
-      {url: `http://localhost:8000/api/shop/admin/avatar-frames/${frameId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: avatarFrameRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceAdminAvatarFrameMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{frameId: number;data: BodyType<AvatarFrameRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{frameId: number;data: BodyType<AvatarFrameRequest>}, TContext> => {
-
-const mutationKey = ['replaceAdminAvatarFrame'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, {frameId: number;data: BodyType<AvatarFrameRequest>}> = (props) => {
-          const {frameId,data} = props ?? {};
-
-          return  replaceAdminAvatarFrame(frameId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceAdminAvatarFrameMutationResult = NonNullable<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>>
-    export type ReplaceAdminAvatarFrameMutationBody = BodyType<AvatarFrameRequest>
-    export type ReplaceAdminAvatarFrameMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Admin Avatar Frame
- */
-export const useReplaceAdminAvatarFrame = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceAdminAvatarFrame>>, TError,{frameId: number;data: BodyType<AvatarFrameRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceAdminAvatarFrame>>,
-        TError,
-        {frameId: number;data: BodyType<AvatarFrameRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceAdminAvatarFrameMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

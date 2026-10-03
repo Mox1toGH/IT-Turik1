@@ -32,16 +32,12 @@ import type {
   CertificateRequest,
   CertificateResponse,
   CertificateTemplateResponse,
-  CertificateVerifyResponse,
   CreateCertificateTemplateBody,
-  CreateCertificateTemplateParams,
   ErrorResponse,
   ListCertificateTemplatesParams,
   ListCertificatesParams,
   PagedCertificateResponse,
   PagedCertificateTemplateResponse,
-  ReplaceCertificateTemplateBody,
-  ReplaceCertificateTemplateParams,
   UpdateCertificateTemplateBody,
   UpdateCertificateTemplateParams
 } from '../backendAPINinja.schemas';
@@ -128,19 +124,20 @@ export function useListCertificateTemplates<TData = Awaited<ReturnType<typeof li
  */
 export const createCertificateTemplate = (
     createCertificateTemplateBody: MaybeRef<CreateCertificateTemplateBody>,
-    params: MaybeRef<CreateCertificateTemplateParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       createCertificateTemplateBody = unref(createCertificateTemplateBody);
-params = unref(params);
       const formData = new FormData();
+formData.append(`name`, createCertificateTemplateBody.name)
+if(createCertificateTemplateBody.is_default !== undefined) {
+ formData.append(`is_default`, createCertificateTemplateBody.is_default.toString())
+ }
 formData.append(`image`, createCertificateTemplateBody.image)
 
       return customInstance<CertificateTemplateResponse>(
       {url: `http://localhost:8000/api/certificates/certificate-templates`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params: unref(params), signal
+       data: formData, signal
     },
       options);
     }
@@ -148,8 +145,8 @@ formData.append(`image`, createCertificateTemplateBody.image)
 
 
 export const getCreateCertificateTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>;params: CreateCertificateTemplateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>;params: CreateCertificateTemplateParams}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext> => {
 
 const mutationKey = ['createCertificateTemplate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -161,10 +158,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificateTemplate>>, {data: BodyType<CreateCertificateTemplateBody>;params: CreateCertificateTemplateParams}> = (props) => {
-          const {data,params} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCertificateTemplate>>, {data: BodyType<CreateCertificateTemplateBody>}> = (props) => {
+          const {data} = props ?? {};
 
-          return  createCertificateTemplate(data,params,requestOptions)
+          return  createCertificateTemplate(data,requestOptions)
         }
 
         
@@ -180,11 +177,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Create Template
  */
 export const useCreateCertificateTemplate = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>;params: CreateCertificateTemplateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCertificateTemplate>>, TError,{data: BodyType<CreateCertificateTemplateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof createCertificateTemplate>>,
         TError,
-        {data: BodyType<CreateCertificateTemplateBody>;params: CreateCertificateTemplateParams},
+        {data: BodyType<CreateCertificateTemplateBody>},
         TContext
       > => {
 
@@ -329,78 +326,6 @@ export const useUpdateCertificateTemplate = <TError = ErrorType<ErrorResponse>,
       > => {
 
       const mutationOptions = getUpdateCertificateTemplateMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Update Template
- */
-export const replaceCertificateTemplate = (
-    templateId: MaybeRef<number>,
-    replaceCertificateTemplateBody: MaybeRef<ReplaceCertificateTemplateBody>,
-    params?: MaybeRef<ReplaceCertificateTemplateParams>,
- options?: SecondParameter<typeof customInstance>,) => {
-      templateId = unref(templateId);
-replaceCertificateTemplateBody = unref(replaceCertificateTemplateBody);
-params = unref(params);
-      const formData = new FormData();
-if(replaceCertificateTemplateBody.image !== undefined) {
- formData.append(`image`, replaceCertificateTemplateBody.image)
- }
-
-      return customInstance<CertificateTemplateResponse>(
-      {url: `http://localhost:8000/api/certificates/certificate-templates/${templateId}`, method: 'PUT',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData,
-        params: unref(params)
-    },
-      options);
-    }
-  
-
-
-export const getReplaceCertificateTemplateMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{templateId: number;data: BodyType<ReplaceCertificateTemplateBody>;params?: ReplaceCertificateTemplateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{templateId: number;data: BodyType<ReplaceCertificateTemplateBody>;params?: ReplaceCertificateTemplateParams}, TContext> => {
-
-const mutationKey = ['replaceCertificateTemplate'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceCertificateTemplate>>, {templateId: number;data: BodyType<ReplaceCertificateTemplateBody>;params?: ReplaceCertificateTemplateParams}> = (props) => {
-          const {templateId,data,params} = props ?? {};
-
-          return  replaceCertificateTemplate(templateId,data,params,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceCertificateTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof replaceCertificateTemplate>>>
-    export type ReplaceCertificateTemplateMutationBody = BodyType<ReplaceCertificateTemplateBody>
-    export type ReplaceCertificateTemplateMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Template
- */
-export const useReplaceCertificateTemplate = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceCertificateTemplate>>, TError,{templateId: number;data: BodyType<ReplaceCertificateTemplateBody>;params?: ReplaceCertificateTemplateParams}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceCertificateTemplate>>,
-        TError,
-        {templateId: number;data: BodyType<ReplaceCertificateTemplateBody>;params?: ReplaceCertificateTemplateParams},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceCertificateTemplateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -869,7 +794,7 @@ export const verifyCertificate = (
 ) => {
       code = unref(code);
       
-      return customInstance<CertificateVerifyResponse>(
+      return customInstance<CertificateResponse>(
       {url: `http://localhost:8000/api/certificates/verify/${code}`, method: 'GET', signal
     },
       options);
@@ -885,7 +810,7 @@ export const getVerifyCertificateQueryKey = (code?: MaybeRef<string>,) => {
     }
 
     
-export const getVerifyCertificateQueryOptions = <TData = Awaited<ReturnType<typeof verifyCertificate>>, TError = ErrorType<unknown>>(code: MaybeRef<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyCertificate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getVerifyCertificateQueryOptions = <TData = Awaited<ReturnType<typeof verifyCertificate>>, TError = ErrorType<ErrorResponse>>(code: MaybeRef<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyCertificate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -904,14 +829,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type VerifyCertificateQueryResult = NonNullable<Awaited<ReturnType<typeof verifyCertificate>>>
-export type VerifyCertificateQueryError = ErrorType<unknown>
+export type VerifyCertificateQueryError = ErrorType<ErrorResponse>
 
 
 /**
  * @summary Verify Certificate
  */
 
-export function useVerifyCertificate<TData = Awaited<ReturnType<typeof verifyCertificate>>, TError = ErrorType<unknown>>(
+export function useVerifyCertificate<TData = Awaited<ReturnType<typeof verifyCertificate>>, TError = ErrorType<ErrorResponse>>(
  code: MaybeRef<string>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof verifyCertificate>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

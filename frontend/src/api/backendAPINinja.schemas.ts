@@ -30,14 +30,18 @@ export interface PagedCertificateTemplateResponse {
   count: number;
 }
 
-export type ErrorResponseDetailsAnyOf = {[key: string]: string[]};
+export type ErrorResponseDetailsAnyOf = {[key: string]: string};
 
 export type ErrorResponseDetails = ErrorResponseDetailsAnyOf | null;
 
 export interface ErrorResponse {
-  code: string;
   message: string;
   details?: ErrorResponseDetails;
+}
+
+export interface CertificateTemplateRequest {
+  name: string;
+  is_default?: boolean;
 }
 
 export type CertificateResponseUser = number | null;
@@ -85,16 +89,6 @@ export interface CertificateRequest {
   placement: string;
   certificate_number?: string;
   template?: CertificateRequestTemplate;
-}
-
-export type CertificateVerifyResponseData = CertificateResponse | null;
-
-export type CertificateVerifyResponseMessage = string | null;
-
-export interface CertificateVerifyResponse {
-  is_valid: boolean;
-  data?: CertificateVerifyResponseData;
-  message?: CertificateVerifyResponseMessage;
 }
 
 /**
@@ -443,19 +437,19 @@ export interface GoogleAuthRequest {
   id_token: string;
 }
 
-export type UserUpdateRequestEmail = string | null;
-
 export type UserUpdateRequestFullName = string | null;
 
 export type UserUpdateRequestPhone = string | null;
 
 export type UserUpdateRequestCity = string | null;
 
+export type UserUpdateRequestPassword = string | null;
+
 export interface UserUpdateRequest {
-  email?: UserUpdateRequestEmail;
   full_name?: UserUpdateRequestFullName;
   phone?: UserUpdateRequestPhone;
   city?: UserUpdateRequestCity;
+  password?: UserUpdateRequestPassword;
 }
 
 export interface UserAvatarResponse {
@@ -522,7 +516,7 @@ export interface MessageResponse {
   message: string;
 }
 
-export interface PasswordResetRequestRequest {
+export interface PasswordResetRequest {
   email: string;
 }
 
@@ -624,6 +618,8 @@ export interface TeamMemberResponse {
   avatar_frame_url?: TeamMemberResponseAvatarFrameUrl;
 }
 
+export type TeamResponseBanner = string | null;
+
 export interface TeamResponse {
   id: number;
   name: string;
@@ -633,7 +629,7 @@ export interface TeamResponse {
   organization?: string;
   contact_telegram?: string;
   contact_discord?: string;
-  banner?: string;
+  banner?: TeamResponseBanner;
   members: TeamMemberResponse[];
   is_member: boolean;
   can_request_to_join: boolean;
@@ -809,6 +805,15 @@ export interface NewsArticleRequest {
   title: string;
   content: NewsArticleRequestContent;
   send_notification?: boolean;
+}
+
+export type NewsArticlePatchRequestTitle = string | null;
+
+export type NewsArticlePatchRequestContent = string | null;
+
+export interface NewsArticlePatchRequest {
+  title?: NewsArticlePatchRequestTitle;
+  content?: NewsArticlePatchRequestContent;
 }
 
 export interface NotificationResponse {
@@ -1594,12 +1599,6 @@ export interface CurrentTaskResponse {
   tech_requirements: CurrentTaskResponseTechRequirements;
 }
 
-export interface IconResponse {
-  id: number;
-  name: string;
-  path: string;
-}
-
 export type EventListResponse = EventResponse[];
 
 export type EventResponseIcon = number | null;
@@ -1662,12 +1661,9 @@ page?: number;
 page_size?: number | null;
 };
 
-export type CreateCertificateTemplateParams = {
-name: string;
-is_default?: boolean;
-};
-
 export type CreateCertificateTemplateBody = {
+  name: string;
+  is_default?: boolean;
   image: Blob;
 };
 
@@ -1677,15 +1673,6 @@ is_default?: boolean | null;
 };
 
 export type UpdateCertificateTemplateBody = {
-  image?: Blob;
-};
-
-export type ReplaceCertificateTemplateParams = {
-name?: string | null;
-is_default?: boolean | null;
-};
-
-export type ReplaceCertificateTemplateBody = {
   image?: Blob;
 };
 
@@ -1749,10 +1736,6 @@ export type ListRoleActivationCodesParams = {
  * Filter by role: jury, organizer, admin
  */
 role?: string | null;
-};
-
-export type TeamBannerUpdateBody = {
-  banner: Blob;
 };
 
 export type TeamBannerPartialUpdateBody = {
@@ -1895,35 +1878,6 @@ export type UpdateAdminProductBody = {
   is_active?: boolean;
   uploaded_images?: Blob[];
   avatar_frame_file?: UpdateAdminProductBodyAvatarFrameFile;
-};
-
-export type ReplaceAdminProductBodyProductType = typeof ReplaceAdminProductBodyProductType[keyof typeof ReplaceAdminProductBodyProductType];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ReplaceAdminProductBodyProductType = {
-  physical: 'physical',
-  digital: 'digital',
-} as const;
-
-export type ReplaceAdminProductBodyAvatarFrameId = number | null;
-
-export type ReplaceAdminProductBodyAvatarFrameFile = Blob | null;
-
-export type ReplaceAdminProductBody = {
-  name: string;
-  description?: string;
-  /** @minimum 0 */
-  price: number;
-  /** @minimum 0 */
-  stock_quantity?: number;
-  category_id: number;
-  product_type?: ReplaceAdminProductBodyProductType;
-  avatar_frame_id?: ReplaceAdminProductBodyAvatarFrameId;
-  digital_asset_url?: string;
-  is_active?: boolean;
-  uploaded_images?: Blob[];
-  avatar_frame_file?: ReplaceAdminProductBodyAvatarFrameFile;
 };
 
 export type ListAdminOrdersParams = {

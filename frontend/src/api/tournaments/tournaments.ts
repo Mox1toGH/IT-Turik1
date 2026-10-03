@@ -43,7 +43,6 @@ import type {
   ExportToGoogleCalendarResponse,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
-  IconResponse,
   ListEventsParams,
   ListRoundsParams,
   ListTournamentTeamsParams,
@@ -1224,71 +1223,6 @@ export function useGetTournamentForUpdate<TData = Awaited<ReturnType<typeof getT
 
 
 /**
- * @summary Replace Tournament
- */
-export const replaceTournament = (
-    id: MaybeRef<number>,
-    tournamentCreateRequest: MaybeRef<TournamentCreateRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      id = unref(id);
-tournamentCreateRequest = unref(tournamentCreateRequest);
-      
-      return customInstance<TournamentResponse>(
-      {url: `http://localhost:8000/api/tournaments/manage/${id}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: tournamentCreateRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceTournamentMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentCreateRequest>}, TContext> => {
-
-const mutationKey = ['replaceTournament'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceTournament>>, {id: number;data: BodyType<TournamentCreateRequest>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  replaceTournament(id,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceTournamentMutationResult = NonNullable<Awaited<ReturnType<typeof replaceTournament>>>
-    export type ReplaceTournamentMutationBody = BodyType<TournamentCreateRequest>
-    export type ReplaceTournamentMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace Tournament
- */
-export const useReplaceTournament = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTournament>>, TError,{id: number;data: BodyType<TournamentCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceTournament>>,
-        TError,
-        {id: number;data: BodyType<TournamentCreateRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceTournamentMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Tournament
  */
 export const updateTournament = (
@@ -2028,71 +1962,6 @@ export function useGetRound<TData = Awaited<ReturnType<typeof getRound>>, TError
 
 
 /**
- * @summary Replace Round
- */
-export const replaceRound = (
-    id: MaybeRef<number>,
-    roundCreateRequest: MaybeRef<RoundCreateRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      id = unref(id);
-roundCreateRequest = unref(roundCreateRequest);
-      
-      return customInstance<RoundResponse>(
-      {url: `http://localhost:8000/api/tournaments/rounds/${id}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: roundCreateRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceRoundMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundCreateRequest>}, TContext> => {
-
-const mutationKey = ['replaceRound'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceRound>>, {id: number;data: BodyType<RoundCreateRequest>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  replaceRound(id,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceRoundMutationResult = NonNullable<Awaited<ReturnType<typeof replaceRound>>>
-    export type ReplaceRoundMutationBody = BodyType<RoundCreateRequest>
-    export type ReplaceRoundMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace Round
- */
-export const useReplaceRound = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceRound>>, TError,{id: number;data: BodyType<RoundCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceRound>>,
-        TError,
-        {id: number;data: BodyType<RoundCreateRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceRoundMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Round
  */
 export const updateRound = (
@@ -2605,71 +2474,6 @@ export function useGetSubmission<TData = Awaited<ReturnType<typeof getSubmission
 
 
 /**
- * @summary Replace Submission
- */
-export const replaceSubmission = (
-    id: MaybeRef<number>,
-    submissionCreateRequest: MaybeRef<SubmissionCreateRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      id = unref(id);
-submissionCreateRequest = unref(submissionCreateRequest);
-      
-      return customInstance<SubmissionResponse>(
-      {url: `http://localhost:8000/api/tournaments/submissions/${id}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: submissionCreateRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceSubmissionMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionCreateRequest>}, TContext> => {
-
-const mutationKey = ['replaceSubmission'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceSubmission>>, {id: number;data: BodyType<SubmissionCreateRequest>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  replaceSubmission(id,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceSubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof replaceSubmission>>>
-    export type ReplaceSubmissionMutationBody = BodyType<SubmissionCreateRequest>
-    export type ReplaceSubmissionMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace Submission
- */
-export const useReplaceSubmission = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceSubmission>>, TError,{id: number;data: BodyType<SubmissionCreateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceSubmission>>,
-        TError,
-        {id: number;data: BodyType<SubmissionCreateRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceSubmissionMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Submission
  */
 export const updateSubmission = (
@@ -2860,74 +2664,6 @@ export function useGetCurrentTask<TData = Awaited<ReturnType<typeof getCurrentTa
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetCurrentTaskQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
-
-  return query;
-}
-
-
-
-
-/**
- * @summary List Icons
- */
-export const listIcons = (
-    
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<IconResponse[]>(
-      {url: `http://localhost:8000/api/tournaments/icons`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getListIconsQueryKey = () => {
-    return [
-    'http:','localhost:8000','api','tournaments','icons'
-    ] as const;
-    }
-
-    
-export const getListIconsQueryOptions = <TData = Awaited<ReturnType<typeof listIcons>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  getListIconsQueryKey();
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIcons>>> = ({ signal }) => listIcons(requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData> 
-}
-
-export type ListIconsQueryResult = NonNullable<Awaited<ReturnType<typeof listIcons>>>
-export type ListIconsQueryError = ErrorType<ErrorResponse>
-
-
-/**
- * @summary List Icons
- */
-
-export function useListIcons<TData = Awaited<ReturnType<typeof listIcons>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listIcons>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getListIconsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

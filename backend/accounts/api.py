@@ -141,10 +141,6 @@ def _send_link_email(
     )
 
 
-def _is_platform_admin(user) -> bool:
-    return bool(user and user.is_authenticated and (user.is_superuser or user.role == 'admin'))
-
-
 def _active_counts() -> dict:
     return {
         role: RoleActivationCode.objects.filter(role=role, is_used=False).count()
