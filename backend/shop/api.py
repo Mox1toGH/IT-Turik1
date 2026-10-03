@@ -506,6 +506,86 @@ def cancel_admin_order(request, order_id: int):
         'Order cancelled by admin',
         extra={'order_id': order_id, 'user_id': request.auth.id},
     )
-    NotificationService.notify(recipients=[cancelled.user], event_type='shop_order_status_changed',
-        context={'order_id': cancelled.id, 'product_name': cancelled.product.name, 'order_status': cancelled.status
-    })
+    NotificationService.notify(recipients=[cancelled.user], event_type='shop_order_status_changed', context={'order_id': cancelled.id, 'product_name': cancelled.product.name, 'order_status': cancelled.status})
+
+    return OrderResponse.model_validate(
+        cancelled,
+        from_attributes=True,
+    )
+
+
+@router.get('/avatar-frames', operation_id='listAvatarFrames', url_name='shop-admin-avatar-frames-list-create', response={200: list[AvatarFrameResponse], 401: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_avatar_frames(request, search: str | None = None):
+    logger.debug('Listing avatar frames', extra={'search': search})
+    queryset = AvatarFrame.objects.filter(is_active=True)
+
+    return queryset.filter(name__icontains=search).order_by('name') if search else queryset.order_by('name')
+
+
+@router.get('/admin/avatar-frames', operation_id='listAdminAvatarFrames', url_name='shop-admin-avatar-frames-list-create', response={200: list[AvatarFrameResponse], 401: ErrorResponse, 403: ErrorResponse})
+@paginate(PageNumberPagination, page_size=20)
+def list_admin_avatar_frames(request, search: str | None = None):
+    _require_admin(request)
+    logger.debug('Listing admin avatar frames', extra={'search': search})
+    queryset = AvatarFrame.objects.all()
+
+    return queryset.filter(name__icontains=search).order_by('name', 'id') if search else queryset.order_by('name', 'id')
+
+
+@router.post('/admin/avatar-frames', operation_id='createAdminAvatarFrame', url_name='shop-admin-avatar-frames-list-create', response={201: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+def create_admin_avatar_frame(request, payload: AvatarFrameRequest):
+    _require_admin(request)
+
+    frame = AvatarFrame.objects.create(**payload.model_dump())
+    logger.info(
+        'Avatar frame created',
+        extra={'frame_id': frame.id, 'user_id': request.auth.id},
+    )
+
+    return 201, AvatarFrameResponse.model_validate(
+        frame,
+        from_attributes=True,
+    )
+
+
+@router.get('/admin/avatar-frames/{frame_id}', operation_id='getAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def get_admin_avatar_frame(request, frame_id: int):
+    _require_admin(request)
+    logger.debug('Fetching avatar frame', extra={'frame_id': frame_id})
+
+    return AvatarFrameResponse.model_validate(
+        get_object_or_404(AvatarFrame, pk=frame_id),
+        from_attributes=True,
+    )
+
+
+@router.patch('/admin/avatar-frames/{frame_id}', operation_id='updateAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={200: AvatarFrameResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_admin_avatar_frame(request, frame_id: int, payload: AvatarFrameRequest):
+    _require_admin(request)
+    frame = get_object_or_404(AvatarFrame, pk=frame_id)
+
+    for field, value in payload.model_dump().items():
+        setattr(frame, field, value)
+    frame.save()
+    logger.info(
+        'Avatar frame updated',
+        extra={'frame_id': frame_id, 'user_id': request.auth.id},
+    )
+
+    return AvatarFrameResponse.model_validate(
+        frame,
+        from_attributes=True,
+    )
+
+
+@router.delete('/admin/avatar-frames/{frame_id}', operation_id='deleteAdminAvatarFrame', url_name='shop-admin-avatar-frames-detail', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def delete_admin_avatar_frame(request, frame_id: int):
+    _require_admin(request)
+    get_object_or_404(AvatarFrame, pk=frame_id).delete()
+    logger.info(
+        'Avatar frame deleted',
+        extra={'frame_id': frame_id, 'user_id': request.auth.id},
+    )
+
+    return 204, None

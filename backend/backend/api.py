@@ -40,7 +40,6 @@ def validation_error_handler(request, exc):
     return api.create_response(
         request,
         ErrorResponse(
-            code="validation_error",
             message="Validation failed.",
             details=details or None,
         ).model_dump(),
