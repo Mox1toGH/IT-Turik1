@@ -73,7 +73,7 @@ LOGGING = {
     'root': {'handlers': ['console'], 'level': 'WARNING'},
     'loggers': {
         **{
-            name: {'handlers': ['console', 'file'], 'level': LOG_LEVEL, 'propagate': False}
+            name: {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False}
             for name in PROJECT_LOGGERS
         },
         'django.db.backends': {'level': DJANGO_DB_LOG_LEVEL},
