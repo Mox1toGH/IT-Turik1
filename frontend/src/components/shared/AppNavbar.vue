@@ -16,17 +16,23 @@
           </template>
 
           <template v-else>
-            <router-link to="/" :class="navItemClass('home')">Home</router-link>
-            <router-link to="/teams" :class="navItemClass('teams')">Teams</router-link>
-            <router-link to="/tournaments" :class="navItemClass('tournaments')"
-              >Tournaments</router-link
-            >
-            <router-link to="/news" :class="navItemClass('news')"> News </router-link>
-            <router-link to="/shop" :class="navItemClass('shop')">Shop</router-link>
-            <router-link to="/calendar" :class="navItemClass('calendar')"> Calendar </router-link>
-            <router-link v-if="isJury" to="/evaluation" :class="navItemClass('evaluation')"
-              >Evaluations</router-link
-            >
+            <div class="dock" role="navigation" aria-label="Main">
+              <router-link
+                v-for="item in dockItems"
+                :key="item.section"
+                :to="item.to"
+                :title="item.label"
+                :aria-label="item.label"
+                class="dock-item"
+                :class="{ active: isSectionActive(item.section) }"
+              >
+                <component :is="item.icon" :size="18" :stroke-width="2.2" />
+                <span class="dock-label">{{ item.label }}</span>
+              </router-link>
+            </div>
+
+            <notification-dropdown />
+
             <router-link
               to="/profile"
               class="profile-avatar-link"
@@ -41,12 +47,6 @@
                 :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
               />
             </router-link>
-
-            <router-link v-if="isAdmin" to="/admin" :class="navItemClass('admin')"
-              >Admin</router-link
-            >
-
-            <notification-dropdown />
           </template>
         </div>
 
@@ -169,8 +169,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type Component } from 'vue'
 import { useRoute } from 'vue-router'
+import {
+  Home,
+  Users,
+  Trophy,
+  Newspaper,
+  ShoppingBag,
+  CalendarDays,
+  ClipboardCheck,
+  Shield,
+} from 'lucide-vue-next'
 import SwitchThemeButton from './SwitchThemeButton.vue'
 import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
@@ -201,6 +211,35 @@ type Section =
   | 'login'
   | 'register'
 
+interface DockItem {
+  section: Section
+  to: string
+  label: string
+  icon: Component
+}
+
+const dockItems = computed<DockItem[]>(() => [
+  { section: 'home', to: '/', label: 'Home', icon: Home },
+  { section: 'teams', to: '/teams', label: 'Teams', icon: Users },
+  { section: 'tournaments', to: '/tournaments', label: 'Tournaments', icon: Trophy },
+  { section: 'news', to: '/news', label: 'News', icon: Newspaper },
+  { section: 'shop', to: '/shop', label: 'Shop', icon: ShoppingBag },
+  { section: 'calendar', to: '/calendar', label: 'Calendar', icon: CalendarDays },
+  ...(isJury.value
+    ? [
+        {
+          section: 'evaluation',
+          to: '/evaluation',
+          label: 'Evaluations',
+          icon: ClipboardCheck,
+        } as DockItem,
+      ]
+    : []),
+  ...(isAdmin.value
+    ? [{ section: 'admin', to: '/admin', label: 'Admin', icon: Shield } as DockItem]
+    : []),
+])
+
 const navItemClass = (section: Section, cta = false) => ({
   'nav-item': true,
   'nav-cta': cta,
@@ -221,7 +260,7 @@ const isSectionActive = (section: Section) => {
   if (section === 'profile')
     return path === '/profile' || path.startsWith('/profile/') || path === '/complete-profile'
   if (section === 'notifications') return path === '/profile/notifications'
-  if (section === 'admin') return path.startsWith('/admin/')
+  if (section === 'admin') return path === '/admin' || path.startsWith('/admin/')
 
   return false
 }
@@ -244,6 +283,7 @@ const isSectionActive = (section: Section) => {
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--foreground);
+  white-space: nowrap;
 }
 
 .brand-group {
@@ -255,7 +295,7 @@ const isSectionActive = (section: Section) => {
 
 .nav-container {
   margin: 0 auto;
-  padding: 0.9rem 1rem;
+  padding: 0.9rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -265,32 +305,19 @@ const isSectionActive = (section: Section) => {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
+/* ---------- Guest links ---------- */
 .nav-item {
   color: var(--foreground);
   font-weight: 700;
   padding: 0.45rem 0.85rem;
-  border-radius: 999px;
+  border-radius: var(--radius, 10px);
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.profile-avatar-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  border-radius: 999px;
-  transition: background 0.2s ease;
-}
-
-.profile-avatar-link:hover,
-.profile-avatar-link.active {
-  background: var(--secondary);
 }
 
 .nav-item:hover {
@@ -316,6 +343,79 @@ const isSectionActive = (section: Section) => {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
+/* ---------- Dock ---------- */
+/* Плоский стиль як у кнопок сайту: без капсули, радіус як у UiButton */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dock-item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 0.7rem;
+  border-radius: var(--radius, 10px);
+  color: var(--muted-foreground, var(--foreground));
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.dock-item:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.dock-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.dock-label {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 0.3s ease,
+    margin 0.3s ease,
+    opacity 0.2s ease;
+}
+
+/* активний = той самий secondary, що й у кнопок "Manage Categories" / "Admin Orders" */
+.dock-item.active {
+  background: var(--secondary);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.dock-item.active .dock-label {
+  max-width: 130px;
+  margin-left: 0.5rem;
+  opacity: 1;
+}
+
+/* ---------- Avatar ---------- */
+.profile-avatar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.profile-avatar-link:hover,
+.profile-avatar-link.active {
+  background: var(--secondary);
+}
+
+/* ---------- Burger ---------- */
 .burger-menu {
   min-height: 35px;
   color: var(--ink-700);
@@ -354,6 +454,7 @@ const isSectionActive = (section: Section) => {
   transform: rotate(-45deg) translate(2px, -3px);
 }
 
+/* ---------- Mobile menu ---------- */
 .mobile-menu {
   position: fixed;
   top: 59.8px;
@@ -423,6 +524,13 @@ const isSectionActive = (section: Section) => {
   background: var(--destructive);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dock-item,
+  .dock-label {
+    transition: none;
+  }
+}
+
 @media (max-width: 817px) {
   .nav-links.desktop {
     display: none;
@@ -434,10 +542,6 @@ const isSectionActive = (section: Section) => {
 
   .mobile-menu {
     display: flex;
-  }
-
-  .nav-container {
-    padding: 0.75rem 1rem;
   }
 
   .brand {

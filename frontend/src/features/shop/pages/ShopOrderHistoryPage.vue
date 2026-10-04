@@ -142,7 +142,7 @@ const formatDate = (value: string) => new Date(value).toLocaleString('uk-UA')
 <style scoped>
 .orders-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 .orders-hero {

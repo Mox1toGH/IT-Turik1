@@ -137,7 +137,7 @@ watch(
 <style scoped>
 .news-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 .news-rule {

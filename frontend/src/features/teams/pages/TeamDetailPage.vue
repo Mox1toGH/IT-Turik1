@@ -440,7 +440,7 @@ watch(
 <style scoped>
 .teams-detail-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 .team-detail-hero {

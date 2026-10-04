@@ -1,5 +1,5 @@
 <template>
-  <section class="page-shell profile-page">
+  <section class="page-shell">
     <div v-if="isLoadingError" class="error-state">
       <p>Error while fetching profile info</p>
     </div>
@@ -184,13 +184,6 @@ const logout = () => {
 </script>
 
 <style scoped>
-.profile-page {
-  max-width: 1180px;
-  margin: 0 auto;
-  gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
-}
-
 .profile-header {
   display: flex;
   align-items: flex-end;

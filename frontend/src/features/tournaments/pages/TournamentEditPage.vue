@@ -17,7 +17,7 @@ const tournamentId = Number(route.params.id)
 <style scoped>
 .edit-tournament-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 @media (max-width: 760px) {

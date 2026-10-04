@@ -130,15 +130,19 @@ watch([statusFilter, userFilter], () => {
 
 const orderParams = ref<ListAdminOrdersParams>({})
 
-watch([page, pageSize, statusFilter, userFilter], () => {
-  const userId = Number(userFilter.value)
-  orderParams.value = {
-    page: page.value,
-    page_size: pageSize.value,
-    status: statusFilter.value === 'all' ? '' : statusFilter.value,
-    user: Number.isInteger(userId) && userId > 0 ? userId : undefined,
-  }
-}, { immediate: true })
+watch(
+  [page, pageSize, statusFilter, userFilter],
+  () => {
+    const userId = Number(userFilter.value)
+    orderParams.value = {
+      page: page.value,
+      page_size: pageSize.value,
+      status: statusFilter.value === 'all' ? '' : statusFilter.value,
+      user: Number.isInteger(userId) && userId > 0 ? userId : undefined,
+    }
+  },
+  { immediate: true },
+)
 
 // TODO: add "all" option to backend
 const { data, isLoading, isLoadingError, error } = useListAdminOrders(orderParams)
@@ -193,7 +197,7 @@ const cancel = (orderId: number) => {
 <style scoped>
 .admin-orders-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 .admin-orders-hero {

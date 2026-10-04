@@ -169,7 +169,7 @@ const { adminCategories, createCategory, updateCategory, deleteCategory } =
 .shop-page {
   display: grid;
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
+  padding:;
 }
 
 .catalog-section {
