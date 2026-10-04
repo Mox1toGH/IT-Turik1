@@ -272,8 +272,8 @@ const handleFormSubmit = () => {
         router.push(`/teams/${data.id}`)
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')
@@ -443,7 +443,7 @@ const handleFormSubmit = () => {
   min-height: 3.2rem;
   margin: 0;
   overflow: hidden;
-  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 

@@ -170,8 +170,8 @@ const handleSubmit = () => {
         emit('saved')
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof ProfileForm, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
         showNotification(error?.message, 'error')
       },

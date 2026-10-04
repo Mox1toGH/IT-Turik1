@@ -267,11 +267,6 @@ const { data: tournament, isLoading, isFetching, isError } = useGetTournament(pr
 
 const { mutate: editTournament, isPending } = useUpdateTournament()
 
-const apiToFormFieldMap: Record<string, keyof Form> = {
-  start_date: 'startDate',
-  end_date: 'endDate',
-}
-
 function toPayload(values: Form): UpdateTournamentMutationBody {
   return {
     name: values.name,
@@ -343,9 +338,8 @@ const handleSubmit = () => {
         router.push(`/tournaments/${props.tournamentId}`)
       },
       onError: (error) => {
-        for (const [apiField, errors] of Object.entries(error?.details || {})) {
-          const formField = apiToFormFieldMap[apiField] ?? apiField
-          form.setError(formField as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')

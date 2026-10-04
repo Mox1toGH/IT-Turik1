@@ -281,8 +281,8 @@ function handleRegister() {
     { data: form.fields.value },
     {
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')
