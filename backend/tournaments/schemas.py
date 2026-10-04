@@ -140,8 +140,7 @@ class ArchiveStandingResponse(Schema):
     rounds_breakdown: list[RoundBreakdownResponse] | None = None
     snapshot_at: datetime
 
-
-class TournamentArchiveListResponse(Schema):
+class TournamentArchiveBase(Schema):
     id: int
     name: str
     description: str
@@ -149,12 +148,24 @@ class TournamentArchiveListResponse(Schema):
     end_date: datetime
     status: TournamentStatus
     banner: str | None = None
-    teams: list[TeamSummaryResponse]
     standings: list[ArchiveStandingResponse]
 
     @staticmethod
     def resolve_banner(obj, context):
         return _file_url(obj.banner, context)
+
+    @staticmethod
+    def resolve_standings(obj):
+        return obj.leaderboard_entries.filter(round__isnull=True).select_related('team').order_by('rank')
+
+
+class TournamentArchiveListResponse(TournamentArchiveBase):
+    pass
+
+
+class TournamentArchiveDetailResponse(TournamentArchiveBase):
+    teams: list[TeamSummaryResponse]
+    standings: list[ArchiveStandingResponse]
 
     @staticmethod
     def resolve_teams(obj):

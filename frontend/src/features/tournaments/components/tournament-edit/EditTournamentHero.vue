@@ -1,36 +1,43 @@
 <template>
-  <ui-card class="create-hero">
+  <ui-card class="edit-hero">
     <div>
       <p class="section-eyebrow">Tournament workspace</p>
-      <h1>Create tournament</h1>
+      <h1>Edit tournament</h1>
       <p class="section-subtitle">
-        Set the public details, team limits, and registration window before rounds are added.
+        Update the public details, team limits, and registration window for this tournament.
       </p>
     </div>
 
-    <ui-button asLink to="/tournaments" variant="secondary" size="lg" class="back-link">
-      Back to tournaments
+    <ui-button
+      asLink
+      :to="`/tournaments/${tournamentId}`"
+      variant="secondary"
+      size="lg"
+      class="back-link"
+    >
+      Back to tournament
     </ui-button>
   </ui-card>
-  <CreateTournamentForm />
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
-import CreateTournamentForm from '../components/tournament-create/CreateTournamentForm.vue'
+
+defineProps<{
+  tournamentId: number
+}>()
 </script>
 
 <style scoped>
-.create-hero {
+.edit-hero {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1.5rem;
-  margin-bottom: 1rem;
 }
 
-.create-hero h1 {
+.edit-hero h1 {
   margin: 0.35rem 0 0;
   color: var(--foreground);
   font-family: var(--font-display);
@@ -39,7 +46,7 @@ import CreateTournamentForm from '../components/tournament-create/CreateTourname
   font-weight: 800;
 }
 
-.create-hero .section-subtitle {
+.edit-hero .section-subtitle {
   max-width: 680px;
   margin: 0.45rem 0 0;
 }
@@ -49,13 +56,13 @@ import CreateTournamentForm from '../components/tournament-create/CreateTourname
 }
 
 @media (max-width: 760px) {
-  .create-hero {
+  .edit-hero {
     flex-direction: column;
     align-items: flex-start;
     padding: 1.2rem;
   }
 
-  .create-hero h1 {
+  .edit-hero h1 {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
   }

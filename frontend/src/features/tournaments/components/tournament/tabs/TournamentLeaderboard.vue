@@ -364,13 +364,17 @@ const tableVars = computed(() => ({
   '--round-cols': String(Math.max(roundColumns.value.length, 1)),
   '--visible-round-cols': String(Math.max(visibleRoundCols.value, 1)),
 }))
-const errorMessage = computed(() =>
-  !error.value
-    ? 'Failed to load leaderboard.'
-    : error.value.code === 'forbidden'
-      ? 'Leaderboard is not available yet.'
-      : error.value.message || 'Failed to load leaderboard.',
-)
+const errorMessage = computed(() => {
+  const err = error.value
+  if (!err) return 'Failed to load leaderboard.'
+
+  if (err._axiosError?.response?.status === 403) {
+    return 'Leaderboard is not available yet.'
+  }
+
+  return err.message
+})
+
 const isLeaderboardNotReady = computed(() => {
   const status = getHttpStatus(error.value)
   return status === 404 || status === 403

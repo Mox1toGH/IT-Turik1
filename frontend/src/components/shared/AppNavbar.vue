@@ -254,7 +254,6 @@ const isSectionActive = (section: Section) => {
 }
 
 .nav-container {
-  max-width: 1100px;
   margin: 0 auto;
   padding: 0.9rem 1rem;
   display: flex;

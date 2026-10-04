@@ -1184,7 +1184,7 @@ export const requestPasswordReset = (
   
 
 
-export const getRequestPasswordResetMutationOptions = <TError = ErrorType<unknown>,
+export const getRequestPasswordResetMutationOptions = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext> => {
 
@@ -1211,12 +1211,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
     export type RequestPasswordResetMutationBody = BodyType<PasswordResetRequest>
-    export type RequestPasswordResetMutationError = ErrorType<unknown>
+    export type RequestPasswordResetMutationError = ErrorType<ErrorResponse>
 
     /**
  * @summary Request Password Reset
  */
-export const useRequestPasswordReset = <TError = ErrorType<unknown>,
+export const useRequestPasswordReset = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: BodyType<PasswordResetRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof requestPasswordReset>>,

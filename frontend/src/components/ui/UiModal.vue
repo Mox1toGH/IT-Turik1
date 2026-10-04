@@ -18,29 +18,31 @@
           @pointer-down-outside="handlePointerDownOutside"
         >
           <ui-card :scrollable="props.scrollable">
-            <div class="modal-header">
-              <DialogTitle v-if="$slots.title" as-child>
-                <span class="modal-title"><slot name="title" /></span>
-              </DialogTitle>
-              <VisuallyHidden v-else as-child>
-                <DialogTitle>Dialog</DialogTitle>
-              </VisuallyHidden>
+            <template #header>
+              <div class="modal-header">
+                <DialogTitle v-if="$slots.title" as-child>
+                  <span class="modal-title"><slot name="title" /></span>
+                </DialogTitle>
+                <VisuallyHidden v-else as-child>
+                  <DialogTitle>Dialog</DialogTitle>
+                </VisuallyHidden>
 
-              <VisuallyHidden as-child>
-                <DialogDescription>Dialog content</DialogDescription>
-              </VisuallyHidden>
+                <VisuallyHidden as-child>
+                  <DialogDescription>Dialog content</DialogDescription>
+                </VisuallyHidden>
 
-              <DialogClose as-child>
-                <ui-button
-                  style="margin-left: auto"
-                  variant="secondary"
-                  size="sm"
-                  aria-label="Close"
-                >
-                  <CrossIcon />
-                </ui-button>
-              </DialogClose>
-            </div>
+                <DialogClose as-child>
+                  <ui-button
+                    style="margin-left: auto"
+                    variant="secondary"
+                    size="sm"
+                    aria-label="Close"
+                  >
+                    <CrossIcon />
+                  </ui-button>
+                </DialogClose>
+              </div>
+            </template>
 
             <slot />
 

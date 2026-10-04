@@ -66,12 +66,6 @@ interface Props {
   tournamentId: number
 }
 
-interface Form {
-  github_url: string
-  demo_video_url: string
-  description: string
-}
-
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -80,7 +74,7 @@ const { showNotification } = useNotification()
 const route = useRoute()
 const router = useRouter()
 
-const form = useForm<Form>(SubmitRoundSchema, {
+const form = useForm(SubmitRoundSchema, {
   github_url: '',
   demo_video_url: '',
   description: '',
@@ -103,8 +97,8 @@ const submitRound = () => {
     },
     {
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error?.message, 'error')

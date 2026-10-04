@@ -34,8 +34,8 @@
           </div>
         </template>
 
-        <div v-if="items.length" class="archive-grid">
-          <ui-card v-for="item in items" :key="item.id" class="archive-card">
+        <div v-if="tournaments" class="archive-grid">
+          <ui-card v-for="item in tournaments" :key="item.id" class="archive-card">
             <div
               class="archive-top"
               :class="{ 'archive-top--with-banner': Boolean(item.banner) }"
@@ -91,13 +91,11 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { computed } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 
-const { data, isLoading } = useListTournamentArchive()
-const items = computed(() => data.value ?? [])
+const { data: tournaments, isLoading } = useListTournamentArchive()
 </script>
 
 <style scoped>

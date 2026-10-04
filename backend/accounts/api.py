@@ -737,7 +737,7 @@ def list_user_tournament_history(request, pk: int):
     auth=None,
     operation_id="requestPasswordReset",
     url_name="password_reset_request",
-    response={200: MessageResponse},
+    response={200: MessageResponse, 400: ErrorResponse},
 )
 def request_password_reset(request, payload: PasswordResetRequest):
     user = User.objects.filter(

@@ -578,20 +578,26 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     )
 
 
-@router.get('/archive', operation_id='listTournamentArchive', url_name='tournament_archive_list', response={200: list[TournamentArchiveListResponse], 401: ErrorResponse})
+@router.get(
+    '/archive',
+    operation_id='listTournamentArchive',
+    url_name='tournament_archive_list',
+    response={200: list[TournamentArchiveListResponse], 401: ErrorResponse},
+)
 def list_tournament_archive(request):
     logger.debug('Listing tournament archive')
-    queryset = Tournament.objects.filter(status=Tournament.STATUS_FINISHED).prefetch_related('rounds')
-
-    return [TournamentArchiveListResponse.model_validate(tournament, from_attributes=True) for tournament in queryset]
+    return Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
 
 
-@router.get('/archive/{id}', operation_id='getTournamentArchive', url_name='tournament_archive_detail', response={200: TournamentArchiveDetailResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get(
+    '/archive/{id}',
+    operation_id='getTournamentArchive',
+    url_name='tournament_archive_detail',
+    response={200: TournamentArchiveDetailResponse, 401: ErrorResponse, 404: ErrorResponse},
+)
 def get_tournament_archive(request, id: int):
     logger.debug('Fetching tournament archive', extra={'tournament_id': id})
-    tournament = get_object_or_404(Tournament.objects.prefetch_related('rounds'), pk=id, status=Tournament.STATUS_FINISHED)
-
-    return TournamentArchiveDetailResponse.model_validate(tournament, from_attributes=True)
+    return get_object_or_404(Tournament, pk=id, status=Tournament.STATUS_FINISHED)
 
 
 @router.get('/archive/{id}/submissions', operation_id='listTournamentArchiveSubmissions', url_name='tournament_archive_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})

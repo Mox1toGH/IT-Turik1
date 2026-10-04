@@ -59,7 +59,7 @@ import UiInput from '@/components/ui/UiInput.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import TeamCard from './TeamCard.vue'
+import TeamCard from '../TeamCard.vue'
 
 interface Props {
   tournamentId: number

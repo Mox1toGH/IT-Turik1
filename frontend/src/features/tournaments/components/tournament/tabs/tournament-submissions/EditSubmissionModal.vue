@@ -79,7 +79,7 @@ const emit = defineEmits<{
 
 const { showNotification } = useNotification()
 
-const form = useForm<Form>(EditSubmissionSchema, {
+const form = useForm(EditSubmissionSchema, {
   github_url: props.defaultValues?.github_url ?? '',
   demo_video_url: props.defaultValues?.demo_video_url ?? '',
   description: props.defaultValues?.description ?? '',
@@ -98,8 +98,8 @@ const editRound = () => {
     },
     {
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error?.message, 'error')

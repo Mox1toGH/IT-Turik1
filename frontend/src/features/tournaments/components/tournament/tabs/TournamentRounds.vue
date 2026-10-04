@@ -1,8 +1,7 @@
 <template>
   <div class="actions" v-if="user?.role === 'admin'">
-    <ui-button asLink :to="`/tournaments/${props.tournamentId}/rounds/create`"
-      >Create round</ui-button
-    >
+    <ui-button @click="openCreate">Create round</ui-button>
+    <CreateRoundModal v-model="isCreateOpen" :tournament-id="props.tournamentId" />
   </div>
 
   <section>
@@ -128,10 +127,11 @@ import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
 import type { Variants } from '@/components/ui/UiBadge.vue'
-import RoundDetailsModal from './modals/RoundDetailsModal.vue'
-import SubmitModal from './modals/SubmitModal.vue'
+import RoundDetailsModal from '../modals/RoundDetailsModal.vue'
+import SubmitModal from '../modals/SubmitModal.vue'
 import RoundActionsPopover from './tournament-rounds/RoundActionsPopover.vue'
-import EditRoundModal from './modals/EditRoundModal.vue'
+import CreateRoundModal from './tournament-rounds/modals/CreateRoundModal.vue'
+import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
@@ -155,8 +155,9 @@ const submittedRoundIds = computed(
 )
 
 const isDetailsOpen = ref(false)
-const isSubmitOpen = ref(false)
+const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
+const isSubmitOpen = ref(false)
 const selectedRound = ref<RoundResponse | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
 
@@ -170,6 +171,10 @@ function getEffectiveRoundStatus(round: RoundResponse): RoundResponse['status'] 
 function openDetails(round: RoundResponse) {
   selectedRound.value = round
   isDetailsOpen.value = true
+}
+
+function openCreate() {
+  isCreateOpen.value = true
 }
 
 function openEdit(round: RoundResponse) {
@@ -254,12 +259,6 @@ function badgeStatus(status: RoundResponse['status']) {
 
 .round-card {
   min-width: 0;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
 }
 
 .description-card {

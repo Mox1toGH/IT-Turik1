@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import { ref } from 'vue'
 
-type Errors<T> = Partial<Record<keyof T, string>>
+type Errors<T> = Partial<Record<keyof T | string, string>>
 
 export function useForm<T extends object>(schema: v.GenericSchema, initialValues: T) {
   const fields = ref<T>({ ...initialValues })
@@ -13,8 +13,11 @@ export function useForm<T extends object>(schema: v.GenericSchema, initialValues
 
     if (!result.success) {
       result.issues.forEach((issue) => {
-        const field = issue.path?.[0]?.key as keyof T
-        if (field) errors.value[field] = issue.message
+        const field = issue.path?.[0]?.key
+
+        if (typeof field === 'string') {
+          errors.value[field] = issue.message
+        }
       })
       return false
     }
@@ -28,8 +31,16 @@ export function useForm<T extends object>(schema: v.GenericSchema, initialValues
     if (issue) errors.value[field] = issue.message
   }
 
-  function setError(key: keyof T, value: string) {
-    errors.value[key] = value
+  function setError(key: keyof T, value: string): void
+  function setError(key: string, value: string): void
+  function setError(key: string | number | symbol, value: string) {
+    errors.value[String(key)] = value
+  }
+
+  function setApiErrors(details: Record<string, string>) {
+    for (const [field, message] of Object.entries(details)) {
+      errors.value[field as keyof T] = message
+    }
   }
 
   function hydrate(values: T) {
@@ -38,9 +49,9 @@ export function useForm<T extends object>(schema: v.GenericSchema, initialValues
   }
 
   function reset() {
-    fields.value = initialValues
+    fields.value = { ...initialValues }
     errors.value = {}
   }
 
-  return { fields, errors, validate, validateField, setError, hydrate, reset }
+  return { fields, errors, validate, validateField, setError, setApiErrors, hydrate, reset }
 }
