@@ -240,6 +240,8 @@ const dockItems = computed<DockItem[]>(() => [
     : []),
 ])
 
+const routeResolved = computed(() => route.matched.length > 0)
+
 const navItemClass = (section: Section, cta = false) => ({
   'nav-item': true,
   'nav-cta': cta,
@@ -247,6 +249,7 @@ const navItemClass = (section: Section, cta = false) => ({
 })
 
 const isSectionActive = (section: Section) => {
+  if (!routeResolved.value) return false
   const path = route.path
 
   if (section === 'home') return path === '/'
@@ -310,7 +313,6 @@ const isSectionActive = (section: Section) => {
   justify-content: flex-end;
 }
 
-/* ---------- Guest links ---------- */
 .nav-item {
   color: var(--foreground);
   font-weight: 700;
@@ -343,8 +345,6 @@ const isSectionActive = (section: Section) => {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
 
-/* ---------- Dock ---------- */
-/* Плоский стиль як у кнопок сайту: без капсули, радіус як у UiButton */
 .dock {
   display: flex;
   align-items: center;
@@ -387,7 +387,6 @@ const isSectionActive = (section: Section) => {
     opacity 0.2s ease;
 }
 
-/* активний = той самий secondary, що й у кнопок "Manage Categories" / "Admin Orders" */
 .dock-item.active {
   background: var(--secondary);
   color: var(--foreground);
@@ -415,7 +414,6 @@ const isSectionActive = (section: Section) => {
   background: var(--secondary);
 }
 
-/* ---------- Burger ---------- */
 .burger-menu {
   min-height: 35px;
   color: var(--ink-700);
@@ -454,7 +452,6 @@ const isSectionActive = (section: Section) => {
   transform: rotate(-45deg) translate(2px, -3px);
 }
 
-/* ---------- Mobile menu ---------- */
 .mobile-menu {
   position: fixed;
   top: 59.8px;
