@@ -97,13 +97,6 @@ EVENTS = {
         message='A new post was published: [news:{news_id}:{news_title}].',
         email_subject='New announcement: {news_title}',
     ),
-    'certificate_received': NotificationEvent(
-        key='certificate_received',
-        channels=['system', 'email'],
-        title='Certificate Received',
-        message='Your certificate for "{tournament_name}" is ready. Placement: {placement}. Certificate № {certificate_number}.',
-        email_subject='Your certificate is ready',
-    ),
     'tournament_team_registered': NotificationEvent(
         key='tournament_team_registered',
         channels=['system'],
@@ -162,18 +155,5 @@ EVENTS = {
         title='New Jury Assignment',
         message='You were assigned to evaluate submissions for round "{round_name}" in tournament "{tournament_name}".',
         email_subject='New jury assignment',
-    ),
-    'shop_order_status_changed': NotificationEvent(
-        key='shop_order_status_changed',
-        channels=['system', 'email'],
-        title='Order Status Updated',
-        message='Your order #{order_id} for "{product_name}" is now "{order_status}".',
-        email_subject='Order #{order_id} status updated',
-    ),
-    'points_balance_changed': NotificationEvent(
-        key='points_balance_changed',
-        channels=['system'],
-        title='Points Balance Updated',
-        message='Your points balance changed by {delta}. Current balance: {balance}. Reason: {reason}.',
     ),
 }

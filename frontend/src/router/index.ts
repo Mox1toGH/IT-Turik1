@@ -9,10 +9,8 @@ import { teamsRoutes } from '@/features/teams/routes'
 import { tournamentsRoutes } from '@/features/tournaments/routes'
 import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
-import { statsRoutes } from '@/features/stats/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
 import { getUserProfile } from '@/api/accounts/accounts'
-import { shopRoutes } from '@/features/shop/routes'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,9 +23,7 @@ const router = createRouter({
     ...tournamentsRoutes,
     ...newsRoutes,
     ...evaluationRoutes,
-    ...statsRoutes,
     ...calendarRoutes,
-    ...shopRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })

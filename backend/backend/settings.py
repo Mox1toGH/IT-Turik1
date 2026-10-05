@@ -45,8 +45,8 @@ LOG_LEVEL = os.getenv('DJANGO_LOG_LEVEL', 'DEBUG' if DEBUG else 'INFO').upper()
 DJANGO_DB_LOG_LEVEL = os.getenv('DJANGO_DB_LOG_LEVEL', 'INFO')
 
 PROJECT_LOGGERS = [
-    'accounts', 'teams', 'evaluation', 'tournaments', 'certificates',
-    'notifications', 'stats', 'news', 'points', 'shop', 'inventory',
+    'accounts', 'teams', 'evaluation', 'tournaments',
+    'notifications', 'stats', 'news',
     'backend',
 ]
 
@@ -94,13 +94,9 @@ INSTALLED_APPS = [
     'tournaments',
     'corsheaders',
     'rest_framework_simplejwt',
-    'certificates',
     'notifications',
     'stats',
     'news',
-    'points',
-    'shop',
-    'inventory',
     'channels',
 ]
 

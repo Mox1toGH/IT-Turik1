@@ -52,8 +52,6 @@ import type {
   RoundCreateRequest,
   RoundResponse,
   RoundUpdateRequest,
-  SendTournamentCertificatesRequest,
-  SendTournamentCertificatesResponse,
   SubmissionCreateRequest,
   SubmissionListResponse,
   SubmissionResponse,
@@ -62,7 +60,6 @@ import type {
   TeamRegistrationResponse,
   TournamentArchiveDetailResponse,
   TournamentArchiveListResponse,
-  TournamentCertificateDeliveryStatusResponse,
   TournamentCreateRequest,
   TournamentListResponse,
   TournamentResponse,
@@ -552,140 +549,6 @@ export function useGetMyCalendar<TData = Awaited<ReturnType<typeof getMyCalendar
 
 
 /**
- * @summary Get Tournament Certificate Delivery Status
- */
-export const getTournamentCertificateDeliveryStatus = (
-    tournamentId: MaybeRef<number>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      tournamentId = unref(tournamentId);
-      
-      return customInstance<TournamentCertificateDeliveryStatusResponse>(
-      {url: `http://localhost:8000/api/tournaments/${tournamentId}/certificates/delivery-status`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getGetTournamentCertificateDeliveryStatusQueryKey = (tournamentId?: MaybeRef<number>,) => {
-    return [
-    'http:','localhost:8000','api','tournaments',tournamentId,'certificates','delivery-status'
-    ] as const;
-    }
-
-    
-export const getGetTournamentCertificateDeliveryStatusQueryOptions = <TData = Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError = ErrorType<ErrorResponse>>(tournamentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  getGetTournamentCertificateDeliveryStatusQueryKey(tournamentId);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>> = ({ signal }) => getTournamentCertificateDeliveryStatus(tournamentId, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: computed(() => !!(unref(tournamentId))), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData> 
-}
-
-export type GetTournamentCertificateDeliveryStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>>
-export type GetTournamentCertificateDeliveryStatusQueryError = ErrorType<ErrorResponse>
-
-
-/**
- * @summary Get Tournament Certificate Delivery Status
- */
-
-export function useGetTournamentCertificateDeliveryStatus<TData = Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError = ErrorType<ErrorResponse>>(
- tournamentId: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTournamentCertificateDeliveryStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetTournamentCertificateDeliveryStatusQueryOptions(tournamentId,options)
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = unref(queryOptions).queryKey as DataTag<QueryKey, TData, TError>;
-
-  return query;
-}
-
-
-
-
-/**
- * @summary Send Tournament Certificates
- */
-export const sendTournamentCertificates = (
-    tournamentId: MaybeRef<number>,
-    sendTournamentCertificatesRequest: MaybeRef<SendTournamentCertificatesRequest>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      tournamentId = unref(tournamentId);
-sendTournamentCertificatesRequest = unref(sendTournamentCertificatesRequest);
-      
-      return customInstance<SendTournamentCertificatesResponse>(
-      {url: `http://localhost:8000/api/tournaments/${tournamentId}/send-certificates`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: sendTournamentCertificatesRequest, signal
-    },
-      options);
-    }
-  
-
-
-export const getSendTournamentCertificatesMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number;data: BodyType<SendTournamentCertificatesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number;data: BodyType<SendTournamentCertificatesRequest>}, TContext> => {
-
-const mutationKey = ['sendTournamentCertificates'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendTournamentCertificates>>, {tournamentId: number;data: BodyType<SendTournamentCertificatesRequest>}> = (props) => {
-          const {tournamentId,data} = props ?? {};
-
-          return  sendTournamentCertificates(tournamentId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendTournamentCertificatesMutationResult = NonNullable<Awaited<ReturnType<typeof sendTournamentCertificates>>>
-    export type SendTournamentCertificatesMutationBody = BodyType<SendTournamentCertificatesRequest>
-    export type SendTournamentCertificatesMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Send Tournament Certificates
- */
-export const useSendTournamentCertificates = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendTournamentCertificates>>, TError,{tournamentId: number;data: BodyType<SendTournamentCertificatesRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof sendTournamentCertificates>>,
-        TError,
-        {tournamentId: number;data: BodyType<SendTournamentCertificatesRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getSendTournamentCertificatesMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Export To Google Calendar
  */
 export const exportToGoogleCalendar = (

@@ -30,8 +30,7 @@ const variantClass = `card-${props.variant}`
 
 <style scoped>
 .card {
-  border: 1px solid;
-  border-color: inherit;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1.2rem;
   display: flex;

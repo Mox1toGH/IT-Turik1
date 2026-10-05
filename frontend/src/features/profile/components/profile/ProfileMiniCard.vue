@@ -5,7 +5,6 @@
         <div class="avatar-box">
           <user-avatar
             :avatar="user?.avatar"
-            :avatar-frame-url="user?.avatar_frame_url"
             :username="user?.username || 'user'"
             :full-name="user?.full_name || ''"
             :size="100"

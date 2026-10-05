@@ -31,7 +31,7 @@
   <ui-card v-else-if="isError" variant="panel" :isError="true">
     <template #error>
       <div class="error-box">
-        <p>Failed to fetch news (code: {{ errorCode }})</p>
+        <p>Failed to fetch news</p>
       </div>
     </template>
   </ui-card>
@@ -104,7 +104,6 @@ import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 defineProps<{
   isLoading: boolean
   isError: boolean
-  errorCode?: number | string
   items: NewsArticleResponse[]
   totalNews: number
   totalPages: number

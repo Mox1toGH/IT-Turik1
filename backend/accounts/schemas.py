@@ -147,24 +147,10 @@ class UserResponse(AvatarSchema):
     phone: str
     city: str
     is_staff: bool
-    avatar_frame_url: str | None
     created_at: datetime
     needs_onboarding: bool
     teams: list[UserTeamResponse]
     active_tournament: UserActiveTournamentResponse | None
-
-    @staticmethod
-    def resolve_avatar_frame_url(obj, context):
-        from inventory.models import UserInventory
-
-        equipped_item = (
-            UserInventory.objects.select_related('product', 'product__avatar_frame')
-            .filter(user=obj, is_equipped=True)
-            .first()
-        )
-        if equipped_item is None:
-            return None
-        return absolute_media_url(equipped_item.product.effective_digital_asset_url, context)
 
     @staticmethod
     def resolve_created_at(obj):

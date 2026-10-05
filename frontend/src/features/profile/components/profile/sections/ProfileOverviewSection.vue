@@ -3,18 +3,6 @@
     <ProfileMiniCard :user="user" :is-loading="isLoading" @edit-profile="openEditProfile" />
     <EditProfileModal ref="editProfileModal" />
 
-    <ui-card variant="stat" class="balance-card">
-      <template #header>
-        <span class="card-label">Points balance:</span>
-      </template>
-      <ui-skeleton-loader :loading="isPointsLoading">
-        <template #skeleton>
-          <ui-skeleton variant="rect" width="5rem" />
-        </template>
-        <p class="balance-value text-xl">{{ pointsBalance?.balance ?? 0 }}</p>
-      </ui-skeleton-loader>
-    </ui-card>
-
     <ui-card variant="panel" class="details-section" aria-labelledby="profile-details-title">
       <div>
         <p class="section-eyebrow">Profile details</p>
@@ -85,7 +73,6 @@ import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
-import { useGetMyPointsBalance } from '@/api/points/points'
 import { formatDate } from '@/lib/date'
 import ProfileMiniCard from '../ProfileMiniCard.vue'
 import EditProfileModal from '../modals/EditProfile/EditProfileModal.vue'
@@ -96,7 +83,6 @@ const props = defineProps<{
   isLoading?: boolean
 }>()
 
-const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
 const editProfileModal = ref<InstanceType<typeof EditProfileModal> | null>(null)
 
 const profileFields = computed(() => [

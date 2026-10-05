@@ -50,7 +50,6 @@ class TeamMemberResponse(Schema):
     full_name: str
     role: UserRole
     avatar: str | None = None
-    avatar_frame_url: str | None = None
 
     @staticmethod
     def resolve_avatar(obj, context):
@@ -567,21 +566,6 @@ class CalendarRoundResponse(Schema):
 class MyCalendarResponse(Schema):
     events: list[CalendarEventResponse]
     rounds: list[CalendarRoundResponse]
-
-
-class TournamentCertificateDeliveryStatusResponse(Schema):
-    existing_count: int
-    missing_count: int
-
-
-class SendTournamentCertificatesRequest(Schema):
-    template_id: int
-    mode: str = 'missing'
-
-
-class SendTournamentCertificatesResponse(Schema):
-    created_count: int
-    skipped_count: int
 
 
 class ExportToGoogleCalendarRequest(Schema):

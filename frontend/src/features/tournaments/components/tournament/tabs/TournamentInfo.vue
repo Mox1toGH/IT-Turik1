@@ -100,34 +100,6 @@
           <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
         </ui-skeleton-loader>
       </div>
-
-      <div class="tournament-points">
-        <p class="text-muted">Your points</p>
-        <ui-skeleton-loader :loading="pointsLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <ui-skeleton variant="rect" width="120px" />
-              <ui-skeleton variant="rect" width="180px" />
-            </div>
-          </template>
-
-          <div v-if="pointsError" class="points-error">
-            <p>Unable to load your points.</p>
-          </div>
-          <div v-else-if="!profile?.id">
-            <p>Log in to see your points balance.</p>
-          </div>
-          <div v-else>
-            <p><strong>Balance:</strong> {{ pointsBalance?.balance ?? 0 }}</p>
-            <p v-if="tournamentPointsEarned !== null">
-              <strong>From this tournament:</strong>
-              <span :class="{ 'positive-value': tournamentPointsEarned > 0 }">
-                {{ tournamentPointsEarned > 0 ? '+' : '' }}{{ tournamentPointsEarned }}
-              </span>
-            </p>
-          </div>
-        </ui-skeleton-loader>
-      </div>
     </div>
 
     <div class="tournament-action">
@@ -161,8 +133,6 @@ import { formatDate } from '@/lib/date'
 import JoinTournamentBtn from '../JoinTournamentBtn.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
-import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useGetMyPointsBalance, useListMyPointsTransactions } from '@/api/points/points'
 import {
   useGetCurrentTask,
   useGetTournament,
@@ -177,43 +147,12 @@ const props = defineProps<Props>()
 const isDesciptionOpen = ref(false)
 
 const { data: tournament, isLoading, isError } = useGetTournament(props.tournamentId)
-const { data: profile } = useGetUserProfile()
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {
     query: { enabled: computed(() => tournament.value?.status === 'running') },
   },
 )
-
-const {
-  data: pointsBalance,
-  isLoading: isBalanceLoading,
-  error: pointsBalanceError,
-} = useGetMyPointsBalance({
-  query: { enabled: computed(() => Boolean(profile.value?.id)) },
-})
-const {
-  data: pointsTransactions,
-  isLoading: isTransactionsLoading,
-  error: pointsTransactionsError,
-} = useListMyPointsTransactions(
-  { page_size: 100, ordering: '-created_at' },
-  {
-    query: { enabled: computed(() => Boolean(profile.value?.id) && Boolean(tournament.value)) },
-  },
-)
-
-const pointsLoading = computed(() => isBalanceLoading.value || isTransactionsLoading.value)
-const pointsError = computed(() =>
-  Boolean(pointsBalanceError.value || pointsTransactionsError.value),
-)
-const tournamentPointsEarned = computed(() => {
-  if (!tournament.value?.name || !pointsTransactions.value?.items) return null
-
-  return pointsTransactions.value.items
-    .filter((transaction) => transaction.reason?.includes(tournament.value?.name))
-    .reduce((sum, transaction) => sum + (transaction.amount ?? 0), 0)
-})
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
 const statusBadgeVariant = computed(() => {
@@ -270,8 +209,7 @@ const handleStartRegistration = () => {
 
 .tournament-name,
 .tournament-dates,
-.tournament-description,
-.tournament-points {
+.tournament-description {
   padding: 0.95rem;
   border: 1px solid var(--line-soft);
   border-radius: 12px;
@@ -280,15 +218,13 @@ const handleStartRegistration = () => {
 
 .tournament-name p,
 .tournament-dates p,
-.tournament-description p,
-.tournament-points p {
+.tournament-description p {
   margin: 0;
 }
 
 .tournament-name .text-muted,
 .tournament-dates .text-muted,
-.tournament-description .text-muted,
-.tournament-points .text-muted {
+.tournament-description .text-muted {
   margin-bottom: 0.45rem;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
@@ -322,11 +258,6 @@ const handleStartRegistration = () => {
 
 .tournament-action-btn {
   width: 100%;
-}
-
-.tournament-points {
-  display: grid;
-  gap: 0.35rem;
 }
 
 .positive-value {

@@ -9,21 +9,6 @@
           </div>
 
           <div class="controls">
-            <ui-button
-              v-if="canSendCertificates"
-              size="sm"
-              variant="secondary"
-              :disabled="isSendingCertificates"
-              @click="isSendCertificatesModalOpen = true"
-            >
-              {{
-                isSendingCertificates
-                  ? 'Sending...'
-                  : isTournamentFinished
-                    ? 'Send certificates'
-                    : 'Send after finish'
-              }}
-            </ui-button>
             <ui-popover minWidth="220px" header="Export">
               <template #trigger="{ toggle }">
                 <ui-button
@@ -143,105 +128,22 @@
         </template>
       </ui-skeleton-loader>
     </ui-card>
-
-    <ui-modal v-model="isSendCertificatesModalOpen" max-width="760px">
-      <template #title><h3>Send Certificates</h3></template>
-
-      <div class="templates-modal-content">
-        <p class="text-muted">
-          Select a certificate template. 4 templates are visible, scroll down for more.
-        </p>
-        <p v-if="!isTournamentFinished" class="text-muted">
-          Sending is available after tournament finish. You can preselect template now.
-        </p>
-
-        <div v-if="isTemplatesLoading" class="templates-loading">
-          <ui-skeleton variant="rect" height="180px" />
-          <ui-skeleton variant="rect" height="180px" />
-        </div>
-        <p v-else-if="templateOptions.length === 0" class="text-muted">No templates available.</p>
-        <div v-else class="templates-scroll-wrap">
-          <div class="templates-grid">
-            <button
-              v-for="template in templateOptions"
-              :key="template.id"
-              type="button"
-              class="template-card"
-              :class="{ selected: selectedTemplateId === template.id }"
-              @click="selectedTemplateId = template.id"
-            >
-              <img
-                v-if="template.image_url"
-                :src="template.image_url"
-                :alt="template.name"
-                class="template-image"
-              />
-              <div v-else class="template-image-fallback">No image</div>
-              <div class="template-name-row">
-                <span class="template-name">{{ template.name }}</span>
-                <ui-badge v-if="template.is_default" variant="primary">Default</ui-badge>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <ui-button variant="secondary" @click="isSendCertificatesModalOpen = false"
-          >Cancel</ui-button
-        >
-        <ui-button
-          :disabled="
-            !isTournamentFinished ||
-            !selectedTemplateId ||
-            isSendingCertificates ||
-            templateOptions.length === 0
-          "
-          @click="handleSendCertificates"
-        >
-          {{ isSendingCertificates ? 'Sending...' : 'Send' }}
-        </ui-button>
-      </template>
-    </ui-modal>
-
-    <ui-modal v-model="isDeliveryModeModalOpen" max-width="520px">
-      <template #title><h3>Certificates Already Exist</h3></template>
-      <p class="text-muted">{{ existingCertificatesMessage }}</p>
-      <template #footer>
-        <ui-button variant="secondary" @click="isDeliveryModeModalOpen = false">Cancel</ui-button>
-        <ui-button
-          variant="secondary"
-          :disabled="isSendingCertificates || !isTournamentFinished"
-          @click="submitCertificates('missing')"
-          >Send Missing</ui-button
-        >
-        <ui-button
-          :disabled="isSendingCertificates || !isTournamentFinished"
-          @click="submitCertificates('resend')"
-          >Send Again</ui-button
-        >
-      </template>
-    </ui-modal>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiPopover from '@/components/ui/UiPopover.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import { useListCertificateTemplates } from '@/api/certificates/certificates'
-import { useGetUserProfile } from '@/api/accounts/accounts'
 import {
   useGetTournamentLeaderboard,
   type GetTournamentLeaderboardQueryResult,
 } from '@/api/evaluation/evaluation'
-import { useGetTournament, useListRounds } from '@/api/tournaments/tournaments'
+import { useListRounds } from '@/api/tournaments/tournaments'
 import { customInstance } from '@/lib/apiClient'
 import { queryClient } from '@/lib/queryClient'
 import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
@@ -278,21 +180,7 @@ const props = defineProps<Props>()
 let unsubscribeLeaderboardSocket: (() => void) | null = null
 const tableWrapRef = ref<HTMLElement | null>(null)
 const isCreatingGoogleSheet = ref(false)
-const isSendCertificatesModalOpen = ref(false)
-const isDeliveryModeModalOpen = ref(false)
-const selectedTemplateId = ref<number | null>(null)
-const existingCertificatesMessage = ref('')
-const isSendingCertificates = ref(false)
 const { showNotification } = useNotification()
-const { data: profile } = useGetUserProfile()
-const { data: tournament } = useGetTournament(props.tournamentId)
-const canSendCertificates = computed(
-  () => profile.value?.role === 'admin' || profile.value?.role === 'organizer',
-)
-const isTournamentFinished = computed(() => tournament.value?.status === 'finished')
-
-const { data: templatesData, isLoading: isTemplatesLoading } = useListCertificateTemplates()
-const templateOptions = computed(() => templatesData.value?.items ?? [])
 
 const { data: roundsData } = useListRounds(props.tournamentId)
 const rounds = computed(() => roundsData.value ?? [])
@@ -507,81 +395,6 @@ function handleDownloadCsv() {
   link.click()
   link.remove()
   window.URL.revokeObjectURL(csvUrl)
-}
-
-function handleSendCertificates() {
-  if (!isTournamentFinished.value) {
-    showNotification('Certificates can be sent only after tournament finish.', 'error')
-    return
-  }
-  if (!selectedTemplateId.value) {
-    showNotification('Please select a template first.', 'error')
-    return
-  }
-  void decideDeliveryModeAndSend()
-}
-
-async function decideDeliveryModeAndSend() {
-  try {
-    const deliveryStatus = await refetchDeliveryStatus()
-    const stats = deliveryStatus
-    if (stats && stats.existing_count > 0) {
-      existingCertificatesMessage.value = `Already created: ${stats.existing_count}. Missing: ${stats.missing_count}. Choose action.`
-      isDeliveryModeModalOpen.value = true
-      return
-    }
-    submitCertificates('missing')
-  } catch (apiError) {
-    const status = getHttpStatus(apiError)
-    if (status === 404) {
-      // Backend may not yet expose delivery-status endpoint in partial environments.
-      submitCertificates('missing')
-      return
-    }
-    const parsedError = parseApiError(apiError as Parameters<typeof parseApiError>[0])
-    showNotification(parsedError?.message || 'Failed to check certificate status.', 'error')
-  }
-}
-
-function submitCertificates(mode: 'missing' | 'resend') {
-  if (!isTournamentFinished.value) return
-  if (!selectedTemplateId.value) return
-  void sendCertificates(mode)
-}
-
-async function refetchDeliveryStatus() {
-  return customInstance<{ existing_count: number; missing_count: number }>({
-    url: `http://localhost:8000/api/tournaments/${props.tournamentId}/certificates/delivery-status/`,
-    method: 'GET',
-  })
-}
-
-async function sendCertificates(mode: 'missing' | 'resend') {
-  if (!selectedTemplateId.value) return
-  isSendingCertificates.value = true
-  try {
-    const result = await customInstance<{ created_count: number; skipped_count: number }>({
-      url: `http://localhost:8000/api/tournaments/${props.tournamentId}/send-certificates/`,
-      method: 'POST',
-      data: { template_id: selectedTemplateId.value, mode },
-    })
-    showNotification(
-      `Certificates sent. Created: ${result.created_count}, skipped: ${result.skipped_count}.`,
-      'success',
-    )
-    isSendCertificatesModalOpen.value = false
-    isDeliveryModeModalOpen.value = false
-  } catch (apiError) {
-    const status = getHttpStatus(apiError)
-    if (status === 404) {
-      showNotification('Certificates sending endpoint is not available yet on backend.', 'error')
-      return
-    }
-    const parsedError = parseApiError(apiError)
-    showNotification(parsedError?.message || 'Failed to send certificates.', 'error')
-  } finally {
-    isSendingCertificates.value = false
-  }
 }
 
 async function handleOpenInGoogleSheets() {
