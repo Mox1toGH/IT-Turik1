@@ -1,57 +1,66 @@
 import * as v from 'valibot'
-import { ref } from 'vue'
+import { computed, ref, toRaw, type Ref } from 'vue'
 
-type Errors<T> = Partial<Record<keyof T | string, string>>
+export type FormErrors = Record<string, string>
 
-export function useForm<T extends object>(schema: v.GenericSchema, initialValues: T) {
-  const fields = ref<T>({ ...initialValues })
-  const errors = ref<Errors<T>>({})
+export function useForm<T extends object>(schema: v.GenericSchema<T, unknown>, initialValues: T) {
+  let initial = structuredClone(toRaw(initialValues))
+  const fields = ref(structuredClone(initial)) as Ref<T>
+  const errors = ref<FormErrors>({})
+
+  const isDirty = computed(() => JSON.stringify(fields.value) !== JSON.stringify(initial))
+
+  function collectErrors(): FormErrors {
+    const result = v.safeParse(schema, fields.value)
+    if (result.success) return {}
+
+    const out: FormErrors = {}
+    for (const issue of result.issues) {
+      const key = v.getDotPath(issue) ?? '_form'
+      if (!(key in out)) out[key] = issue.message
+    }
+    return out
+  }
 
   function validate(): boolean {
-    const result = v.safeParse(schema, fields.value)
-    Object.keys(errors.value).forEach((key) => delete errors.value[key])
-
-    if (!result.success) {
-      result.issues.forEach((issue) => {
-        const field = issue.path?.[0]?.key
-
-        if (typeof field === 'string') {
-          errors.value[field] = issue.message
-        }
-      })
-      return false
-    }
-    return true
+    errors.value = collectErrors()
+    return Object.keys(errors.value).length === 0
   }
 
-  function validateField(field: keyof T) {
-    const result = v.safeParse(schema, fields.value)
-    delete errors.value[field]
-    const issue = result.issues?.find((issue) => issue.path?.[0]?.key === field)
-    if (issue) errors.value[field] = issue.message
+  function validateField(field: string) {
+    const next = collectErrors()
+
+    if (field in next) errors.value[field] = next[field]!
+    else delete errors.value[field]
   }
 
-  function setError(key: keyof T, value: string): void
-  function setError(key: string, value: string): void
-  function setError(key: string | number | symbol, value: string) {
-    errors.value[String(key)] = value
+  const setError = (key: string, message: string) => {
+    errors.value[key] = message
   }
-
-  function setApiErrors(details: Record<string, string>) {
-    for (const [field, message] of Object.entries(details)) {
-      errors.value[field as keyof T] = message
-    }
+  const setApiErrors = (details: FormErrors) => {
+    errors.value = { ...errors.value, ...details }
   }
 
   function hydrate(values: T) {
-    fields.value = { ...values }
+    initial = structuredClone(toRaw(values))
+    fields.value = structuredClone(initial)
     errors.value = {}
   }
 
   function reset() {
-    fields.value = { ...initialValues }
+    fields.value = structuredClone(initial)
     errors.value = {}
   }
 
-  return { fields, errors, validate, validateField, setError, setApiErrors, hydrate, reset }
+  return {
+    fields,
+    errors,
+    isDirty,
+    validate,
+    validateField,
+    setError,
+    setApiErrors,
+    hydrate,
+    reset,
+  }
 }
