@@ -137,19 +137,6 @@ const currentSection = ref<Sections>('information')
 const sectionQueryKey = 'section'
 const allSections: Sections[] = ['information', 'schedule', 'rounds', 'submissions', 'leaderboard']
 
-function parseSectionFromQuery(value: unknown): Sections | null {
-  const raw = Array.isArray(value) ? value[0] : value
-  if (typeof raw !== 'string') return null
-  return allSections.includes(raw as Sections) ? (raw as Sections) : null
-}
-
-const initialSection = parseSectionFromQuery(route.query[sectionQueryKey])
-if (initialSection) currentSection.value = initialSection
-
-const setActiveSection = (section: Sections) => {
-  currentSection.value = section
-}
-
 watch(
   () => route.query[sectionQueryKey],
   (value) => {
@@ -172,6 +159,19 @@ watch(
     })
   },
 )
+
+function parseSectionFromQuery(value: unknown): Sections | null {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (typeof raw !== 'string') return null
+  return allSections.includes(raw as Sections) ? (raw as Sections) : null
+}
+
+const initialSection = parseSectionFromQuery(route.query[sectionQueryKey])
+if (initialSection) currentSection.value = initialSection
+
+const setActiveSection = (section: Sections) => {
+  currentSection.value = section
+}
 </script>
 
 <style scoped>
@@ -199,7 +199,6 @@ watch(
 
 .tournament-detail-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .tournament-rule {

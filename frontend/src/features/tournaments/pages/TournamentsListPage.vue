@@ -151,7 +151,6 @@ watch(statusFilter, () => {
 <style scoped>
 .tournaments-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .tournaments-rule {

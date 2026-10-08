@@ -235,7 +235,6 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 <style scoped>
 .jury-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .jury-hero {

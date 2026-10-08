@@ -292,7 +292,6 @@ const handleFormSubmit = () => {
 
 .team-create-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .create-hero {

@@ -35,47 +35,11 @@
         </template>
 
         <div v-if="tournaments" class="archive-grid">
-          <ui-card v-for="item in tournaments" :key="item.id" class="archive-card">
-            <div
-              class="archive-top"
-              :class="{ 'archive-top--with-banner': Boolean(item.banner) }"
-              :style="
-                item.banner
-                  ? {
-                      backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${item.banner})`,
-                    }
-                  : {}
-              "
-            >
-              <h3 class="archive-card-title" :title="item.name">
-                {{ truncateText(item.name, 80) }}
-              </h3>
-              <p class="archive-description" :title="item.description">
-                {{ truncateText(item.description || 'No description provided.', 180) }}
-              </p>
-            </div>
-
-            <div class="archive-info">
-              <div class="archive-meta">
-                <div class="archive-date">
-                  <p>Finished:</p>
-                  <p>{{ formatDate(item.end_date) }}</p>
-                </div>
-                <p class="archive-count">{{ item.standings.length }} standings</p>
-              </div>
-            </div>
-            <template #footer>
-              <ui-button
-                asLink
-                :to="`/tournaments/archive/${item.id}`"
-                size="sm"
-                variant="secondary"
-                class="archive-details-btn"
-              >
-                View archive
-              </ui-button>
-            </template>
-          </ui-card>
+          <tournament-archive-card
+            v-for="tournament in tournaments"
+            :key="tournament.id"
+            :tournament="tournament"
+          />
         </div>
 
         <ui-card v-else class="empty-card">
@@ -91,9 +55,8 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { truncateText } from '@/lib/utils'
-import { formatDate } from '@/lib/date'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
+import TournamentArchiveCard from '../components/tournament-archive/TournamentArchiveCard.vue'
 
 const { data: tournaments, isLoading } = useListTournamentArchive()
 </script>

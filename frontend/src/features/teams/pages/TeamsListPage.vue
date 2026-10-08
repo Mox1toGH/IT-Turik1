@@ -61,7 +61,6 @@ const { data: user } = useGetUserProfile()
 <style scoped>
 .teams-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .teams-hero {

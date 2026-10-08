@@ -100,7 +100,6 @@ watchEffect(() => {
 <style scoped>
 .teams-edit-page {
   gap: 1.4rem;
-  padding:;
 }
 
 .edit-hero {
