@@ -112,11 +112,23 @@
         Current round: {{ currentRound.name }}
       </ui-button>
 
-      <join-tournament-btn
-        v-if="tournament?.status === 'registration'"
-        :tournament-id="props.tournamentId"
-        :registered-team-id="tournament?.registered_team?.id ?? null"
-      />
+      <template v-if="tournament?.status === 'registration'">
+        <p v-if="!canManageRegistration">You cannot register for this tournament</p>
+        <ui-button
+          v-if="!registeredTeamId"
+          :disabled="!canManageRegistration"
+          @click="isTeamModalOpen = true"
+        >
+          Join Tournament
+        </ui-button>
+
+        <ui-button v-else variant="danger" :disabled="isLeaving" @click="handleLeave">
+          <loading-icon v-if="isLeaving" />
+          <span>Leave Tournament</span>
+        </ui-button>
+
+        <team-select-modal v-model="isTeamModalOpen" :tournament-id="tournamentId" />
+      </template>
     </div>
   </ui-card>
 </template>
@@ -130,13 +142,17 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed, ref } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
-import JoinTournamentBtn from '../JoinTournamentBtn.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
+import TeamSelectModal from './tournament-info/TeamSelectModal.vue'
+import { useNotification } from '@/composables/useNotification'
+import { useGetUserProfile } from '@/api/accounts/accounts'
 import {
   useGetCurrentTask,
   useGetTournament,
   useStartTournamentRegistration,
+  useListEligibleTeamsForTournament,
+  useUnregisterTeamFromTournament,
 } from '@/api/tournaments/tournaments'
 
 interface Props {
@@ -145,6 +161,10 @@ interface Props {
 
 const props = defineProps<Props>()
 const isDesciptionOpen = ref(false)
+const isTeamModalOpen = ref(false)
+
+const { showNotification } = useNotification()
+const { data: user } = useGetUserProfile()
 
 const { data: tournament, isLoading, isError } = useGetTournament(props.tournamentId)
 const { data: currentRound } = useGetCurrentTask(
@@ -152,6 +172,15 @@ const { data: currentRound } = useGetCurrentTask(
   {
     query: { enabled: computed(() => tournament.value?.status === 'running') },
   },
+)
+
+const { data: teams } = useListEligibleTeamsForTournament(props.tournamentId)
+const { mutate: leave, isPending: isLeaving } = useUnregisterTeamFromTournament()
+
+const registeredTeamId = computed(() => tournament.value?.registered_team?.id ?? null)
+
+const canManageRegistration = computed(
+  () => user.value?.role === 'team' && ((teams.value?.length ?? 0) > 0 || !!registeredTeamId.value),
 )
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
@@ -170,6 +199,14 @@ const handleStartRegistration = () => {
   startRegistration({
     id: props.tournamentId,
   })
+}
+
+function handleLeave() {
+  if (!registeredTeamId.value || isLeaving.value) return
+  leave(
+    { id: props.tournamentId, data: { team_id: registeredTeamId.value } },
+    { onError: (error) => showNotification(error?.message, 'error') },
+  )
 }
 </script>
 
