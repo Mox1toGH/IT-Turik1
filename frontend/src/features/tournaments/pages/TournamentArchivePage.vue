@@ -90,29 +90,9 @@ const { data: tournaments, isLoading } = useListTournamentArchive()
   gap: 16px;
 }
 
+/* Потрібні для скелетона */
 .archive-card {
   background: var(--muted) !important;
-}
-
-.archive-top {
-  border-radius: 12px;
-  padding: 12px;
-  margin: -4px -4px 12px;
-  background: color-mix(in srgb, var(--muted) 90%, #000 10%);
-  background-size: cover;
-  background-position: center;
-  min-height: 140px;
-  display: flex;
-  flex-direction: column;
-}
-
-.archive-top--with-banner {
-  color: #fff;
-}
-
-.archive-card-title {
-  margin: 0;
-  word-break: break-word;
 }
 
 .archive-description {
@@ -120,12 +100,6 @@ const { data: tournaments, isLoading } = useListTournamentArchive()
   margin-bottom: 0;
   line-height: 1.5;
   word-break: break-word;
-}
-
-.archive-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
 }
 
 .archive-meta {
@@ -140,15 +114,6 @@ const { data: tournaments, isLoading } = useListTournamentArchive()
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.archive-date p,
-.archive-count {
-  margin: 0;
-}
-
-.archive-details-btn {
-  width: 100%;
 }
 
 .empty-card {
