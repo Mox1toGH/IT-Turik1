@@ -1,11 +1,6 @@
 <template>
   <section class="tournaments-page page-shell">
-    <tournaments-hero
-      :total="data?.total ?? 0"
-      :shown="pageItems.length"
-      :loading="isLoading"
-      :is-admin="isAdmin"
-    />
+    <tournaments-hero :total="tournaments?.total ?? 0" :loading="isLoading" :is-admin="isAdmin" />
 
     <div class="tournaments-rule" aria-hidden="true"></div>
 
@@ -26,7 +21,7 @@
             </div>
 
             <div class="section-meta">
-              <span class="count-pill text-base">{{ pageItems.length }} shown</span>
+              <span class="count-pill text-base">{{ tournaments?.total }} shown</span>
             </div>
           </div>
         </template>
@@ -62,9 +57,9 @@
           </template>
 
           <div>
-            <div v-if="pageItems.length" class="tournaments-grid">
+            <div v-if="tournaments?.total" class="tournaments-grid">
               <tournament-card
-                v-for="tournament in pageItems"
+                v-for="tournament in tournaments.data"
                 :key="tournament.id"
                 :tournament="tournament"
               />
@@ -81,9 +76,9 @@
             </ui-card>
 
             <ui-pagination
-              v-if="(data?.total ?? 0) > pageSize"
+              v-if="(tournaments?.total ?? 0) > pageSize"
               v-model="currentPage"
-              :total-items="data?.total ?? 0"
+              :total-items="tournaments?.total ?? 0"
               :page-size="pageSize"
             />
           </div>
@@ -132,11 +127,14 @@ const params = computed<ListTournamentsParams>(() => ({
   status: statusFilter.value.join(','),
 }))
 
-const { data, isLoading, isFetching, isError } = useListTournaments(params, {
+const {
+  data: tournaments,
+  isLoading,
+  isFetching,
+  isError,
+} = useListTournaments(params, {
   query: { staleTime: 1000 * 60 * 5 },
 })
-
-const pageItems = computed(() => data.value?.data ?? [])
 
 const onSearch = (query: string) => {
   currentPage.value = 1

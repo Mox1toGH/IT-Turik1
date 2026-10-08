@@ -25,11 +25,6 @@
         </ui-card>
       </ui-skeleton-loader>
 
-      <ui-card variant="stat" class="tournaments-stat-card">
-        <strong class="text-xl">{{ shown }}</strong>
-        <span class="text-sm">Showing now</span>
-      </ui-card>
-
       <ui-button asLink to="/tournaments/archive" variant="default" size="lg">Archive</ui-button>
       <ui-button v-if="isAdmin" asLink to="/tournaments/create" size="lg">
         <span class="create-plus text-2xl" aria-hidden="true">+</span>
@@ -47,7 +42,6 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 
 defineProps<{
   total: number
-  shown: number
   loading: boolean
   isAdmin: boolean
 }>()

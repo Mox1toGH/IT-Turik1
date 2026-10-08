@@ -67,10 +67,9 @@ import {
 
 const route = useRoute()
 const id = Number(route.params.id)
-const { data, isLoading } = useGetTournamentArchive(id)
+const { data: archive, isLoading } = useGetTournamentArchive(id)
 const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 
-const archive = computed(() => data.value)
 const submissions = computed(() => submissionsData.value ?? [])
 
 const winnerName = computed(() => {
