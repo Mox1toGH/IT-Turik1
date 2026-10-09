@@ -10,13 +10,12 @@
 
           <div class="controls">
             <ui-popover minWidth="220px" header="Export">
-              <template #trigger="{ toggle }">
+              <template #trigger>
                 <ui-button
                   size="sm"
                   variant="secondary"
                   class="export-trigger"
                   :disabled="isExportDisabled || isCreatingGoogleSheet"
-                  @click="toggle"
                 >
                   Export
                 </ui-button>
@@ -439,7 +438,6 @@ async function handleOpenInGoogleSheets() {
   flex-wrap: wrap;
   align-items: end;
   margin-left: auto;
-  padding-top: 8px;
 }
 
 .templates-modal-content {

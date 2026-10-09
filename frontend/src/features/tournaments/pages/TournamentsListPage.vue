@@ -19,10 +19,6 @@
                 Filter competitions by name or registration status.
               </p>
             </div>
-
-            <div class="section-meta">
-              <span class="count-pill text-base">{{ tournaments?.total }} shown</span>
-            </div>
           </div>
         </template>
 
@@ -179,24 +175,6 @@ watch(statusFilter, () => {
   margin: 0;
 }
 
-.section-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-.count-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
-}
-
 .tournaments-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -290,11 +268,6 @@ watch(statusFilter, () => {
   .empty-row {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .section-meta {
-    justify-content: flex-start;
-    align-items: flex-start;
   }
 
   .tournaments-meta {
