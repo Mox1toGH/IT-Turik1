@@ -142,7 +142,6 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
 #
 #   POST   /jury-evaluations                    -> create_jury_evaluation
 #   GET    /jury-evaluations/{evaluation_id}    -> get_jury_evaluation
-#   PUT    /jury-evaluations/{evaluation_id}    -> replace_jury_evaluation
 #   PATCH  /jury-evaluations/{evaluation_id}    -> update_jury_evaluation
 #   DELETE /jury-evaluations/{evaluation_id}    -> delete_jury_evaluation
 # =============================================================================

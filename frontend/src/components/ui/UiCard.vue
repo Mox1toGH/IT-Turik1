@@ -41,6 +41,10 @@ const variantClass = `card-${props.variant}`
   box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.05);
 }
 
+.dark .card {
+  box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.25);
+}
+
 .card-panel {
   gap: 1.7rem;
   padding: 2.4rem 2rem 1.8rem;
