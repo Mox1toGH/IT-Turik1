@@ -49,12 +49,6 @@ const sections = [
     to: '/admin/role-codes',
     cta: 'Open Activation Codes',
   },
-  {
-    title: 'Certificates Admin',
-    description: 'Create certificates, manage templates, and verify certificate codes.',
-    to: '/admin/certificates',
-    cta: 'Open Certificates Admin',
-  },
 ]
 </script>
 

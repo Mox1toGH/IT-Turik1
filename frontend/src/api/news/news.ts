@@ -31,6 +31,7 @@ import type {
 import type {
   ErrorResponse,
   ListNewsParams,
+  NewsArticlePatchRequest,
   NewsArticleRequest,
   NewsArticleResponse,
   NewsListResponse
@@ -250,15 +251,15 @@ export function useGetNews<TData = Awaited<ReturnType<typeof getNews>>, TError =
  */
 export const updateNews = (
     articleId: MaybeRef<number>,
-    newsArticleRequest: MaybeRef<NewsArticleRequest>,
+    newsArticlePatchRequest: MaybeRef<NewsArticlePatchRequest>,
  options?: SecondParameter<typeof customInstance>,) => {
       articleId = unref(articleId);
-newsArticleRequest = unref(newsArticleRequest);
+newsArticlePatchRequest = unref(newsArticlePatchRequest);
       
       return customInstance<NewsArticleResponse>(
       {url: `http://localhost:8000/api/news/${articleId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
-      data: newsArticleRequest
+      data: newsArticlePatchRequest
     },
       options);
     }
@@ -266,8 +267,8 @@ newsArticleRequest = unref(newsArticleRequest);
 
 
 export const getUpdateNewsMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticlePatchRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticlePatchRequest>}, TContext> => {
 
 const mutationKey = ['updateNews'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -279,7 +280,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNews>>, {articleId: number;data: BodyType<NewsArticleRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNews>>, {articleId: number;data: BodyType<NewsArticlePatchRequest>}> = (props) => {
           const {articleId,data} = props ?? {};
 
           return  updateNews(articleId,data,requestOptions)
@@ -291,87 +292,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UpdateNewsMutationResult = NonNullable<Awaited<ReturnType<typeof updateNews>>>
-    export type UpdateNewsMutationBody = BodyType<NewsArticleRequest>
+    export type UpdateNewsMutationBody = BodyType<NewsArticlePatchRequest>
     export type UpdateNewsMutationError = ErrorType<ErrorResponse>
 
     /**
  * @summary Update News
  */
 export const useUpdateNews = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNews>>, TError,{articleId: number;data: BodyType<NewsArticlePatchRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationReturnType<
         Awaited<ReturnType<typeof updateNews>>,
         TError,
-        {articleId: number;data: BodyType<NewsArticleRequest>},
+        {articleId: number;data: BodyType<NewsArticlePatchRequest>},
         TContext
       > => {
 
       const mutationOptions = getUpdateNewsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Update News
- */
-export const replaceNews = (
-    articleId: MaybeRef<number>,
-    newsArticleRequest: MaybeRef<NewsArticleRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      articleId = unref(articleId);
-newsArticleRequest = unref(newsArticleRequest);
-      
-      return customInstance<NewsArticleResponse>(
-      {url: `http://localhost:8000/api/news/${articleId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: newsArticleRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceNewsMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext> => {
-
-const mutationKey = ['replaceNews'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceNews>>, {articleId: number;data: BodyType<NewsArticleRequest>}> = (props) => {
-          const {articleId,data} = props ?? {};
-
-          return  replaceNews(articleId,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceNewsMutationResult = NonNullable<Awaited<ReturnType<typeof replaceNews>>>
-    export type ReplaceNewsMutationBody = BodyType<NewsArticleRequest>
-    export type ReplaceNewsMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update News
- */
-export const useReplaceNews = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceNews>>, TError,{articleId: number;data: BodyType<NewsArticleRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceNews>>,
-        TError,
-        {articleId: number;data: BodyType<NewsArticleRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceNewsMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

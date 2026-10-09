@@ -5,7 +5,6 @@
         <div class="avatar-box">
           <user-avatar
             :avatar="user?.avatar"
-            :avatar-frame-url="user?.avatar_frame_url"
             :username="user?.username || 'user'"
             :full-name="user?.full_name || ''"
             :size="100"
@@ -36,11 +35,7 @@
       </div>
 
       <ui-button size="lg" :disabled="isLoading" @click="emit('edit-profile')">
-        <!-- TODO: split to individual component or even better import from lib-->
-        <svg aria-hidden="true" viewBox="0 0 24 24" class="edit-icon">
-          <path d="m4 20 4.4-1 10.2-10.2a2.1 2.1 0 0 0-3-3L5.4 16 4 20Z" />
-          <path d="m14.5 7.5 2 2" />
-        </svg>
+        <Pencil aria-hidden="true" :size="18" />
         Edit profile
       </ui-button>
     </div>
@@ -52,9 +47,9 @@ import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import AvatarModal from './modals/AvatarModal.vue'
 import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import { Pencil } from 'lucide-vue-next'
 
 const props = defineProps<{
   user?: UserResponse
@@ -152,16 +147,6 @@ const openAvatarModal = () => {
 .edit-profile-button:hover {
   background: color-mix(in srgb, var(--primary) 84%, black 16%);
   opacity: 1;
-}
-
-.edit-icon {
-  width: 1.35rem;
-  height: 1.35rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
 }
 
 @media (max-width: 560px) {

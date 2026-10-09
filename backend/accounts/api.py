@@ -141,10 +141,6 @@ def _send_link_email(
     )
 
 
-def _is_platform_admin(user) -> bool:
-    return bool(user and user.is_authenticated and (user.is_superuser or user.role == 'admin'))
-
-
 def _active_counts() -> dict:
     return {
         role: RoleActivationCode.objects.filter(role=role, is_used=False).count()
@@ -741,7 +737,7 @@ def list_user_tournament_history(request, pk: int):
     auth=None,
     operation_id="requestPasswordReset",
     url_name="password_reset_request",
-    response={200: MessageResponse},
+    response={200: MessageResponse, 400: ErrorResponse},
 )
 def request_password_reset(request, payload: PasswordResetRequest):
     user = User.objects.filter(

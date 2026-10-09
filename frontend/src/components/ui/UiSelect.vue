@@ -6,6 +6,7 @@
         class="select-trigger"
         :disabled="isLoading"
         data-testid="trigger-wrapper"
+        :style="{ minWidth: props.minWidth }"
       >
         <span class="select-value">
           {{ selectedLabel }}
@@ -44,11 +45,11 @@
             :value="option.value"
             class="select-option"
           >
-            <SelectItemText>
+            <SelectItemText class="select-option-text">
               {{ option.label }}
             </SelectItemText>
 
-            <SelectItemIndicator>
+            <SelectItemIndicator class="select-indicator">
               <SelectedIcon class="select-check" />
             </SelectItemIndicator>
           </SelectItem>
@@ -93,6 +94,7 @@ type Props = {
   isError?: boolean
   error?: string
   align?: alignPositions
+  minWidth?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -170,6 +172,19 @@ const selectedLabel = computed(() => {
   gap: 10px;
   outline: none;
   transition: background 0.1s ease;
+}
+
+.select-option-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-indicator {
+  display: inline-flex;
+  flex: 0 0 auto;
 }
 
 .select-option:hover,

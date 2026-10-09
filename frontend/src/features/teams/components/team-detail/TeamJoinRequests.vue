@@ -46,7 +46,6 @@
           <div class="join-request-user">
             <user-avatar
               :avatar="joinRequest.user.avatar"
-              :avatar-frame-url="joinRequest.user.avatar_frame_url"
               :username="joinRequest.user.username"
               :full-name="joinRequest.user.full_name"
               :size="40"

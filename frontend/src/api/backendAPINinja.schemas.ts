@@ -12,91 +12,6 @@ export interface Input {
   page_size?: InputPageSize;
 }
 
-export type CertificateTemplateResponseImage = string | null;
-
-export type CertificateTemplateResponseImageUrl = string | null;
-
-export interface CertificateTemplateResponse {
-  id: number;
-  name: string;
-  image?: CertificateTemplateResponseImage;
-  image_url?: CertificateTemplateResponseImageUrl;
-  is_default: boolean;
-  created_at: string;
-}
-
-export interface PagedCertificateTemplateResponse {
-  items: CertificateTemplateResponse[];
-  count: number;
-}
-
-export type ErrorResponseDetailsAnyOf = {[key: string]: string[]};
-
-export type ErrorResponseDetails = ErrorResponseDetailsAnyOf | null;
-
-export interface ErrorResponse {
-  code: string;
-  message: string;
-  details?: ErrorResponseDetails;
-}
-
-export type CertificateResponseUser = number | null;
-
-export type CertificateResponseTeam = number | null;
-
-export type CertificateResponseTournament = number | null;
-
-export type CertificateResponseTemplate = number | null;
-
-export interface CertificateResponse {
-  id: number;
-  unique_code: string;
-  user: CertificateResponseUser;
-  full_name: string;
-  team: CertificateResponseTeam;
-  team_name: string;
-  tournament: CertificateResponseTournament;
-  tournament_name: string;
-  placement: string;
-  certificate_number: string;
-  template: CertificateResponseTemplate;
-  template_name: string;
-  certificate_url: string;
-  created_at: string;
-}
-
-export interface PagedCertificateResponse {
-  items: CertificateResponse[];
-  count: number;
-}
-
-export type CertificateRequestUser = number | null;
-
-export type CertificateRequestTeam = number | null;
-
-export type CertificateRequestTournament = number | null;
-
-export type CertificateRequestTemplate = number | null;
-
-export interface CertificateRequest {
-  user?: CertificateRequestUser;
-  team?: CertificateRequestTeam;
-  tournament?: CertificateRequestTournament;
-  placement: string;
-  certificate_number?: string;
-  template?: CertificateRequestTemplate;
-}
-
-export type CertificateVerifyResponseData = CertificateResponse | null;
-
-export type CertificateVerifyResponseMessage = string | null;
-
-export interface CertificateVerifyResponse {
-  is_valid: boolean;
-  data?: CertificateVerifyResponseData;
-  message?: CertificateVerifyResponseMessage;
-}
-
 /**
  * Filter by single round ID
  */
@@ -189,6 +104,15 @@ export interface SubmissionEvaluationResponse {
   final_score: number;
   comment: string;
   created_at: string;
+}
+
+export type ErrorResponseDetailsAnyOf = {[key: string]: string};
+
+export type ErrorResponseDetails = ErrorResponseDetailsAnyOf | null;
+
+export interface ErrorResponse {
+  message: string;
+  details?: ErrorResponseDetails;
 }
 
 export interface ScoreItemRequest {
@@ -411,8 +335,6 @@ export interface UserActiveTournamentTeamResponse {
   name: string;
 }
 
-export type UserResponseAvatarFrameUrl = string | null;
-
 export type UserResponseActiveTournament = UserActiveTournamentResponse | null;
 
 export interface UserResponse {
@@ -425,7 +347,6 @@ export interface UserResponse {
   phone: string;
   city: string;
   is_staff: boolean;
-  avatar_frame_url: UserResponseAvatarFrameUrl;
   created_at: string;
   needs_onboarding: boolean;
   teams: UserTeamResponse[];
@@ -443,19 +364,19 @@ export interface GoogleAuthRequest {
   id_token: string;
 }
 
-export type UserUpdateRequestEmail = string | null;
-
 export type UserUpdateRequestFullName = string | null;
 
 export type UserUpdateRequestPhone = string | null;
 
 export type UserUpdateRequestCity = string | null;
 
+export type UserUpdateRequestPassword = string | null;
+
 export interface UserUpdateRequest {
-  email?: UserUpdateRequestEmail;
   full_name?: UserUpdateRequestFullName;
   phone?: UserUpdateRequestPhone;
   city?: UserUpdateRequestCity;
+  password?: UserUpdateRequestPassword;
 }
 
 export interface UserAvatarResponse {
@@ -522,7 +443,7 @@ export interface MessageResponse {
   message: string;
 }
 
-export interface PasswordResetRequestRequest {
+export interface PasswordResetRequest {
   email: string;
 }
 
@@ -580,8 +501,6 @@ export interface RoleActivationCodeResponse {
 export interface UserShortResponse {
   id: number;
   username: string;
-  email: string;
-  full_name: string;
 }
 
 export type RoleActivationCodeGenerateResponseActiveCounts = {[key: string]: number};
@@ -624,6 +543,8 @@ export interface TeamMemberResponse {
   avatar_frame_url?: TeamMemberResponseAvatarFrameUrl;
 }
 
+export type TeamResponseBanner = string | null;
+
 export interface TeamResponse {
   id: number;
   name: string;
@@ -633,7 +554,7 @@ export interface TeamResponse {
   organization?: string;
   contact_telegram?: string;
   contact_discord?: string;
-  banner?: string;
+  banner?: TeamResponseBanner;
   members: TeamMemberResponse[];
   is_member: boolean;
   can_request_to_join: boolean;
@@ -735,53 +656,6 @@ export interface TeamInvitationResponse {
   invited_by_id?: TeamInvitationResponseInvitedById;
 }
 
-export interface CategoryResponse {
-  id: number;
-  name: string;
-}
-
-export interface DigitalInventoryItemResponse {
-  id: number;
-  product: ProductResponse;
-  is_equipped: boolean;
-  acquired_at: string;
-  updated_at: string;
-}
-
-export interface PagedDigitalInventoryItemResponse {
-  items: DigitalInventoryItemResponse[];
-  count: number;
-}
-
-export interface ProductImageResponse {
-  id: number;
-  image: string;
-  created_at: string;
-}
-
-export type ProductResponseAvatarFrame = AvatarFrameResponse | null;
-
-export interface ProductResponse {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  stock_quantity: number;
-  category: CategoryResponse;
-  product_type: string;
-  avatar_frame?: ProductResponseAvatarFrame;
-  digital_asset_url: string;
-  images: ProductImageResponse[];
-  is_active: boolean;
-  is_available: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EquipDigitalItemRequest {
-  inventory_id: number;
-}
-
 export interface JsonValue {}
 
 export type NewsArticleResponseContent = {[key: string]: JsonValue};
@@ -809,6 +683,15 @@ export interface NewsArticleRequest {
   title: string;
   content: NewsArticleRequestContent;
   send_notification?: boolean;
+}
+
+export type NewsArticlePatchRequestTitle = string | null;
+
+export type NewsArticlePatchRequestContent = string | null;
+
+export interface NewsArticlePatchRequest {
+  title?: NewsArticlePatchRequestTitle;
+  content?: NewsArticlePatchRequestContent;
 }
 
 export interface NotificationResponse {
@@ -870,177 +753,6 @@ export interface NotificationConfigUpdateRequest {
 
 export interface GlobalConfigUpdateRequest {
   emails_disabled_globally: boolean;
-}
-
-export interface PointsBalanceResponse {
-  user_id: number;
-  balance: number;
-  updated_at: string;
-}
-
-export interface PagedPointsTransactionResponse {
-  items: PointsTransactionResponse[];
-  count: number;
-}
-
-export type PointsTransactionResponseOrderId = number | null;
-
-export interface PointsTransactionResponse {
-  id: number;
-  user_id: number;
-  order_id?: PointsTransactionResponseOrderId;
-  amount: number;
-  reason: string;
-  created_at: string;
-}
-
-export interface ModifyPointsResponse {
-  user: UserLookupResponse;
-  balance: PointsBalanceResponse;
-  transaction: PointsTransactionResponse;
-}
-
-export interface UserLookupResponse {
-  id: number;
-  username: string;
-  email: string;
-}
-
-export type ModifyPointsRequestOperation = typeof ModifyPointsRequestOperation[keyof typeof ModifyPointsRequestOperation];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ModifyPointsRequestOperation = {
-  add: 'add',
-  subtract: 'subtract',
-  set: 'set',
-  reset: 'reset',
-} as const;
-
-export type ModifyPointsRequestAmount = number | null;
-
-export interface ModifyPointsRequest {
-  operation: ModifyPointsRequestOperation;
-  amount?: ModifyPointsRequestAmount;
-  /** @maxLength 255 */
-  reason: string;
-}
-
-export interface AvatarFrameResponse {
-  id: number;
-  name: string;
-  svg_file: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PagedProductResponse {
-  items: ProductResponse[];
-  count: number;
-}
-
-export interface PurchaseDigitalResponse {
-  result_type?: 'digital';
-  message: string;
-}
-
-export interface PurchaseOrderResponse {
-  id: number;
-  user: UserShortResponse;
-  user_profile_url: string;
-  product: ProductResponse;
-  quantity: number;
-  total_cost: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  result_type?: 'order';
-}
-
-export interface PurchaseRequest {
-  /** @minimum 1 */
-  product_id: number;
-  /** @minimum 1 */
-  quantity: number;
-}
-
-export interface OrderResponse {
-  id: number;
-  user: UserShortResponse;
-  user_profile_url: string;
-  product: ProductResponse;
-  quantity: number;
-  total_cost: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PagedOrderResponse {
-  items: OrderResponse[];
-  count: number;
-}
-
-export interface PagedCategoryResponse {
-  items: CategoryResponse[];
-  count: number;
-}
-
-export interface CategoryRequest {
-  /** @maxLength 120 */
-  name: string;
-}
-
-export type ProductRequestProductType = typeof ProductRequestProductType[keyof typeof ProductRequestProductType];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ProductRequestProductType = {
-  physical: 'physical',
-  digital: 'digital',
-} as const;
-
-export type ProductRequestAvatarFrameId = number | null;
-
-export interface ProductRequest {
-  name: string;
-  description?: string;
-  /** @minimum 0 */
-  price: number;
-  /** @minimum 0 */
-  stock_quantity?: number;
-  category_id: number;
-  product_type?: ProductRequestProductType;
-  avatar_frame_id?: ProductRequestAvatarFrameId;
-  digital_asset_url?: string;
-  is_active?: boolean;
-}
-
-export type OrderStatusRequestStatus = typeof OrderStatusRequestStatus[keyof typeof OrderStatusRequestStatus];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const OrderStatusRequestStatus = {
-  pending: 'pending',
-  confirmed: 'confirmed',
-  shipped: 'shipped',
-  completed: 'completed',
-} as const;
-
-export interface OrderStatusRequest {
-  status: OrderStatusRequestStatus;
-}
-
-export interface PagedAvatarFrameResponse {
-  items: AvatarFrameResponse[];
-  count: number;
-}
-
-export interface AvatarFrameRequest {
-  name: string;
-  svg_file: string;
-  is_active?: boolean;
 }
 
 export type PlayerStatsResponseCurrentTeamName = string | null;
@@ -1277,21 +989,6 @@ export interface MyCalendarResponse {
   rounds: CalendarRoundResponse[];
 }
 
-export interface TournamentCertificateDeliveryStatusResponse {
-  existing_count: number;
-  missing_count: number;
-}
-
-export interface SendTournamentCertificatesResponse {
-  created_count: number;
-  skipped_count: number;
-}
-
-export interface SendTournamentCertificatesRequest {
-  template_id: number;
-  mode?: string;
-}
-
 export interface CalendarExportErrorResponse {
   type: string;
   id: number;
@@ -1371,7 +1068,6 @@ export interface TournamentArchiveListResponse {
   end_date: string;
   status: TournamentStatus;
   banner?: TournamentArchiveListResponseBanner;
-  teams: TeamSummaryResponse[];
   standings: ArchiveStandingResponse[];
 }
 
@@ -1385,7 +1081,6 @@ export interface TournamentArchiveDetailResponse {
   end_date: string;
   status: TournamentStatus;
   banner?: TournamentArchiveDetailResponseBanner;
-  teams: TeamSummaryResponse[];
   standings: ArchiveStandingResponse[];
   rounds: RoundShortResponse[];
 }
@@ -1594,12 +1289,6 @@ export interface CurrentTaskResponse {
   tech_requirements: CurrentTaskResponseTechRequirements;
 }
 
-export interface IconResponse {
-  id: number;
-  name: string;
-  path: string;
-}
-
 export type EventListResponse = EventResponse[];
 
 export type EventResponseIcon = number | null;
@@ -1652,51 +1341,6 @@ export interface EventUpdateRequest {
   start_datetime?: EventUpdateRequestStartDatetime;
   icon?: EventUpdateRequestIcon;
 }
-
-export type ListCertificateTemplatesParams = {
-nopage?: string;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type CreateCertificateTemplateParams = {
-name: string;
-is_default?: boolean;
-};
-
-export type CreateCertificateTemplateBody = {
-  image: Blob;
-};
-
-export type UpdateCertificateTemplateParams = {
-name?: string | null;
-is_default?: boolean | null;
-};
-
-export type UpdateCertificateTemplateBody = {
-  image?: Blob;
-};
-
-export type ReplaceCertificateTemplateParams = {
-name?: string | null;
-is_default?: boolean | null;
-};
-
-export type ReplaceCertificateTemplateBody = {
-  image?: Blob;
-};
-
-export type ListCertificatesParams = {
-search?: string;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
 
 export type ListJuryAssignmentsParams = {
 /**
@@ -1755,198 +1399,12 @@ export type TeamBannerUpdateBody = {
   banner: Blob;
 };
 
-export type TeamBannerPartialUpdateBody = {
-  banner: Blob;
-};
-
-export type ListMyDigitalInventoryParams = {
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
 export type ListNewsParams = {
 page?: number;
 page_size?: number;
 };
 
 export type ListNotificationsParams = {
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListMyPointsTransactionsParams = {
-ordering?: string;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListAdminUserPointsTransactionsParams = {
-ordering?: string;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListProductsParams = {
-search?: string | null;
-category?: number | null;
-product_type?: string | null;
-ordering?: string;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type PurchaseProduct201 = PurchaseOrderResponse | PurchaseDigitalResponse;
-
-export type ListMyOrdersParams = {
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListAdminCategoriesParams = {
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListAdminProductsParams = {
-search?: string | null;
-category?: number | null;
-product_type?: string | null;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type CreateAdminProductBodyProductType = typeof CreateAdminProductBodyProductType[keyof typeof CreateAdminProductBodyProductType];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const CreateAdminProductBodyProductType = {
-  physical: 'physical',
-  digital: 'digital',
-} as const;
-
-export type CreateAdminProductBodyAvatarFrameId = number | null;
-
-export type CreateAdminProductBodyAvatarFrameFile = Blob | null;
-
-export type CreateAdminProductBody = {
-  name: string;
-  description?: string;
-  /** @minimum 0 */
-  price: number;
-  /** @minimum 0 */
-  stock_quantity?: number;
-  category_id: number;
-  product_type?: CreateAdminProductBodyProductType;
-  avatar_frame_id?: CreateAdminProductBodyAvatarFrameId;
-  digital_asset_url?: string;
-  is_active?: boolean;
-  uploaded_images?: Blob[];
-  avatar_frame_file?: CreateAdminProductBodyAvatarFrameFile;
-};
-
-export type UpdateAdminProductBodyProductType = typeof UpdateAdminProductBodyProductType[keyof typeof UpdateAdminProductBodyProductType];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const UpdateAdminProductBodyProductType = {
-  physical: 'physical',
-  digital: 'digital',
-} as const;
-
-export type UpdateAdminProductBodyAvatarFrameId = number | null;
-
-export type UpdateAdminProductBodyAvatarFrameFile = Blob | null;
-
-export type UpdateAdminProductBody = {
-  name: string;
-  description?: string;
-  /** @minimum 0 */
-  price: number;
-  /** @minimum 0 */
-  stock_quantity?: number;
-  category_id: number;
-  product_type?: UpdateAdminProductBodyProductType;
-  avatar_frame_id?: UpdateAdminProductBodyAvatarFrameId;
-  digital_asset_url?: string;
-  is_active?: boolean;
-  uploaded_images?: Blob[];
-  avatar_frame_file?: UpdateAdminProductBodyAvatarFrameFile;
-};
-
-export type ReplaceAdminProductBodyProductType = typeof ReplaceAdminProductBodyProductType[keyof typeof ReplaceAdminProductBodyProductType];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const ReplaceAdminProductBodyProductType = {
-  physical: 'physical',
-  digital: 'digital',
-} as const;
-
-export type ReplaceAdminProductBodyAvatarFrameId = number | null;
-
-export type ReplaceAdminProductBodyAvatarFrameFile = Blob | null;
-
-export type ReplaceAdminProductBody = {
-  name: string;
-  description?: string;
-  /** @minimum 0 */
-  price: number;
-  /** @minimum 0 */
-  stock_quantity?: number;
-  category_id: number;
-  product_type?: ReplaceAdminProductBodyProductType;
-  avatar_frame_id?: ReplaceAdminProductBodyAvatarFrameId;
-  digital_asset_url?: string;
-  is_active?: boolean;
-  uploaded_images?: Blob[];
-  avatar_frame_file?: ReplaceAdminProductBodyAvatarFrameFile;
-};
-
-export type ListAdminOrdersParams = {
-status?: string | null;
-user?: number | null;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListAvatarFramesParams = {
-search?: string | null;
-/**
- * @minimum 1
- */
-page?: number;
-page_size?: number | null;
-};
-
-export type ListAdminAvatarFramesParams = {
-search?: string | null;
 /**
  * @minimum 1
  */

@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
+    <link href="/src/assets/main.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite App</title>
 
@@ -12,26 +13,6 @@
         document.documentElement.setAttribute('data-theme', theme)
       })()
     </script>
-
-    <style>
-      *:not(dialog) {
-        margin: 0;
-      }
-
-      #app {
-        width: 100%;
-        min-height: 100vh;
-        background: var(--background);
-      }
-
-      :root[data-theme='light'] {
-        --background: #ffffff;
-      }
-
-      :root[data-theme='dark'] {
-        --background: #1d1d1d;
-      }
-    </style>
   </head>
 
   <body>

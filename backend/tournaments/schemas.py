@@ -50,7 +50,6 @@ class TeamMemberResponse(Schema):
     full_name: str
     role: UserRole
     avatar: str | None = None
-    avatar_frame_url: str | None = None
 
     @staticmethod
     def resolve_avatar(obj, context):
@@ -140,8 +139,7 @@ class ArchiveStandingResponse(Schema):
     rounds_breakdown: list[RoundBreakdownResponse] | None = None
     snapshot_at: datetime
 
-
-class TournamentArchiveListResponse(Schema):
+class TournamentArchiveBase(Schema):
     id: int
     name: str
     description: str
@@ -149,12 +147,24 @@ class TournamentArchiveListResponse(Schema):
     end_date: datetime
     status: TournamentStatus
     banner: str | None = None
-    teams: list[TeamSummaryResponse]
     standings: list[ArchiveStandingResponse]
 
     @staticmethod
     def resolve_banner(obj, context):
         return _file_url(obj.banner, context)
+
+    @staticmethod
+    def resolve_standings(obj):
+        return obj.leaderboard_entries.filter(round__isnull=True).select_related('team').order_by('rank')
+
+
+class TournamentArchiveListResponse(TournamentArchiveBase):
+    pass
+
+
+class TournamentArchiveDetailResponse(TournamentArchiveBase):
+    teams: list[TeamSummaryResponse]
+    standings: list[ArchiveStandingResponse]
 
     @staticmethod
     def resolve_teams(obj):
@@ -556,21 +566,6 @@ class CalendarRoundResponse(Schema):
 class MyCalendarResponse(Schema):
     events: list[CalendarEventResponse]
     rounds: list[CalendarRoundResponse]
-
-
-class TournamentCertificateDeliveryStatusResponse(Schema):
-    existing_count: int
-    missing_count: int
-
-
-class SendTournamentCertificatesRequest(Schema):
-    template_id: int
-    mode: str = 'missing'
-
-
-class SendTournamentCertificatesResponse(Schema):
-    created_count: int
-    skipped_count: int
 
 
 class ExportToGoogleCalendarRequest(Schema):

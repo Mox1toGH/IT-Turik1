@@ -155,32 +155,18 @@ import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import { useForm } from '@/composables/useForm'
 import { EditRoundSchema } from '@/schemas/tournaments.schema'
-import { type JSONContent } from '@tiptap/vue-3'
-import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
+import AddCriteriaModal from '../tabs/tournament-rounds/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
-import type { CriterionResponse, RoundResponse } from '@/api/backendAPINinja.schemas.ts'
+import EditorModal from '../tabs/tournament-rounds/modals/EditorModal.vue'
+import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
   modelValue: boolean
   round: RoundResponse
-}
-
-interface Form {
-  name: string
-  passing_count: number
-  tech_requirements: JSONContent | null
-  description: JSONContent | null
-  must_have_requirements: JSONContent | null
-  criteria: CriterionResponse[]
-  start_date: Date
-  start_time: string
-  end_date: Date
-  end_time: string
 }
 
 const props = defineProps<Props>()
@@ -193,7 +179,7 @@ const pad = (value: number) => String(value).padStart(2, '0')
 const startDate = new Date(props.round.start_date)
 const endDate = new Date(props.round.end_date)
 
-const form = useForm<Form>(EditRoundSchema, {
+const form = useForm(EditRoundSchema, {
   name: props.round.name ?? '',
   passing_count: props.round.passing_count ?? 1,
   description: props.round.description ?? '',
@@ -227,8 +213,8 @@ function handleSubmit() {
         showNotification('Successfully changed round info', 'success')
       },
       onError(error) {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
         showNotification(error?.message, 'error')
       },

@@ -11,7 +11,6 @@
     <news-list
       :is-loading="isLoadingNews"
       :is-error="isLoadingError"
-      :error-code="newsError?.code"
       :items="newsItems"
       :total-news="totalNews"
       :total-pages="totalPages"
@@ -68,7 +67,6 @@ const {
   data: news,
   isLoading: isLoadingNews,
   isLoadingError,
-  error: newsError,
 } = useListNews(computed(() => ({ page: currentPage.value, pageSize })))
 
 const newsItems = computed<NewsArticleResponse[]>(() =>
@@ -137,7 +135,6 @@ watch(
 <style scoped>
 .news-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .news-rule {

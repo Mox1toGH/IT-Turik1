@@ -31,7 +31,7 @@
   <ui-card v-else-if="isError" variant="panel" :isError="true">
     <template #error>
       <div class="error-box">
-        <p>Failed to fetch news (code: {{ errorCode }})</p>
+        <p>Failed to fetch news</p>
       </div>
     </template>
   </ui-card>
@@ -60,36 +60,19 @@
     </div>
   </ui-card>
 
-  <ui-card v-else variant="panel">
-    <template #header>
-      <div class="section-head">
-        <div>
-          <div class="section-meta">
-            <h2 class="text-3xl">Latest news</h2>
-            <span class="count-pill text-base">{{ totalNews }} published</span>
-          </div>
-          <p class="section-subtitle text-base">Fresh announcements from the platform team.</p>
-        </div>
-      </div>
-    </template>
-
-    <div class="news-grid">
-      <news-item-card
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        :can-modify="canModify(item)"
-        @edit="$emit('edit', $event)"
-        @delete="$emit('delete', $event)"
-      />
-    </div>
-
-    <ui-pagination
-      v-if="totalNews > pageSize"
-      v-model="currentPageModel"
-      :total-items="totalNews"
-      :page-size="pageSize"
+  <div class="news-grid">
+    <news-item-card
+      v-for="item in items"
+      :key="item.id"
+      :item="item"
+      :can-modify="canModify(item)"
+      @edit="$emit('edit', $event)"
+      @delete="$emit('delete', $event)"
     />
+  </div>
+
+  <ui-card v-if="totalNews > pageSize">
+    <ui-pagination v-model="currentPageModel" :total-items="totalNews" :page-size="pageSize" />
   </ui-card>
 </template>
 
@@ -104,7 +87,6 @@ import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 defineProps<{
   isLoading: boolean
   isError: boolean
-  errorCode?: number | string
   items: NewsArticleResponse[]
   totalNews: number
   totalPages: number
@@ -134,24 +116,6 @@ const currentPageModel = defineModel<number>('currentPage', { required: true })
 
 .section-head .section-subtitle {
   margin: 0;
-}
-
-.section-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.count-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
 }
 
 .news-grid {
@@ -215,11 +179,6 @@ const currentPageModel = defineModel<number>('currentPage', { required: true })
   .empty-row {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .section-meta {
-    min-height: 0;
-    align-items: flex-start;
   }
 }
 </style>

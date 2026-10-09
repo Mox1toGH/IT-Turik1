@@ -13,7 +13,6 @@ from accounts.google_calendar import get_calendar_service
 from backend.auth import JWTAuth
 from backend.permissions import Permission, require_permission, has_permission
 from backend.schemas import ErrorResponse
-from certificates.models import Certificate, CertificateTemplate
 from evaluation.leaderboard_service import get_tournament_leaderboard
 from notifications.services import NotificationService
 from teams.models import Team
@@ -31,8 +30,8 @@ from .schemas import (
     SubmissionListResponse, SubmissionResponse, SubmissionUpdateRequest, TeamRegistrationRequest,
     TeamRegistrationResponse, TournamentArchiveDetailResponse,
     TournamentArchiveListResponse, TournamentCreateRequest, TournamentListResponse,
-    TournamentCertificateDeliveryStatusResponse, TournamentResponse, TournamentTeamResponse, TournamentUpdateRequest,
-    SendTournamentCertificatesRequest, SendTournamentCertificatesResponse,
+    TournamentResponse, TournamentTeamResponse, TournamentUpdateRequest,
+    
 )
 from .services import (
     close_submissions_on_round, delete_round, leave_team_from_tournament,
@@ -367,98 +366,6 @@ def get_my_calendar(request):
         rounds=[CalendarRoundResponse.from_orm(round_obj) for round_obj in rounds],
     )
 
-
-@router.get('/{tournament_id}/certificates/delivery-status', operation_id='getTournamentCertificateDeliveryStatus', url_name='tournament_certificate_delivery_status', response={200: TournamentCertificateDeliveryStatusResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-def get_tournament_certificate_delivery_status(request, tournament_id: int):
-    require_permission(request, Permission.MANAGE_PARTICIPANTS)
-    logger.debug(
-        'Fetching certificate delivery status',
-        extra={'tournament_id': tournament_id},
-    )
-    tournament = get_object_or_404(Tournament, pk=tournament_id)
-    registrations = TournamentTeamRegistration.objects.filter(
-        tournament=tournament, is_active=True, is_disqualified=False
-    ).select_related('team__captain').prefetch_related('team__team_members__user')
-    participant_ids = set()
-    for registration in registrations:
-        if registration.team.captain_id:
-            participant_ids.add(registration.team.captain_id)
-        participant_ids.update(registration.team.team_members.values_list('user_id', flat=True))
-    existing_ids = set(Certificate.objects.filter(
-        tournament=tournament, user_id__in=participant_ids
-    ).values_list('user_id', flat=True))
-    return TournamentCertificateDeliveryStatusResponse(
-        existing_count=len(existing_ids),
-        missing_count=len(participant_ids - existing_ids),
-    )
-
-
-@router.post('/{tournament_id}/send-certificates', operation_id='sendTournamentCertificates', url_name='tournament_send_certificates', response={200: SendTournamentCertificatesResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
-def send_tournament_certificates(request, tournament_id: int, payload: SendTournamentCertificatesRequest):
-    require_permission(request, Permission.MANAGE_PARTICIPANTS)
-    logger.info(
-        'Sending certificates',
-        extra={
-            'tournament_id': tournament_id,
-            'mode': payload.mode,
-            'template_id': payload.template_id,
-            'user_id': request.auth.id,
-        },
-    )
-    tournament = get_object_or_404(Tournament, pk=tournament_id)
-    if tournament.status != Tournament.STATUS_FINISHED:
-        logger.warning(
-            'Certificates rejected, tournament not finished',
-            extra={'tournament_id': tournament_id, 'status': tournament.status},
-        )
-        raise_api_error(HTTPStatus.BAD_REQUEST, 'Certificates can be sent only after tournament is finished.')
-    mode = payload.mode.strip().lower()
-    if mode not in {'missing', 'resend'}:
-        logger.warning(
-            'Certificates rejected, invalid mode',
-            extra={'tournament_id': tournament_id, 'mode': payload.mode},
-        )
-        raise_api_error(HTTPStatus.BAD_REQUEST, 'mode must be "missing" or "resend".')
-    template = get_object_or_404(CertificateTemplate, pk=payload.template_id)
-    registrations = TournamentTeamRegistration.objects.filter(
-        tournament=tournament, is_active=True, is_disqualified=False
-    ).select_related('team__captain').prefetch_related('team__team_members__user')
-    ranks = {row.get('team_id'): row.get('rank') for row in get_tournament_leaderboard(tournament.id, request.auth)}
-    created_count = 0
-    skipped_count = 0
-    participant_ids = set()
-    for registration in registrations:
-        team = registration.team
-        team_user_ids = set(team.team_members.values_list('user_id', flat=True))
-        if team.captain_id:
-            team_user_ids.add(team.captain_id)
-        for user_id in team_user_ids - participant_ids:
-            participant_ids.add(user_id)
-            if mode == 'missing' and Certificate.objects.filter(tournament=tournament, user_id=user_id).exists():
-                skipped_count += 1
-                continue
-            rank = ranks.get(team.id)
-            Certificate.objects.create(
-                user_id=user_id,
-                team=team,
-                tournament=tournament,
-                placement=f'Rank #{rank}' if rank else 'Participant',
-                template=template,
-            )
-            created_count += 1
-    logger.info(
-        'Certificates processed',
-        extra={
-            'tournament_id': tournament_id,
-            'mode': mode,
-            'created_count': created_count,
-            'skipped_count': skipped_count,
-            'user_id': request.auth.id,
-        },
-    )
-    return SendTournamentCertificatesResponse(created_count=created_count, skipped_count=skipped_count)
-
-
 @router.post('/my-calendar/export-to-google', operation_id='exportToGoogleCalendar', url_name='export_to_google_calendar', response={200: ExportToGoogleCalendarResponse, 400: ErrorResponse, 401: ErrorResponse})
 def export_to_google_calendar(request, payload: ExportToGoogleCalendarRequest):
     logger.info(
@@ -578,20 +485,26 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     )
 
 
-@router.get('/archive', operation_id='listTournamentArchive', url_name='tournament_archive_list', response={200: list[TournamentArchiveListResponse], 401: ErrorResponse})
+@router.get(
+    '/archive',
+    operation_id='listTournamentArchive',
+    url_name='tournament_archive_list',
+    response={200: list[TournamentArchiveListResponse], 401: ErrorResponse},
+)
 def list_tournament_archive(request):
     logger.debug('Listing tournament archive')
-    queryset = Tournament.objects.filter(status=Tournament.STATUS_FINISHED).prefetch_related('rounds')
-
-    return [TournamentArchiveListResponse.model_validate(tournament, from_attributes=True) for tournament in queryset]
+    return Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
 
 
-@router.get('/archive/{id}', operation_id='getTournamentArchive', url_name='tournament_archive_detail', response={200: TournamentArchiveDetailResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get(
+    '/archive/{id}',
+    operation_id='getTournamentArchive',
+    url_name='tournament_archive_detail',
+    response={200: TournamentArchiveDetailResponse, 401: ErrorResponse, 404: ErrorResponse},
+)
 def get_tournament_archive(request, id: int):
     logger.debug('Fetching tournament archive', extra={'tournament_id': id})
-    tournament = get_object_or_404(Tournament.objects.prefetch_related('rounds'), pk=id, status=Tournament.STATUS_FINISHED)
-
-    return TournamentArchiveDetailResponse.model_validate(tournament, from_attributes=True)
+    return get_object_or_404(Tournament, pk=id, status=Tournament.STATUS_FINISHED)
 
 
 @router.get('/archive/{id}/submissions', operation_id='listTournamentArchiveSubmissions', url_name='tournament_archive_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})

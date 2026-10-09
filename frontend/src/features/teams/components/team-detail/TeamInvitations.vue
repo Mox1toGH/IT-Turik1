@@ -62,7 +62,6 @@
             <div class="team-invitations-user">
               <user-avatar
                 :avatar="invitation.user.avatar"
-                :avatar-frame-url="invitation.user.avatar_frame_url"
                 :username="invitation.user.username"
                 :full-name="invitation.user.full_name"
                 :size="40"
@@ -87,7 +86,6 @@
               <div class="team-invitations-user">
                 <user-avatar
                   :avatar="invitation.user.avatar"
-                  :avatar-frame-url="invitation.user.avatar_frame_url"
                   :username="invitation.user.username"
                   :full-name="invitation.user.full_name"
                   :size="40"

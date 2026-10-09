@@ -40,40 +40,10 @@ import {
 } from '@/api/tournaments/tournaments'
 
 import {
-  getGetMyPointsBalanceQueryKey,
-  getListMyPointsTransactionsQueryKey,
-  getGetAdminUserPointsBalanceQueryKey,
-  getListAdminUserPointsTransactionsQueryKey,
-} from '@/api/points/points'
-
-import {
-  getListProductsQueryKey,
-  getGetProductQueryKey,
-  getListMyOrdersQueryKey,
-  getListAdminCategoriesQueryKey,
-  getGetAdminCategoryQueryKey,
-  getListAdminProductsQueryKey,
-  getGetAdminProductQueryKey,
-  getListAdminOrdersQueryKey,
-  getListAvatarFramesQueryKey,
-  getListAdminAvatarFramesQueryKey,
-  getGetAdminAvatarFrameQueryKey,
-} from '@/api/shop/shop'
-
-import {
-  getListCertificatesQueryKey,
-  getGetCertificateQueryKey,
-  getListCertificateTemplatesQueryKey,
-  getGetCertificateTemplateQueryKey,
-} from '@/api/certificates/certificates'
-
-import {
   getListNotificationsQueryKey,
   getGetUnreadNotificationCountQueryKey,
   getGetNotificationSettingsQueryKey,
 } from '@/api/notifications/notifications'
-
-import { getListMyDigitalInventoryQueryKey } from '@/api/inventory/inventory'
 
 import { getListNewsQueryKey, getGetNewsQueryKey } from '@/api/news/news'
 
@@ -304,97 +274,6 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getGetNewsQueryKey(vars.id as number)),
   ],
   deleteNews: [v(() => getListNewsQueryKey())],
-
-  // Points
-  modifyUserPointsBalance: [
-    v(({ vars }) => getGetAdminUserPointsBalanceQueryKey(vars.userId as number)),
-    v(({ vars }) => getListAdminUserPointsTransactionsQueryKey(vars.userId as number)),
-    v(() => getGetAdminStatsQueryKey()),
-  ],
-
-  // Shop
-  purchaseProduct: [
-    v(() => getListMyOrdersQueryKey()),
-    v(() => getGetMyPointsBalanceQueryKey()),
-    v(() => getListMyPointsTransactionsQueryKey()),
-    v(() => getListMyDigitalInventoryQueryKey()),
-    v(() => getGetAdminStatsQueryKey()),
-    v(() => getListProductsQueryKey()),
-  ],
-  cancelMyOrder: [
-    v(() => getListMyOrdersQueryKey()),
-    v(() => getGetMyPointsBalanceQueryKey()),
-    v(() => getListMyPointsTransactionsQueryKey()),
-  ],
-  createAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
-  replaceAdminCategory: [
-    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
-    v(() => getListAdminCategoriesQueryKey()),
-  ],
-  updateAdminCategory: [
-    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
-    v(() => getListAdminCategoriesQueryKey()),
-  ],
-  deleteAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
-  createAdminProduct: [v(() => getListAdminProductsQueryKey()), v(() => getListProductsQueryKey())],
-  replaceAdminProduct: [
-    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
-    v(() => getListAdminProductsQueryKey()),
-    v(() => getListProductsQueryKey()),
-    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
-  ],
-  updateAdminProduct: [
-    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
-    v(() => getListAdminProductsQueryKey()),
-    v(() => getListProductsQueryKey()),
-    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
-  ],
-  deleteAdminProduct: [v(() => getListAdminProductsQueryKey()), v(() => getListProductsQueryKey())],
-  updateAdminOrderStatus: [v(() => getListAdminOrdersQueryKey())],
-  cancelAdminOrder: [v(() => getListAdminOrdersQueryKey())],
-  createAdminAvatarFrame: [v(() => getListAdminAvatarFramesQueryKey())],
-  replaceAdminAvatarFrame: [
-    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-  updateAdminAvatarFrame: [
-    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-  deleteAdminAvatarFrame: [
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-
-  // Inventory
-  equipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
-  unequipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
-
-  // Certificates
-  createCertificate: [v(() => getListCertificatesQueryKey())],
-  certificatesUpdate: [
-    v(({ vars }) => getGetCertificateQueryKey(vars.uniqueCode as string)),
-    v(() => getListCertificatesQueryKey()),
-  ],
-  updateCertificate: [
-    v(({ vars }) => getGetCertificateQueryKey(vars.uniqueCode as string)),
-    v(() => getListCertificatesQueryKey()),
-  ],
-  deleteCertificate: [v(() => getListCertificatesQueryKey())],
-
-  // Certificate Templates
-  createCertificateTemplate: [v(() => getListCertificateTemplatesQueryKey())],
-  replaceCertificateTemplate: [
-    v(({ vars }) => getGetCertificateTemplateQueryKey(vars.id as number)),
-    v(() => getListCertificateTemplatesQueryKey()),
-  ],
-  updateCertificateTemplate: [
-    v(({ vars }) => getGetCertificateTemplateQueryKey(vars.id as number)),
-    v(() => getListCertificateTemplatesQueryKey()),
-  ],
-  deleteCertificateTemplate: [v(() => getListCertificateTemplatesQueryKey())],
 
   // Notifications
   deleteNotification: [

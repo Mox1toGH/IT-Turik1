@@ -30,8 +30,7 @@ const variantClass = `card-${props.variant}`
 
 <style scoped>
 .card {
-  border: 1px solid;
-  border-color: inherit;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1.2rem;
   display: flex;
@@ -40,6 +39,10 @@ const variantClass = `card-${props.variant}`
   background: var(--card);
   color: var(--card-foreground);
   box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.05);
+}
+
+.dark .card {
+  box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.25);
 }
 
 .card-panel {

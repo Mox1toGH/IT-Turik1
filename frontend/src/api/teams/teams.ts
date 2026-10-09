@@ -32,7 +32,6 @@ import type {
   DetailResponse,
   ErrorResponse,
   InviteMemberRequest,
-  TeamBannerPartialUpdateBody,
   TeamBannerResponse,
   TeamBannerUpdateBody,
   TeamCreateRequest,
@@ -252,71 +251,6 @@ export function useGetTeam<TData = Awaited<ReturnType<typeof getTeam>>, TError =
 
 
 /**
- * @summary Replace Team
- */
-export const replaceTeam = (
-    pk: MaybeRef<number>,
-    teamUpdateRequest: MaybeRef<TeamUpdateRequest>,
- options?: SecondParameter<typeof customInstance>,) => {
-      pk = unref(pk);
-teamUpdateRequest = unref(teamUpdateRequest);
-      
-      return customInstance<TeamResponse>(
-      {url: `http://localhost:8000/api/teams/${pk}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: teamUpdateRequest
-    },
-      options);
-    }
-  
-
-
-export const getReplaceTeamMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTeam>>, TError,{pk: number;data: BodyType<TeamUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof replaceTeam>>, TError,{pk: number;data: BodyType<TeamUpdateRequest>}, TContext> => {
-
-const mutationKey = ['replaceTeam'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replaceTeam>>, {pk: number;data: BodyType<TeamUpdateRequest>}> = (props) => {
-          const {pk,data} = props ?? {};
-
-          return  replaceTeam(pk,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ReplaceTeamMutationResult = NonNullable<Awaited<ReturnType<typeof replaceTeam>>>
-    export type ReplaceTeamMutationBody = BodyType<TeamUpdateRequest>
-    export type ReplaceTeamMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Replace Team
- */
-export const useReplaceTeam = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replaceTeam>>, TError,{pk: number;data: BodyType<TeamUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof replaceTeam>>,
-        TError,
-        {pk: number;data: BodyType<TeamUpdateRequest>},
-        TContext
-      > => {
-
-      const mutationOptions = getReplaceTeamMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Team
  */
 export const updateTeam = (
@@ -443,7 +377,7 @@ export const useDeleteTeam = <TError = ErrorType<ErrorResponse>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Replace Team Banner
+ * @summary Update Team Banner
  */
 export const teamBannerUpdate = (
     pk: MaybeRef<number>,
@@ -455,7 +389,7 @@ teamBannerUpdateBody = unref(teamBannerUpdateBody);
 formData.append(`banner`, teamBannerUpdateBody.banner)
 
       return customInstance<TeamBannerResponse>(
-      {url: `http://localhost:8000/api/teams/${pk}/banner`, method: 'PUT',
+      {url: `http://localhost:8000/api/teams/${pk}/banner`, method: 'PATCH',
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
@@ -494,7 +428,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type TeamBannerUpdateMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Replace Team Banner
+ * @summary Update Team Banner
  */
 export const useTeamBannerUpdate = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerUpdate>>, TError,{pk: number;data: BodyType<TeamBannerUpdateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
@@ -506,73 +440,6 @@ export const useTeamBannerUpdate = <TError = ErrorType<ErrorResponse>,
       > => {
 
       const mutationOptions = getTeamBannerUpdateMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Update Team Banner
- */
-export const teamBannerPartialUpdate = (
-    pk: MaybeRef<number>,
-    teamBannerPartialUpdateBody: MaybeRef<TeamBannerPartialUpdateBody>,
- options?: SecondParameter<typeof customInstance>,) => {
-      pk = unref(pk);
-teamBannerPartialUpdateBody = unref(teamBannerPartialUpdateBody);
-      const formData = new FormData();
-formData.append(`banner`, teamBannerPartialUpdateBody.banner)
-
-      return customInstance<TeamBannerResponse>(
-      {url: `http://localhost:8000/api/teams/${pk}/banner`, method: 'PATCH',
-      headers: {'Content-Type': 'multipart/form-data', },
-       data: formData
-    },
-      options);
-    }
-  
-
-
-export const getTeamBannerPartialUpdateMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{pk: number;data: BodyType<TeamBannerPartialUpdateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{pk: number;data: BodyType<TeamBannerPartialUpdateBody>}, TContext> => {
-
-const mutationKey = ['teamBannerPartialUpdate'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, {pk: number;data: BodyType<TeamBannerPartialUpdateBody>}> = (props) => {
-          const {pk,data} = props ?? {};
-
-          return  teamBannerPartialUpdate(pk,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type TeamBannerPartialUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof teamBannerPartialUpdate>>>
-    export type TeamBannerPartialUpdateMutationBody = BodyType<TeamBannerPartialUpdateBody>
-    export type TeamBannerPartialUpdateMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Team Banner
- */
-export const useTeamBannerPartialUpdate = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof teamBannerPartialUpdate>>, TError,{pk: number;data: BodyType<TeamBannerPartialUpdateBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof teamBannerPartialUpdate>>,
-        TError,
-        {pk: number;data: BodyType<TeamBannerPartialUpdateBody>},
-        TContext
-      > => {
-
-      const mutationOptions = getTeamBannerPartialUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1029,7 +896,7 @@ export const createTeamJoinRequest = (
 ) => {
       pk = unref(pk);
       
-      return customInstance<DetailResponse | DetailResponse>(
+      return customInstance<DetailResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/join-requests`, method: 'POST', signal
     },
       options);

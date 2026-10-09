@@ -1,5 +1,5 @@
 <template>
-  <section class="page-shell profile-page">
+  <section class="page-shell">
     <div v-if="isLoadingError" class="error-state">
       <p>Error while fetching profile info</p>
     </div>
@@ -69,48 +69,6 @@
               <span class="rail-link-copy"><EditIcon />My statistics</span>
               <ArrowRight />
             </button>
-            <button
-              :class="['rail-link', { active: activeSection === 'transactions' }]"
-              type="button"
-              @click="activeSection = 'transactions'"
-            >
-              <span class="rail-link-copy"><FileCheckIcon />Transaction history</span>
-              <ArrowRight />
-            </button>
-            <button
-              :class="['rail-link', { active: activeSection === 'orders' }]"
-              type="button"
-              @click="activeSection = 'orders'"
-            >
-              <span class="rail-link-copy"><TeamIcon />My shop orders</span>
-              <ArrowRight />
-            </button>
-            <button
-              :class="['rail-link', { active: activeSection === 'inventory' }]"
-              type="button"
-              @click="activeSection = 'inventory'"
-            >
-              <span class="rail-link-copy"><LockIcon />Digital inventory</span>
-              <ArrowRight />
-            </button>
-          </ui-card>
-
-          <ui-card
-            variant="panel"
-            class="rail-card account-card"
-            role="navigation"
-            aria-label="Account shortcuts"
-          >
-            <p class="rail-eyebrow">Account</p>
-
-            <button
-              :class="['rail-link', { active: activeSection === 'certificates' }]"
-              type="button"
-              @click="activeSection = 'certificates'"
-            >
-              <span class="rail-link-copy"><FileCheckIcon />Certificates</span>
-              <ArrowRight />
-            </button>
           </ui-card>
 
           <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
@@ -137,27 +95,14 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import EditIcon from '@/icons/EditIcon.vue'
-import FileCheckIcon from '@/icons/FileCheckIcon.vue'
-import LockIcon from '@/icons/LockIcon.vue'
-import TeamIcon from '@/icons/TeamIcon.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
 import { useUserStore } from '@/stores/user'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { formatDate } from '@/lib/date'
-import StatsPage from '@/features/stats/pages/StatsPage.vue'
-import TransactionHistorySection from '../components/profile/sections/TransactionHistorySection.vue'
-import ShopOrderHistoryPage from '@/features/shop/pages/ShopOrderHistoryPage.vue'
-import ShopInventoryPage from '@/features/shop/pages/ShopInventoryPage.vue'
-import CertificatesSection from '../components/profile/sections/CertificatesSection.vue'
+import UserStats from '../components/profile/sections/UserStats.vue'
 
-type ProfileSection =
-  | 'overview'
-  | 'statistics'
-  | 'transactions'
-  | 'orders'
-  | 'inventory'
-  | 'certificates'
+type ProfileSection = 'overview' | 'statistics'
 
 const store = useUserStore()
 const { data: user, isLoading, isLoadingError } = useGetUserProfile()
@@ -166,11 +111,7 @@ const isDeleting = ref(false)
 const activeSection = ref<ProfileSection>('overview')
 
 const viewComponents = {
-  statistics: StatsPage,
-  transactions: TransactionHistorySection,
-  orders: ShopOrderHistoryPage,
-  inventory: ShopInventoryPage,
-  certificates: CertificatesSection,
+  statistics: UserStats,
 } as const
 
 const activeComponent = computed(
@@ -184,13 +125,6 @@ const logout = () => {
 </script>
 
 <style scoped>
-.profile-page {
-  max-width: 1180px;
-  margin: 0 auto;
-  gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
-}
-
 .profile-header {
   display: flex;
   align-items: flex-end;
@@ -299,10 +233,6 @@ const logout = () => {
   display: grid;
   gap: 0;
   padding: 1.25rem;
-}
-
-.account-card {
-  padding-top: 1.25rem;
 }
 
 .rail-eyebrow {

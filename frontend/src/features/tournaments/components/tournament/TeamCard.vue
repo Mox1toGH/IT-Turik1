@@ -1,10 +1,14 @@
 <template>
-  <RouterLink :to="`/teams/${team.id}`" class="team-item">
+  <div class="team-item">
     <div class="team-info">
       <TeamIcon :class="[{ 'text-muted': !team.is_active }]" />
-      <p :title="team.name" :class="[{ 'text-muted': !team.is_active }]">
+      <RouterLink
+        :to="`/teams/${team.id}`"
+        :title="team.name"
+        :class="[{ 'text-muted': !team.is_active }]"
+      >
         {{ truncateText(team.name, 15) }}
-      </p>
+      </RouterLink>
     </div>
 
     <div class="team-action-group">
@@ -35,7 +39,7 @@
         </ui-button>
       </template>
     </div>
-  </RouterLink>
+  </div>
 
   <ui-confirm-modal
     v-model="showConfirmModal"
@@ -170,10 +174,6 @@ function handleConfirmAction() {
   background: var(--background);
   color: var(--foreground);
   text-decoration: none;
-}
-
-.team-item:hover {
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
 }
 
 .team-action-group {

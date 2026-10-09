@@ -43,26 +43,6 @@ class TeamMemberResponse(AvatarSchema):
     email: str
     full_name: Optional[str] = None
     role: UserRole
-    avatar_frame_url: str | None
-
-    @staticmethod
-    def resolve_avatar_frame_url(obj, context):
-        from inventory.models import UserInventory
-
-        equipped_item = (
-            UserInventory.objects.select_related('product', 'product__avatar_frame')
-            .filter(user=obj, is_equipped=True)
-            .first()
-        )
-        if equipped_item is None:
-            return None
-
-        url = equipped_item.product.effective_digital_asset_url
-        if not url:
-            return None
-
-        return absolute_media_url(url, context)
-
 
 class TeamSummaryResponse(Schema):
     id: int

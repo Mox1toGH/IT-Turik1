@@ -92,7 +92,8 @@ applyTheme()
 
 .page-content {
   width: min(1100px, 100% - 2rem);
-  margin: 1.6rem auto 2.4rem;
+  margin: 2rem auto 0;
+  padding: 0 2rem 2rem;
   position: relative;
   z-index: 9;
 }
@@ -160,7 +161,7 @@ applyTheme()
   }
 
   .page-content {
-    width: min(1100px, 100% - 1rem);
+    padding: 0 1rem;
     margin-top: 1rem;
   }
 

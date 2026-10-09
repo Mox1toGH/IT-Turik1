@@ -22,10 +22,6 @@
           </p>
         </ui-card>
       </div>
-
-      <div class="preview-actions">
-        <ui-button as-link to="/stats" variant="secondary" size="md">View full stats</ui-button>
-      </div>
     </ui-skeleton-loader>
   </section>
 </template>
@@ -33,7 +29,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
@@ -213,10 +208,6 @@ onMounted(() => {
 
 .value-link:hover {
   text-decoration: underline;
-}
-
-.preview-actions {
-  margin-top: 1rem;
 }
 
 .preview-error {
