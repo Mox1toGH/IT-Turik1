@@ -34,7 +34,6 @@ ROLE_PERMISSIONS = {
         Permission.MANAGE_EVENTS,
 
         # jury
-        Permission.MANAGE_ASSIGNMENTS,
         Permission.MANAGE_EVALUATIONS,
 
         # news

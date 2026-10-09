@@ -20,6 +20,7 @@ export const RegisterSchema = v.object({
     v.minLength(3, 'Username must be at least 3 characters.'),
     v.regex(/^[A-Za-z0-9@.+_-]+$/, 'Use letters, numbers, and @ . + - _ only.'),
   ),
+  activation_code: v.pipe(v.string(), v.minLength(1, 'Activation code cannot be empty')),
   full_name: v.pipe(v.string(), v.minLength(1, 'Fullname cannot be empty')),
   email: v.pipe(v.string(), v.email('Invalid email')),
   password: PasswordSchema,

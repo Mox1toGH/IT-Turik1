@@ -114,6 +114,7 @@
             <div class="actions-cell">
               <ui-select
                 multiple
+                min-width="150px"
                 v-model="assignedJury[submission.id]!"
                 :options="juryOptions"
                 placeholder="Assign jury"

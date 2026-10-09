@@ -91,11 +91,11 @@
           </div>
 
           <label class="form-item" v-if="isRestrictedRole">
-            <p class="form-label full-width">Redeem code</p>
+            <p class="form-label full-width">Activation code</p>
             <ui-input
-              v-model="form.fields.value.redeem_code"
-              @blur="form.validateField('redeem_code')"
-              :is-invalid="!!form.errors.value.redeem_code"
+              v-model="form.fields.value.activation_code"
+              @blur="form.validateField('activation_code')"
+              :is-invalid="!!form.errors.value.activation_code"
               placeholder="Enter one-time activation code"
               required
             />
@@ -226,7 +226,7 @@ interface Form {
   email: string
   password: string
   role: UserRole
-  redeem_code: string
+  activation_code: string
   phone: string
   city: string
 }
@@ -236,7 +236,7 @@ const form = useForm<Form>(RegisterSchema, {
   email: '',
   password: '',
   role: 'team',
-  redeem_code: '',
+  activation_code: '',
   full_name: '',
   phone: '',
   city: '',
@@ -264,7 +264,7 @@ watch(
   () => form.fields.value.role,
   (newRole) => {
     if (!restrictedRoles.includes(newRole)) {
-      form.fields.value.redeem_code = ''
+      form.fields.value.activation_code = ''
     }
   },
 )
