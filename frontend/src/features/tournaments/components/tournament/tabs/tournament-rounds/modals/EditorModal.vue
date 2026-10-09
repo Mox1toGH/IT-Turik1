@@ -109,6 +109,37 @@
         </div>
       </ui-card>
 
+      <form v-if="isLinkEditorOpen" class="link-editor" @submit.prevent="applyLink">
+        <label class="link-field-label">
+          Link URL
+          <ui-input
+            v-model="linkUrl"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            placeholder="https://example.com"
+            :is-invalid="!!linkError"
+            @input="linkError = ''"
+          />
+        </label>
+        <p v-if="linkError" class="link-error" role="alert">{{ linkError }}</p>
+        <div class="link-editor-actions">
+          <ui-button size="sm" type="submit">Apply link</ui-button>
+          <ui-button size="sm" variant="secondary" type="button" @click="closeLinkEditor">
+            Cancel
+          </ui-button>
+          <ui-button
+            v-if="linkSelection?.wasLink"
+            size="sm"
+            variant="ghost"
+            type="button"
+            @click="removeLink"
+          >
+            Remove link
+          </ui-button>
+        </div>
+      </form>
+
       <editor-content class="editor" :editor="editor" />
     </div>
 
@@ -122,6 +153,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
+import UiInput from '@/components/ui/UiInput.vue'
 import UiModal from '@/components/ui/UiModal.vue'
 import BoldIcon from '@/icons/typography/BoldIcon.vue'
 import BulletListIcon from '@/icons/typography/BulletListIcon.vue'
@@ -134,6 +166,8 @@ import type { JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import { computed, ref } from 'vue'
 import { tiptapJsonToText } from '@/lib/utils'
+import * as v from 'valibot'
+import { LinkUrlSchema } from '@/schemas/link.schema'
 import UnderlineIcon from '@/icons/typography/UnderlineIcon.vue'
 import HighlightIcon from '@/icons/typography/HighlightIcon.vue'
 import Highlight from '@tiptap/extension-highlight'
@@ -163,6 +197,10 @@ const modelValue = defineModel<JSONContent | null>({ default: null })
 
 const isOpen = ref(false)
 const draftJson = ref<JSONContent | null>(modelValue.value)
+const isLinkEditorOpen = ref(false)
+const linkUrl = ref('')
+const linkError = ref('')
+const linkSelection = ref<{ from: number; to: number; wasLink: boolean } | null>(null)
 
 const addTextComputed = computed(() => props.addText || `Add ${props.title.toLowerCase()}`)
 const editTextComputed = computed(() => props.editText || `Edit ${props.title.toLowerCase()}`)
@@ -199,10 +237,12 @@ const editor = useEditor({
 function openModal() {
   draftJson.value = modelValue.value
   editor.value?.commands.setContent(draftJson.value ?? '', { emitUpdate: false })
+  closeLinkEditor()
   isOpen.value = true
 }
 
 function handleClose() {
+  closeLinkEditor()
   isOpen.value = false
   emit('blur')
 }
@@ -262,22 +302,53 @@ function toggleLink() {
   if (!editor.value) return
 
   const { from, to, empty } = editor.value.state.selection
+  const wasLink = editor.value.isActive('link')
+  linkSelection.value = { from, to, wasLink }
+  linkUrl.value = wasLink ? String(editor.value.getAttributes('link').href ?? '') : ''
+  linkError.value = !wasLink && empty ? 'Select text in the editor before adding a link.' : ''
+  isLinkEditorOpen.value = true
+}
 
-  if (empty) return
+function validateLinkUrl(value: string): string | null {
+  const result = v.safeParse(LinkUrlSchema, value)
+  if (!result.success) {
+    linkError.value = result.issues.map((issue) => issue.message).join(' ')
+    return null
+  }
 
-  if (editor.value.isActive('link')) {
-    editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+  linkError.value = ''
+  return result.output
+}
+
+function applyLink() {
+  if (!editor.value || !linkSelection.value) return
+
+  const href = validateLinkUrl(linkUrl.value)
+  if (!href) return
+
+  const { from, to, wasLink } = linkSelection.value
+  if (!wasLink && from === to) {
+    linkError.value = 'Select text in the editor before adding a link.'
     return
   }
 
-  const selectedText = editor.value.state.doc.textBetween(from, to, ' ').trim()
-  if (!selectedText) return
+  const chain = editor.value.chain().focus()
+  if (wasLink) chain.extendMarkRange('link')
+  else chain.setTextSelection({ from, to })
+  chain.setLink({ href }).run()
+  closeLinkEditor()
+}
 
-  const href = /^(https?:\/\/|mailto:|tel:)/i.test(selectedText)
-    ? selectedText
-    : `https://${selectedText}`
+function removeLink() {
+  if (!editor.value || !linkSelection.value?.wasLink) return
 
-  editor.value.chain().focus().extendMarkRange('link').setLink({ href }).run()
+  editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+  closeLinkEditor()
+}
+
+function closeLinkEditor() {
+  isLinkEditorOpen.value = false
+  linkError.value = ''
 }
 </script>
 
@@ -298,6 +369,40 @@ function toggleLink() {
 
 .toolbar button.is-active {
   background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.link-editor {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.link-field-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.link-field-label :deep(input) {
+  width: 100%;
+}
+
+.link-error {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.82rem;
+}
+
+.link-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .editor {

@@ -94,7 +94,6 @@ const toItem = computed(() => {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 0.8rem;
-  padding-top: 12px;
 }
 
 .summary {
