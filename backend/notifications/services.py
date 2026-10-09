@@ -1,12 +1,13 @@
 import logging
 
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.utils import OperationalError, ProgrammingError
 
 from .channels import CHANNEL_REGISTRY
 from .config import EVENTS
 from .dispatcher import dispatch_pending_async
-from .models import NotificationDeliveryTask
+from .models import Notification, NotificationDeliveryTask
+from .realtime import emit_notifications_created
 
 logger = logging.getLogger(__name__)
 
@@ -32,47 +33,71 @@ class NotificationService:
         Dispatch a notification to *recipients* for the given *event_type*.
         """
         from .models import NotificationConfig, UserNotificationSettings
-        
+
         event = EVENTS.get(event_type)
         if not event:
             logger.warning('NotificationService: unknown event_type=%s', event_type)
             return
 
-        # Format content once for all recipients
         title, message, email_subject = event.format(context)
-
-        tasks_to_create = []
-
+        recipient_ids = []
+        recipients_by_id = {}
         for recipient in recipients:
-            # 1. Fetch or create the personal settings for this user
-            user_settings, _ = UserNotificationSettings.objects.get_or_create(user=recipient)
-            
-            # 2. Fetch or create the personal config for this event
-            db_config, _ = NotificationConfig.objects.get_or_create(
-                user=recipient,
-                event_type=event_type,
-                defaults={
-                    'is_system_enabled': 'system' in event.channels,
-                    'is_email_enabled': 'email' in event.channels
-                }
+            recipient_ids.append(recipient.id)
+            recipients_by_id[recipient.id] = recipient
+
+        if not recipient_ids:
+            return
+
+        settings_by_user = {
+            setting.user_id: setting
+            for setting in UserNotificationSettings.objects.filter(
+                user_id__in=recipient_ids
             )
+        }
+        config_by_user = {
+            config.user_id: config
+            for config in NotificationConfig.objects.filter(
+                user_id__in=recipient_ids,
+                event_type=event_type,
+            )
+        }
 
-            # 3. Determine active channels for THIS user
-            active_channels = []
-            if db_config.is_system_enabled:
-                active_channels.append('system')
-            
-            # Email only if enabled in event AND not disabled globally for user
-            if db_config.is_email_enabled and not user_settings.emails_disabled_globally:
-                active_channels.append('email')
+        notifications_to_create = []
+        tasks_to_create = []
+        for recipient_id in recipient_ids:
+            config = config_by_user.get(recipient_id)
+            system_enabled = (
+                config.is_system_enabled
+                if config
+                else 'system' in event.channels
+            )
+            email_enabled = (
+                config.is_email_enabled
+                if config
+                else 'email' in event.channels
+            )
+            user_settings = settings_by_user.get(recipient_id)
 
-            for channel_name in active_channels:
-                if channel_name not in CHANNEL_REGISTRY:
-                    continue
+            if system_enabled and 'system' in CHANNEL_REGISTRY:
+                notifications_to_create.append(
+                    Notification(
+                        recipient_id=recipient_id,
+                        event_type=event_type,
+                        title=title,
+                        message=message,
+                    )
+                )
+
+            if (
+                email_enabled
+                and not (user_settings and user_settings.emails_disabled_globally)
+                and 'email' in CHANNEL_REGISTRY
+            ):
                 tasks_to_create.append(
                     NotificationDeliveryTask(
-                        recipient=recipient,
-                        channel=channel_name,
+                        recipient_id=recipient_id,
+                        channel='email',
                         event_type=event_type,
                         title=title,
                         message=message,
@@ -80,16 +105,24 @@ class NotificationService:
                     )
                 )
 
-        if not tasks_to_create:
+        if not notifications_to_create and not tasks_to_create:
             return
 
-        try:
-            NotificationDeliveryTask.objects.bulk_create(tasks_to_create)
-            transaction.on_commit(dispatch_pending_async)
-        except (OperationalError, ProgrammingError):
-            logger.exception(
-                'Notification queue table is unavailable. Falling back to inline delivery.'
-            )
+        queue_unavailable = False
+        with transaction.atomic(savepoint=not connection.in_atomic_block):
+            if notifications_to_create:
+                Notification.objects.bulk_create(notifications_to_create)
+            if tasks_to_create:
+                try:
+                    with transaction.atomic():
+                        NotificationDeliveryTask.objects.bulk_create(tasks_to_create)
+                except (OperationalError, ProgrammingError):
+                    queue_unavailable = True
+                    logger.exception(
+                        'Notification queue table is unavailable. Falling back to inline email delivery.'
+                    )
+
+        if queue_unavailable:
             for task in tasks_to_create:
                 channel_cls = CHANNEL_REGISTRY.get(task.channel)
                 if not channel_cls:
@@ -97,7 +130,7 @@ class NotificationService:
                 try:
                     channel = channel_cls()
                     channel.send(
-                        recipient=task.recipient,
+                        recipient=recipients_by_id[task.recipient_id],
                         title=task.title,
                         message=task.message,
                         event_type=task.event_type,
@@ -106,7 +139,14 @@ class NotificationService:
                 except Exception:
                     logger.exception(
                         'Inline fallback notification delivery failed: user=%s event=%s channel=%s',
-                        getattr(task.recipient, 'id', None),
+                        task.recipient_id,
                         task.event_type,
                         task.channel,
                     )
+        elif tasks_to_create:
+            transaction.on_commit(dispatch_pending_async)
+
+        if notifications_to_create:
+            transaction.on_commit(
+                lambda: emit_notifications_created(notifications_to_create)
+            )
