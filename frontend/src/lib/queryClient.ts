@@ -297,6 +297,14 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
 }
 
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (count, err) => {
+        const s = err._axiosError?.response?.status
+        return (!s || s >= 500) && count < 2
+      },
+    },
+  },
   mutationCache: new MutationCache({
     onSuccess: (data, vars, _ctx, mutation) => {
       const key = mutation.options.mutationKey?.[0] as string | undefined
@@ -315,8 +323,6 @@ export const queryClient = new QueryClient({
         vars: (vars ?? {}) as Ctx['vars'],
         data: (data ?? {}) as Ctx['data'],
       }
-
-      console.log(ctx, key)
 
       entries.forEach((entry) => {
         queryClient.invalidateQueries({ queryKey: entry(ctx) })

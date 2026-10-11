@@ -100,6 +100,39 @@
           <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
         </ui-skeleton-loader>
       </div>
+
+      <div class="tournament-limits">
+        <div>
+          <p class="text-muted">Minimum team members</p>
+          <ui-skeleton-loader :loading="isLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100px" />
+            </template>
+
+            <p>
+              {{
+                tournament?.min_team_members
+                  ? `${tournament.min_team_members} members`
+                  : 'No minimum'
+              }}
+            </p>
+          </ui-skeleton-loader>
+        </div>
+
+        <div>
+          <p class="text-muted">Maximum teams</p>
+          <ui-skeleton-loader :loading="isLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100px" />
+            </template>
+
+            <p>
+              {{ tournament?.max_teams ?? 'No limit' }}
+              <span v-if="tournament?.max_teams">teams</span>
+            </p>
+          </ui-skeleton-loader>
+        </div>
+      </div>
     </div>
 
     <div class="tournament-action">
@@ -320,6 +353,30 @@ function handleJoin() {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+}
+
+.tournament-limits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.tournament-limits > div {
+  padding: 0.95rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--background);
+}
+
+.tournament-limits p {
+  margin: 0;
+}
+
+.tournament-limits .text-muted {
+  margin-bottom: 0.45rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
 }
 
 .tournament-label {
