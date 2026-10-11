@@ -1127,6 +1127,7 @@ export interface EligibleTeamResponse {
   id: number;
   name: string;
   members_count: number;
+  reason?: string | null;
 }
 
 export type TournamentTeamResponseDisqualificationReason = string | null;
@@ -1442,4 +1443,3 @@ tournament_id?: number | null;
 export type ListEventsParams = {
 tournament?: number | null;
 };
-

@@ -43,11 +43,28 @@
             v-for="option in options"
             :key="option.value"
             :value="option.value"
+            :disabled="option.disabled"
             class="select-option"
           >
-            <SelectItemText class="select-option-text">
-              {{ option.label }}
-            </SelectItemText>
+            <div class="select-option-main">
+              <SelectItemText class="select-option-text">
+                {{ option.label }}
+              </SelectItemText>
+
+              <ui-hover-card v-if="option.reason" class="select-option-warning">
+                <template #trigger>
+                  <button
+                    type="button"
+                    class="select-option-warning-trigger"
+                    :aria-label="`Unavailable: ${option.reason}`"
+                    @click.stop
+                  >
+                    <triangle-alert :size="16" aria-hidden="true" />
+                  </button>
+                </template>
+                {{ option.reason }}
+              </ui-hover-card>
+            </div>
 
             <SelectItemIndicator class="select-indicator">
               <SelectedIcon class="select-check" />
@@ -73,9 +90,11 @@ import {
 } from 'reka-ui'
 
 import UiButton from './UiButton.vue'
+import UiHoverCard from './UiHoverCard.vue'
 import ArrowDown from '@/icons/ArrowDown.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { TriangleAlert } from 'lucide-vue-next'
 
 type alignPositions = 'start' | 'end' | 'center'
 
@@ -84,6 +103,8 @@ export type SelectOptionValue = string | number
 export interface SelectOption {
   value: SelectOptionValue
   label: string
+  disabled?: boolean
+  reason?: string | null
 }
 
 type Props = {
@@ -182,6 +203,30 @@ const selectedLabel = computed(() => {
   white-space: nowrap;
 }
 
+.select-option-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+.select-option-warning {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.select-option-warning-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--warning, #b7791f);
+  cursor: help;
+}
+
 .select-indicator {
   display: inline-flex;
   flex: 0 0 auto;
@@ -190,6 +235,12 @@ const selectedLabel = computed(() => {
 .select-option:hover,
 .select-option[data-highlighted] {
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.select-option[data-disabled] {
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 .select-option[data-state='checked'] {

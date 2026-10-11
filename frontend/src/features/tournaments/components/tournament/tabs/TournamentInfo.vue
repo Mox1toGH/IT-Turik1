@@ -113,21 +113,36 @@
       </ui-button>
 
       <template v-if="tournament?.status === 'registration'">
-        <p v-if="!canManageRegistration">You cannot register for this tournament</p>
+        <p v-if="!isTeamsError && !canManageRegistration && !registeredTeamId">
+          You cannot register for this tournament
+        </p>
+        <p v-if="isTeamsError && !registeredTeamId" class="team-registration-reason" role="alert">
+          Failed to load teams. Please try again.
+        </p>
+        <div v-if="!registeredTeamId && canManageRegistration" class="join-controls">
+          <ui-button :disabled="!canJoinSelectedTeam" @click="handleJoin">
+            <loading-icon v-if="isRegistering" />
+            Join Tournament
+          </ui-button>
+          <ui-select
+            v-model="selectedTeamId"
+            :options="teamOptions"
+            placeholder="Select a team"
+            min-width="220px"
+            :is-loading="isLoadingTeams"
+            :is-error="isTeamsError"
+            error="Failed to fetch teams"
+          />
+        </div>
         <ui-button
-          v-if="!registeredTeamId"
-          :disabled="!canManageRegistration"
-          @click="isTeamModalOpen = true"
+          v-if="registeredTeamId"
+          variant="danger"
+          :disabled="isLeaving"
+          @click="handleLeave"
         >
-          Join Tournament
-        </ui-button>
-
-        <ui-button v-else variant="danger" :disabled="isLeaving" @click="handleLeave">
           <loading-icon v-if="isLeaving" />
           <span>Leave Tournament</span>
         </ui-button>
-
-        <team-select-modal v-model="isTeamModalOpen" :tournament-id="tournamentId" />
       </template>
     </div>
   </ui-card>
@@ -144,12 +159,13 @@ import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
-import TeamSelectModal from './tournament-info/TeamSelectModal.vue'
 import { useNotification } from '@/composables/useNotification'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import UiSelect from '@/components/ui/UiSelect.vue'
 import {
   useGetCurrentTask,
   useGetTournament,
+  useRegisterTeamForTournament,
   useStartTournamentRegistration,
   useListEligibleTeamsForTournament,
   useUnregisterTeamFromTournament,
@@ -161,7 +177,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const isDesciptionOpen = ref(false)
-const isTeamModalOpen = ref(false)
+const selectedTeamId = ref<number | null>(null)
 
 const { showNotification } = useNotification()
 const { data: user } = useGetUserProfile()
@@ -174,10 +190,27 @@ const { data: currentRound } = useGetCurrentTask(
   },
 )
 
-const { data: teams } = useListEligibleTeamsForTournament(props.tournamentId)
+const {
+  data: teams,
+  isLoading: isLoadingTeams,
+  isError: isTeamsError,
+} = useListEligibleTeamsForTournament(props.tournamentId)
+const { mutate: register, isPending: isRegistering } = useRegisterTeamForTournament()
 const { mutate: leave, isPending: isLeaving } = useUnregisterTeamFromTournament()
 
 const registeredTeamId = computed(() => tournament.value?.registered_team?.id ?? null)
+const teamOptions = computed(() =>
+  (teams.value ?? []).map((team) => ({
+    value: team.id,
+    label: team.name,
+    disabled: !!team.reason,
+    reason: team.reason,
+  })),
+)
+const selectedTeam = computed(() => teams.value?.find((team) => team.id === selectedTeamId.value))
+const canJoinSelectedTeam = computed(
+  () => !!selectedTeam.value && !selectedTeam.value.reason && !isRegistering.value,
+)
 
 const canManageRegistration = computed(
   () => user.value?.role === 'team' && ((teams.value?.length ?? 0) > 0 || !!registeredTeamId.value),
@@ -205,6 +238,14 @@ function handleLeave() {
   if (!registeredTeamId.value || isLeaving.value) return
   leave(
     { id: props.tournamentId, data: { team_id: registeredTeamId.value } },
+    { onError: (error) => showNotification(error?.message, 'error') },
+  )
+}
+
+function handleJoin() {
+  if (!canJoinSelectedTeam.value || !selectedTeamId.value) return
+  register(
+    { id: props.tournamentId, data: { team_id: selectedTeamId.value } },
     { onError: (error) => showNotification(error?.message, 'error') },
   )
 }
@@ -293,6 +334,18 @@ function handleLeave() {
   gap: 0.5rem;
 }
 
+.join-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.team-registration-reason {
+  margin: 0;
+  color: var(--destructive);
+  font-size: var(--text-sm);
+}
+
 .tournament-action-btn {
   width: 100%;
 }
@@ -306,6 +359,11 @@ function handleLeave() {
   .tournament-dates {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .join-controls {
+    align-items: stretch;
+    flex-direction: column-reverse;
   }
 }
 </style>

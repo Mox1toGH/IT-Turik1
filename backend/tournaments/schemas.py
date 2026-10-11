@@ -287,6 +287,7 @@ class EligibleTeamResponse(Schema):
     id: int
     name: str
     members_count: int
+    reason: str | None = None
 
 
 class TournamentTeamResponse(Schema):

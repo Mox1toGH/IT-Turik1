@@ -1075,6 +1075,133 @@ class TournamentApiTests(APITestCase):
         self.assertEqual(data[0]['id'], self.team.id)
         self.assertEqual(data[0]['name'], self.team.name)
         self.assertEqual(data[0]['members_count'], 2)
+        self.assertIsNone(data[0]['reason'])
+
+    def test_eligible_teams_explain_registration_blockers(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            min_team_members=2,
+            max_teams=1,
+            **self.tournament_data
+        )
+        full_roster_team = Team.objects.create(
+            name='Full Roster Team',
+            email='full-roster@example.com',
+            captain=self.captain,
+        )
+        TeamMember.objects.create(team=full_roster_team, user=self.captain)
+        extra_member = User.objects.create_user(
+            username='full-roster-member',
+            email='full-roster-member@example.com',
+            password='StrongPass123!',
+        )
+        TeamMember.objects.create(team=full_roster_team, user=extra_member)
+
+        competitor = Team.objects.create(
+            name='Registered Competitor',
+            email='competitor@example.com',
+            captain=self.admin,
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=competitor,
+            created_by=self.admin,
+            is_active=True,
+        )
+
+        authenticate(self.client, self.captain)
+        url = reverse('ninja-api:tournament_eligible_teams', kwargs={'id': tournament.id})
+        response = self.client.get(url)
+        data = {team['id']: team for team in response.json()}
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            data[self.team.id]['reason'],
+            'Team must have at least 2 members for this tournament.',
+        )
+        self.assertEqual(
+            data[full_roster_team.id]['reason'],
+            'Tournament registration limit has been reached.',
+        )
+
+    def test_eligible_teams_explain_existing_tournament_participation(self):
+        tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_REGISTRATION,
+            **self.tournament_data
+        )
+        other_tournament = Tournament.objects.create(
+            created_by=self.admin,
+            status=Tournament.STATUS_RUNNING,
+            **{
+                **self.tournament_data,
+                'name': 'Another Tournament',
+            }
+        )
+        TournamentTeamRegistration.objects.create(
+            tournament=tournament,
+            team=self.team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        active_elsewhere_team = Team.objects.create(
+            name='Active Elsewhere Team',
+            email='active-elsewhere@example.com',
+            captain=self.captain,
+        )
+        TeamMember.objects.create(team=active_elsewhere_team, user=self.captain)
+        TournamentTeamRegistration.objects.create(
+            tournament=other_tournament,
+            team=active_elsewhere_team,
+            created_by=self.captain,
+            is_active=True,
+        )
+
+        shared_member = User.objects.create_user(
+            username='shared-member',
+            email='shared-member@example.com',
+            password='StrongPass123!',
+        )
+        conflicting_team = Team.objects.create(
+            name='Conflicting Team',
+            email='conflicting-team@example.com',
+            captain=self.admin,
+        )
+        TeamMember.objects.create(team=conflicting_team, user=shared_member)
+        TournamentTeamRegistration.objects.create(
+            tournament=other_tournament,
+            team=conflicting_team,
+            created_by=self.admin,
+            is_active=True,
+        )
+        candidate_team = Team.objects.create(
+            name='Candidate Team',
+            email='candidate-team@example.com',
+            captain=self.captain,
+        )
+        TeamMember.objects.create(team=candidate_team, user=self.captain)
+        TeamMember.objects.create(team=candidate_team, user=shared_member)
+
+        authenticate(self.client, self.captain)
+        url = reverse('ninja-api:tournament_eligible_teams', kwargs={'id': tournament.id})
+        response = self.client.get(url)
+        data = {team['id']: team for team in response.json()}
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            data[self.team.id]['reason'],
+            'This team is already registered for the tournament.',
+        )
+        self.assertEqual(
+            data[active_elsewhere_team.id]['reason'],
+            'This team is already participating in another tournament.',
+        )
+        self.assertEqual(
+            data[candidate_team.id]['reason'],
+            'One or more team members are already participating in another tournament.',
+        )
 
     def test_team_active_tournament_returns_registration_or_running_tournament(self):
         tournament = Tournament.objects.create(

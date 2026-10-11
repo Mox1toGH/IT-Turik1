@@ -15,7 +15,7 @@ from backend.permissions import Permission, require_permission, has_permission
 from backend.schemas import ErrorResponse
 from evaluation.leaderboard_service import get_tournament_leaderboard
 from notifications.services import NotificationService
-from teams.models import Team
+from teams.models import Team, TeamMember
 
 from .models import Event, Round, Submission, Tournament, TournamentTeamRegistration
 from backend.errors import raise_api_error
@@ -712,10 +712,83 @@ def list_eligible_teams(request, id: int):
         'Listing eligible teams',
         extra={'tournament_id': id, 'user_id': request.auth.id},
     )
-    get_object_or_404(Tournament, pk=id)
-    queryset = Team.objects.filter(captain_id=request.auth.id).annotate(members_count=Count('team_members', distinct=True))
+    tournament = get_object_or_404(Tournament, pk=id)
+    teams = list(
+        Team.objects.filter(captain_id=request.auth.id)
+        .annotate(members_count=Count('team_members', distinct=True))
+        .prefetch_related('team_members')
+    )
+    team_ids = [team.id for team in teams]
+    participant_ids_by_team = {
+        team.id: {team.captain_id, *(member.user_id for member in team.team_members.all())}
+        for team in teams
+    }
+    participant_ids = {
+        participant_id
+        for team_participant_ids in participant_ids_by_team.values()
+        for participant_id in team_participant_ids
+    }
 
-    return [EligibleTeamResponse.model_validate(team, from_attributes=True) for team in queryset]
+    active_registrations = list(
+        TournamentTeamRegistration.objects.filter(
+            team_id__in=team_ids,
+            is_active=True,
+            tournament__status__in=[Tournament.STATUS_REGISTRATION, Tournament.STATUS_RUNNING],
+        ).values_list('team_id', 'tournament_id')
+    )
+    active_team_ids = {
+        team_id for team_id, tournament_id in active_registrations if tournament_id == id
+    }
+    teams_in_other_tournaments = {
+        team_id for team_id, tournament_id in active_registrations if tournament_id != id
+    }
+    conflicting_member_ids = set(
+        TeamMember.objects.filter(
+            user_id__in=participant_ids,
+            team__tournament_registrations__is_active=True,
+            team__tournament_registrations__tournament__status__in=[
+                Tournament.STATUS_REGISTRATION,
+                Tournament.STATUS_RUNNING,
+            ],
+        )
+        .exclude(team_id__in=team_ids)
+        .values_list('user_id', flat=True)
+    )
+    tournament_is_full = (
+        tournament.max_teams is not None
+        and TournamentTeamRegistration.objects.filter(tournament=tournament, is_active=True).count()
+        >= tournament.max_teams
+    )
+
+    responses = []
+    for team in teams:
+        reason = None
+        if tournament.status != Tournament.STATUS_REGISTRATION:
+            reason = 'Tournament is not open for team registration.'
+        elif team.id in active_team_ids:
+            reason = 'This team is already registered for the tournament.'
+        elif (
+            tournament.min_team_members
+            and len(participant_ids_by_team[team.id]) < tournament.min_team_members
+        ):
+            reason = f'Team must have at least {tournament.min_team_members} members for this tournament.'
+        elif tournament_is_full:
+            reason = 'Tournament registration limit has been reached.'
+        elif team.id in teams_in_other_tournaments:
+            reason = 'This team is already participating in another tournament.'
+        elif participant_ids_by_team[team.id] & conflicting_member_ids:
+            reason = 'One or more team members are already participating in another tournament.'
+
+        responses.append(
+            EligibleTeamResponse(
+                id=team.id,
+                name=team.name,
+                members_count=team.members_count,
+                reason=reason,
+            )
+        )
+
+    return responses
 
 
 @router.get('/{id}/teams', operation_id='listTournamentTeams', url_name='tournament_teams', response={200: list[TournamentTeamResponse], 401: ErrorResponse, 404: ErrorResponse})
