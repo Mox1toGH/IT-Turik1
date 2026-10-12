@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
 import { useDeleteNews, useListNews } from '@/api/news/news'
 import { useGetUserProfile } from '@/api/accounts/accounts'

@@ -281,7 +281,7 @@ import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/team
 import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
-import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 
 const router = useRouter()
 const route = useRoute()

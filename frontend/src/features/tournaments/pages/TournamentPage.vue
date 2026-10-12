@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiHorizontalScroll from '@/components/ui/UiHorizontalScroll.vue'
+import UiHorizontalScroll from '@/components/ui/UiHorizontalScroll'
 import { useRoute, useRouter } from 'vue-router'
 import TournamentInfo from '../components/tournament/tabs/TournamentInfo.vue'
 import TournamentTeams from '../components/tournament/tabs/TournamentTeams.vue'

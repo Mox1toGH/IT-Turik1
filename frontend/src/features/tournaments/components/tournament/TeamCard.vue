@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { truncateText } from '@/lib/utils'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { ref } from 'vue'
 import { useNotification } from '@/composables/useNotification'
 import { useDisqualifyTeamFromTournament } from '@/api/tournaments/tournaments'

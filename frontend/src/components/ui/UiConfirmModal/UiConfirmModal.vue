@@ -26,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import UiModal from './UiModal'
-import UiButton from './UiButton'
+import UiModal from '../UiModal'
+import UiButton from '../UiButton'
 
 const isOpen = defineModel({ default: false })
 

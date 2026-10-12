@@ -114,7 +114,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiPagination from '@/components/ui/UiPagination.vue'
+import UiPagination from '@/components/ui/UiPagination'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

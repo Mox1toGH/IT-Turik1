@@ -60,7 +60,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
-import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 
 import DragIcon from '@/icons/DragIcon.vue'
 

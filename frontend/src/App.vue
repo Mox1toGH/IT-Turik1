@@ -41,7 +41,7 @@
 import { useNotification } from '@/composables/useNotification'
 import AppNavbar from './components/shared/AppNavbar.vue'
 import UiButton from './components/ui/UiButton'
-import UiOfflineBanner from './components/ui/UiOfflineBanner.vue'
+import UiOfflineBanner from './components/ui/UiOfflineBanner'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import CrossIcon from './icons/CrossIcon.vue'
 

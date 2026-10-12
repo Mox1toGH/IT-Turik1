@@ -49,7 +49,7 @@ import {
   PaginationPrev,
   PaginationNext,
 } from 'reka-ui'
-import UiButton from './UiButton'
+import UiButton from '../UiButton'
 
 interface Props {
   modelValue: number

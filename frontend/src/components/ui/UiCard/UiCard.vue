@@ -106,8 +106,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCardError from '@/components/ui/UiCardError.vue'
-import UiErrorBoundary from '@/components/ui/UiErrorBoundary.vue'
+import UiCardError from '@/components/ui/UiCardError'
+import UiErrorBoundary from '@/components/ui/UiErrorBoundary'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useConnection } from '@/composables/useConnection'
 import { useCardState, type CardErrorCode, type CardQuery, type CardStatus } from '@/composables/useCardState'

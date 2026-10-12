@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiPagination from '@/components/ui/UiPagination.vue'
+import UiPagination from '@/components/ui/UiPagination'
 import NewsItemCard from './NewsItemCard.vue'
 import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'

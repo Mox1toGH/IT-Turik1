@@ -61,7 +61,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
-import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
 
 const props = withDefaults(

@@ -124,7 +124,7 @@ import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 
 import TrashIcon from '@/icons/TrashIcon.vue'
 import UiButton from '@/components/ui/UiButton'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import {
   useDeleteAllNotifications,
   useDeleteNotification,
