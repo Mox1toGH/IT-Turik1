@@ -26,7 +26,7 @@
       </div>
 
       <div class="hero-actions">
-        <ui-card v-for="item in heroStats" :key="item.label" variant="stat" class="hero-stat">
+        <ui-card v-for="item in heroStats" :key="item.label" class="hero-stat">
           <span class="text-base">{{ item.label }}:</span>
           <strong class="text-base">{{ item.value }}</strong>
         </ui-card>
@@ -151,6 +151,13 @@ const heroStats = computed(() => [
 
 .hero-stat {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .hero-stat strong {

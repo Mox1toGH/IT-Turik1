@@ -1,6 +1,5 @@
 <template>
   <ui-card
-    variant="panel"
     class="tournament-card"
     :query="activeTeamsQuery"
     empty-text="No teams registered yet"

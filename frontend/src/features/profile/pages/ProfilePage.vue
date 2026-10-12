@@ -18,7 +18,7 @@
         </div>
 
         <div class="profile-actions">
-          <ui-card variant="stat" class="joined-card">
+          <ui-card class="joined-card">
             <strong class="text-base">{{
               user?.created_at ? formatDate(user.created_at) : 'N/A'
             }}</strong>
@@ -55,7 +55,6 @@
 
         <aside class="profile-rail">
           <ui-card
-            variant="panel"
             class="rail-card"
             role="navigation"
             aria-label="Profile shortcuts"
@@ -169,6 +168,13 @@ const logout = () => {
 
 .joined-card {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .joined-card strong {

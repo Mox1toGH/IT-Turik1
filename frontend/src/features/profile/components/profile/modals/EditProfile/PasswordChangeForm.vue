@@ -1,6 +1,6 @@
 <template>
   <form class="password-form" @submit.prevent="handleSubmit">
-    <ui-card variant="form" class="form-panel">
+    <ui-card class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>
@@ -51,7 +51,7 @@
         </small>
       </label>
 
-      <ui-card variant="inset" class="reset-hint">
+      <ui-card class="reset-hint">
         <span>Forgot your current password?</span>
         <ui-button type="button" size="sm" :disabled="isSendingReset" @click="sendResetEmail">
           <LoadingIcon v-if="isSendingReset" />

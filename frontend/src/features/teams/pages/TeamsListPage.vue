@@ -20,7 +20,7 @@
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
-          <ui-card variant="stat" class="teams-stat-card">
+          <ui-card class="teams-stat-card">
             <span class="text-sm">Total teams:</span>
             <strong class="text-xl">{{ teams?.length ?? 0 }}</strong>
           </ui-card>
@@ -114,6 +114,13 @@ const { data: user } = useGetUserProfile()
 
 .teams-stat-card {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .teams-stat-card strong {

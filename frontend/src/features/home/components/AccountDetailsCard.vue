@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="info-card" variant="form" :status="status" :error-code="errorCode">
+  <ui-card class="info-card" :status="status" :error-code="errorCode">
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch account info</p>

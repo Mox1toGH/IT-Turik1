@@ -19,7 +19,7 @@
           <ui-skeleton variant="rect" width="148px" height="45px" />
         </template>
 
-        <ui-card variant="stat" class="tournaments-stat-card">
+        <ui-card class="tournaments-stat-card">
           <strong class="text-xl">{{ total }}</strong>
           <span class="text-sm">Total results</span>
         </ui-card>
@@ -97,7 +97,18 @@ defineProps<{
   align-items: center;
 }
 
-.tournaments-stat-card strong {
+  .tournaments-stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
+}
+
+  .tournaments-stat-card strong {
   font-weight: 800;
 }
 

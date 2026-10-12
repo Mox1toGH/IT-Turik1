@@ -6,7 +6,6 @@
 
     <section class="tournaments-section">
       <ui-card
-        variant="panel"
         class="tournaments-panel"
         :status="status"
         :is-fetching="isFetching"

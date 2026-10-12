@@ -14,7 +14,7 @@
     </div>
 
     <div class="hero-actions">
-      <ui-card variant="stat" class="news-stat-card">
+      <ui-card class="news-stat-card">
         <strong class="text-xl">{{ totalNews }}</strong>
         <span class="text-sm">Total posts</span>
       </ui-card>
@@ -93,6 +93,13 @@ defineEmits<{
 
 .news-stat-card {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .news-stat-card strong {

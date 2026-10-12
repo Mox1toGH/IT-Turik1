@@ -174,7 +174,7 @@
       </form>
 
       <aside class="summary-panel" aria-label="Team summary">
-        <ui-card variant="stat" class="summary-stat">
+        <ui-card class="summary-stat">
           <strong>{{ selectedMembersCount }}</strong>
           <span>Initial members</span>
         </ui-card>
@@ -403,7 +403,14 @@ const handleFormSubmit = () => {
 }
 
 .summary-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .summary-stat strong {

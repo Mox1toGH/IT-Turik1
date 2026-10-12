@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="panel form-panel" variant="form">
+  <ui-card class="panel form-panel">
     <template #header>
       <div class="panel-header">
         <span class="step-marker">01</span>
@@ -135,7 +135,7 @@
         </label>
       </section>
 
-      <ui-card class="form-actions" variant="actions">
+      <ui-card class="form-actions">
         <ui-button
           type="submit"
           size="lg"

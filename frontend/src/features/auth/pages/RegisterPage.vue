@@ -18,7 +18,7 @@
     <div class="auth-rule" aria-hidden="true"></div>
 
     <div class="auth-layout">
-      <ui-card variant="panel" class="register-card">
+      <ui-card class="register-card">
         <template #header>
           <div class="panel-header">
             <span class="step-marker">01</span>
@@ -171,7 +171,7 @@
       </ui-card>
 
       <aside class="summary-panel" aria-label="Registration summary">
-        <ui-card variant="stat" class="summary-stat">
+        <ui-card class="summary-stat">
           <strong>{{ isRestrictedRole ? 'Code' : 'Open' }}</strong>
           <span>{{ isRestrictedRole ? 'Invite required' : 'No invite needed' }}</span>
         </ui-card>
@@ -408,7 +408,14 @@ function handleRegister() {
 }
 
 .summary-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .summary-card.card {

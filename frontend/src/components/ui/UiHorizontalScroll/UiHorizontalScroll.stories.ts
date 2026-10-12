@@ -34,7 +34,7 @@ export const Default: Story = {
     },
     template: `
       <ui-horizontal-scroll v-bind="args" style="max-width: 600px;">
-        <ui-card v-for="i in 8" :key="i" variant="stat" style="min-width: 180px;">
+        <ui-card v-for="i in 8" :key="i" style="min-width: 180px;">
           <template #header>Card {{ i }}</template>
           <p class="text-muted">Content for card {{ i }}</p>
         </ui-card>
@@ -123,7 +123,7 @@ export const CustomContentClass: Story = {
     },
     template: `
       <ui-horizontal-scroll v-bind="args" style="max-width: 600px;">
-        <ui-card v-for="i in 5" :key="i" variant="hero" style="min-width: 220px;">
+        <ui-card v-for="i in 5" :key="i" style="min-width: 220px;">
           <template #header>Hero {{ i }}</template>
           <p class="text-muted">With custom gap</p>
         </ui-card>

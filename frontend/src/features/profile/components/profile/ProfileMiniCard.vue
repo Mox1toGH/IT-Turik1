@@ -1,5 +1,5 @@
 <template>
-  <ui-card variant="panel">
+  <ui-card>
     <div class="profile-mini-content">
       <div class="profile-mini-identity">
         <div class="avatar-box">
@@ -50,6 +50,7 @@ import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarModal from './modals/AvatarModal.vue'
 import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
 import { Pencil } from 'lucide-vue-next'
+import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 
 const props = defineProps<{
   user?: UserResponse

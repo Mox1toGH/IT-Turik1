@@ -6,7 +6,7 @@
         <h1>Forgot your password?</h1>
       </div>
 
-      <ui-card variant="form" class="form-panel">
+      <ui-card class="form-panel">
         <div class="panel-header">
           <span class="step-marker">01</span>
           <div>

@@ -20,7 +20,6 @@
         <ui-card
           v-for="(section, index) in sections"
           :key="section.to"
-          variant="form"
           class="form-panel admin-link-card"
         >
           <div class="panel-header">

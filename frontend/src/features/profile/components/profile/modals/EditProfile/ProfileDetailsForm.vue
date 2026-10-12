@@ -1,6 +1,6 @@
 <template>
   <form class="profile-form" @submit.prevent="handleSubmit">
-    <ui-card variant="form" class="form-panel">
+    <ui-card class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>

@@ -1,7 +1,6 @@
 <template>
   <ui-card
     class="panel members-panel"
-    variant="form"
     :status="props.status"
     :error-code="props.errorCode"
   >
@@ -23,7 +22,7 @@
             <ui-skeleton variant="rect" width="100px" />
           </template>
 
-          <ui-card variant="stat" class="members-stat">
+          <ui-card class="members-stat">
             <strong>{{ team?.members.length ?? 0 }}</strong>
             <span>People</span>
           </ui-card>
@@ -68,7 +67,6 @@
           v-for="member in filteredMembers"
           :key="`member-${member.id}`"
           class="member-row"
-          variant="inset"
         >
           <div>
             <div class="member-row-top">
@@ -128,7 +126,6 @@
             v-for="invitation in invitations"
             :key="`inv-${invitation.id}`"
             class="member-row"
-            variant="inset"
           >
             <div class="member-row-top">
               <p class="member-name">{{ invitation.user.username }}</p>
@@ -297,7 +294,15 @@ const addMember = () => {
 }
 
 .members-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
   margin-left: auto;
+  border-color: var(--line-soft);
 }
 
 .members-stat strong {

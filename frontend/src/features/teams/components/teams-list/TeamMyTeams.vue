@@ -1,6 +1,5 @@
 <template>
   <ui-card
-    variant="panel"
     :status="status"
     :is-fetching="isFetching"
     :is-stale="isStale"

@@ -3,7 +3,7 @@
     <ProfileMiniCard :user="user" :is-loading="isLoading" @edit-profile="openEditProfile" />
     <EditProfileModal ref="editProfileModal" />
 
-    <ui-card variant="panel" class="details-section" aria-labelledby="profile-details-title">
+    <ui-card class="details-section" aria-labelledby="profile-details-title">
       <div>
         <p class="section-eyebrow">Profile details</p>
         <h1 id="profile-details-title" class="text-3xl">Your information</h1>
@@ -23,7 +23,7 @@
       </div>
     </ui-card>
 
-    <ui-card v-if="user?.teams?.length" variant="panel" class="supporting-section">
+    <ui-card v-if="user?.teams?.length" class="supporting-section">
       <div class="section-heading compact-heading">
         <div>
           <p class="section-eyebrow">Membership</p>
@@ -44,7 +44,7 @@
       </div>
     </ui-card>
 
-    <ui-card v-if="user?.active_tournament" variant="panel" class="supporting-section">
+    <ui-card v-if="user?.active_tournament" class="supporting-section">
       <div class="section-heading compact-heading">
         <div>
           <p class="section-eyebrow">Current event</p>

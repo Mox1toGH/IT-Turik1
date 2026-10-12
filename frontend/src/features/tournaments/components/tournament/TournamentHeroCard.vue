@@ -30,7 +30,7 @@
     </div>
 
     <div class="hero-actions hero-content">
-      <ui-card variant="stat" class="tournament-stat-card">
+      <ui-card class="tournament-stat-card">
         <span class="text-sm">Status:</span>
         <strong class="text-base">{{ tournament?.status ?? 'Loading' }}</strong>
       </ui-card>
@@ -186,6 +186,13 @@ const heroBannerStyle = computed(() =>
 
 .tournament-stat-card {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .tournament-stat-card strong {

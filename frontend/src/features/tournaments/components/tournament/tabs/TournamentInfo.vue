@@ -1,6 +1,5 @@
 <template>
   <ui-card
-    variant="panel"
     class="tournament-card"
     :status="status"
     :is-fetching="isFetching"

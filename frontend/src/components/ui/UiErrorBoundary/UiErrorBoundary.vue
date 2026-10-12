@@ -4,7 +4,7 @@ import { TriangleAlert } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
 
 // Fragment in the happy path: zero extra DOM, so card flex layouts
-// (e.g. variant="stat" rows) are unaffected. Retry remounts via key.
+// (e.g. stat rows) are unaffected. Retry remounts via key.
 export default defineComponent({
   name: 'UiErrorBoundary',
   setup(_, { slots }) {

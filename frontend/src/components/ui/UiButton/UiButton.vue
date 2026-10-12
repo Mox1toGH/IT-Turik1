@@ -3,6 +3,7 @@
     :is="props.asLink ? RouterLink : 'button'"
     :to="props.asLink ? props.to : undefined"
     :type="props.asLink ? undefined : 'button'"
+    :disabled="props.disabled"
     :class="['btn', variantClass, sizeClass]"
     v-bind="$attrs"
   >

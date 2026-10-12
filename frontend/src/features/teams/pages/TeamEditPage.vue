@@ -29,7 +29,7 @@
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
-          <ui-card variant="stat" class="edit-stat-card">
+          <ui-card class="edit-stat-card">
             <span class="text-sm">Members:</span>
             <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
           </ui-card>
@@ -40,7 +40,7 @@
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
 
-          <ui-card variant="stat" class="edit-stat-card">
+          <ui-card class="edit-stat-card">
             <span>Visibility:</span>
             <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
           </ui-card>
@@ -159,7 +159,18 @@ watchEffect(() => {
   align-items: center;
 }
 
-.edit-stat-card strong {
+  .edit-stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
+}
+
+  .edit-stat-card strong {
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;

@@ -16,7 +16,7 @@
         </div>
 
         <div class="hero-actions">
-          <ui-card variant="stat" class="notifications-stat-card">
+          <ui-card class="notifications-stat-card">
             <span class="text-sm">Unread:</span>
             <strong class="text-xl">{{ unreadCount }}</strong>
           </ui-card>
@@ -43,7 +43,7 @@
 
       <div class="notifications-rule" aria-hidden="true"></div>
 
-      <ui-card variant="form" class="form-panel notifications-panel">
+      <ui-card class="form-panel notifications-panel">
         <div v-if="isLoading" class="loading-state">
           <p class="text-muted">Loading notifications...</p>
         </div>
@@ -410,7 +410,18 @@ const formatDate = (dateStr: string) => {
   align-items: center;
 }
 
-.notifications-stat-card strong {
+  .notifications-stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
+}
+
+  .notifications-stat-card strong {
   font-weight: 800;
 }
 

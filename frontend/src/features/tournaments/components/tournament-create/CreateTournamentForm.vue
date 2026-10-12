@@ -1,7 +1,7 @@
 <template>
   <div class="create-layout">
     <form class="tournament-form" @submit.prevent="handleSubmit">
-      <ui-card variant="form" class="form-panel basics-panel">
+      <ui-card class="form-panel basics-panel">
         <div class="panel-header">
           <span class="step-marker">01</span>
           <div>
@@ -41,7 +41,7 @@
         </label>
       </ui-card>
 
-      <ui-card variant="form" class="form-panel">
+      <ui-card class="form-panel">
         <div class="panel-header">
           <span class="step-marker">02</span>
           <div>
@@ -83,7 +83,7 @@
         </div>
       </ui-card>
 
-      <ui-card variant="form" class="form-panel">
+      <ui-card class="form-panel">
         <div class="panel-header">
           <span class="step-marker">03</span>
           <div>
@@ -147,7 +147,7 @@
         </div>
       </ui-card>
 
-      <ui-card variant="actions" class="form-actions">
+      <ui-card class="form-actions">
         <ui-button asLink to="/tournaments" variant="secondary" size="lg">Cancel</ui-button>
         <ui-button type="submit" size="lg" :disabled="isPending">
           {{ isPending ? 'Creating...' : 'Create tournament' }}
@@ -156,12 +156,12 @@
     </form>
 
     <aside class="summary-panel" aria-label="Tournament summary">
-      <ui-card variant="stat" class="summary-stat">
+      <ui-card class="summary-stat">
         <strong>{{ form.fields.value.max_teams }}</strong>
         <span>Teams</span>
       </ui-card>
 
-      <ui-card variant="form" class="summary-card">
+      <ui-card class="summary-card">
         <p class="section-eyebrow">Draft summary</p>
         <h2>{{ form.fields.value.name || 'Untitled tournament' }}</h2>
         <p class="summary-description text-muted">
@@ -169,15 +169,15 @@
         </p>
 
         <div class="summary-list">
-          <ui-card variant="inset" class="summary-list-item">
+          <ui-card class="summary-list-item">
             <span>Team size</span>
             <strong>{{ form.fields.value.min_team_members }}+ members</strong>
           </ui-card>
-          <ui-card variant="inset" class="summary-list-item">
+          <ui-card class="summary-list-item">
             <span>Starts</span>
             <strong>{{ startsLabel }}</strong>
           </ui-card>
-          <ui-card variant="inset" class="summary-list-item">
+          <ui-card class="summary-list-item">
             <span>Ends</span>
             <strong>{{ endsLabel }}</strong>
           </ui-card>
@@ -335,7 +335,14 @@ const handleSubmit = () => {
 }
 
 .summary-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .summary-stat strong {

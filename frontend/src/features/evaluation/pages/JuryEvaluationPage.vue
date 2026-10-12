@@ -18,7 +18,7 @@
             <ui-skeleton variant="rect" width="180px" height="64px" />
           </template>
 
-          <ui-card variant="stat" class="jury-stat-card">
+          <ui-card class="jury-stat-card">
             <span class="text-sm">Evaluated:</span>
             <strong class="text-xl">{{ evaluatedCount }} / {{ totalCount }}</strong>
           </ui-card>
@@ -288,6 +288,13 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 
 .jury-stat-card {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .jury-stat-card strong {

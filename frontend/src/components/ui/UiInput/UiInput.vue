@@ -1,5 +1,7 @@
 <template>
   <input
+    :disabled="disabled"
+    :placeholder="placeholder"
     v-bind="$attrs"
     :class="['input', { invalid: isInvalid }]"
     :type="type"

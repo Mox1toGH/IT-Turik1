@@ -18,7 +18,7 @@
 
     <div>
       <div class="info-grid">
-        <ui-card title="Name" variant="inset" class="info-item">
+        <ui-card title="Name" class="info-item">
           <template #header>
             <span class="card-label">Name</span>
           </template>
@@ -34,7 +34,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Email" variant="inset" class="info-item">
+        <ui-card title="Email" class="info-item">
           <template #header>
             <span class="card-label">Email</span>
           </template>
@@ -48,7 +48,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Organization" variant="inset" class="info-item">
+        <ui-card title="Organization" class="info-item">
           <template #header>
             <span class="card-label">Organization</span>
           </template>
@@ -62,7 +62,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Captain" variant="inset" class="info-item">
+        <ui-card title="Captain" class="info-item">
           <template #header>
             <span class="card-label">Captain</span>
           </template>
@@ -81,7 +81,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Members count" variant="inset" class="info-item">
+        <ui-card title="Members count" class="info-item">
           <template #header>
             <span class="card-label">Members count</span>
           </template>
@@ -95,7 +95,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Visibility" variant="inset" class="info-item">
+        <ui-card title="Visibility" class="info-item">
           <template #header>
             <span class="card-label">Visibility</span>
           </template>
