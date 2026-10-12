@@ -18,11 +18,15 @@ export default defineConfig({
     projects: [{
       extends: true,
       test: {
+        name: 'app',
         browser: {
           enabled: true,
           provider: playwright({
             launchOptions: {
               channel: 'chromium'
+            },
+            contextOptions: {
+              timezoneId: 'Europe/Kyiv'
             }
           }),
           instances: [{

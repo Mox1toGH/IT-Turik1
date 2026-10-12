@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DateFieldInput, DateFieldRoot } from 'reka-ui'
-import { CalendarDate, type DateValue, fromDate } from '@internationalized/date'
+import { CalendarDate, type DateValue } from '@internationalized/date'
 
 type Props = {
   modelValue?: Date | null
@@ -55,8 +55,8 @@ const emit = defineEmits<{
 }>()
 
 const toCalendarDate = (date: Date) => {
-  const value = fromDate(date, 'UTC')
-  return new CalendarDate(value.year, value.month, value.day)
+  // Local calendar day: never go through UTC, or dates shift a day in UTC+/- zones.
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }
 
 const toNativeDate = (value: DateValue) => value.toDate('UTC')
