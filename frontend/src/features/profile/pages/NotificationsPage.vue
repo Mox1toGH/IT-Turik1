@@ -16,11 +16,6 @@
         </div>
 
         <div class="hero-actions">
-          <ui-card class="notifications-stat-card">
-            <span class="text-sm">Unread:</span>
-            <strong class="text-xl">{{ unreadCount }}</strong>
-          </ui-card>
-
           <ui-button
             variant="secondary"
             size="lg"
@@ -206,11 +201,7 @@ const confirmModalConfig = ref({
   confirmVariant: 'danger' as const,
 })
 
-const unreadCount = computed(() => {
-  return notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0
-})
-
-const hasUnread = computed(() => unreadCount.value > 0)
+const hasUnread = computed(() => (notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0) > 0)
 
 const hasNotifications = computed(() => {
   return (notificationsData.value?.items.length ?? 0) > 0
@@ -408,27 +399,6 @@ const formatDate = (dateStr: string) => {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-  .notifications-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-  .notifications-stat-card strong {
-  font-weight: 800;
-}
-
-.notifications-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .notifications-rule {

@@ -30,11 +30,6 @@
     </div>
 
     <div class="hero-actions hero-content">
-      <ui-card class="tournament-stat-card">
-        <span class="text-sm">Status:</span>
-        <strong class="text-base">{{ tournament?.status ?? 'Loading' }}</strong>
-      </ui-card>
-
       <ui-button asLink to="/tournaments" variant="secondary" size="lg" class="tournament-link">
         Back to tournaments
       </ui-button>
@@ -184,42 +179,16 @@ const heroBannerStyle = computed(() =>
   width: max-content;
 }
 
-.tournament-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-.tournament-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-  text-transform: capitalize;
-}
-
-.tournament-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.tournament-hero--with-banner .tournament-stat-card {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.tournament-hero--with-banner .tournament-stat-card strong,
-.tournament-hero--with-banner .tournament-stat-card span {
+.tournament-hero--with-banner h1,
+.tournament-hero--with-banner .section-subtitle {
   color: #fff;
 }
 
-@media (max-width: 810px) {
+.tournament-hero--with-banner .breadcrumb-label {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.banner-edit-btn {
   .tournament-hero {
     align-items: stretch;
     flex-direction: column;

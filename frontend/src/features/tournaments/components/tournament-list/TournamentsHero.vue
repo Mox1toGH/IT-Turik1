@@ -14,17 +14,6 @@
     </div>
 
     <div class="hero-actions">
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
-          <ui-skeleton variant="rect" width="148px" height="45px" />
-        </template>
-
-        <ui-card class="tournaments-stat-card">
-          <strong class="text-xl">{{ total }}</strong>
-          <span class="text-sm">Total results</span>
-        </ui-card>
-      </ui-skeleton-loader>
-
       <ui-button asLink to="/tournaments/archive" variant="default" size="lg">Archive</ui-button>
       <ui-button v-if="isAdmin" asLink to="/tournaments/create" size="lg">
         <span class="create-plus text-2xl" aria-hidden="true">+</span>
@@ -36,12 +25,8 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 
 defineProps<{
-  total: number
   loading: boolean
   isAdmin: boolean
 }>()
@@ -95,27 +80,6 @@ defineProps<{
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-  .tournaments-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-  .tournaments-stat-card strong {
-  font-weight: 800;
-}
-
-.tournaments-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .create-plus {

@@ -24,28 +24,6 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card class="edit-stat-card">
-            <span class="text-sm">Members:</span>
-            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card class="edit-stat-card">
-            <span>Visibility:</span>
-            <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
         <ui-button
           asLink
           variant="secondary"

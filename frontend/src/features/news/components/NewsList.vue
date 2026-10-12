@@ -14,10 +14,6 @@
           <h2 class="text-3xl">Latest news</h2>
           <p class="section-subtitle text-base">Fresh announcements from the platform team.</p>
         </div>
-
-        <div class="section-meta">
-          <span class="count-pill text-base">{{ totalNews }} published</span>
-        </div>
       </div>
     </template>
 

@@ -15,17 +15,6 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card class="teams-stat-card">
-            <span class="text-sm">Total teams:</span>
-            <strong class="text-xl">{{ teams?.length ?? 0 }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
         <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" size="lg">
           <span class="create-plus text-2xl" aria-hidden="true">+</span>
           Create team
@@ -48,13 +37,8 @@ import UiButton from '@/components/ui/UiButton'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiCard from '@/components/ui/UiCard'
-import { useListTeams } from '@/api/teams/teams'
-import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetUserProfile } from '@/api/accounts/accounts.ts'
 
-const { data: teams, isLoading: isLoadingTeams } = useListTeams()
 const { data: user } = useGetUserProfile()
 </script>
 
@@ -110,29 +94,6 @@ const { data: user } = useGetUserProfile()
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.teams-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-.teams-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.teams-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .create-plus {

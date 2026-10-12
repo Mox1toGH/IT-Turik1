@@ -59,22 +59,12 @@
           <template #skeleton>
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
-
-          <ui-card class="detail-stat-card">
-            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
-            <span class="text-sm">Members</span>
-          </ui-card>
         </ui-skeleton-loader>
 
         <ui-skeleton-loader :loading="isInfoLoading">
           <template #skeleton>
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
-
-          <ui-card class="detail-stat-card">
-            <span class="text-sm">Visibility:</span>
-            <strong class="text-xl">{{ team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-card>
         </ui-skeleton-loader>
 
         <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
@@ -485,27 +475,6 @@ watch(
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-  .detail-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-  .detail-stat-card strong {
-  font-weight: 800;
-}
-
-.detail-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .teams-rule {
