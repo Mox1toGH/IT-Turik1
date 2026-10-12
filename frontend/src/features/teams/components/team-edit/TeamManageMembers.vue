@@ -1,5 +1,10 @@
 <template>
-  <ui-card class="panel members-panel" variant="form" :is-error="props.isError">
+  <ui-card
+    class="panel members-panel"
+    variant="form"
+    :status="props.status"
+    :error-code="props.errorCode"
+  >
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch team members</p>
@@ -191,12 +196,14 @@ import {
   useRemoveMemberFromTeam,
 } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team: TeamResponse
   loading: boolean
-  isError?: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
 }
 
 const props = defineProps<Props>()

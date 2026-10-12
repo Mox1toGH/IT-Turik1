@@ -23,7 +23,8 @@ function isEmptyData(data: unknown): boolean {
   if (Array.isArray(data)) return data.length === 0
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>
-    // Paginated list shapes: { data, total } (tournaments), { items } (notifications), { results } (DRF)
+
+    // Paginated list shapes: { data, total } (tournaments), { items } (notifications), { results }
     if (obj.total === 0) return true
     if (Array.isArray(obj.items) && obj.items.length === 0) return true
     if (Array.isArray(obj.results) && obj.results.length === 0) return true

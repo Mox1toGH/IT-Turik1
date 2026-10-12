@@ -1,5 +1,14 @@
 <template>
-  <ui-card variant="panel" class="tournament-card" :is-error="isError">
+  <ui-card
+    variant="panel"
+    class="tournament-card"
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    empty-text="No teams registered yet"
+    @retry="refetchAll"
+  >
     <template #header>
       <div class="tournament-card-head">
         <div>
@@ -58,6 +67,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
+import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import TeamCard from '../TeamCard.vue'
 
@@ -69,17 +79,26 @@ const props = defineProps<Props>()
 const search = ref('')
 
 const { data: tournament } = useGetTournament(props.tournamentId)
-const {
-  data: activeTeams,
-  isLoading: isActiveTeamsLoading,
-  isError: isActiveTeamsError,
-} = useListTournamentTeams(props.tournamentId, { status: 'all' })
-const {
-  data: teams,
-  isLoading: isTeamsLoading,
-  isError: isDisqualifiedTeamsError,
-} = useListTournamentTeams(props.tournamentId, { status: 'disqualified' })
-const isError = computed(() => isActiveTeamsError.value || isDisqualifiedTeamsError.value)
+const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'all' })
+const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
+  status: 'disqualified',
+})
+const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
+const { data: teams, isLoading: isTeamsLoading } = disqualifiedTeamsQuery
+const cardQuery = computed(() => ({
+  isPending: activeTeamsQuery.isPending.value || disqualifiedTeamsQuery.isPending.value,
+  isError: activeTeamsQuery.isError.value || disqualifiedTeamsQuery.isError.value,
+  data: [...(activeTeams.value ?? []), ...(teams.value ?? [])],
+  error: activeTeamsQuery.error.value ?? disqualifiedTeamsQuery.error.value,
+}))
+const { status, errorCode, isStale } = useCardState(cardQuery)
+const isFetching = computed(
+  () => activeTeamsQuery.isFetching.value || disqualifiedTeamsQuery.isFetching.value,
+)
+const refetchAll = () => {
+  void activeTeamsQuery.refetch()
+  void disqualifiedTeamsQuery.refetch()
+}
 
 const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()

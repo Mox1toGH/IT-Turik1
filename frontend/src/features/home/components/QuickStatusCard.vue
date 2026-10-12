@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="info-card" variant="form" :is-error="isLoadingUserError">
+  <ui-card class="info-card" variant="form" :status="status" :error-code="errorCode">
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch profile info</p>
@@ -38,11 +38,13 @@ import type { UserResponse } from '@/api/backendAPINinja.schemas'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { computed } from 'vue'
 
 const props = defineProps<{
   user?: UserResponse
-  isLoadingUserError: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
   isLoadingUser: boolean
 }>()
 

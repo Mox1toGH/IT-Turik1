@@ -60,9 +60,14 @@
     <div class="teams-rule" aria-hidden="true"></div>
 
     <div class="workspace-grid" v-if="team">
-      <team-edit-form :is-error="isError" :loading="isLoadingTeamInfo" :team="team" />
+      <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
 
-      <team-manage-members :is-error="isError" :loading="isLoadingTeamInfo" :team="team" />
+      <team-manage-members
+        :status="status"
+        :error-code="errorCode"
+        :loading="isLoadingTeamInfo"
+        :team="team"
+      />
     </div>
   </section>
 </template>
@@ -78,6 +83,7 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { useGetTeam } from '@/api/teams/teams'
 
 const route = useRoute()
@@ -86,7 +92,9 @@ const router = useRouter()
 const { data: user } = useGetUserProfile()
 
 const teamId = computed(() => Number(route.params.id))
-const { data: team, isLoading: isLoadingTeamInfo, isError } = useGetTeam(teamId.value)
+const teamQuery = useGetTeam(teamId.value)
+const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
+const { status, errorCode } = useCardState(teamQuery)
 
 watchEffect(() => {
   if (user.value && team.value) {

@@ -41,7 +41,7 @@ describe('UiCard', () => {
 
   it('renders an error only when the error slot is provided', async () => {
     const screen = render(UiCard, {
-      props: { isError: true },
+      props: { status: 'error' },
       slots: {
         content: 'Text content',
         error: 'Some error',

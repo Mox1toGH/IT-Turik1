@@ -1,5 +1,13 @@
 <template>
-  <ui-card variant="panel" class="tournament-card" :is-error="isError">
+  <ui-card
+    variant="panel"
+    class="tournament-card"
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #header>
       <div class="tournament-header">
         <div>
@@ -193,6 +201,7 @@ import { formatDate } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
 import { useNotification } from '@/composables/useNotification'
+import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import {
@@ -215,7 +224,9 @@ const selectedTeamId = ref<number | null>(null)
 const { showNotification } = useNotification()
 const { data: user } = useGetUserProfile()
 
-const { data: tournament, isLoading, isError } = useGetTournament(props.tournamentId)
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { data: tournament, isLoading, isFetching, refetch } = tournamentQuery
+const { status, errorCode, isStale } = useCardState(tournamentQuery)
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {

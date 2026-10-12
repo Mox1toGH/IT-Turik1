@@ -1,5 +1,12 @@
 <template>
-  <ui-card variant="panel" :isError="isLoadingError">
+  <ui-card
+    variant="panel"
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching my teams</p>
@@ -107,6 +114,7 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
@@ -114,7 +122,9 @@ const TEAMS_PER_PAGE = 8
 type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError } = useListTeams()
+const teamsQuery = useListTeams()
+const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
+const { status, errorCode, isStale } = useCardState(teamsQuery)
 
 const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {

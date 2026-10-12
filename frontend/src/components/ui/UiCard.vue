@@ -1,6 +1,14 @@
 <template>
-  <div :class="['card', variantClass, { scrollable: props.scrollable, 'is-fetching': props.isFetching && effectiveStatus === 'data' }]">
-    <!-- Header: ALWAYS rendered -->
+  <div
+    :class="[
+      'card',
+      variantClass,
+      {
+        scrollable: props.scrollable,
+        'is-fetching': props.isFetching && effectiveStatus === 'data',
+      },
+    ]"
+  >
     <slot v-if="$slots.header" name="header" />
     <div v-else-if="props.title" class="card-default-header">
       <div class="card-default-header__text">
@@ -9,27 +17,38 @@
           {{ props.subtitle }}
         </p>
       </div>
+
       <div v-if="$slots.controls" class="card-default-header__controls">
         <slot name="controls" />
       </div>
+
       <div v-if="$slots.badge && effectiveStatus === 'data'" class="card-default-header__badge">
         <slot name="badge" />
       </div>
     </div>
+
     <div v-else-if="$slots.badge && effectiveStatus === 'data'" class="card-badge-row">
       <slot name="badge" />
     </div>
 
-    <!-- Stale banner: data kept, refetch failed -->
     <div v-if="props.isStale && effectiveStatus === 'data'" class="stale-banner" role="status">
       <span>Update failed</span>
-      <button type="button" class="stale-banner__retry" :disabled="props.isFetching" @click="emit('retry')">
+      <button
+        type="button"
+        class="stale-banner__retry"
+        :disabled="props.isFetching"
+        @click="emit('retry')"
+      >
         {{ props.isFetching ? 'Retrying…' : 'Retry' }}
       </button>
     </div>
 
-    <!-- Content by status -->
-    <div v-if="effectiveStatus === 'loading'" class="card-status-block" aria-busy="true" aria-live="polite">
+    <div
+      v-if="effectiveStatus === 'loading'"
+      class="card-status-block"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <slot name="skeleton">
         <ui-skeleton height="18px" />
         <ui-skeleton height="18px" />
@@ -58,7 +77,11 @@
       <slot name="empty-action" />
     </div>
 
-    <div v-else :class="['card-data', { dimmed: props.isFetching }]" :aria-busy="props.isFetching || undefined">
+    <div
+      v-else
+      :class="['card-data', { dimmed: props.isFetching }]"
+      :aria-busy="props.isFetching || undefined"
+    >
       <ui-error-boundary>
         <slot />
       </ui-error-boundary>
@@ -84,8 +107,6 @@ interface Props {
   isStale?: boolean
   errorCode?: CardErrorCode
   emptyText?: string
-  /** @deprecated use status="error" instead */
-  isError?: boolean
   scrollable?: boolean
   variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'actions' | 'inset'
 }
@@ -102,10 +123,7 @@ const emit = defineEmits<{
   (e: 'retry'): void
 }>()
 
-const effectiveStatus = computed<CardStatus>(() => {
-  if (props.isError) return 'error'
-  return props.status
-})
+const effectiveStatus = computed<CardStatus>(() => props.status)
 
 const { isOnline } = useConnection()
 

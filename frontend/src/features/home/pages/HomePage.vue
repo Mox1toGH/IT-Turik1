@@ -42,20 +42,23 @@
         <QuickAccessCard
           :user="user"
           :is-loading-user="isLoadingUser"
-          :is-loading-user-error="isLoadingUserError"
+          :status="status"
+          :error-code="errorCode"
         />
       </template>
 
       <AccountDetailsCard
         :user="user"
         :is-loading-user="isLoadingUser"
-        :is-loading-user-error="isLoadingUserError"
+        :status="status"
+        :error-code="errorCode"
       />
 
       <QuickStatusCard
         :user="user"
         :is-loading-user="isLoadingUser"
-        :is-loading-user-error="isLoadingUserError"
+        :status="status"
+        :error-code="errorCode"
       ></QuickStatusCard>
     </section>
   </section>
@@ -71,12 +74,11 @@ import { useGetUserProfile } from '@/api/accounts/accounts'
 import AccountDetailsCard from '../components/AccountDetailsCard.vue'
 import QuickStatusCard from '../components/QuickStatusCard.vue'
 import QuickAccessCard from '../components/QuickAccessCard.vue'
+import { useCardState } from '@/composables/useCardState'
 
-const {
-  data: user,
-  isLoading: isLoadingUser,
-  isLoadingError: isLoadingUserError,
-} = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user, isLoading: isLoadingUser } = userQuery
+const { status, errorCode } = useCardState(userQuery)
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 

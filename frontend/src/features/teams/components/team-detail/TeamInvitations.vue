@@ -1,5 +1,11 @@
 <template>
-  <ui-card :is-error="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 200px">
         <p>Failed to fetch invitations</p>
@@ -132,6 +138,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -151,7 +158,9 @@ const emit = defineEmits<{
 const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
-const { data: invitations, isLoading, isLoadingError } = useListTeamInvitationsByTeam(props.teamId)
+const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
+const { data: invitations, isLoading, isFetching, refetch } = invitationsQuery
+const { status, errorCode, isStale } = useCardState(invitationsQuery)
 
 const uniqueInvitations = computed(() => {
   const byUserId = new Map<number, TeamInvitationResponse>()

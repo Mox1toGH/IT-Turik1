@@ -1,5 +1,5 @@
 <template>
-  <ui-card :is-error="props.loadingError">
+  <ui-card :status="props.status" :error-code="props.errorCode">
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 200px">
         <p>Failed to fetch team members</p>
@@ -84,6 +84,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { computed } from 'vue'
 import type { TeamResponse, UserResponse } from '@/api/backendAPINinja.schemas'
 
@@ -91,7 +92,8 @@ interface Props {
   team?: TeamResponse
   user?: UserResponse
   loading: boolean
-  loadingError?: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
   searchFilter?: string
   isCaptain: boolean
 }

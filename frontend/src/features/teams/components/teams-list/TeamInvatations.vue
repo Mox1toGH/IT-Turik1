@@ -1,5 +1,12 @@
 <template>
-  <ui-card variant="panel" :isError="isLoadingError">
+  <ui-card
+    variant="panel"
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching invitations</p>
@@ -111,6 +118,7 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
+import { useCardState } from '@/composables/useCardState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
@@ -119,7 +127,9 @@ import {
 
 const { showNotification } = useNotification()
 
-const { data: inboxInvitations, isLoading: inboxLoading, isLoadingError } = useListTeamInvitations()
+const invitationsQuery = useListTeamInvitations()
+const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
+const { status, errorCode, isStale } = useCardState(invitationsQuery)
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),

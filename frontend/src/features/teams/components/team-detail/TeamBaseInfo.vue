@@ -1,5 +1,5 @@
 <template>
-  <ui-card :is-error="props.loadingError">
+  <ui-card :status="props.status" :error-code="props.errorCode">
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 502px">
         <p>Failed to fetch team info</p>
@@ -145,6 +145,7 @@ import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { truncateText } from '@/lib/utils'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -153,7 +154,8 @@ import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 interface Props {
   team?: TeamResponse
   loading: boolean
-  loadingError?: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
   isCaptain: boolean
 }
 

@@ -1,5 +1,10 @@
 <template>
-  <ui-card class="stats-section" :is-error="isError">
+  <ui-card
+    class="stats-section"
+    :status="status"
+    :error-code="errorCode"
+    title="statistics"
+  >
     <template #header>
       <h2>Statistics</h2>
     </template>
@@ -33,6 +38,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
+import { useCardState } from '@/composables/useCardState'
 import type { UserRole } from '@/api/backendAPINinja.schemas'
 
 type TeamRef = { id: number; name: string }
@@ -83,6 +89,15 @@ const errorMessage = ref('Failed to load statistics. Please try again.')
 const playerStats = ref<PlayerStatsResponse | null>(null)
 const teamStats = ref<TeamStatsResponse | null>(null)
 const adminStats = ref<AdminStatsResponse | null>(null)
+
+const statsError = ref<unknown>(null)
+const cardQuery = computed(() => ({
+  isPending: isLoading.value,
+  isError: isError.value,
+  data: adminStats.value ?? playerStats.value ?? undefined,
+  error: statsError.value,
+}))
+const { status, errorCode } = useCardState(cardQuery)
 
 const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(2)}%`
 const formatScore = (value: number | null | undefined) => (value ?? 0).toFixed(2)
@@ -147,6 +162,7 @@ const loadStats = async () => {
 
   isLoading.value = true
   isError.value = false
+  statsError.value = null
   errorMessage.value = 'Failed to load statistics. Please try again.'
   playerStats.value = null
   teamStats.value = null
@@ -175,6 +191,7 @@ const loadStats = async () => {
     }
   } catch (error) {
     isError.value = true
+    statsError.value = error
 
     if (error instanceof Error) {
       errorMessage.value = error.message

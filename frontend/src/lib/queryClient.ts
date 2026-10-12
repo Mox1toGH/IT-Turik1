@@ -57,6 +57,8 @@ import {
   getGetTournamentStatsQueryKey,
   getGetAdminStatsQueryKey,
 } from '@/api/stats/stats'
+import type { ErrorResponse } from '@/api/backendAPINinja.schemas'
+import type { ErrorType } from './apiClient'
 
 type Ctx = {
   vars: Record<string, unknown>
@@ -308,8 +310,7 @@ export const queryClient = new QueryClient({
   },
   queryCache: new QueryCache({
     onError: (error) => {
-      const status = (error as { _axiosError?: { response?: { status?: number } } })?._axiosError
-        ?.response?.status
+      const status = (error as ErrorType<ErrorResponse>)?._axiosError?.response?.status
       // 401 is handled globally (tokens cleared + redirect in the axios
       // interceptor); cards never render a 401 error state.
       if (status === 401) {

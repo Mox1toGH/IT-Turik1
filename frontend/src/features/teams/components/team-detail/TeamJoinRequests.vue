@@ -1,5 +1,11 @@
 <template>
-  <ui-card :is-error="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 200px">
         <p>Failed to fetch join requests</p>
@@ -99,6 +105,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 
@@ -110,7 +117,9 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const { data: joinRequest, isLoading, isLoadingError } = useListTeamJoinRequestsByTeam(props.teamId)
+const joinRequestsQuery = useListTeamJoinRequestsByTeam(props.teamId)
+const { data: joinRequest, isLoading, isFetching, refetch } = joinRequestsQuery
+const { status, errorCode, isStale } = useCardState(joinRequestsQuery)
 
 const matches = (parts: (string | undefined)[]) => {
   const q = props.searchFilter?.trim().toLowerCase()

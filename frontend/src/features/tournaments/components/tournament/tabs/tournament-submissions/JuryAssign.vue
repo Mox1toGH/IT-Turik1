@@ -1,6 +1,12 @@
 <template>
   <section class="jury-assign-shell">
-    <ui-card :is-error="isError">
+    <ui-card
+      :status="status"
+      :is-fetching="isFetching"
+      :is-stale="isStale"
+      :error-code="errorCode"
+      @retry="refetchAll"
+    >
       <template #error>
         <div style="display: flex; justify-content: center; align-items: center; height: 200px">
           <p>{{ error?.message || 'Something went wrong' }}</p>
@@ -143,6 +149,7 @@ import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import { useCardState } from '@/composables/useCardState'
 import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
 import {
   useAssignJuryToRound,
@@ -159,29 +166,30 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
+const tournamentQuery = useGetTournament(props.tournamentId)
 const {
   data: tournament,
   isLoading: tournamentLoading,
   isError: tournamentError,
   error: tournamentErrorData,
-} = useGetTournament(props.tournamentId)
+} = tournamentQuery
 
 const closedRound = computed(() =>
   tournament.value?.rounds.find((round) => round.status === 'submission_closed'),
 )
 
-const {
-  data: submissions,
-  isLoading: submissionsLoading,
-  isLoadingError: submissionsError,
-  error: submissionsErrorData,
-} = useListRoundSubmissions(
+const submissionsQuery = useListRoundSubmissions(
   computed(() => closedRound.value?.id ?? 0),
 
   {
     query: { enabled: computed(() => !!closedRound.value) },
   },
 )
+const {
+  data: submissions,
+  isLoading: submissionsLoading,
+  error: submissionsErrorData,
+} = submissionsQuery
 
 const {
   data: availableJury,
@@ -199,9 +207,20 @@ const {
 const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
 const isLoadingRound = computed(() => tournamentLoading.value)
 const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
-const isError = computed(
-  () => noClosedRound.value || tournamentError.value || submissionsError.value,
+const cardQuery = computed(() => ({
+  isPending: tournamentQuery.isPending.value || submissionsQuery.isPending.value,
+  isError: noClosedRound.value || tournamentQuery.isError.value || submissionsQuery.isError.value,
+  data: noClosedRound.value ? undefined : (submissions.value ?? tournament.value),
+  error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
+}))
+const { status, errorCode, isStale } = useCardState(cardQuery)
+const isFetching = computed(
+  () => tournamentQuery.isFetching.value || submissionsQuery.isFetching.value,
 )
+const refetchAll = () => {
+  void tournamentQuery.refetch()
+  void submissionsQuery.refetch()
+}
 const error = computed(() => {
   if (noClosedRound.value) {
     return { message: 'No finished round available' }

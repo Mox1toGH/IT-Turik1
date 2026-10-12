@@ -139,7 +139,7 @@
         <ui-button
           type="submit"
           size="lg"
-          :disabled="isSavingChanges || props.loading || props.isError"
+          :disabled="isSavingChanges || props.loading || props.status === 'error'"
         >
           <loading-icon v-if="isSavingChanges" />
           Save changes
@@ -171,12 +171,13 @@ import UiBadge from '@/components/ui/UiBadge.vue'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
 import { useUpdateTeam } from '@/api/teams/teams'
+import type { CardStatus } from '@/composables/useCardState'
 import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team?: TeamResponse
   loading: boolean
-  isError?: boolean
+  status: CardStatus
 }
 
 const props = defineProps<Props>()

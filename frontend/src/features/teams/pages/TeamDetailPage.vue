@@ -147,7 +147,8 @@
       <team-base-info
         :team="team"
         :loading="isInfoLoading"
-        :loading-error="isInfoLoadingError"
+        :status="status"
+        :error-code="errorCode"
         :is-captain="isCaptain"
         @deleted="router.push('/teams')"
         @leave="router.push('/teams')"
@@ -166,14 +167,15 @@
           <ui-input
             v-model="searchInput"
             placeholder="Search by username or email"
-            :disabled="isInfoLoading || isInfoLoadingError"
+            :disabled="isInfoLoading || status === 'error'"
           />
 
           <team-members
             :team="team"
             :user="user"
             :search-filter="searchInput"
-            :loading-error="isInfoLoadingError"
+            :status="status"
+            :error-code="errorCode"
             :loading="isInfoLoading || isProfileLoading"
             :is-captain="isCaptain"
           />
@@ -276,6 +278,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
+import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 import UiFileDrop from '@/components/ui/UiFileDrop.vue'
@@ -286,11 +289,9 @@ const teamId = Number(route.params.id)
 
 const searchInput = ref('')
 const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
-const {
-  data: team,
-  isLoading: isInfoLoading,
-  isLoadingError: isInfoLoadingError,
-} = useGetTeam(teamId)
+const teamQuery = useGetTeam(teamId)
+const { data: team, isLoading: isInfoLoading } = teamQuery
+const { status, errorCode } = useCardState(teamQuery)
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },

@@ -1,6 +1,12 @@
 <template>
   <section class="page-shell">
-    <ui-card :is-error="isLoadingError">
+    <ui-card
+      :status="status"
+      :is-fetching="isFetching"
+      :is-stale="isStale"
+      :error-code="errorCode"
+      @retry="refetch"
+    >
       <template #error>
         <div style="display: flex; height: 436px; justify-content: center; align-items: center">
           <p>Error while fetching profile info</p>
@@ -176,11 +182,14 @@ import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUser } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { formatDate } from '@/lib/date'
 
 const route = useRoute()
 const userId = computed(() => Number(route.params.id))
-const { data: user, isLoading, isLoadingError } = useGetUser(userId)
+const userQuery = useGetUser(userId)
+const { data: user, isLoading, isFetching, refetch } = userQuery
+const { status, errorCode, isStale } = useCardState(userQuery)
 </script>
 
 <style scoped>
