@@ -10,6 +10,8 @@ export interface CardQuery {
   isError: MaybeRef<boolean>
   data: MaybeRef<unknown>
   error: MaybeRef<unknown>
+  isFetching?: MaybeRef<boolean>
+  refetch?: MaybeRef<() => unknown>
 }
 
 export function getErrorCode(error: unknown): CardErrorCode {
@@ -52,5 +54,17 @@ export function useCardState(query: MaybeRef<CardQuery>) {
     return getErrorCode(unref(s.error))
   })
 
-  return { status, errorCode, isStale }
+  const isFetching = computed(() => {
+    const s = unref(query)
+    if (s.isFetching === undefined) return false
+    return unref(s.isFetching)
+  })
+
+  const refetch = () => {
+    const s = unref(query)
+    if (s.refetch === undefined) return undefined
+    return unref(s.refetch)()
+  }
+
+  return { status, errorCode, isStale, isFetching, refetch }
 }

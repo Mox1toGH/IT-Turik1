@@ -5,7 +5,7 @@
       variantClass,
       {
         scrollable: props.scrollable,
-        'is-fetching': props.isFetching && effectiveStatus === 'data',
+        'is-fetching': effectiveIsFetching && effectiveStatus === 'data',
       },
     ]"
   >
@@ -31,15 +31,19 @@
       <slot name="badge" />
     </div>
 
-    <div v-if="props.isStale && effectiveStatus === 'data'" class="stale-banner" role="status">
+    <div
+      v-if="effectiveIsStale && effectiveStatus === 'data'"
+      class="stale-banner"
+      role="status"
+    >
       <span>Update failed</span>
       <button
         type="button"
         class="stale-banner__retry"
-        :disabled="props.isFetching"
-        @click="emit('retry')"
+        :disabled="effectiveIsFetching"
+        @click="handleRetry"
       >
-        {{ props.isFetching ? 'Retrying…' : 'Retry' }}
+        {{ effectiveIsFetching ? 'Retrying…' : 'Retry' }}
       </button>
     </div>
 
@@ -60,15 +64,18 @@
       <div v-if="$slots.error" role="alert">
         <slot name="error" />
       </div>
-      <p v-else-if="props.errorCode === 'network' && !isOnline" class="card-empty__text text-muted">
+      <p
+        v-else-if="effectiveErrorCode === 'network' && !isOnline"
+        class="card-empty__text text-muted"
+      >
         Waiting for connection…
       </p>
       <ui-card-error
         v-else
         :title="props.title"
-        :error-code="props.errorCode ?? null"
-        :is-fetching="props.isFetching"
-        @retry="emit('retry')"
+        :error-code="effectiveErrorCode"
+        :is-fetching="effectiveIsFetching"
+        @retry="handleRetry"
       />
     </div>
 
@@ -79,8 +86,8 @@
 
     <div
       v-else
-      :class="['card-data', { dimmed: props.isFetching }]"
-      :aria-busy="props.isFetching || undefined"
+      :class="['card-data', { dimmed: effectiveIsFetching }]"
+      :aria-busy="effectiveIsFetching || undefined"
     >
       <ui-error-boundary>
         <slot />
@@ -97,11 +104,14 @@ import UiCardError from '@/components/ui/UiCardError.vue'
 import UiErrorBoundary from '@/components/ui/UiErrorBoundary.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useConnection } from '@/composables/useConnection'
-import type { CardStatus, CardErrorCode } from '@/composables/useCardState'
+import { useCardState, type CardErrorCode, type CardQuery, type CardStatus } from '@/composables/useCardState'
 
 interface Props {
   title?: string
   subtitle?: string
+  /** Primary query mode: the card derives status/error/retry from it. */
+  query?: CardQuery
+  /** Manual fallback mode (ignored when query is provided). */
   status?: CardStatus
   isFetching?: boolean
   isStale?: boolean
@@ -123,7 +133,33 @@ const emit = defineEmits<{
   (e: 'retry'): void
 }>()
 
-const effectiveStatus = computed<CardStatus>(() => props.status)
+const hasQuery = computed(() => props.query !== undefined)
+const querySource = computed<CardQuery>(
+  () => props.query ?? { isPending: false, isError: false, data: null, error: null },
+)
+const {
+  status: queryStatus,
+  errorCode: queryErrorCode,
+  isStale: queryIsStale,
+  isFetching: queryIsFetching,
+  refetch: refetchQuery,
+} = useCardState(querySource)
+
+const effectiveStatus = computed<CardStatus>(() =>
+  hasQuery.value ? queryStatus.value : props.status,
+)
+const effectiveErrorCode = computed<CardErrorCode>(() =>
+  hasQuery.value ? queryErrorCode.value : props.errorCode,
+)
+const effectiveIsStale = computed(() => (hasQuery.value ? queryIsStale.value : props.isStale))
+const effectiveIsFetching = computed(() =>
+  hasQuery.value ? queryIsFetching.value : props.isFetching,
+)
+
+const handleRetry = () => {
+  if (props.query) refetchQuery()
+  else emit('retry')
+}
 
 const { isOnline } = useConnection()
 

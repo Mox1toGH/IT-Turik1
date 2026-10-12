@@ -2,12 +2,8 @@
   <ui-card
     variant="panel"
     class="tournament-card"
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
+    :query="activeTeamsQuery"
     empty-text="No teams registered yet"
-    @retry="refetchAll"
   >
     <template #header>
       <div class="tournament-card-head">
@@ -32,7 +28,7 @@
         v-model="search"
         placeholder="Search team"
         class="team-search"
-        :disabled="isTeamsLoading"
+        :disabled="isActiveTeamsLoading"
       />
 
       <TournamentTeamSection
@@ -49,8 +45,8 @@
       <TournamentTeamSection
         v-if="hasDisqualifiedTeams"
         sectionType="disqualified"
-        :teams="teams"
-        :loading="isTeamsLoading"
+        :teams="disqualifiedTeams"
+        :loading="isDisqualifiedTeamsLoading"
         :search="search"
       >
         <template #default="{ team }">
@@ -67,7 +63,6 @@ import UiCard from '@/components/ui/UiCard.vue'
 import UiInput from '@/components/ui/UiInput.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
-import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import TeamCard from '../TeamCard.vue'
 
@@ -79,28 +74,17 @@ const props = defineProps<Props>()
 const search = ref('')
 
 const { data: tournament } = useGetTournament(props.tournamentId)
-const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'all' })
+// Primary query: drives the card's status. 'active' filters is_active=True on the
+// backend ('all' would also return disqualified and inactive registrations).
+const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'active' })
+// Secondary query: own loading state, never affects the card's status.
 const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
   status: 'disqualified',
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
-const { data: teams, isLoading: isTeamsLoading } = disqualifiedTeamsQuery
-const cardQuery = computed(() => ({
-  isPending: activeTeamsQuery.isPending.value || disqualifiedTeamsQuery.isPending.value,
-  isError: activeTeamsQuery.isError.value || disqualifiedTeamsQuery.isError.value,
-  data: [...(activeTeams.value ?? []), ...(teams.value ?? [])],
-  error: activeTeamsQuery.error.value ?? disqualifiedTeamsQuery.error.value,
-}))
-const { status, errorCode, isStale } = useCardState(cardQuery)
-const isFetching = computed(
-  () => activeTeamsQuery.isFetching.value || disqualifiedTeamsQuery.isFetching.value,
-)
-const refetchAll = () => {
-  void activeTeamsQuery.refetch()
-  void disqualifiedTeamsQuery.refetch()
-}
+const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
 
-const hasDisqualifiedTeams = computed(() => (teams.value?.length ?? 0) > 0)
+const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 </script>
