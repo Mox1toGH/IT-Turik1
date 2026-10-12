@@ -68,4 +68,27 @@ describe('UiCard', () => {
     expect(screen.getByText('Body')).toBeInTheDocument()
     expect(screen.getByText('Footer')).toBeInTheDocument()
   })
+
+  it('keeps base card styling (background, border, radius)', async () => {
+    render(UiCard, {
+      slots: { default: 'Body' },
+    })
+
+    const card = document.querySelector('.card') as HTMLElement
+    expect(card).toBeInTheDocument()
+    const style = getComputedStyle(card)
+    expect(style.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
+    expect(style.borderStyle).not.toBe('none')
+  })
+
+  it('keeps data content layout-transparent (no wrapper box)', async () => {
+    render(UiCard, {
+      props: { variant: 'stat' },
+      slots: { default: 'Body' },
+    })
+
+    const data = document.querySelector('.card > .card-data') as HTMLElement
+    expect(data).toBeInTheDocument()
+    expect(getComputedStyle(data).display).toBe('contents')
+  })
 })

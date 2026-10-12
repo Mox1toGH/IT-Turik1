@@ -25,6 +25,7 @@
     </Transition>
 
     <main class="page-content">
+      <ui-offline-banner />
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <div :key="$route.path">
@@ -40,6 +41,7 @@
 import { useNotification } from '@/composables/useNotification'
 import AppNavbar from './components/shared/AppNavbar.vue'
 import UiButton from './components/ui/UiButton.vue'
+import UiOfflineBanner from './components/ui/UiOfflineBanner.vue'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import CrossIcon from './icons/CrossIcon.vue'
 

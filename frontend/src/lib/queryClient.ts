@@ -1,4 +1,4 @@
-import { MutationCache, QueryClient } from '@tanstack/vue-query'
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/vue-query'
 import { connectNotificationSocket } from '@/lib/notificationSocket'
 
 import {
@@ -300,11 +300,25 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (count, err) => {
-        const s = err._axiosError?.response?.status
+        const s = (err as { _axiosError?: { response?: { status?: number } } })?._axiosError
+          ?.response?.status
         return (!s || s >= 500) && count < 2
       },
     },
   },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      const status = (error as { _axiosError?: { response?: { status?: number } } })?._axiosError
+        ?.response?.status
+      // 401 is handled globally (tokens cleared + redirect in the axios
+      // interceptor); cards never render a 401 error state.
+      if (status === 401) {
+        console.warn('[query] unauthorized (401): redirect handled by api interceptor')
+        return
+      }
+      console.error('[query] failed:', error)
+    },
+  }),
   mutationCache: new MutationCache({
     onSuccess: (data, vars, _ctx, mutation) => {
       const key = mutation.options.mutationKey?.[0] as string | undefined

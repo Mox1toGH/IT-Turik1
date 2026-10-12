@@ -1,21 +1,90 @@
 <template>
-  <div :class="['card', variantClass, { scrollable: props.scrollable }]">
+  <div :class="['card', variantClass, { scrollable: props.scrollable, 'is-fetching': props.isFetching && effectiveStatus === 'data' }]">
+    <!-- Header: ALWAYS rendered -->
     <slot v-if="$slots.header" name="header" />
+    <div v-else-if="props.title" class="card-default-header">
+      <div class="card-default-header__text">
+        <h3 class="card-default-header__title">{{ props.title }}</h3>
+        <p v-if="props.subtitle" class="card-default-header__subtitle text-muted">
+          {{ props.subtitle }}
+        </p>
+      </div>
+      <div v-if="$slots.controls" class="card-default-header__controls">
+        <slot name="controls" />
+      </div>
+      <div v-if="$slots.badge && effectiveStatus === 'data'" class="card-default-header__badge">
+        <slot name="badge" />
+      </div>
+    </div>
+    <div v-else-if="$slots.badge && effectiveStatus === 'data'" class="card-badge-row">
+      <slot name="badge" />
+    </div>
 
-    <Transition name="error-fade" role="alert">
-      <div v-if="props.isError">
+    <!-- Stale banner: data kept, refetch failed -->
+    <div v-if="props.isStale && effectiveStatus === 'data'" class="stale-banner" role="status">
+      <span>Update failed</span>
+      <button type="button" class="stale-banner__retry" :disabled="props.isFetching" @click="emit('retry')">
+        {{ props.isFetching ? 'Retrying…' : 'Retry' }}
+      </button>
+    </div>
+
+    <!-- Content by status -->
+    <div v-if="effectiveStatus === 'loading'" class="card-status-block" aria-busy="true" aria-live="polite">
+      <slot name="skeleton">
+        <ui-skeleton height="18px" />
+        <ui-skeleton height="18px" />
+        <ui-skeleton height="18px" />
+      </slot>
+    </div>
+
+    <div v-else-if="effectiveStatus === 'error'" class="card-status-block">
+      <div v-if="$slots.error" role="alert">
         <slot name="error" />
       </div>
-    </Transition>
+      <p v-else-if="props.errorCode === 'network' && !isOnline" class="card-empty__text text-muted">
+        Waiting for connection…
+      </p>
+      <ui-card-error
+        v-else
+        :title="props.title"
+        :error-code="props.errorCode ?? null"
+        :is-fetching="props.isFetching"
+        @retry="emit('retry')"
+      />
+    </div>
 
-    <slot v-if="!props.isError && $slots.default" />
+    <div v-else-if="effectiveStatus === 'empty'" class="card-status-block card-empty">
+      <p class="card-empty__text text-muted">{{ props.emptyText ?? 'Nothing here yet.' }}</p>
+      <slot name="empty-action" />
+    </div>
+
+    <div v-else :class="['card-data', { dimmed: props.isFetching }]" :aria-busy="props.isFetching || undefined">
+      <ui-error-boundary>
+        <slot />
+      </ui-error-boundary>
+    </div>
 
     <slot v-if="$slots.footer" name="footer" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import UiCardError from '@/components/ui/UiCardError.vue'
+import UiErrorBoundary from '@/components/ui/UiErrorBoundary.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import { useConnection } from '@/composables/useConnection'
+import type { CardStatus, CardErrorCode } from '@/composables/useCardState'
+
 interface Props {
+  title?: string
+  subtitle?: string
+  status?: CardStatus
+  isFetching?: boolean
+  isStale?: boolean
+  errorCode?: CardErrorCode
+  emptyText?: string
+  /** @deprecated use status="error" instead */
   isError?: boolean
   scrollable?: boolean
   variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'actions' | 'inset'
@@ -23,9 +92,24 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   variant: 'default',
+  status: 'data',
+  isFetching: false,
+  isStale: false,
+  errorCode: null,
 })
 
-const variantClass = `card-${props.variant}`
+const emit = defineEmits<{
+  (e: 'retry'): void
+}>()
+
+const effectiveStatus = computed<CardStatus>(() => {
+  if (props.isError) return 'error'
+  return props.status
+})
+
+const { isOnline } = useConnection()
+
+const variantClass = computed(() => `card-${props.variant}`)
 </script>
 
 <style scoped>
@@ -117,5 +201,100 @@ const variantClass = `card-${props.variant}`
 .error-fade-enter-from,
 .error-fade-leave-to {
   opacity: 0;
+}
+
+.card-default-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.card-default-header__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.card-default-header__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+}
+
+.card-default-header__controls,
+.card-default-header__badge,
+.card-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-empty {
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.card-empty__text {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.card-data {
+  display: contents;
+}
+
+.card-data.dimmed > * {
+  opacity: 0.6;
+}
+
+.stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.stale-banner__retry {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.stale-banner__retry:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.stale-banner__retry:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.is-fetching {
+  scroll-behavior: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-data.dimmed > * {
+    opacity: 0.75;
+  }
 }
 </style>
