@@ -32,7 +32,7 @@ import { RouterLink } from 'vue-router'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
-import UiCard from '../ui/UiCard.vue'
+import UiCard from '../ui/UiCard'
 import type { UserRole } from '@/api/backendAPINinja.schemas.ts'
 
 type TeamRef = { id: number; name: string }

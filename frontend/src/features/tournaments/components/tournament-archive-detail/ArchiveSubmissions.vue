@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { formatScore } from './lib/format'
 import { type SubmissionResponse } from '@/api/backendAPINinja.schemas'
 

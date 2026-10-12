@@ -92,7 +92,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import EditIcon from '@/icons/EditIcon.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'

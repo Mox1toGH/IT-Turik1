@@ -69,7 +69,7 @@
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiModal from '@/components/ui/UiModal.vue'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'

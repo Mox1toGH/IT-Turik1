@@ -191,7 +191,7 @@
 import { useCreateTournament } from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput.vue'
 import UiTextArea from '@/components/ui/UiTextArea.vue'

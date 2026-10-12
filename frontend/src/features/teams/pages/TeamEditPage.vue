@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'

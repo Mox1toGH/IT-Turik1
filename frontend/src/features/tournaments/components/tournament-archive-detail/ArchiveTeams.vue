@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
 
 defineProps<{

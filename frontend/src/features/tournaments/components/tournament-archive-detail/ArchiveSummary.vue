@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 
 defineProps<{
   roundsCount: number

@@ -67,7 +67,7 @@
 import { useRouter } from 'vue-router'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import { useUserStore } from '@/stores/user'

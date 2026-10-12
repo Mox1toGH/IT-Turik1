@@ -111,7 +111,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -169,7 +169,7 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 }
 
 .section-head h2 {
-  margin: 2rem 0 0.45rem;
+  margin: 0.5rem 0 0.45rem;
   font-family: var(--font-display);
   font-weight: 800;
 }

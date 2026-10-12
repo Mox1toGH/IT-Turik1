@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { formatDateRange } from './lib/format'
 
 const props = defineProps<{

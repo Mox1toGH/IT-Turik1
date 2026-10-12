@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'

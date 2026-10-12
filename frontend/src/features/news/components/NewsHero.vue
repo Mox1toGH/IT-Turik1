@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton.vue'
 
 defineProps<{

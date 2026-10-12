@@ -80,7 +80,7 @@ import {
   useListMyTeamSubmissions,
   useListTournaments,
 } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import { computed } from 'vue'

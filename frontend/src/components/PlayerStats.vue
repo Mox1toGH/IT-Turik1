@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import { useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import type { UserRole } from '@/api/backendAPINinja.schemas'

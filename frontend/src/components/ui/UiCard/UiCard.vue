@@ -9,92 +9,98 @@
       },
     ]"
   >
-    <slot v-if="$slots.header" name="header" />
-    <div v-else-if="props.title" class="card-default-header">
-      <div class="card-default-header__text">
-        <h3 class="card-default-header__title">{{ props.title }}</h3>
-        <p v-if="props.subtitle" class="card-default-header__subtitle text-muted">
-          {{ props.subtitle }}
-        </p>
+    <div class="card-head">
+      <slot v-if="$slots.header" name="header" />
+      <div v-else-if="props.title" class="card-default-header">
+        <div class="card-default-header__text">
+          <h3 class="card-default-header__title">{{ props.title }}</h3>
+          <p v-if="props.subtitle" class="card-default-header__subtitle text-muted">
+            {{ props.subtitle }}
+          </p>
+        </div>
+
+        <div v-if="$slots.controls" class="card-default-header__controls">
+          <slot name="controls" />
+        </div>
+
+        <div v-if="$slots.badge && effectiveStatus === 'data'" class="card-default-header__badge">
+          <slot name="badge" />
+        </div>
       </div>
 
-      <div v-if="$slots.controls" class="card-default-header__controls">
-        <slot name="controls" />
-      </div>
-
-      <div v-if="$slots.badge && effectiveStatus === 'data'" class="card-default-header__badge">
+      <div v-else-if="$slots.badge && effectiveStatus === 'data'" class="card-badge-row">
         <slot name="badge" />
       </div>
     </div>
 
-    <div v-else-if="$slots.badge && effectiveStatus === 'data'" class="card-badge-row">
-      <slot name="badge" />
-    </div>
-
-    <div
-      v-if="effectiveIsStale && effectiveStatus === 'data'"
-      class="stale-banner"
-      role="status"
-    >
-      <span>Update failed</span>
-      <button
-        type="button"
-        class="stale-banner__retry"
-        :disabled="effectiveIsFetching"
-        @click="handleRetry"
+    <div class="card-body">
+      <div
+        v-if="effectiveIsStale && effectiveStatus === 'data'"
+        class="stale-banner"
+        role="status"
       >
-        {{ effectiveIsFetching ? 'Retrying…' : 'Retry' }}
-      </button>
-    </div>
-
-    <div
-      v-if="effectiveStatus === 'loading'"
-      class="card-status-block"
-      aria-busy="true"
-      aria-live="polite"
-    >
-      <slot name="skeleton">
-        <ui-skeleton height="18px" />
-        <ui-skeleton height="18px" />
-        <ui-skeleton height="18px" />
-      </slot>
-    </div>
-
-    <div v-else-if="effectiveStatus === 'error'" class="card-status-block">
-      <div v-if="$slots.error" role="alert">
-        <slot name="error" />
+        <span>Update failed</span>
+        <button
+          type="button"
+          class="stale-banner__retry"
+          :disabled="effectiveIsFetching"
+          @click="handleRetry"
+        >
+          {{ effectiveIsFetching ? 'Retrying…' : 'Retry' }}
+        </button>
       </div>
-      <p
-        v-else-if="effectiveErrorCode === 'network' && !isOnline"
-        class="card-empty__text text-muted"
+
+      <div
+        v-if="effectiveStatus === 'loading'"
+        class="card-status-block"
+        aria-busy="true"
+        aria-live="polite"
       >
-        Waiting for connection…
-      </p>
-      <ui-card-error
+        <slot name="skeleton">
+          <ui-skeleton height="18px" />
+          <ui-skeleton height="18px" />
+          <ui-skeleton height="18px" />
+        </slot>
+      </div>
+
+      <div v-else-if="effectiveStatus === 'error'" class="card-status-block">
+        <div v-if="$slots.error" role="alert">
+          <slot name="error" />
+        </div>
+        <p
+          v-else-if="effectiveErrorCode === 'network' && !isOnline"
+          class="card-empty__text text-muted"
+        >
+          Waiting for connection…
+        </p>
+        <ui-card-error
+          v-else
+          :title="props.title"
+          :error-code="effectiveErrorCode"
+          :is-fetching="effectiveIsFetching"
+          @retry="handleRetry"
+        />
+      </div>
+
+      <div v-else-if="effectiveStatus === 'empty'" class="card-status-block card-empty">
+        <p class="card-empty__text text-muted">{{ props.emptyText ?? 'Nothing here yet.' }}</p>
+        <slot name="empty-action" />
+      </div>
+
+      <div
         v-else
-        :title="props.title"
-        :error-code="effectiveErrorCode"
-        :is-fetching="effectiveIsFetching"
-        @retry="handleRetry"
-      />
+        :class="['card-data', { dimmed: effectiveIsFetching }]"
+        :aria-busy="effectiveIsFetching || undefined"
+      >
+        <ui-error-boundary>
+          <slot />
+        </ui-error-boundary>
+      </div>
     </div>
 
-    <div v-else-if="effectiveStatus === 'empty'" class="card-status-block card-empty">
-      <p class="card-empty__text text-muted">{{ props.emptyText ?? 'Nothing here yet.' }}</p>
-      <slot name="empty-action" />
+    <div v-if="$slots.footer" class="card-foot">
+      <slot name="footer" />
     </div>
-
-    <div
-      v-else
-      :class="['card-data', { dimmed: effectiveIsFetching }]"
-      :aria-busy="effectiveIsFetching || undefined"
-    >
-      <ui-error-boundary>
-        <slot />
-      </ui-error-boundary>
-    </div>
-
-    <slot v-if="$slots.footer" name="footer" />
   </div>
 </template>
 
@@ -236,8 +242,20 @@ const variantClass = computed(() => `card-${props.variant}`)
   background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
 }
 
+.card-head,
+.card-body,
+.card-foot {
+  display: contents;
+}
+
 .card.scrollable {
   max-height: calc(100vh - 16px * 2);
+}
+
+.card.scrollable > .card-body {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 

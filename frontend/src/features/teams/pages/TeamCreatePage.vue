@@ -208,7 +208,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed } from 'vue'

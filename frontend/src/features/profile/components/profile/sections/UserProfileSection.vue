@@ -176,7 +176,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'

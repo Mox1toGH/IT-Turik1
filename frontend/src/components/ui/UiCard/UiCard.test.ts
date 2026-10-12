@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiCard from '../UiCard.vue'
+import UiCard from './UiCard.vue'
 
 describe('UiCard', () => {
   it('renders default slot content', async () => {
@@ -69,6 +69,15 @@ describe('UiCard', () => {
     expect(screen.getByText('Footer')).toBeInTheDocument()
   })
 
+  it('renders a custom skeleton slot when loading', async () => {
+    const screen = render(UiCard, {
+      props: { status: 'loading' },
+      slots: { skeleton: 'Custom skeleton' },
+    })
+
+    expect(screen.getByText('Custom skeleton')).toBeInTheDocument()
+  })
+
   it('keeps base card styling (background, border, radius)', async () => {
     render(UiCard, {
       slots: { default: 'Body' },
@@ -81,13 +90,28 @@ describe('UiCard', () => {
     expect(style.borderStyle).not.toBe('none')
   })
 
+  it('scrolls only the body while header and footer stay pinned', async () => {
+    render(UiCard, {
+      props: { scrollable: true },
+      slots: {
+        header: 'Header',
+        default: 'Body',
+        footer: 'Footer',
+      },
+    })
+
+    const body = document.querySelector('.card > .card-body') as HTMLElement
+    expect(body).toBeInTheDocument()
+    expect(getComputedStyle(body).overflowY).toBe('auto')
+  })
+
   it('keeps data content layout-transparent (no wrapper box)', async () => {
     render(UiCard, {
       props: { variant: 'stat' },
       slots: { default: 'Body' },
     })
 
-    const data = document.querySelector('.card > .card-data') as HTMLElement
+    const data = document.querySelector('.card .card-data') as HTMLElement
     expect(data).toBeInTheDocument()
     expect(getComputedStyle(data).display).toBe('contents')
   })

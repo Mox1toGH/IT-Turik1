@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import NewsItemCard from './NewsItemCard.vue'

@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import { useCardState } from '@/composables/useCardState'

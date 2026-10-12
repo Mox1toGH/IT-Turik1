@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { formatArchiveDateTime, formatDateRange } from './lib/format'
 import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
 

@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import CrossIcon from '@/icons/CrossIcon.vue'
 import UiButton from './UiButton.vue'
-import UiCard from './UiCard.vue'
+import UiCard from './UiCard'
 import {
   DialogRoot,
   DialogPortal,

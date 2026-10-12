@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarModal from './modals/AvatarModal.vue'
 import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import type { TournamentArchiveListResponse } from '@/api/backendAPINinja.schemas'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { formatDate } from '@/lib/date'
 import { truncateText } from '@/lib/utils'
 

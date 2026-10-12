@@ -139,7 +139,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'

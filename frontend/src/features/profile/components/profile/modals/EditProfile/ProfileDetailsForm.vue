@@ -124,7 +124,7 @@
 import { watch } from 'vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'

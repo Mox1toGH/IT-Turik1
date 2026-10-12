@@ -101,7 +101,7 @@ import {
   useListTeamJoinRequestsByTeam,
 } from '@/api/teams/teams'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import UserAvatar from '@/components/shared/UserAvatar.vue'

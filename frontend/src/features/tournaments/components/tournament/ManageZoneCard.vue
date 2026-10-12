@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import DeleteTournamentModal from './modals/DeleteTournamentModal.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import DangerIcon from '@/icons/DangerIcon.vue'

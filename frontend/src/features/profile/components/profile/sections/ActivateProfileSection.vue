@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import { useNotification } from '@/composables/useNotification'
 import { useActivateAccount } from '@/api/accounts/accounts'
 

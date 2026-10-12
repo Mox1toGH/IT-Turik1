@@ -117,7 +117,7 @@
 import { computed, ref, watch } from 'vue'
 import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 import { useListTournaments } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'

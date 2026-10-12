@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiPasswordField from '@/components/ui/UiPasswordField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

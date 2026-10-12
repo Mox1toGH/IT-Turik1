@@ -107,7 +107,7 @@
 <script setup lang="ts">
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import { computed, ref } from 'vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
@@ -154,7 +154,7 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 }
 
 .section-head h2 {
-  margin: 2rem 0 0.45rem;
+  margin: 0.5rem 0 0.45rem;
   font-family: var(--font-display);
   font-weight: 800;
 }

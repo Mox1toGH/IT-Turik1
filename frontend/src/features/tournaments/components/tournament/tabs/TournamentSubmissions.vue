@@ -239,7 +239,7 @@
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import UiBadge, { type Variants } from '@/components/ui/UiBadge.vue'
 import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiProgressBar from '@/components/ui/UiProgressBar.vue'
 import UiSelect from '@/components/ui/UiSelect.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'

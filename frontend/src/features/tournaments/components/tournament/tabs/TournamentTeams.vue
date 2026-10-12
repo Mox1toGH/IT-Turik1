@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput.vue'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
@@ -102,7 +102,7 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 }
 
 .tournament-card-head h2 {
-  margin: 2rem 0 0.45rem;
+  margin: 0.5rem 0 0.45rem;
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;

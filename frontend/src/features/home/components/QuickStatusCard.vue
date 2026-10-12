@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
 import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
