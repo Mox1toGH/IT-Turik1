@@ -108,7 +108,7 @@
 import { computed } from 'vue'
 import UiCardError from '@/components/ui/UiCardError.vue'
 import UiErrorBoundary from '@/components/ui/UiErrorBoundary.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useConnection } from '@/composables/useConnection'
 import { useCardState, type CardErrorCode, type CardQuery, type CardStatus } from '@/composables/useCardState'
 

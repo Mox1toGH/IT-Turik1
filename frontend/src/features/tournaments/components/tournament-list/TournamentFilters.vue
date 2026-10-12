@@ -33,9 +33,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiSelect from '@/components/ui/UiSelect'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas'
 

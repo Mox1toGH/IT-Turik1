@@ -97,15 +97,15 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
 import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
 import { ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'

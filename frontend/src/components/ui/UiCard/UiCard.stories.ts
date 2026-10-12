@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import UiCard from './UiCard.vue'
-import UiButton from '../UiButton.vue'
-import UiSkeleton from '../UiSkeleton.vue'
+import UiButton from '../UiButton'
+import UiSkeleton from '../UiSkeleton'
 import type { CardQuery } from '@/composables/useCardState'
 
 const meta: Meta<typeof UiCard> = {

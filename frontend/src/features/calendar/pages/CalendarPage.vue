@@ -75,9 +75,9 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

@@ -139,16 +139,16 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiSelect, { type SelectOption } from '@/components/ui/UiSelect.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiSelect, { type SelectOption } from '@/components/ui/UiSelect'
 import { formatDate } from '@/lib/date'
 import UiCard from '@/components/ui/UiCard'
 import { truncateText } from '@/lib/utils'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useCardState } from '@/composables/useCardState'
 import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
 import {

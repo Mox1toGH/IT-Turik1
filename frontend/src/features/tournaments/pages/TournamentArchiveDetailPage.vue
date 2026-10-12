@@ -50,8 +50,8 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'
 import ArchiveSummary from '../components/tournament-archive-detail/ArchiveSummary.vue'
 import ArchiveStandings from '../components/tournament-archive-detail/ArchiveStandings.vue'

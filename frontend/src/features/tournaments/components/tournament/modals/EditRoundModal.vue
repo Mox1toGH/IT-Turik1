@@ -150,13 +150,13 @@
 </template>
 
 <script setup lang="ts">
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiDatePicker from '@/components/ui/UiDatePicker'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
 import { useForm } from '@/composables/useForm'
 import { EditRoundSchema } from '@/schemas/tournaments.schema'
 import AddCriteriaModal from '../tabs/tournament-rounds/modals/AddCriteriaModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'

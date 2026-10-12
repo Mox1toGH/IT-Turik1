@@ -85,7 +85,7 @@
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination.vue'
 import { useCardState } from '@/composables/useCardState'
 import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'

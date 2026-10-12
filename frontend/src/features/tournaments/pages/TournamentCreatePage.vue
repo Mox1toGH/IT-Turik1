@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import CreateTournamentForm from '../components/tournament-create/CreateTournamentForm.vue'
 </script>

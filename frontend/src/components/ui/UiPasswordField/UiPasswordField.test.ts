@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiPasswordField from '../UiPasswordField.vue'
+import UiPasswordField from './UiPasswordField.vue'
 
 describe('UiPasswordField', () => {
   it('renders a password input by default', async () => {

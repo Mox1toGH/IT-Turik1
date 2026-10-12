@@ -200,11 +200,11 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiModal from '@/components/ui/UiModal'
+import UiDatePicker from '@/components/ui/UiDatePicker'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiInput from '@/components/ui/UiInput'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import AddCriteriaModal from './AddCriteriaModal.vue'
 import EditorModal from './EditorModal.vue'

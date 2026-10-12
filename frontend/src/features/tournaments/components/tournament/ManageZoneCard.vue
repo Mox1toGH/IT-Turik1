@@ -55,7 +55,7 @@ import { ref } from 'vue'
 
 import UiCard from '@/components/ui/UiCard'
 import DeleteTournamentModal from './modals/DeleteTournamentModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import DangerIcon from '@/icons/DangerIcon.vue'
 
 import { useGetTournament } from '@/api/tournaments/tournaments.ts'

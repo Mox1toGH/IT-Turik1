@@ -66,10 +66,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
+import UiInput from '@/components/ui/UiInput'
+import UiPasswordField from '@/components/ui/UiPasswordField'
 import { useUserStore } from '@/stores/user'
 import { useLogin } from '@/api/accounts/accounts'
 import { useForm } from '@/composables/useForm'

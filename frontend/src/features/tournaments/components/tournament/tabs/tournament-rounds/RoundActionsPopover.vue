@@ -77,8 +77,8 @@ import {
   useMarkRoundEvaluated,
   useStartRound,
 } from '@/api/tournaments/tournaments'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiPopover from '@/components/ui/UiPopover.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiPopover from '@/components/ui/UiPopover'
 import { useNotification } from '@/composables/useNotification'
 import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
 

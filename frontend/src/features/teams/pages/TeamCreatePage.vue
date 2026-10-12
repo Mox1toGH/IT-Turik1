@@ -207,14 +207,14 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
+import UiSelect from '@/components/ui/UiSelect'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateTeamSchema } from '@/schemas/teams.schema'

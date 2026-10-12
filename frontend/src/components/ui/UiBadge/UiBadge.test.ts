@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiBadge from '../UiBadge.vue'
+import UiBadge from './UiBadge.vue'
 
 describe('UiBadge', () => {
   it('renders slot content correctly', () => {

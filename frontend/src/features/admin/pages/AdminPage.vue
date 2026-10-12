@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 
 const sections = [
   {

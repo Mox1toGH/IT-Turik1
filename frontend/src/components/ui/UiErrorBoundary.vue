@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, h, Fragment, ref, onErrorCaptured } from 'vue'
 import { TriangleAlert } from 'lucide-vue-next'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 
 // Fragment in the happy path: zero extra DOM, so card flex layouts
 // (e.g. variant="stat" rows) are unaffected. Retry remounts via key.

@@ -67,10 +67,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiBadge from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
 import { formatDate } from '@/lib/date'

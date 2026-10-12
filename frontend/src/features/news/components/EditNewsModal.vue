@@ -46,10 +46,10 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import type { JSONContent } from '@tiptap/core'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiInput from '@/components/ui/UiInput'
 import UiSwitch from '@/components/ui/UiSwitch.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import EditorModal from '@/features/tournaments/components/tournament/tabs/tournament-rounds/modals/EditorModal.vue'
 import { useForm } from '@/composables/useForm'

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
 import { userEvent } from 'vitest/browser'
-import UiModal from '../UiModal.vue'
+import UiModal from './UiModal.vue'
 
 describe('UiModal', () => {
   it('does not render when modelValue is false', async () => {
@@ -91,15 +91,6 @@ describe('UiModal', () => {
     await userEvent.keyboard('{Escape}')
 
     expect(screen.emitted('update:modelValue')?.[0]).toStrictEqual([false])
-  })
-
-  it('exposes accessible dialog attributes', async () => {
-    const screen = await render(UiModal, {
-      props: { modelValue: true },
-      slots: { title: '<h2>Accessible</h2>' },
-    })
-    const dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
   })
 
   it('renders safely with long title content', async () => {

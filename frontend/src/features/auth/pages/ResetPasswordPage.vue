@@ -74,8 +74,8 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiPasswordField from '@/components/ui/UiPasswordField'
+import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 

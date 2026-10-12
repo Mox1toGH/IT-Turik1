@@ -45,9 +45,9 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiTextArea from '@/components/ui/UiTextArea'
 import {
   useCreateJuryEvaluation,
   useUpdateJuryEvaluation,

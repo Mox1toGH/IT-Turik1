@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiTextArea from '../UiTextArea.vue'
+import UiTextArea from './UiTextArea.vue'
 
 describe('UiTextArea', () => {
   it('renders the provided modelValue', async () => {

@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'

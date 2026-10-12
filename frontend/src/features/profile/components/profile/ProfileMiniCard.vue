@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarModal from './modals/AvatarModal.vue'

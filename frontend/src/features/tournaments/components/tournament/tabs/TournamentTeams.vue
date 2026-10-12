@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiInput from '@/components/ui/UiInput'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'

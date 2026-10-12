@@ -67,8 +67,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import AccountDetailsCard from '../components/AccountDetailsCard.vue'

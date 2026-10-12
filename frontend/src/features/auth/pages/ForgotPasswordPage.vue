@@ -46,9 +46,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useRequestPasswordReset } from '@/api/accounts/accounts'

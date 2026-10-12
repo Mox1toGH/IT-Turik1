@@ -45,8 +45,8 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
 import CrossIcon from '@/icons/CrossIcon.vue'
 import ClockIcon from '@/icons/ClockIcon.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'

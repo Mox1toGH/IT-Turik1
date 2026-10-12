@@ -33,9 +33,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiBadge from '@/components/ui/UiBadge'
+import UiInput from '@/components/ui/UiInput'
 import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'

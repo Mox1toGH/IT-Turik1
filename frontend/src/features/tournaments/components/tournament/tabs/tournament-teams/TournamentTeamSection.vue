@@ -37,8 +37,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
 
 type Team = TournamentTeamResponse

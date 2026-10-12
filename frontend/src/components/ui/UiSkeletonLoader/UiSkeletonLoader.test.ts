@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiSkeletonLoader from '../UiSkeletonLoader.vue'
+import UiSkeletonLoader from './UiSkeletonLoader.vue'
 
 describe('UiSkeletonLoader', () => {
   it('renders skeleton slot content when loading is true', async () => {

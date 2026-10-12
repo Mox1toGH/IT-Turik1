@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
 import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 

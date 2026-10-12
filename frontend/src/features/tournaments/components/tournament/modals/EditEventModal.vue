@@ -62,17 +62,17 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiTimePicker from '@/components/ui/UiTimePicker.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiDatePicker from '@/components/ui/UiDatePicker'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
+import UiTimePicker from '@/components/ui/UiTimePicker'
 import { useForm } from '@/composables/useForm'
 import { EditEventSchema } from '@/schemas/tournaments.schema'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
+import UiTextArea from '@/components/ui/UiTextArea'
 import { useUpdateEvent } from '@/api/tournaments/tournaments'
 
 interface Props {

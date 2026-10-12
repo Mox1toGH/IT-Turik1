@@ -151,10 +151,10 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
 import BoldIcon from '@/icons/typography/BoldIcon.vue'
 import BulletListIcon from '@/icons/typography/BulletListIcon.vue'
 import Heading1Icon from '@/icons/typography/Heading1Icon.vue'

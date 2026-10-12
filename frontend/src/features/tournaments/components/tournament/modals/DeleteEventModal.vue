@@ -36,10 +36,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
+import UiBadge from '@/components/ui/UiBadge'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useDeleteEvent } from '@/api/tournaments/tournaments'

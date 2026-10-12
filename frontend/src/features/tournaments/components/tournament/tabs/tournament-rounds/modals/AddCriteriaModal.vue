@@ -80,12 +80,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiModal from '@/components/ui/UiModal'
 import UiCard from '@/components/ui/UiCard'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
+import UiTextArea from '@/components/ui/UiTextArea'
 import { truncateText } from '@/lib/utils'
 import type { CriterionResponse } from '@/api/backendAPINinja.schemas'
 

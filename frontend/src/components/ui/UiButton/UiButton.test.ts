@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import UiButton from '../UiButton.vue'
+import UiButton from './UiButton.vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { render } from 'vitest-browser-vue'
 

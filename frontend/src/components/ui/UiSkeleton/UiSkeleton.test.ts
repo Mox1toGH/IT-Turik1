@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'vitest-browser-vue'
-import UiSkeleton from '../UiSkeleton.vue'
+import UiSkeleton from './UiSkeleton.vue'
 
 describe('UiSkeleton', () => {
   it('renders an accessible loading placeholder', async () => {

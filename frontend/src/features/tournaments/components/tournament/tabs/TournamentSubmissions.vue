@@ -237,13 +237,13 @@
 
 <script setup lang="ts">
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
-import UiBadge, { type Variants } from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiBadge, { type Variants } from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiProgressBar from '@/components/ui/UiProgressBar.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSelect from '@/components/ui/UiSelect'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import FileCheckIcon from '@/icons/FileCheckIcon.vue'
 import { formatDate } from '@/lib/date'
 import { truncateText } from '@/lib/utils'

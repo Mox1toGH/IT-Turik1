@@ -52,9 +52,9 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 import TournamentArchiveCard from '../components/tournament-archive/TournamentArchiveCard.vue'
 

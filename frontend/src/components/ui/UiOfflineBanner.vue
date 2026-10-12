@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import { useConnection } from '@/composables/useConnection'
 import { queryClient } from '@/lib/queryClient'
 

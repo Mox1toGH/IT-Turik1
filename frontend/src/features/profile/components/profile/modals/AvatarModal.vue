@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'

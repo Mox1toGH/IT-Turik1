@@ -51,10 +51,10 @@
 
 <script setup lang="ts">
 import { useUpdateSubmission } from '@/api/tournaments/tournaments'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
+import UiTextArea from '@/components/ui/UiTextArea'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { EditSubmissionSchema } from '@/schemas/tournaments.schema'

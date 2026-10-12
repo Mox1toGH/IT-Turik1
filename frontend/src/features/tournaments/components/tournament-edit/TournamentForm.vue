@@ -212,15 +212,15 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiDatePicker from '@/components/ui/UiDatePicker'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
-import UiTimePicker from '@/components/ui/UiTimePicker.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiInput from '@/components/ui/UiInput'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiTextArea from '@/components/ui/UiTextArea'
+import UiTimePicker from '@/components/ui/UiTimePicker'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
 import { EditTournamentSchema } from '@/schemas/tournaments.schema'

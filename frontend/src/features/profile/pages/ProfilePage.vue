@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import EditIcon from '@/icons/EditIcon.vue'

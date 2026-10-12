@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import UiInput from './UiInput.vue'
+import UiInput from '../UiInput'
 import EyeIcon from '@/icons/EyeIcon.vue'
 
 interface Props {

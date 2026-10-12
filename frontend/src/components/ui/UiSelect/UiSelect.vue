@@ -89,8 +89,8 @@ import {
   SelectViewport,
 } from 'reka-ui'
 
-import UiButton from './UiButton.vue'
-import UiHoverCard from './UiHoverCard.vue'
+import UiButton from '../UiButton'
+import UiHoverCard from '../UiHoverCard.vue'
 import ArrowDown from '@/icons/ArrowDown.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

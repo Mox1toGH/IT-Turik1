@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { TriangleAlert, CloudOff } from 'lucide-vue-next'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import type { CardErrorCode } from '@/composables/useCardState'
 
 interface Props {

@@ -29,8 +29,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import UiCard from '../ui/UiCard'
 import type { UserRole } from '@/api/backendAPINinja.schemas.ts'
