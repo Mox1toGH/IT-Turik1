@@ -90,7 +90,7 @@ import {
 } from 'reka-ui'
 
 import UiButton from '../UiButton'
-import UiHoverCard from '../UiHoverCard.vue'
+import UiHoverCard from '../UiHoverCard'
 import ArrowDown from '@/icons/ArrowDown.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

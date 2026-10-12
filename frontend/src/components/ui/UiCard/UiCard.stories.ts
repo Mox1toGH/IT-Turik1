@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
+import { fn } from 'storybook/test'
 import UiCard from './UiCard.vue'
 import UiButton from '../UiButton'
 import UiSkeleton from '../UiSkeleton'
@@ -125,7 +126,7 @@ export const ErrorNetwork: Story = {
   render: (args) => ({
     components: { UiCard },
     setup() {
-      const onRetry = () => console.log('retry')
+      const onRetry = fn()
       return { args, onRetry }
     },
     template: `<ui-card v-bind="args" style="max-width: 480px" @retry="onRetry" />`,
@@ -150,7 +151,7 @@ export const ErrorServer: Story = {
   render: (args) => ({
     components: { UiCard },
     setup() {
-      const onRetry = () => console.log('retry')
+      const onRetry = fn()
       return { args, onRetry }
     },
     template: `<ui-card v-bind="args" style="max-width: 480px" @retry="onRetry" />`,
@@ -199,7 +200,7 @@ export const Stale: Story = {
   render: (args) => ({
     components: { UiCard },
     setup() {
-      const onRetry = () => console.log('retry')
+      const onRetry = fn()
       return { args, onRetry }
     },
     template: `

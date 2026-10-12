@@ -2,6 +2,7 @@
   <textarea
     :class="['textarea', { invalid: props.isInvalid }]"
     :value="props.modelValue"
+    :placeholder="props.placeholder"
     rows="1"
     @input="handleInput"
   />
@@ -11,11 +12,13 @@
 interface Props {
   modelValue?: string
   isInvalid?: boolean
+  placeholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   isInvalid: false,
+  placeholder: '',
 })
 
 const emit = defineEmits<{
@@ -62,7 +65,7 @@ function handleInput(event: Event) {
   background: color-mix(in srgb, var(--input) 80%, var(--muted));
 }
 
-.invalid {
+.textarea.invalid {
   border-color: var(--destructive);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 12%, transparent);
 }

@@ -57,7 +57,7 @@
 import type { JSONContent } from '@tiptap/core'
 import UiModal from '@/components/ui/UiModal'
 import UiInput from '@/components/ui/UiInput'
-import UiSwitch from '@/components/ui/UiSwitch.vue'
+import UiSwitch from '@/components/ui/UiSwitch'
 import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import EditorModal from '@/features/tournaments/components/tournament/tabs/tournament-rounds/modals/EditorModal.vue'

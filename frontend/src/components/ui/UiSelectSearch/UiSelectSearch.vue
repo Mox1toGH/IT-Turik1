@@ -84,7 +84,7 @@ import {
   ComboboxViewport,
 } from 'reka-ui'
 
-import UiButton from './UiButton'
+import UiButton from '../UiButton'
 import ArrowDown from '@/icons/ArrowDown.vue'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'

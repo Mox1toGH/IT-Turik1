@@ -1,24 +1,27 @@
 <template>
   <Transition name="skeleton-fade" mode="out-in">
-    <div v-if="loading">
-      <slot name="skeleton" />
-    </div>
-
-    <div v-else>
-      <slot />
+    <div :key="loading ? 'skeleton' : 'content'" :style="containerStyle">
+      <slot v-if="loading" name="skeleton" />
+      <slot v-else />
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
   loading: boolean
   minWidth?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   loading: true,
 })
+
+const containerStyle = computed(() => ({
+  minWidth: props.minWidth,
+}))
 </script>
 
 <style scoped>

@@ -138,14 +138,27 @@
 
     <notification-settings-modal v-model:is-open="isSettingsModalOpen" />
 
-    <ui-confirm-modal
+    <ui-modal
       v-model="isConfirmModalOpen"
       :title="confirmModalConfig.title"
-      :message="confirmModalConfig.message"
-      :confirm-variant="confirmModalConfig.confirmVariant"
-      :loading="isDeletingAll"
-      @confirm="confirmModalConfig.onConfirm"
-    />
+      max-width="400px"
+      @close="isConfirmModalOpen = false"
+    >
+      <p>{{ confirmModalConfig.message }}</p>
+      <template #footer>
+        <ui-button size="sm" variant="secondary" @click="isConfirmModalOpen = false"
+          >Cancel</ui-button
+        >
+        <ui-button
+          size="sm"
+          :variant="confirmModalConfig.confirmVariant"
+          :disabled="isDeletingAll"
+          @click="confirmModalConfig.onConfirm"
+        >
+          {{ isDeletingAll ? 'Deleting...' : 'Confirm' }}
+        </ui-button>
+      </template>
+    </ui-modal>
   </section>
 </template>
 
@@ -153,9 +166,9 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
-import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
-import UiConfirmModal from '@/components/ui/UiConfirmModal'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal.vue'

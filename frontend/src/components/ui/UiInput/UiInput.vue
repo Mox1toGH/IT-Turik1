@@ -13,6 +13,8 @@ interface Props {
   modelValue?: string | number
   isInvalid?: boolean
   type?: string
+  placeholder?: string
+  disabled?: boolean
 }
 
 withDefaults(defineProps<Props>(), {

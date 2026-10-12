@@ -23,6 +23,7 @@ type Props = {
   to?: string
   variant?: Variant
   size?: Size
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {

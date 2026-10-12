@@ -7,6 +7,12 @@
 <script setup lang="ts">
 import { SwitchRoot, SwitchThumb } from 'reka-ui'
 
+interface Props {
+  disabled?: boolean
+}
+
+defineProps<Props>()
+
 const modelValue = defineModel<boolean>()
 </script>
 

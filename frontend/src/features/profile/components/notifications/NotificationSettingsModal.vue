@@ -74,7 +74,7 @@ Somehow neeed to figure out it in different way cuz we don't have undefined at a
 
 <script setup lang="ts">
 import UiModal from '@/components/ui/UiModal'
-import UiSwitch from '@/components/ui/UiSwitch.vue'
+import UiSwitch from '@/components/ui/UiSwitch'
 import UiButton from '@/components/ui/UiButton'
 import { useNotification } from '@/composables/useNotification'
 import {
