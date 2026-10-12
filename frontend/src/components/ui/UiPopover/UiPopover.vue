@@ -1,7 +1,7 @@
 <template>
   <PopoverRoot :open="isOpen" @update:open="handleOpenChange">
     <PopoverTrigger as-child :style="{ display: inline ? 'inline-flex' : 'flex' }">
-      <slot name="trigger" :is-open="isOpen" :toggle="toggle" :open="open" :close="close" />
+      <slot name="trigger" :is-open="isOpen" :open="open" :close="close" />
     </PopoverTrigger>
 
     <PopoverPortal>
@@ -72,10 +72,6 @@ function close() {
   emit('close')
 }
 
-function toggle() {
-  isOpen.value ? close() : open()
-}
-
 function handleOpenChange(value: boolean) {
   if (value) open()
   else close()
@@ -85,7 +81,7 @@ function handleEscapeKeyDown(e: Event) {
   if (!props.closeOnEsc) e.preventDefault()
 }
 
-defineExpose({ open, close, toggle, isOpen })
+defineExpose({ open, close, isOpen })
 </script>
 
 <style scoped>
