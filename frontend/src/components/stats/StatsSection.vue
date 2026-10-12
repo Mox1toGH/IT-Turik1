@@ -22,19 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
-import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
-import type {
-  AdminStatsResponse,
-  PlayerStatsResponse,
-  TeamStatsResponse,
-  UserResponse,
-} from '@/api/backendAPINinja.schemas.ts'
+import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
+import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
 
 type ProfileLike = UserResponse
 
@@ -43,14 +38,36 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const isLoading = ref(false)
-const isError = ref(false)
-const playerStats = ref<PlayerStatsResponse | null>(null)
-const teamStats = ref<TeamStatsResponse | null>(null)
-const adminStats = ref<AdminStatsResponse | null>(null)
 
 const isAdmin = computed(() => Boolean(props.user?.is_staff))
 const isTeamRole = computed(() => props.user?.role === 'team')
+const isPlayerActive = computed(() => !!props.user && !isAdmin.value)
+const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
+const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
+
+const adminQuery = useGetAdminStats({ query: { enabled: isAdmin } })
+const playerQuery = useGetPlayerStats({ query: { enabled: isPlayerActive } })
+const teamQuery = useGetTeamStats(firstTeamId, {
+  query: { enabled: isTeamActive, retry: false },
+})
+
+const { data: adminStats } = adminQuery
+const { data: playerStats } = playerQuery
+const { data: teamStats } = teamQuery
+
+const isLoading = computed(
+  () =>
+    (isAdmin.value && adminQuery.isPending.value) ||
+    (isPlayerActive.value && playerQuery.isPending.value) ||
+    (isTeamActive.value && teamQuery.isPending.value),
+)
+// Team stats are non-fatal: player stats stay visible if they fail.
+const isError = computed(
+  () =>
+    (isAdmin.value && adminQuery.isError.value) ||
+    (isPlayerActive.value && playerQuery.isError.value),
+)
+
 const currentTeamTo = computed(() => {
   const teamName = playerStats.value?.current_team_name
   if (!teamName) return undefined
@@ -58,48 +75,5 @@ const currentTeamTo = computed(() => {
   if (matched) return `/teams/${matched.id}`
   const fallbackId = props.user?.teams?.[0]?.id
   return fallbackId ? `/teams/${fallbackId}` : undefined
-})
-
-const loadStats = async () => {
-  if (!props.user) return
-  isLoading.value = true
-  isError.value = false
-  playerStats.value = null
-  teamStats.value = null
-  adminStats.value = null
-
-  try {
-    if (isAdmin.value) {
-      const data = await getAdminStats()
-      adminStats.value = data
-      return
-    }
-
-    const data = await getPlayerStats()
-    playerStats.value = data
-
-    if (isTeamRole.value) {
-      const teamId = props.user.teams?.[0]?.id
-      if (!teamId) return
-      const data = await getTeamStats(teamId)
-      teamStats.value = data
-    }
-  } catch {
-    isError.value = true
-  } finally {
-    isLoading.value = false
-  }
-}
-
-watch(
-  () => props.user,
-  () => {
-    if (props.user) void loadStats()
-  },
-  { deep: true },
-)
-
-onMounted(() => {
-  if (props.user) void loadStats()
 })
 </script>

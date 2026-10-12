@@ -2,8 +2,11 @@
   <ui-card
     class="stats-section"
     :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
     :error-code="errorCode"
     title="statistics"
+    @retry="refetchAll"
   >
     <template #header>
       <h2>Statistics</h2>
@@ -33,11 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton.vue'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
+import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import { useCardState } from '@/composables/useCardState'
 import type { UserRole } from '@/api/backendAPINinja.schemas'
 
@@ -48,56 +51,66 @@ type ProfileLike = {
   readonly teams?: readonly TeamRef[]
 }
 
-type PlayerStatsResponse = {
-  total_tournaments: number
-  wins: number
-  losses: number
-  win_rate: number
-  average_evaluation_score: number
-  current_team_name: string | null
-}
-
-type TeamStatsResponse = {
-  win_rate: number
-  active_members_count: number
-  top_player: {
-    username: string
-    average_evaluation_score: number
-  } | null
-}
-
-type AdminStatsResponse = {
-  total_users: number
-  total_teams: number
-  total_tournaments: number
-  new_registrations_last_7_days: number
-  new_registrations_last_30_days: number
-  active_tournaments: number
-  users_by_role: Array<{ role: string; count: number }>
-}
-
 interface Props {
   user?: ProfileLike | null
 }
 
 const props = defineProps<Props>()
 
-const isLoading = ref(false)
-const isError = ref(false)
-const errorMessage = ref('Failed to load statistics. Please try again.')
+const isStaff = computed(() => !!props.user?.is_staff)
+const isTeamRole = computed(() => props.user?.role === 'team')
+const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
 
-const playerStats = ref<PlayerStatsResponse | null>(null)
-const teamStats = ref<TeamStatsResponse | null>(null)
-const adminStats = ref<AdminStatsResponse | null>(null)
+const adminQuery = useGetAdminStats({ query: { enabled: isStaff } })
+const playerQuery = useGetPlayerStats({
+  query: { enabled: computed(() => !!props.user && !isStaff.value) },
+})
+const teamQuery = useGetTeamStats(firstTeamId, {
+  query: { enabled: computed(() => isTeamRole.value && firstTeamId.value > 0), retry: false },
+})
 
-const statsError = ref<unknown>(null)
+const { data: adminStats } = adminQuery
+const { data: playerStats } = playerQuery
+const { data: teamStats } = teamQuery
+
+const isPlayerActive = computed(() => !!props.user && !isStaff.value)
+const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
+
 const cardQuery = computed(() => ({
-  isPending: isLoading.value,
-  isError: isError.value,
-  data: adminStats.value ?? playerStats.value ?? undefined,
-  error: statsError.value,
+  isPending:
+    (isStaff.value && adminQuery.isPending.value) ||
+    (isPlayerActive.value && playerQuery.isPending.value) ||
+    (isTeamActive.value && teamQuery.isPending.value),
+  // Team stats are non-fatal: player stats stay visible if they fail.
+  isError:
+    (isStaff.value && adminQuery.isError.value) ||
+    (isPlayerActive.value && playerQuery.isError.value),
+  data:
+    (isStaff.value ? adminStats.value : undefined) ??
+    (isPlayerActive.value ? playerStats.value : undefined),
+  error: adminQuery.error.value ?? playerQuery.error.value ?? null,
 }))
-const { status, errorCode } = useCardState(cardQuery)
+const { status, errorCode, isStale } = useCardState(cardQuery)
+
+const isLoading = computed(
+  () =>
+    (isStaff.value && adminQuery.isPending.value) ||
+    (isPlayerActive.value && playerQuery.isPending.value) ||
+    (isTeamActive.value && teamQuery.isPending.value),
+)
+const isFetching = computed(
+  () => adminQuery.isFetching.value || playerQuery.isFetching.value || teamQuery.isFetching.value,
+)
+const refetchAll = () => {
+  void adminQuery.refetch()
+  void playerQuery.refetch()
+  void teamQuery.refetch()
+}
+
+const queryError = computed(() => adminQuery.error.value ?? playerQuery.error.value)
+const errorMessage = computed(
+  () => queryError.value?.message ?? 'Failed to load statistics. Please try again.',
+)
 
 const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(2)}%`
 const formatScore = (value: number | null | undefined) => (value ?? 0).toFixed(2)
@@ -155,66 +168,6 @@ const statsCards = computed(() => {
   }
 
   return cards
-})
-
-const loadStats = async () => {
-  if (!props.user) return
-
-  isLoading.value = true
-  isError.value = false
-  statsError.value = null
-  errorMessage.value = 'Failed to load statistics. Please try again.'
-  playerStats.value = null
-  teamStats.value = null
-  adminStats.value = null
-
-  try {
-    if (props.user.is_staff) {
-      const data = await getAdminStats()
-      adminStats.value = data
-      return
-    }
-
-    const data = await getPlayerStats()
-    playerStats.value = data
-
-    if (props.user.role === 'team') {
-      const firstTeamId = props.user.teams?.[0]?.id
-      if (!firstTeamId) return
-
-      try {
-        const data = await getTeamStats(firstTeamId)
-        teamStats.value = data
-      } catch {
-        // Keep player stats visible if team stats are unavailable for this user/team.
-      }
-    }
-  } catch (error) {
-    isError.value = true
-    statsError.value = error
-
-    if (error instanceof Error) {
-      errorMessage.value = error.message
-    } else if (typeof error === 'string') {
-      errorMessage.value = error
-    } else {
-      errorMessage.value = 'An unknown error occurred.'
-    }
-  } finally {
-    isLoading.value = false
-  }
-}
-
-watch(
-  () => props.user,
-  () => {
-    if (props.user) void loadStats()
-  },
-  { deep: true },
-)
-
-onMounted(() => {
-  if (props.user) void loadStats()
 })
 </script>
 
