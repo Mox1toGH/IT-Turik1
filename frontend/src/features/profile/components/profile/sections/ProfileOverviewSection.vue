@@ -4,6 +4,7 @@
     <EditProfileModal ref="editProfileModal" />
 
     <ui-section
+      divider
       title="Your information"
       description="Profile details"
       aria-labelledby="profile-details-title"
@@ -22,11 +23,7 @@
       </div>
     </ui-section>
 
-    <ui-section
-      v-if="user?.teams?.length"
-      title="Your teams"
-      description="Membership"
-    >
+    <ui-section v-if="user?.teams?.length" divider title="Your teams" description="Membership">
       <div class="team-list">
         <router-link
           v-for="team in user.teams"
@@ -43,6 +40,7 @@
 
     <ui-section
       v-if="user?.active_tournament"
+      divider
       title="Active tournament"
       description="Current event"
     >
@@ -97,24 +95,22 @@ const openEditProfile = () => {
 <style scoped>
 .overview-content {
   display: grid;
-  gap: 2.5rem;
+  gap: 2.25rem;
 }
 
 .details-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0;
-  border-top: 1px solid var(--border);
+  gap: 1rem;
 }
 
 .field-row {
   display: grid;
+  align-items: center;
   gap: 0.45rem;
-  padding: 0.8rem 0;
-}
-
-.details-grid .field-row + .field-row {
-  border-top: 1px solid var(--border);
+  padding: 0.8rem;
+  background-color: var(--card);
+  border-radius: var(--radius);
 }
 
 .field-label {

@@ -1,14 +1,5 @@
 <template>
-  <ui-button
-    variant="danger"
-    :disabled="isLoading || isDeleting"
-    @click="isDeleteModalOpen = true"
-    type="button"
-  >
-    Delete account
-  </ui-button>
-
-  <ui-modal v-model="isDeleteModalOpen">
+  <ui-modal v-model="isOpen">
     <template #title>
       <h3>Delete account</h3>
     </template>
@@ -29,12 +20,7 @@
     <p v-if="deleteError">{{ deleteError }}</p>
 
     <template #footer>
-      <ui-button
-        size="sm"
-        variant="secondary"
-        :disabled="isDeleting"
-        @click="isDeleteModalOpen = false"
-      >
+      <ui-button size="sm" variant="secondary" :disabled="isDeleting" @click="isOpen = false">
         Cancel
       </ui-button>
       <ui-button size="sm" variant="danger" :disabled="!canDelete" @click="handleDeleteAccount">
@@ -52,19 +38,21 @@ import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { useDeleteUserProfile, useGetUserProfile } from '@/api/accounts/accounts'
 
+/** Open state is owned by the parent, which renders the trigger button. */
+const isOpen = defineModel<boolean>({ default: false })
+
 const store = useUserStore()
-const { data: user, isLoading } = useGetUserProfile()
+const { data: user } = useGetUserProfile()
 const { mutate: deleteAccount, isPending: isDeleting } = useDeleteUserProfile()
 
 const router = useRouter()
 const { showNotification, hideNotification } = useNotification()
 
-const isDeleteModalOpen = ref(false)
 const deleteError = ref<string | null>(null)
 const deleteConfirmInput = ref('')
 const expectedDeleteText = computed(() => user.value?.username || '')
@@ -76,13 +64,19 @@ const canDelete = computed(
     !isDeleting.value,
 )
 
+watch(isOpen, (open) => {
+  if (!open) {
+    deleteConfirmInput.value = ''
+    deleteError.value = null
+  }
+})
+
 const handleDeleteAccount = async () => {
   if (deleteConfirmInput.value !== expectedDeleteText.value) {
     deleteError.value = `Please enter "${expectedDeleteText.value}" exactly.`
     return
   }
 
-  isDeleting.value = true
   deleteError.value = ''
   hideNotification()
 

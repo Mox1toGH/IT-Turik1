@@ -32,7 +32,7 @@
         </template>
 
         <template #invitations>
-          <team-invitations :loading="isLoadingTeamInvitations" :invitations="teamInvitations" />
+          <team-invitations :loading="isLoadingTeamInvitations" :invitations="invitationList" />
         </template>
 
         <template v-if="!team.is_in_active_tournament" #invite>
@@ -72,9 +72,9 @@ const { status } = useCardState(teamQuery)
 // no extra fetch): the pending count is needed here for the tab badge.
 const { data: invitationsData, isLoading: isLoadingTeamInvitations } =
   useListTeamInvitationsByTeam(teamId)
-const teamInvitations = computed(() => invitationsData.value ?? [])
+const invitationList = computed(() => invitationsData.value ?? [])
 const pendingInvitationCount = computed(
-  () => teamInvitations.value.filter((invitation) => invitation.status === 'invited').length,
+  () => invitationList.value.filter((invitation) => invitation.status === 'invited').length,
 )
 
 const tabItems = computed<TabItem[]>(() => {
