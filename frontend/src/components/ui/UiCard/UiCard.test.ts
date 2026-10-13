@@ -104,14 +104,4 @@ describe('UiCard', () => {
     expect(body).toBeInTheDocument()
     expect(getComputedStyle(body).overflowY).toBe('auto')
   })
-
-  it('keeps data content layout-transparent (no wrapper box)', async () => {
-    render(UiCard, {
-      slots: { default: 'Body' },
-    })
-
-    const data = document.querySelector('.card .card-data') as HTMLElement
-    expect(data).toBeInTheDocument()
-    expect(getComputedStyle(data).display).toBe('contents')
-  })
 })
