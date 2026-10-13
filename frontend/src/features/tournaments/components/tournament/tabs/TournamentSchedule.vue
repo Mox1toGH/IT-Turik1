@@ -59,8 +59,9 @@
         </div>
 
         <div class="event-actions" v-if="user?.role === 'admin'">
-          <ui-button size="sm" @click="isEditOpen = true">Edit</ui-button>
+          <ui-button size="sm" @click="openEdit(event.id)">Edit</ui-button>
           <EditEventModal
+            v-if="editTargetId === event.id"
             v-model="isEditOpen"
             :event-id="event.id"
             :tournament-id="props.tournamentId"
@@ -71,8 +72,9 @@
             :link="event.link ?? ''"
           />
 
-          <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
+          <ui-button size="sm" variant="danger" @click="openDelete(event.id)">Delete</ui-button>
           <DeleteEventModal
+            v-if="deleteTargetId === event.id"
             v-model="isDeleteOpen"
             :event-id="event.id"
             :tournament-id="props.tournamentId"
@@ -93,7 +95,7 @@ import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
 import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useCardState } from '@/composables/useCardState'
@@ -112,6 +114,24 @@ const { data: user } = useGetUserProfile()
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
+const editTargetId = ref<number | null>(null)
+const deleteTargetId = ref<number | null>(null)
+
+const openEdit = (id: number) => {
+  editTargetId.value = id
+  isEditOpen.value = true
+}
+const openDelete = (id: number) => {
+  deleteTargetId.value = id
+  isDeleteOpen.value = true
+}
+
+watch(isEditOpen, (val) => {
+  if (!val) editTargetId.value = null
+})
+watch(isDeleteOpen, (val) => {
+  if (!val) deleteTargetId.value = null
+})
 
 const eventsQuery = useListEvents({ tournament: props.tournamentId })
 const { status } = useCardState(eventsQuery)
