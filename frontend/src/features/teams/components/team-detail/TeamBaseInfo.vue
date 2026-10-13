@@ -258,7 +258,6 @@ const leaveTeam = () => {
 
 .info-value {
   min-width: 0;
-  text-align: right;
   overflow-wrap: anywhere;
 }
 

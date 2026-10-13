@@ -4,25 +4,27 @@
 
     <div class="teams-rule" aria-hidden="true"></div>
 
-    <team-banner-section
-      :team="team"
-      :loading="isInfoLoading"
-      :is-captain="isCaptain"
-      :hero-banner-style="banner.heroBannerStyle.value"
-      @open="banner.isBannerModalOpen.value = true"
-    />
-
     <ui-tabs :items="tabItems" query-key="tab">
       <template #overview>
-        <team-base-info
-          :team="team"
-          :loading="isInfoLoading"
-          :status="status"
-          :error-code="errorCode"
-          :is-captain="isCaptain"
-          @deleted="router.push('/teams')"
-          @leave="router.push('/teams')"
-        />
+        <div class="overview-grid">
+          <team-base-info
+            :team="team"
+            :loading="isInfoLoading"
+            :status="status"
+            :error-code="errorCode"
+            :is-captain="isCaptain"
+            @deleted="router.push('/teams')"
+            @leave="router.push('/teams')"
+          />
+
+          <team-banner-section
+            :team="team"
+            :loading="isInfoLoading"
+            :is-captain="isCaptain"
+            :hero-banner-style="banner.heroBannerStyle.value"
+            @open="banner.isBannerModalOpen.value = true"
+          />
+        </div>
       </template>
 
       <template #members>
@@ -240,6 +242,19 @@ const tabItems = computed<TabItem[]>(() => {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
   background: var(--border);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.85fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .active-tournament-card.card {

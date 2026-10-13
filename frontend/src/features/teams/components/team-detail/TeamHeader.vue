@@ -54,18 +54,6 @@
     </div>
 
     <div class="hero-actions">
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
-          <ui-skeleton variant="rect" width="148px" height="45px" />
-        </template>
-      </ui-skeleton-loader>
-
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
-          <ui-skeleton variant="rect" width="148px" height="45px" />
-        </template>
-      </ui-skeleton-loader>
-
       <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
     </div>
   </header>

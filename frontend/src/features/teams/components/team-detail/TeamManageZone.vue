@@ -13,7 +13,7 @@
 
       <div>
         <div class="danger-zone-header">
-          <danger-icon />
+          <danger-icon width="20" height="20" />
           <span>Danger Zone</span>
         </div>
 
@@ -120,9 +120,6 @@ const emit = defineEmits<{
   justify-content: space-between;
   align-items: center;
   gap: 0.9rem;
-}
-
-.manage-row:not(:last-child) {
   padding: 1rem 0;
 }
 

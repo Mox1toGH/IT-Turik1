@@ -1,23 +1,42 @@
 <template>
-  <section
-    v-if="team?.banner || (isCaptain && !loading)"
-    class="team-banner-panel"
-    :class="{ 'team-banner-panel--empty': !team?.banner }"
-  >
-    <div v-if="team?.banner" class="hero-banner" :style="heroBannerStyle" />
-    <button
-      v-if="isCaptain && !loading"
-      class="banner-edit-overlay"
-      type="button"
-      @click="emit('open')"
-    >
-      <avatar-edit-icon />
-      {{ team?.banner ? 'Edit banner' : 'Add banner' }}
-    </button>
-  </section>
+  <ui-card v-if="team?.banner || (isCaptain && !loading)" class="banner-card">
+    <template #header>
+      <div class="panel-header">
+        <div class="banner-copy">
+          <h2>Team banner</h2>
+          <p class="text-muted">Cover image shown for this team.</p>
+        </div>
+
+        <ui-button
+          v-if="isCaptain"
+          size="sm"
+          variant="secondary"
+          class="banner-action"
+          @click="emit('open')"
+        >
+          <avatar-edit-icon class="banner-action-icon" />
+          {{ team?.banner ? 'Edit' : 'Add banner' }}
+        </ui-button>
+      </div>
+    </template>
+
+    <div
+      v-if="team?.banner"
+      class="banner-frame"
+      :style="heroBannerStyle"
+      role="img"
+      :aria-label="`Banner of ${team?.name ?? 'team'}`"
+    ></div>
+
+    <div v-else class="banner-frame banner-frame--empty">
+      <span>No banner yet</span>
+    </div>
+  </ui-card>
 </template>
 
 <script setup lang="ts">
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
@@ -36,46 +55,50 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-.team-banner-panel {
-  position: relative;
-  min-height: 220px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
+.banner-card {
+  gap: 0.9rem;
 }
 
-.team-banner-panel--empty {
-  display: flex;
-  min-height: 150px;
+.banner-card .panel-header {
   align-items: center;
-  justify-content: center;
-  background: var(--subtle);
 }
 
-.hero-banner {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  z-index: 0;
+.banner-copy {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.banner-edit-overlay {
-  position: absolute;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1;
+.banner-action {
+  flex: 0 0 auto;
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  min-height: 40px;
-  padding: 0.55rem 0.8rem;
+  gap: 0.4rem;
+}
+
+.banner-action-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.banner-frame {
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--card);
-  color: var(--foreground);
-  font-weight: 800;
-  cursor: pointer;
+  border-radius: var(--radius-sm);
+  background-color: var(--subtle);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.banner-frame--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
 }
 </style>

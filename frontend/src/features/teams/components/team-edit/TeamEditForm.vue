@@ -2,21 +2,17 @@
   <ui-card class="panel form-panel">
     <template #header>
       <div class="panel-header">
-        <span class="step-marker">01</span>
         <div>
           <h2>Team profile</h2>
           <p class="text-muted">Core identity and contact details for the team directory.</p>
         </div>
-        <ui-badge variant="green" class="access-badge">Captain access</ui-badge>
       </div>
     </template>
 
-    <div class="teams-rule" aria-hidden="true"></div>
-
-    <form class="form-grid" @submit.prevent="handleSubmit">
+    <form class="edit-form" @submit.prevent="handleSubmit">
       <section class="form-section-grid identity-section">
         <div class="section-heading">
-          <span class="section-number">Identity</span>
+          <h3 class="section-title">Identity</h3>
           <p class="text-muted">Public details shown across team pages.</p>
         </div>
 
@@ -84,11 +80,9 @@
         </label>
       </section>
 
-      <div class="teams-rule" aria-hidden="true"></div>
-
       <section class="form-section-grid contact-section">
         <div class="section-heading">
-          <span class="section-number">Contact</span>
+          <h3 class="section-title">Contact</h3>
           <p class="text-muted">Optional channels members can use to coordinate.</p>
         </div>
 
@@ -167,7 +161,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiBadge from '@/components/ui/UiBadge'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
 import { useUpdateTeam } from '@/api/teams/teams'
@@ -219,20 +212,15 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.teams-rule {
-  height: 1px;
-  margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
-}
-
 .access-badge {
+  margin-left: auto;
   white-space: nowrap;
 }
 
-.form-grid {
+.edit-form {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.15rem;
 }
 
 .form-section-grid {
@@ -241,39 +229,36 @@ const handleSubmit = () => {
   gap: 1rem;
 }
 
+.form-section-grid + .form-section-grid {
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--border);
+}
+
 .section-heading {
   grid-column: 1 / -1;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  gap: 0.15rem;
 }
 
 .section-heading p {
   margin: 0;
-  text-align: right;
 }
 
-.section-number {
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.full-width {
-  grid-column: 1 / -1;
+.section-title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  font-weight: 800;
 }
 
 .form-actions {
-  margin-top: 0.1rem;
-  flex-direction: row;
-  justify-content: flex-end;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
+  margin-top: 0.1rem;
   border-top: 1px solid var(--border);
   padding-top: 1rem;
 }
@@ -283,23 +268,16 @@ const handleSubmit = () => {
     flex-wrap: wrap;
   }
 
+  .access-badge {
+    margin-left: 0;
+  }
+
   .form-section-grid {
     grid-template-columns: 1fr;
   }
 
-  .section-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .section-heading p {
-    text-align: left;
-  }
-
   .form-actions {
-    position: static;
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: stretch;
   }
 }
