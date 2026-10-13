@@ -4,7 +4,6 @@
     @update:model-value="toggleOpen"
     @close="toggleClose"
     max-width="1200px"
-    scrollable
   >
     <template #title>
       <h2>Edit round</h2>
