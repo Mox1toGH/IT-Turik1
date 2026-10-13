@@ -147,7 +147,7 @@ defineExpose({ open, close, isOpen })
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #00000073;
+  background: var(--scrim);
   backdrop-filter: blur(3px);
   z-index: 50;
 }

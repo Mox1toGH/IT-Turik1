@@ -297,6 +297,14 @@ a {
   color: var(--muted-foreground);
 }
 
+.min-w-0 {
+  min-width: 0;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
 .empty-card {
   border: 1px dashed var(--border) !important;
   color: var(--muted-foreground) !important;

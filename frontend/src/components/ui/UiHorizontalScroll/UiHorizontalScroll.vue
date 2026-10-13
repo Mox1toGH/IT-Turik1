@@ -165,25 +165,22 @@ onBeforeUnmount(() => {
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--card);
   color: var(--foreground);
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--foreground) 14%, transparent);
   cursor: pointer;
   transform: translateY(-50%);
 }
 
 .scroll-control:hover {
   color: var(--primary);
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--line-soft));
+  border-color: var(--primary);
 }
 
 .scroll-control:focus-visible {
   outline: none;
-  box-shadow:
-    0 0 0 2px var(--ring),
-    0 8px 18px color-mix(in srgb, var(--foreground) 14%, transparent);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .scroll-control span {

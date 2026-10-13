@@ -24,7 +24,7 @@ describe('UiSegmentedProgressBar', () => {
     })
 
     const alpha = screen.getByTitle('Alpha').element() as HTMLElement
-    expect(alpha.style.backgroundColor).toBe('rgb(59, 130, 246)')
+    expect(alpha.style.backgroundColor).toBe('var(--chart-1)')
   })
 
   it('uses the default accessible label unless overridden', async () => {

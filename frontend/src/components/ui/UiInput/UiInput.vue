@@ -63,6 +63,6 @@ function handleInput(event: Event) {
 
 .invalid {
   border-color: var(--destructive);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 12%, transparent);
+  box-shadow: 0 0 0 3px var(--destructive-soft);
 }
 </style>

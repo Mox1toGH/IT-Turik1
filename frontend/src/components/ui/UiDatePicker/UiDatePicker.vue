@@ -90,7 +90,7 @@ function handleValueChange(value: DateValue | undefined) {
   width: 100%;
   min-height: 2.5rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border: 1px solid var(--border-soft);
   background: var(--input);
   border-radius: 8px;
   color: inherit;
@@ -120,6 +120,6 @@ function handleValueChange(value: DateValue | undefined) {
 }
 
 :deep(.datepicker-field [data-placeholder]) {
-  color: color-mix(in srgb, var(--foreground) 42%, transparent);
+  color: var(--placeholder);
 }
 </style>

@@ -16,7 +16,7 @@ const meta: Meta<typeof UiProgressBar> = {
   args: {
     percent: 50,
     height: 12,
-    fillColor: 'color-mix(in srgb, var(--foreground) 35%, transparent)',
+    fillColor: 'var(--muted-foreground)',
   },
 }
 
@@ -84,7 +84,7 @@ export const Complete: Story = {
 
 /** Custom fill color (green). */
 export const GreenFill: Story = {
-  args: { percent: 60, fillColor: '#22c55e' },
+  args: { percent: 60, fillColor: 'var(--chart-2)' },
   render: (args) => ({
     components: { UiProgressBar },
     setup() {
@@ -96,7 +96,7 @@ export const GreenFill: Story = {
 
 /** Custom fill color (red). */
 export const RedFill: Story = {
-  args: { percent: 80, fillColor: '#ef4444' },
+  args: { percent: 80, fillColor: 'var(--chart-4)' },
   render: (args) => ({
     components: { UiProgressBar },
     setup() {
@@ -108,7 +108,7 @@ export const RedFill: Story = {
 
 /** Custom fill color (blue). */
 export const BlueFill: Story = {
-  args: { percent: 40, fillColor: '#3b82f6' },
+  args: { percent: 40, fillColor: 'var(--chart-1)' },
   render: (args) => ({
     components: { UiProgressBar },
     setup() {

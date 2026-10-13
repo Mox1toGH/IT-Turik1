@@ -43,7 +43,7 @@ withDefaults(
   border-radius: 8px;
   background: var(--popover, var(--background));
   color: var(--popover-foreground, var(--foreground));
-  box-shadow: 0 8px 20px rgb(0 0 0 / 14%);
+  box-shadow: var(--shadow-overlay);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
 }

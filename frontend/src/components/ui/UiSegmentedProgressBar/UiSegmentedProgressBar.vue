@@ -34,7 +34,14 @@ const props = withDefaults(defineProps<Props>(), {
   height: 12,
 })
 
-const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316']
+const palette = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+]
 const safePercent = computed(() => Math.max(0, Math.min(Number(props.percent || 0), 100)))
 </script>
 
@@ -44,7 +51,7 @@ const safePercent = computed(() => Math.max(0, Math.min(Number(props.percent || 
   overflow: hidden;
   border: 1px solid var(--border);
   display: flex;
-  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  background: var(--track);
 }
 
 .used {

@@ -84,7 +84,7 @@ interface Props {
   errorCode?: CardErrorCode
   emptyText?: string
   scrollable?: boolean
-  variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'inset'
+  variant?: 'default' | 'stat' | 'inset'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -123,21 +123,11 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.75rem;
   padding: 1.2rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--card);
   color: var(--card-foreground);
-  box-shadow: 0 5px 20px rgb(0 0 0 / 0.05);
-}
-.dark .card {
-  box-shadow: 0 5px 20px rgb(0 0 0 / 0.25);
 }
 
-.card-panel {
-  gap: 1.7rem;
-  padding: 2.4rem 2rem 1.8rem;
-  border-color: var(--line-soft);
-  border-radius: 20px;
-}
 .card-stat {
   flex-direction: row;
   align-items: center;
@@ -145,27 +135,13 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.7rem;
   min-width: 100px;
   padding: 0.5rem 1.1rem;
-  border-color: var(--line-soft);
 }
-.card-hero {
-  padding: 1.5rem;
-  border-color: var(--line-soft);
-  border-radius: 20px;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 44%),
-    var(--card);
-}
-.card-form {
-  gap: 1rem;
-  padding: 1.25rem;
-  border-color: var(--line-soft);
-  border-radius: 18px;
-}
+
 .card-inset {
   padding: 0.8rem;
-  border-color: var(--line-soft);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
 }
 
 .card-title {
@@ -218,8 +194,8 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.5rem;
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--muted);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
   color: var(--muted-foreground);
   font-size: 0.8rem;
 }
@@ -242,11 +218,6 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   outline-offset: 2px;
 }
 
-@media (max-width: 700px) {
-  .card-panel {
-    padding: 1.4rem;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .dimmed > * {
     opacity: 0.75;

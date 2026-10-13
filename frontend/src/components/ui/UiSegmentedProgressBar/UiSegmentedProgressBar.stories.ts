@@ -24,10 +24,10 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     segments: [
-      { id: 1, widthPercent: 30, title: 'Segment A (30%)', color: '#3b82f6' },
-      { id: 2, widthPercent: 25, title: 'Segment B (25%)', color: '#22c55e' },
-      { id: 3, widthPercent: 20, title: 'Segment C (20%)', color: '#f59e0b' },
-      { id: 4, widthPercent: 25, title: 'Segment D (25%)', color: '#ef4444' },
+      { id: 1, widthPercent: 30, title: 'Segment A (30%)', color: 'var(--chart-1)' },
+      { id: 2, widthPercent: 25, title: 'Segment B (25%)', color: 'var(--chart-2)' },
+      { id: 3, widthPercent: 20, title: 'Segment C (20%)', color: 'var(--chart-3)' },
+      { id: 4, widthPercent: 25, title: 'Segment D (25%)', color: 'var(--chart-4)' },
     ],
   },
   render: (args) => ({
@@ -64,8 +64,8 @@ export const TwoSegments: Story = {
   args: {
     percent: 60,
     segments: [
-      { id: 1, widthPercent: 40, title: 'Completed (40%)', color: '#22c55e' },
-      { id: 2, widthPercent: 60, title: 'Remaining (60%)', color: '#e5e7eb' },
+      { id: 1, widthPercent: 40, title: 'Completed (40%)', color: 'var(--chart-2)' },
+      { id: 2, widthPercent: 60, title: 'Remaining (60%)', color: 'var(--track)' },
     ],
   },
   render: (args) => ({
@@ -82,11 +82,11 @@ export const FiveSegments: Story = {
   args: {
     percent: 85,
     segments: [
-      { id: 1, widthPercent: 20, title: 'Design', color: '#8b5cf6' },
-      { id: 2, widthPercent: 20, title: 'Development', color: '#3b82f6' },
-      { id: 3, widthPercent: 20, title: 'Testing', color: '#f59e0b' },
-      { id: 4, widthPercent: 20, title: 'Deploy', color: '#22c55e' },
-      { id: 5, widthPercent: 20, title: 'Review', color: '#ef4444' },
+      { id: 1, widthPercent: 20, title: 'Design', color: 'var(--chart-5)' },
+      { id: 2, widthPercent: 20, title: 'Development', color: 'var(--chart-1)' },
+      { id: 3, widthPercent: 20, title: 'Testing', color: 'var(--chart-3)' },
+      { id: 4, widthPercent: 20, title: 'Deploy', color: 'var(--chart-2)' },
+      { id: 5, widthPercent: 20, title: 'Review', color: 'var(--chart-4)' },
     ],
   },
   render: (args) => ({
@@ -103,8 +103,8 @@ export const PartialProgress: Story = {
   args: {
     percent: 45,
     segments: [
-      { id: 1, widthPercent: 50, title: 'Phase 1', color: '#3b82f6' },
-      { id: 2, widthPercent: 50, title: 'Phase 2', color: '#22c55e' },
+      { id: 1, widthPercent: 50, title: 'Phase 1', color: 'var(--chart-1)' },
+      { id: 2, widthPercent: 50, title: 'Phase 2', color: 'var(--chart-2)' },
     ],
   },
   render: (args) => ({
@@ -122,9 +122,9 @@ export const Thin: Story = {
     height: 6,
     percent: 70,
     segments: [
-      { id: 1, widthPercent: 30, title: 'A', color: '#3b82f6' },
-      { id: 2, widthPercent: 40, title: 'B', color: '#22c55e' },
-      { id: 3, widthPercent: 30, title: 'C', color: '#f59e0b' },
+      { id: 1, widthPercent: 30, title: 'A', color: 'var(--chart-1)' },
+      { id: 2, widthPercent: 40, title: 'B', color: 'var(--chart-2)' },
+      { id: 3, widthPercent: 30, title: 'C', color: 'var(--chart-3)' },
     ],
   },
   render: (args) => ({
@@ -142,9 +142,9 @@ export const Thick: Story = {
     height: 24,
     percent: 80,
     segments: [
-      { id: 1, widthPercent: 25, title: 'Step 1', color: '#8b5cf6' },
-      { id: 2, widthPercent: 35, title: 'Step 2', color: '#3b82f6' },
-      { id: 3, widthPercent: 40, title: 'Step 3', color: '#22c55e' },
+      { id: 1, widthPercent: 25, title: 'Step 1', color: 'var(--chart-5)' },
+      { id: 2, widthPercent: 35, title: 'Step 2', color: 'var(--chart-1)' },
+      { id: 3, widthPercent: 40, title: 'Step 3', color: 'var(--chart-2)' },
     ],
   },
   render: (args) => ({

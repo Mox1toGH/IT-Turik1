@@ -324,10 +324,10 @@ function onDrop(event: DragEvent) {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  border: 1.5px dashed var(--border);
+  border: 1.5px dashed var(--border-strong);
   border-radius: var(--radius);
   padding: 2rem 1.25rem;
-  background: var(--muted);
+  background: var(--subtle);
   cursor: pointer;
   text-align: center;
   transition:
@@ -336,17 +336,17 @@ function onDrop(event: DragEvent) {
 }
 
 .dropzone:hover:not(.is-disabled) {
-  border-color: color-mix(in srgb, var(--accent-strong) 55%, var(--border));
+  border-color: var(--primary);
 }
 
 .dropzone:focus-visible {
-  outline: 2px solid var(--accent-strong);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
 .dropzone.is-dragging {
-  border-color: var(--accent-strong);
-  background: color-mix(in srgb, var(--accent-strong) 8%, var(--muted));
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .dropzone.is-disabled {
@@ -361,8 +361,8 @@ function onDrop(event: DragEvent) {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent-strong) 12%, transparent);
-  color: var(--accent-strong);
+  background: var(--primary-soft);
+  color: var(--primary);
 }
 
 .dropzone-title {
@@ -372,7 +372,7 @@ function onDrop(event: DragEvent) {
 }
 
 .link-text {
-  color: var(--accent-strong);
+  color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -416,7 +416,7 @@ function onDrop(event: DragEvent) {
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: 8px;
-  background: var(--muted);
+  background: var(--subtle);
   color: var(--muted-foreground);
 }
 
@@ -461,7 +461,7 @@ function onDrop(event: DragEvent) {
 }
 
 .file-remove:hover {
-  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  background: var(--destructive-soft);
   color: var(--destructive);
 }
 </style>
