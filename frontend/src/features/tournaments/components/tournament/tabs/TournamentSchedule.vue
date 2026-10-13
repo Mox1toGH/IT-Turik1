@@ -5,84 +5,73 @@
   </div>
 
   <section class="page-shell">
-    <ui-skeleton-loader :loading="isEventsLoading">
-      <template #skeleton>
-        <div class="events-list">
-          <ui-card v-for="i in 5" :key="i">
-            <div class="event-content">
-              <div class="event-left-side">
-                <ui-skeleton variant="rounded" width="50px" height="50px" />
-                <ui-skeleton variant="rect" width="100px" />
-              </div>
-              <div class="event-dates">
-                <ui-skeleton variant="rect" width="150px" />
-              </div>
-            </div>
-          </ui-card>
-        </div>
-      </template>
-
-      <ui-card v-if="isEventsError">
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching tournament schedule</p>
+    <div v-if="status === 'loading'" class="events-list">
+      <ui-card v-for="i in 5" :key="`event-skeleton-${i}`">
+        <div class="event-content">
+          <div class="event-left-side">
+            <ui-skeleton variant="rounded" width="50px" height="50px" />
+            <ui-skeleton variant="rect" width="100px" />
+          </div>
+          <div class="event-dates">
+            <ui-skeleton variant="rect" width="150px" />
+          </div>
         </div>
       </ui-card>
+    </div>
 
-      <ui-card
-        v-else-if="events?.length === 0"
-        class="empty-card"
-        style="display: flex; align-items: center; justify-content: center; height: 300px"
-      >
-        <p class="empty-error">No events founded for this tournament</p>
-      </ui-card>
+    <ui-card
+      v-else-if="status !== 'data'"
+      :query="eventsQuery"
+      class="events-state"
+      empty-text="No events for this tournament yet"
+    />
 
-      <div v-else class="events-list">
-        <ui-card v-for="event in events" :key="event.title" class="event-card">
-          <div class="event-content">
-            <div class="event-left-side">
-              <div class="event-icon">
-                <FinishIcon width="25px" height="25px" />
-              </div>
-
-              <div class="event-info">
-                <p class="event-title break-anywhere" :title="event.title">
-                  {{ truncateText(event.title, 30) }}
-                </p>
-                <ui-expandable-text :text="event.description ?? '-'" :lines="2" />
-              </div>
+    <div v-else class="events-list">
+      <ui-card v-for="event in events" :key="event.title" class="event-card">
+        <div class="event-content">
+          <div class="event-left-side">
+            <div class="event-icon">
+              <FinishIcon width="25px" height="25px" />
             </div>
 
-            <div class="event-right-side">
-              <p class="text-muted">
-                {{ formatDate(event.start_datetime, { showHours: true }) }}
+            <div class="event-info">
+              <p class="event-title break-anywhere" :title="event.title">
+                {{ truncateText(event.title, 30) }}
               </p>
+              <ui-expandable-text :text="event.description ?? '-'" :lines="2" />
             </div>
           </div>
 
-          <div class="event-actions" v-if="user?.role === 'admin'">
-            <ui-button size="sm" @click="isEditOpen = true">Edit</ui-button>
-            <EditEventModal
-              v-model="isEditOpen"
-              :event-id="event.id"
-              :tournament-id="props.tournamentId"
-              :title="event.title"
-              :description="event.description ?? '-'"
-              :start-date="event.start_datetime"
-              :event-type="event.type"
-              :link="event.link ?? ''"
-            />
-
-            <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
-            <DeleteEventModal
-              v-model="isDeleteOpen"
-              :event-id="event.id"
-              :tournament-id="props.tournamentId"
-              :title="event.title"
-            />
+          <div class="event-right-side">
+            <p class="text-muted">
+              {{ formatDate(event.start_datetime, { showHours: true }) }}
+            </p>
           </div>
-        </ui-card>
-      </div>
-    </ui-skeleton-loader>
+        </div>
+
+        <div class="event-actions" v-if="user?.role === 'admin'">
+          <ui-button size="sm" @click="isEditOpen = true">Edit</ui-button>
+          <EditEventModal
+            v-model="isEditOpen"
+            :event-id="event.id"
+            :tournament-id="props.tournamentId"
+            :title="event.title"
+            :description="event.description ?? '-'"
+            :start-date="event.start_datetime"
+            :event-type="event.type"
+            :link="event.link ?? ''"
+          />
+
+          <ui-button size="sm" variant="danger" @click="isDeleteOpen = true">Delete</ui-button>
+          <DeleteEventModal
+            v-model="isDeleteOpen"
+            :event-id="event.id"
+            :tournament-id="props.tournamentId"
+            :title="event.title"
+          />
+        </div>
+      </ui-card>
+    </div>
   </section>
 </template>
 
@@ -90,15 +79,15 @@
 import UiCard from '@/components/ui/UiCard'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
 import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
 import { truncateText } from '@/lib/utils.ts'
@@ -115,11 +104,9 @@ const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
 
-const {
-  data: events,
-  isLoading: isEventsLoading,
-  isError: isEventsError,
-} = useListEvents({ tournament: props.tournamentId })
+const eventsQuery = useListEvents({ tournament: props.tournamentId })
+const { status } = useCardState(eventsQuery)
+const events = computed(() => eventsQuery.data.value ?? [])
 </script>
 
 <style scoped>
@@ -153,6 +140,11 @@ const {
   padding-left: 20px;
   margin-left: 10px;
   border-left: 1px solid var(--border);
+}
+
+.events-state {
+  min-height: 180px;
+  justify-content: center;
 }
 
 .event-icon {

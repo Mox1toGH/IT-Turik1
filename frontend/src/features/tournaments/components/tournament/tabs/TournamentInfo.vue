@@ -1,12 +1,5 @@
 <template>
-  <ui-card
-    class="tournament-card"
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
+  <ui-card class="tournament-card" :query="tournamentQuery">
     <template #header>
       <div class="tournament-header">
         <div>
@@ -22,75 +15,77 @@
       </div>
     </template>
 
-    <template #error>
-      <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament info</p>
+    <template #skeleton>
+      <div class="tournament-info">
+        <div class="info-section">
+          <p class="section-label">Name</p>
+          <div class="skeleton-lines">
+            <ui-skeleton variant="rect" width="100%" />
+            <ui-skeleton variant="rect" width="80%" />
+          </div>
+        </div>
+
+        <div class="info-section">
+          <p class="section-label">Description</p>
+          <div class="skeleton-lines">
+            <ui-skeleton variant="rect" width="90%" />
+            <ui-skeleton variant="rect" width="70%" />
+            <ui-skeleton variant="rect" width="80%" />
+          </div>
+        </div>
+
+        <div class="info-section">
+          <p class="section-label">Dates</p>
+          <div class="dates-row">
+            <div class="dates-values">
+              <ui-skeleton variant="rect" width="180px" />
+            </div>
+            <ui-skeleton variant="rect" width="100px" />
+          </div>
+        </div>
+
+        <div class="info-section">
+          <p class="section-label">Limits</p>
+          <div class="limits-row">
+            <ui-skeleton variant="rect" width="100px" />
+            <ui-skeleton variant="rect" width="100px" />
+          </div>
+        </div>
       </div>
     </template>
 
     <div class="tournament-info">
       <div class="info-section">
         <p class="section-label">Name</p>
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <ui-skeleton variant="rect" width="100%" />
-              <ui-skeleton variant="rect" width="80%" />
-            </div>
-          </template>
-
-          <ui-truncate :text="tournament?.name ?? ''" />
-        </ui-skeleton-loader>
+        <ui-truncate :text="tournament?.name ?? ''" />
       </div>
 
       <div class="info-section">
         <p class="section-label">Description</p>
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.4rem">
-              <ui-skeleton variant="rect" width="90%" />
-              <ui-skeleton variant="rect" width="70%" />
-              <ui-skeleton variant="rect" width="80%" />
-            </div>
-          </template>
-
-          <ui-expandable-text :text="tournament?.description ?? ''" :lines="3" />
-        </ui-skeleton-loader>
+        <ui-expandable-text :text="tournament?.description ?? ''" :lines="3" />
       </div>
 
       <div class="info-section">
         <p class="section-label">Dates</p>
         <div class="dates-row">
           <div class="dates-values">
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="180px" />
-              </template>
-
-              <p class="date-value">
-                <span class="date-label">Start</span>
-                {{
-                  tournament?.start_date
-                    ? formatDate(tournament.start_date, { showHours: true })
-                    : '-'
-                }}
-              </p>
-              <p class="date-value">
-                <span class="date-label">End</span>
-                {{
-                  tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
-                }}
-              </p>
-            </ui-skeleton-loader>
+            <p class="date-value">
+              <span class="date-label">Start</span>
+              {{
+                tournament?.start_date
+                  ? formatDate(tournament.start_date, { showHours: true })
+                  : '-'
+              }}
+            </p>
+            <p class="date-value">
+              <span class="date-label">End</span>
+              {{
+                tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
+              }}
+            </p>
           </div>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" />
-            </template>
-
-            <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
-          </ui-skeleton-loader>
+          <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
         </div>
       </div>
 
@@ -98,32 +93,20 @@
         <p class="section-label">Limits</p>
         <div class="limits-row">
           <div class="limit-item">
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-
-              <p class="limit-value">
-                {{
-                  tournament?.min_team_members
-                    ? `${tournament.min_team_members} members`
-                    : 'No minimum'
-                }}
-              </p>
-            </ui-skeleton-loader>
+            <p class="limit-value">
+              {{
+                tournament?.min_team_members
+                  ? `${tournament.min_team_members} members`
+                  : 'No minimum'
+              }}
+            </p>
           </div>
 
           <div class="limit-item">
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-
-              <p class="limit-value">
-                {{ tournament?.max_teams ?? 'No limit' }}
-                <span v-if="tournament?.max_teams">teams</span>
-              </p>
-            </ui-skeleton-loader>
+            <p class="limit-value">
+              {{ tournament?.max_teams ?? 'No limit' }}
+              <span v-if="tournament?.max_teams">teams</span>
+            </p>
           </div>
         </div>
       </div>
@@ -181,13 +164,11 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { computed, ref } from 'vue'
 import { formatDate } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import UiSelect from '@/components/ui/UiSelect'
 import {
@@ -210,8 +191,7 @@ const { showNotification } = useNotification()
 const { data: user } = useGetUserProfile()
 
 const tournamentQuery = useGetTournament(props.tournamentId)
-const { data: tournament, isLoading, isFetching, refetch } = tournamentQuery
-const { status, errorCode, isStale } = useCardState(tournamentQuery)
+const { data: tournament } = tournamentQuery
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {
@@ -367,6 +347,11 @@ function handleJoin() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.skeleton-lines {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .limit-value {

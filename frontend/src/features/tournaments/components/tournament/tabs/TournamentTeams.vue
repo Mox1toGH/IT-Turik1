@@ -1,12 +1,5 @@
 <template>
-  <ui-card
-    class="teams-card"
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
+  <ui-card class="teams-card" :query="activeTeamsQuery" empty-text="No teams registered yet">
     <template #header>
       <div class="teams-header">
         <div class="teams-header-text">
@@ -18,27 +11,18 @@
       </div>
     </template>
 
-    <template #error>
-      <div class="teams-state">
-        <p>Error while fetching tournament teams</p>
-      </div>
+    <template #empty-action>
+      <p class="empty-hint">Teams will appear here once they register for this tournament.</p>
     </template>
 
     <template #skeleton>
-      <div class="teams-body">
+      <div class="skeleton-stack">
         <ui-skeleton variant="rect" height="40px" width="100%" />
-        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem">
-          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
-        </div>
+        <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
       </div>
     </template>
 
-    <div v-if="status === 'empty'" class="teams-state teams-empty">
-      <p class="empty-title">No teams registered yet</p>
-      <p class="empty-hint">Teams will appear here once they register for this tournament.</p>
-    </div>
-
-    <div v-else class="teams-body">
+    <div class="teams-body">
       <div class="teams-search-wrap">
         <SearchIcon class="search-icon" />
         <ui-input
@@ -86,7 +70,6 @@ import { SearchIcon } from 'lucide-vue-next'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import TeamCard from '../TeamCard.vue'
 
 interface Props {
@@ -106,7 +89,6 @@ const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
 const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
-const { status, isFetching, isStale, errorCode, refetch } = useCardState(activeTeamsQuery)
 
 const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()
@@ -198,24 +180,13 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
   padding-left: 2.25rem;
 }
 
-.teams-state {
+.skeleton-stack {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 3rem 1rem;
-  text-align: center;
 }
 
-.teams-empty .empty-title {
-  margin: 0;
-  font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--foreground);
-}
-
-.teams-empty .empty-hint {
+.empty-hint {
   margin: 0;
   font-size: var(--text-sm);
   color: var(--muted-foreground);

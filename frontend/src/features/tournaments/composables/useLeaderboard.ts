@@ -8,6 +8,7 @@ import { customInstance } from '@/lib/apiClient'
 import { queryClient } from '@/lib/queryClient'
 import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
 import { useNotification } from '@/composables/useNotification'
+import { getErrorCode } from '@/composables/useCardState'
 
 export interface LeaderboardRoundColumn {
   id: number
@@ -89,7 +90,9 @@ export function useLeaderboard(tournamentId: MaybeRefOrGetter<number>) {
     data: leaderboard,
     isLoading,
     isError,
+    isFetching,
     error,
+    refetch,
   } = useGetTournamentLeaderboard(id, {
     query: {
       retry: (failureCount: number, queryError: unknown): boolean => {
@@ -157,14 +160,7 @@ export function useLeaderboard(tournamentId: MaybeRefOrGetter<number>) {
     '--visible-round-cols': String(Math.max(visibleRoundCols.value, 1)),
   }))
 
-  const errorMessage = computed<string>(() => {
-    const err = error.value as { _axiosError?: { response?: { status?: number } }; message?: string } | null
-    if (!err) return 'Failed to load leaderboard.'
-    if (err._axiosError?.response?.status === 403) {
-      return 'Leaderboard is not available yet.'
-    }
-    return err.message ?? 'Failed to load leaderboard.'
-  })
+  const errorCode = computed(() => getErrorCode(error.value))
 
   const isLeaderboardNotReady = computed<boolean>(() => {
     const status = getHttpStatus(error.value)
@@ -304,7 +300,9 @@ export function useLeaderboard(tournamentId: MaybeRefOrGetter<number>) {
     tableVars,
     isLoading,
     isError,
-    errorMessage,
+    isFetching,
+    errorCode,
+    refetch,
     isLeaderboardNotReady,
     isExportDisabled,
     getRoundScore,
