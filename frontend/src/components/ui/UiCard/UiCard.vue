@@ -29,7 +29,7 @@
         </slot>
       </div>
 
-      <div v-else-if="status === 'error'" class="card-state">
+      <div v-else-if="status === 'error'" class="card-state card-state-error">
         <div v-if="$slots.error" role="alert"><slot name="error" /></div>
         <p v-else-if="errorCode === 'network' && !isOnline" class="card-muted">
           Waiting for connection…
@@ -186,10 +186,20 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   flex-direction: column;
   gap: 0.5rem;
 }
+
+/* Loading keeps the card's own surface; error and empty are placeholders, so they
+   sit on a soft panel with a dashed outline. */
+.card-state-error,
+.card-empty {
+  padding: 0.75rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+}
 .card-empty {
   align-items: center;
   text-align: center;
-  padding: 1rem 0;
+  padding: 1.25rem 1rem;
 }
 .card-muted {
   margin: 0;

@@ -227,9 +227,19 @@ function badgeStatus(status: RoundResponse['status']) {
   gap: 0.8rem;
 }
 
+/* The state card only carries the placeholder panel: it draws no frame of its own. */
 .rounds-state {
-  min-height: 180px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.rounds-state :deep(.card-empty),
+.rounds-state :deep(.card-state-error) {
+  flex: 1 1 auto;
+  min-height: 220px;
   justify-content: center;
+  padding: 2rem 1rem;
 }
 
 .skeleton-lines {

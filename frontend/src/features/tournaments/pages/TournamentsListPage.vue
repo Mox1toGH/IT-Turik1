@@ -197,7 +197,11 @@ watch(statusFilter, () => {
   gap: 0.5rem;
   justify-items: center;
   text-align: center;
-  padding: 2rem 0;
+  padding: 2rem 1rem;
+  /* Same placeholder panel the cards use for their error and empty states. */
+  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
 }
 
 .card-muted {

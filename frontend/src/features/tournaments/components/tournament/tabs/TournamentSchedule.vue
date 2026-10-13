@@ -151,9 +151,19 @@ const events = computed(() => eventsQuery.data.value ?? [])
   border-left: 1px solid var(--border);
 }
 
+/* The state card only carries the placeholder panel: it draws no frame of its own. */
 .events-state {
-  min-height: 180px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.events-state :deep(.card-empty),
+.events-state :deep(.card-state-error) {
+  flex: 1 1 auto;
+  min-height: 220px;
   justify-content: center;
+  padding: 2rem 1rem;
 }
 
 .event-icon {
