@@ -3,7 +3,7 @@
     {{ criteriaCount > 0 ? `Edit criteria (${criteriaCount})` : 'Add criteria' }}
   </ui-button>
 
-  <ui-modal v-model="isOpen" :maxWidth="'760px'" scrollable @close="closeModal">
+  <ui-modal v-model="isOpen" :maxWidth="'760px'" @close="closeModal">
     <template #title>
       <h2>Add criteria</h2>
     </template>
@@ -139,6 +139,8 @@ function removeCriterion(id: string) {
 .criteria-list {
   display: grid;
   gap: 0;
+  overflow-y: auto;
+  max-height: 200px;
 }
 
 .criteria-card {

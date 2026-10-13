@@ -2,7 +2,6 @@
   <ui-modal
     :modelValue="props.modelValue"
     @update:modelValue="emit('update:modelValue', $event)"
-    scrollable
     maxWidth="1100px"
     @close="handleClose"
   >
