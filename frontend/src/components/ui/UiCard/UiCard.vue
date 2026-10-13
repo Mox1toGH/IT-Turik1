@@ -45,7 +45,9 @@
 
       <div v-else-if="status === 'empty'" class="card-state card-empty">
         <p class="card-muted">{{ emptyText ?? 'Nothing here yet.' }}</p>
-        <slot name="empty-action" />
+        <div v-if="$slots['empty-action']" class="card-empty-action">
+          <slot name="empty-action" />
+        </div>
       </div>
 
       <div v-else :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
@@ -192,6 +194,13 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
 .card-muted {
   margin: 0;
   font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+/* Keeps every "nothing here yet" helper line across the app identical. */
+.card-empty-action :slotted(p) {
+  margin: 0;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 .dimmed > * {

@@ -4,17 +4,9 @@
     description="Assign jury members to evaluate round submissions."
     class="jury-assign-shell"
   >
-    <ui-card
-      :status="status"
-      :is-fetching="isFetching"
-      :is-stale="isStale"
-      :error-code="errorCode"
-      @retry="refetchAll"
-    >
-      <template #error>
-        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-          <p>{{ error?.message || 'Something went wrong' }}</p>
-        </div>
+    <ui-card :query="cardQuery" empty-text="No submissions to evaluate yet">
+      <template #empty-action>
+        <p class="text-sm text-muted">Assignments appear once teams submit to the closed round.</p>
       </template>
 
       <template #header>
@@ -24,7 +16,8 @@
               <ui-skeleton variant="rect" width="150px" />
             </template>
 
-            <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
+            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
+            <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
           </ui-skeleton-loader>
           <div class="header-actions">
             <ui-select
@@ -56,34 +49,7 @@
         </div>
       </template>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="submissions-table">
-            <div class="table-head">
-              <span>Team</span>
-              <span>Submitted On</span>
-              <span>Assigned Jury</span>
-              <span style="text-align: end">Actions</span>
-            </div>
-
-            <div v-for="i in 2" :key="`skeleton-${i}`" class="table-row">
-              <div class="team-cell">
-                <div class="team-avatar">
-                  <ui-skeleton variant="rounded" width="40px" height="40px" />
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; flex: 1">
-                  <ui-skeleton variant="rect" width="100px" />
-                  <ui-skeleton variant="rect" width="140px" />
-                </div>
-              </div>
-
-              <ui-skeleton variant="rect" width="100px" />
-              <ui-skeleton variant="rect" width="100px" />
-              <ui-skeleton variant="rect" width="100px" />
-            </div>
-          </div>
-        </template>
-
+      <template #skeleton>
         <div class="submissions-table">
           <div class="table-head">
             <span>Team</span>
@@ -92,24 +58,45 @@
             <span style="text-align: end">Actions</span>
           </div>
 
-          <p v-if="submissions?.length === 0" class="empty-error">
-            No submissions was submited to this round
-          </p>
-          <jury-assign-row
-            v-else
-            v-for="submission in submissions"
-            :key="submission.id"
-            :submission="submission"
-            v-model:assigned="assignedJury[submission.id]"
-            :jury-options="juryOptions"
-            :is-failed-to-fetch-jury="isFailedToFetchJury"
-            :jury-fetch-error-message="juryFetchError?.message"
-            :is-fetching-jury="isFetchingJury"
-            :team-abbr="teamAbbr"
-            :jury-label="juryLabel"
-          />
+          <div v-for="i in 2" :key="`skeleton-${i}`" class="table-row">
+            <div class="team-cell">
+              <div class="team-avatar">
+                <ui-skeleton variant="rounded" width="40px" height="40px" />
+              </div>
+              <div class="skeleton-lines">
+                <ui-skeleton variant="rect" width="100px" />
+                <ui-skeleton variant="rect" width="140px" />
+              </div>
+            </div>
+
+            <ui-skeleton variant="rect" width="100px" />
+            <ui-skeleton variant="rect" width="100px" />
+            <ui-skeleton variant="rect" width="100px" />
+          </div>
         </div>
-      </ui-skeleton-loader>
+      </template>
+
+      <div class="submissions-table">
+        <div class="table-head">
+          <span>Team</span>
+          <span>Submitted On</span>
+          <span>Assigned Jury</span>
+          <span style="text-align: end">Actions</span>
+        </div>
+
+        <jury-assign-row
+          v-for="submission in submissions"
+          :key="submission.id"
+          :submission="submission"
+          v-model:assigned="assignedJury[submission.id]"
+          :jury-options="juryOptions"
+          :is-failed-to-fetch-jury="isFailedToFetchJury"
+          :jury-fetch-error-message="juryFetchError?.message"
+          :is-fetching-jury="isFetchingJury"
+          :team-abbr="teamAbbr"
+          :jury-label="juryLabel"
+        />
+      </div>
     </ui-card>
   </ui-section>
 </template>
@@ -139,12 +126,7 @@ const {
   noClosedRound,
   isLoadingRound,
   isLoading,
-  status,
-  errorCode,
-  isStale,
-  isFetching,
-  refetchAll,
-  error,
+  cardQuery,
   juryOptions,
   juryFetchError,
   isFetchingJury,
@@ -179,6 +161,10 @@ const {
 
 .jury-assign-shell {
   min-width: 0;
+}
+
+.no-closed-round {
+  font-size: var(--text-lg);
 }
 
 .submissions-table {
@@ -224,6 +210,13 @@ const {
   font-weight: 700;
   color: var(--primary-foreground);
   background: var(--primary);
+}
+
+.skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .jury-select-all {

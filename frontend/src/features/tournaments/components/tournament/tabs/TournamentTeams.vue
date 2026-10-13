@@ -11,10 +11,6 @@
       </div>
     </template>
 
-    <template #empty-action>
-      <p class="empty-hint">Teams will appear here once they register for this tournament.</p>
-    </template>
-
     <template #skeleton>
       <div class="skeleton-stack">
         <ui-skeleton variant="rect" height="40px" width="100%" />
@@ -184,12 +180,6 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.empty-hint {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
 }
 
 @media (max-width: 700px) {

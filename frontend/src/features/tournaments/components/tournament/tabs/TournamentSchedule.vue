@@ -6,16 +6,21 @@
 
   <section class="page-shell">
     <div v-if="status === 'loading'" class="events-list">
-      <ui-card v-for="i in 5" :key="`event-skeleton-${i}`">
-        <div class="event-content">
-          <div class="event-left-side">
-            <ui-skeleton variant="rounded" width="50px" height="50px" />
-            <ui-skeleton variant="rect" width="100px" />
+      <ui-card v-for="i in 5" :key="`event-skeleton-${i}`" class="event-card" status="loading">
+        <template #skeleton>
+          <div class="event-content">
+            <div class="event-left-side">
+              <ui-skeleton variant="rounded" width="50px" height="50px" />
+              <div class="event-info">
+                <ui-skeleton variant="rect" width="140px" />
+                <ui-skeleton variant="rect" width="220px" />
+              </div>
+            </div>
+            <div class="event-right-side">
+              <ui-skeleton variant="rect" width="150px" />
+            </div>
           </div>
-          <div class="event-dates">
-            <ui-skeleton variant="rect" width="150px" />
-          </div>
-        </div>
+        </template>
       </ui-card>
     </div>
 
@@ -23,11 +28,15 @@
       v-else-if="status !== 'data'"
       :query="eventsQuery"
       class="events-state"
-      empty-text="No events for this tournament yet"
-    />
+      empty-text="No events scheduled yet"
+    >
+      <template #empty-action>
+        <p class="text-sm text-muted">Events added to this tournament appear here.</p>
+      </template>
+    </ui-card>
 
     <div v-else class="events-list">
-      <ui-card v-for="event in events" :key="event.title" class="event-card">
+      <ui-card v-for="event in events" :key="event.id" class="event-card">
         <div class="event-content">
           <div class="event-left-side">
             <div class="event-icon">

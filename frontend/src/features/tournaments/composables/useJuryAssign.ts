@@ -25,9 +25,12 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     tournament.value?.rounds.find((round) => round.status === 'submission_closed'),
   )
 
-  const submissionsQuery = useListRoundSubmissions(computed(() => closedRound.value?.id ?? 0), {
-    query: { enabled: computed(() => !!closedRound.value) },
-  })
+  const submissionsQuery = useListRoundSubmissions(
+    computed(() => closedRound.value?.id ?? 0),
+    {
+      query: { enabled: computed(() => !!closedRound.value) },
+    },
+  )
   const {
     data: submissions,
     isLoading: submissionsLoading,
@@ -39,20 +42,17 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     isLoading: isFetchingJury,
     isError: isFailedToFetchJury,
     error: juryFetchError,
-  } = useListAvailableJury(computed(() => closedRound.value?.id ?? 0), undefined, {
-    query: { enabled: computed(() => !!closedRound.value) },
-  })
+  } = useListAvailableJury(
+    computed(() => closedRound.value?.id ?? 0),
+    undefined,
+    {
+      query: { enabled: computed(() => !!closedRound.value) },
+    },
+  )
 
   const noClosedRound = computed<boolean>(() => !!tournament.value && !closedRound.value)
   const isLoadingRound = computed<boolean>(() => tournamentLoading.value)
   const isLoading = computed<boolean>(() => tournamentLoading.value || submissionsLoading.value)
-  const cardQuery = computed(() => ({
-    isPending: tournamentQuery.isPending.value || submissionsQuery.isPending.value,
-    isError: noClosedRound.value || tournamentQuery.isError.value || submissionsQuery.isError.value,
-    data: noClosedRound.value ? undefined : (submissions.value ?? tournament.value),
-    error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
-  }))
-  const { status, errorCode, isStale } = useCardState(cardQuery)
   const isFetching = computed<boolean>(
     () => tournamentQuery.isFetching.value || submissionsQuery.isFetching.value,
   )
@@ -60,6 +60,19 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     void tournamentQuery.refetch()
     void submissionsQuery.refetch()
   }
+  // A disabled query stays `pending` forever, so only the round that is actually
+  // being fetched may keep the card in its loading state; "no closed round yet" is
+  // an empty state, not a failure.
+  const cardQuery = computed(() => ({
+    isPending:
+      tournamentQuery.isPending.value || (!!closedRound.value && submissionsQuery.isPending.value),
+    isError: tournamentQuery.isError.value || submissionsQuery.isError.value,
+    data: noClosedRound.value ? [] : submissions.value,
+    error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
+    isFetching: isFetching.value,
+    refetch: refetchAll,
+  }))
+  const { status, errorCode, isStale } = useCardState(cardQuery)
   const error = computed(() => {
     if (noClosedRound.value) {
       return { message: 'No finished round available' }
@@ -147,6 +160,7 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     noClosedRound,
     isLoadingRound,
     isLoading,
+    cardQuery,
     status,
     errorCode,
     isStale,

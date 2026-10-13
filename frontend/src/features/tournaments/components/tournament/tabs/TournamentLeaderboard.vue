@@ -67,6 +67,10 @@
       <leaderboard-skeleton />
     </template>
 
+    <template #empty-action>
+      <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
+    </template>
+
     <leaderboard-table
       :rankings="rankings"
       :round-columns="roundColumns"

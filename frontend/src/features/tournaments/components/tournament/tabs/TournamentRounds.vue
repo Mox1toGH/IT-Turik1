@@ -6,7 +6,7 @@
 
   <section>
     <div v-if="status === 'loading'" class="rounds-list">
-      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card">
+      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card" status="loading">
         <template #header>
           <div class="round-header">
             <ui-skeleton variant="rect" width="180px" height="24px" />
@@ -14,14 +14,16 @@
           </div>
         </template>
 
-        <div class="skeleton-lines">
-          <ui-skeleton variant="rect" width="220px" />
-          <ui-skeleton variant="rect" width="220px" />
-        </div>
+        <template #skeleton>
+          <div class="skeleton-lines">
+            <ui-skeleton variant="rect" width="220px" />
+            <ui-skeleton variant="rect" width="220px" />
+          </div>
 
-        <div class="round-actions">
-          <ui-skeleton variant="rect" width="110px" height="36px" />
-        </div>
+          <div class="round-actions">
+            <ui-skeleton variant="rect" width="110px" height="36px" />
+          </div>
+        </template>
       </ui-card>
     </div>
 
@@ -29,8 +31,12 @@
       v-else-if="status !== 'data'"
       :query="roundsQuery"
       class="rounds-state"
-      empty-text="No rounds found"
-    />
+      empty-text="No rounds added yet"
+    >
+      <template #empty-action>
+        <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
+      </template>
+    </ui-card>
 
     <div v-else class="rounds-list">
       <ui-card v-for="round in rounds" :key="round.id" class="round-card">

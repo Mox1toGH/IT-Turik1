@@ -3,9 +3,12 @@
     :status="cardStatus"
     :error-code="errorCode"
     :is-fetching="isFetching"
-    empty-text="No submissions found"
+    empty-text="No submissions yet"
     @retry="refetch"
   >
+    <template #empty-action>
+      <p class="text-sm text-muted">Submissions you send for a round appear here.</p>
+    </template>
     <template #header>
       <div class="submissions-header">
         <h2>My submissions</h2>
