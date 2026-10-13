@@ -29,8 +29,8 @@
     </template>
 
     <div class="tournament-info">
-      <div class="info-row">
-        <p class="text-muted">Name</p>
+      <div class="info-section">
+        <p class="section-label">Name</p>
         <ui-skeleton-loader :loading="isLoading">
           <template #skeleton>
             <div style="display: flex; flex-direction: column; gap: 0.3rem">
@@ -43,9 +43,8 @@
         </ui-skeleton-loader>
       </div>
 
-      <div class="info-row">
-        <p class="text-muted">Description</p>
-
+      <div class="info-section">
+        <p class="section-label">Description</p>
         <ui-skeleton-loader :loading="isLoading">
           <template #skeleton>
             <div style="display: flex; flex-direction: column; gap: 0.4rem">
@@ -59,30 +58,30 @@
         </ui-skeleton-loader>
       </div>
 
-      <div class="info-row">
+      <div class="info-section">
+        <p class="section-label">Dates</p>
         <div class="dates-row">
-          <div>
-            <p class="text-muted">Start / end date</p>
-            <div class="">
-              <ui-skeleton-loader :loading="isLoading">
-                <template #skeleton>
-                  <ui-skeleton variant="rect" width="180px" />
-                </template>
+          <div class="dates-values">
+            <ui-skeleton-loader :loading="isLoading">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="180px" />
+              </template>
 
-                <p>
-                  {{
-                    tournament?.start_date
-                      ? formatDate(tournament.start_date, { showHours: true })
-                      : '-'
-                  }}
-                </p>
-                <p>
-                  {{
-                    tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
-                  }}
-                </p>
-              </ui-skeleton-loader>
-            </div>
+              <p class="date-value">
+                <span class="date-label">Start</span>
+                {{
+                  tournament?.start_date
+                    ? formatDate(tournament.start_date, { showHours: true })
+                    : '-'
+                }}
+              </p>
+              <p class="date-value">
+                <span class="date-label">End</span>
+                {{
+                  tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
+                }}
+              </p>
+            </ui-skeleton-loader>
           </div>
 
           <ui-skeleton-loader :loading="isLoading">
@@ -95,36 +94,37 @@
         </div>
       </div>
 
-      <div class="info-row limits-row">
-        <div>
-          <p class="text-muted">Minimum team members</p>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" />
-            </template>
+      <div class="info-section">
+        <p class="section-label">Limits</p>
+        <div class="limits-row">
+          <div class="limit-item">
+            <ui-skeleton-loader :loading="isLoading">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="100px" />
+              </template>
 
-            <p>
-              {{
-                tournament?.min_team_members
-                  ? `${tournament.min_team_members} members`
-                  : 'No minimum'
-              }}
-            </p>
-          </ui-skeleton-loader>
-        </div>
+              <p class="limit-value">
+                {{
+                  tournament?.min_team_members
+                    ? `${tournament.min_team_members} members`
+                    : 'No minimum'
+                }}
+              </p>
+            </ui-skeleton-loader>
+          </div>
 
-        <div>
-          <p class="text-muted">Maximum teams</p>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" />
-            </template>
+          <div class="limit-item">
+            <ui-skeleton-loader :loading="isLoading">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="100px" />
+              </template>
 
-            <p>
-              {{ tournament?.max_teams ?? 'No limit' }}
-              <span v-if="tournament?.max_teams">teams</span>
-            </p>
-          </ui-skeleton-loader>
+              <p class="limit-value">
+                {{ tournament?.max_teams ?? 'No limit' }}
+                <span v-if="tournament?.max_teams">teams</span>
+              </p>
+            </ui-skeleton-loader>
+          </div>
         </div>
       </div>
     </div>
@@ -290,6 +290,9 @@ function handleJoin() {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
 }
 
 .tournament-header h2 {
@@ -308,25 +311,28 @@ function handleJoin() {
   flex-direction: column;
 }
 
-.info-row {
-  padding: 0.8rem 0;
-  border-top: 1px solid var(--border);
+.info-section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.info-row:first-child {
-  border-top: 0;
-  padding-top: 0;
+.info-section:first-child {
+  padding-top: 0.5rem;
 }
 
-.info-row p {
-  margin: 0;
+.info-section:last-child {
+  border-bottom: 0;
+  padding-bottom: 0.5rem;
 }
 
-.info-row > .text-muted {
-  margin-bottom: 0.45rem;
+.section-label {
+  margin: 0 0 0.5rem;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
 }
 
 .dates-row {
@@ -336,28 +342,45 @@ function handleJoin() {
   gap: 1rem;
 }
 
+.dates-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.date-value {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.date-label {
+  display: inline-block;
+  min-width: 2.5rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
 .limits-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
-.limits-row p {
+.limit-value {
   margin: 0;
-}
-
-.limits-row .text-muted {
-  margin-bottom: 0.45rem;
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--foreground);
 }
 
 .tournament-action {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.8rem;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
   border-top: 1px solid var(--border);
 }
 

@@ -16,11 +16,12 @@
     >
       Delete all
     </ui-button>
-    <ui-button size="lg" @click="emit('open-settings')">Settings</ui-button>
+    <ui-button size="lg" @click="goToSettings">Settings</ui-button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 
 interface Props {
@@ -35,8 +36,13 @@ defineProps<Props>()
 const emit = defineEmits<{
   (e: 'mark-all-read'): void
   (e: 'delete-all'): void
-  (e: 'open-settings'): void
 }>()
+
+const router = useRouter()
+
+function goToSettings() {
+  router.push('/profile/notifications/settings')
+}
 </script>
 
 <style scoped>

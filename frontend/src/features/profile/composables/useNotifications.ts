@@ -92,6 +92,28 @@ export function formatNotificationDate(dateStr: string): string {
   }).format(date)
 }
 
+export function formatNotificationEventType(eventType: string): string {
+  return eventType
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+const NOTIFICATION_CATEGORY_PREFIXES: { prefix: string; label: string }[] = [
+  { prefix: 'team_', label: 'Teams' },
+  { prefix: 'tournament_', label: 'Tournaments' },
+  { prefix: 'round_', label: 'Rounds' },
+  { prefix: 'submission_', label: 'Submissions' },
+  { prefix: 'jury_', label: 'Evaluation' },
+  { prefix: 'evaluation_', label: 'Evaluation' },
+  { prefix: 'news_', label: 'News' },
+]
+
+export function getNotificationCategory(eventType: string): string {
+  const match = NOTIFICATION_CATEGORY_PREFIXES.find(({ prefix }) => eventType.startsWith(prefix))
+  return match?.label ?? 'Updates'
+}
+
 export interface UseNotificationsOptions {
   page?: Ref<number> | ComputedRef<number>
 }

@@ -7,18 +7,21 @@
         :title="team.name"
         :class="[{ 'text-muted': !team.is_active }]"
       >
-        {{ truncateText(team.name, 15) }}
+        {{ team.name }}
       </RouterLink>
     </div>
 
     <div class="team-action-group">
       <template v-if="!isDisqualified">
-        <ui-badge variant="primary">{{ team.members_count }} members</ui-badge>
+        <ui-badge variant="primary">
+          {{ team.members_count }} {{ team.members_count === 1 ? 'member' : 'members' }}
+        </ui-badge>
         <ui-button
           v-if="isAdmin"
           size="sm"
           variant="danger"
           :disabled="isUpdating"
+          aria-label="Disqualify team"
           @click.prevent.stop="openDisqualifyModal(team)"
         >
           <TeamDeleteIcon />
@@ -33,6 +36,7 @@
           size="sm"
           variant="default"
           :disabled="isUpdating"
+          aria-label="Reactivate team"
           @click.prevent.stop="openReactivateModal(team)"
         >
           <AddTeamIcon />
@@ -153,25 +157,31 @@ function handleConfirmAction() {
 .team-info {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   min-width: 0;
+  overflow: hidden;
 }
 
-.team-info p {
-  margin: 0;
-  overflow-wrap: anywhere;
+.team-info a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.team-info a:hover {
+  text-decoration: underline;
 }
 
 .team-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.8rem;
-  margin-top: 0.55rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
   color: var(--foreground);
   text-decoration: none;
 }
@@ -180,11 +190,6 @@ function handleConfirmAction() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.team-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 </style>

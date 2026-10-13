@@ -45,7 +45,9 @@
               </div>
 
               <div class="event-info">
-                <p class="event-title">{{ event.title }}</p>
+                <p class="event-title break-anywhere" :title="event.title">
+                  {{ truncateText(event.title, 30) }}
+                </p>
                 <ui-expandable-text :text="event.description ?? '-'" :lines="2" />
               </div>
             </div>
@@ -99,6 +101,7 @@ import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
+import { truncateText } from '@/lib/utils.ts'
 
 interface Props {
   tournamentId: number
@@ -197,7 +200,8 @@ const {
 
 .event-actions {
   margin-bottom: 0;
-  padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 7px;
   border-top: 1px solid var(--border);
 }
 </style>

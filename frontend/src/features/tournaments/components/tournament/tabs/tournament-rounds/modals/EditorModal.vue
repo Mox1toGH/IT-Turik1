@@ -3,12 +3,7 @@
     {{ hasValue ? editTextComputed : addTextComputed }}
   </ui-button>
 
-  <ui-modal
-    v-model="isOpen"
-    :maxWidth="props.maxWidth"
-    :close-on-backdrop="false"
-    @close="handleClose"
-  >
+  <ui-modal v-model="isOpen" :maxWidth="props.maxWidth" @close="handleClose">
     <template #title>
       <h2>{{ title }}</h2>
     </template>

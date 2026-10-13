@@ -1,12 +1,64 @@
 <template>
+  <ui-card
+    v-if="layout === 'list'"
+    :class="['notification-card', { 'notification-card--unread': !notification.is_read }]"
+    @click="onListCardClick"
+  >
+    <div class="notification-card__body">
+      <div class="notification-card__meta">
+        <span class="notification-card__category">{{
+          getNotificationCategory(notification.event_type)
+        }}</span>
+        <span class="notification-card__meta-sep" aria-hidden="true">·</span>
+        <time class="notification-card__date">{{
+          formatNotificationDate(notification.created_at)
+        }}</time>
+        <span v-if="!notification.is_read" class="notification-card__pill">New</span>
+      </div>
+
+      <h3 class="notification-card__title">{{ notification.title }}</h3>
+
+      <notification-message
+        class="notification-card__message"
+        :message="notification.message"
+        :expandable="expandable"
+      />
+
+      <div class="notification-card__actions">
+        <ui-button
+          v-if="getNotificationRedirectUrl(notification)"
+          size="sm"
+          variant="secondary"
+          type="button"
+          @click.stop="emit('redirect', notification)"
+        >
+          <external-link-icon class="action-icon" />
+          Open
+        </ui-button>
+        <ui-button
+          size="sm"
+          variant="ghost"
+          type="button"
+          @click.stop="emit('delete', notification.id)"
+        >
+          <trash-icon class="action-icon" />
+          Delete
+        </ui-button>
+      </div>
+    </div>
+  </ui-card>
+
   <div
+    v-else
     :class="['notification-item', { 'is-unread': !notification.is_read }]"
     @click="!notification.is_read && emit('mark-read', notification.id)"
   >
     <div class="notification-header">
       <div class="notification-title-group">
         <span v-if="!notification.is_read" class="unread-dot"></span>
-        <ui-badge v-if="showEventBadge" variant="gray">{{ notification.event_type }}</ui-badge>
+        <ui-badge v-if="showEventBadge" variant="gray">{{
+          formatNotificationEventType(notification.event_type)
+        }}</ui-badge>
         <h4 class="notification-title">
           <ui-truncate :text="notification.title" />
         </h4>
@@ -33,80 +85,28 @@
       </div>
     </div>
     <div class="notification-body">
-      <ui-expandable-text v-if="expandable" :lines="2">
-        <p class="notification-message">
-          <template v-for="(part, index) in parseNotificationMessage(notification.message)" :key="index">
-            <a
-              v-if="part.type === 'user'"
-              :href="`/users/${part.id}`"
-              class="user-link"
-              @click.stop
-            >
-              {{ part.text }}
-            </a>
-            <router-link
-              v-else-if="part.type === 'team'"
-              :to="`/teams/${part.id}`"
-              class="user-link"
-              @click.stop
-            >
-              {{ part.text }}
-            </router-link>
-            <router-link
-              v-else-if="part.type === 'news'"
-              :to="`/news#news-${part.id}`"
-              class="user-link"
-              @click.stop
-            >
-              {{ part.text }}
-            </router-link>
-            <span v-else>{{ part.text }}</span>
-          </template>
-        </p>
-      </ui-expandable-text>
-      <p v-else class="notification-message notification-message--clamp">
-        <template v-for="(part, index) in parseNotificationMessage(notification.message)" :key="index">
-          <a
-            v-if="part.type === 'user'"
-            :href="`/users/${part.id}`"
-            class="user-link"
-            @click.stop
-          >
-            {{ part.text }}
-          </a>
-          <router-link
-            v-else-if="part.type === 'team'"
-            :to="`/teams/${part.id}`"
-            class="user-link"
-            @click.stop
-          >
-            {{ part.text }}
-          </router-link>
-          <router-link
-            v-else-if="part.type === 'news'"
-            :to="`/news#news-${part.id}`"
-            class="user-link"
-            @click.stop
-          >
-            {{ part.text }}
-          </router-link>
-          <span v-else>{{ part.text }}</span>
-        </template>
-      </p>
+      <notification-message
+        :message="notification.message"
+        :expandable="expandable"
+        clamp
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import UiBadge from '@/components/ui/UiBadge'
-import UiExpandableText from '@/components/ui/UiExpandableText'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import UiTruncate from '@/components/ui/UiTruncate'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
+import NotificationMessage from './NotificationMessage.vue'
 import {
   formatNotificationDate,
+  formatNotificationEventType,
+  getNotificationCategory,
   getNotificationRedirectUrl,
-  parseNotificationMessage,
 } from '../../composables/useNotifications'
 import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 
@@ -114,11 +114,13 @@ interface Props {
   notification: NotificationResponse
   showEventBadge?: boolean
   expandable?: boolean
+  layout?: 'compact' | 'list'
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   showEventBadge: false,
   expandable: false,
+  layout: 'compact',
 })
 
 const emit = defineEmits<{
@@ -126,9 +128,111 @@ const emit = defineEmits<{
   (e: 'delete', id: number): void
   (e: 'redirect', notification: NotificationResponse): void
 }>()
+
+function onListCardClick(): void {
+  if (props.layout !== 'list' || props.notification.is_read) return
+  emit('mark-read', props.notification.id)
+}
 </script>
 
 <style scoped>
+.notification-card {
+  padding: 0;
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.notification-card :deep(.card-body) {
+  gap: 0;
+}
+
+.notification-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.notification-card--unread {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: color-mix(in srgb, var(--primary) 5%, var(--card));
+  cursor: pointer;
+}
+
+.notification-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem 1.2rem 1.05rem;
+}
+
+.notification-card__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  color: var(--muted-foreground);
+}
+
+.notification-card__category {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.notification-card__meta-sep {
+  opacity: 0.65;
+}
+
+.notification-card__date {
+  font-weight: 500;
+}
+
+.notification-card__pill {
+  margin-left: auto;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.notification-card__title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line-height);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.notification-card__message {
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.notification-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.action-icon {
+  width: 14px;
+  height: 14px;
+}
+
 .notification-item {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
@@ -229,31 +333,11 @@ const emit = defineEmits<{
   margin-left: 0.5rem;
 }
 
-.notification-message {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.notification-message--clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.user-link {
-  color: var(--primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.user-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 @media (max-width: 760px) {
+  .notification-card__pill {
+    margin-left: 0;
+  }
+
   .notification-header {
     flex-direction: column;
     align-items: flex-start;

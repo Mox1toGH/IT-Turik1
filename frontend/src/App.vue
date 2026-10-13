@@ -88,7 +88,7 @@ applyTheme()
   --nav-offset: 76px;
   position: relative;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   padding-top: var(--nav-offset);
 }
 

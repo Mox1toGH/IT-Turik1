@@ -61,6 +61,7 @@
         </div>
 
         <ui-pagination
+          class="tournaments-pagination"
           v-if="(tournaments?.total ?? 0) > pageSize"
           v-model="currentPage"
           :total-items="tournaments?.total ?? 0"
@@ -145,6 +146,10 @@ watch(statusFilter, () => {
   display: grid;
   gap: 1rem;
   min-width: 0;
+}
+
+.tournaments-pagination {
+  margin-top: 1rem;
 }
 
 .tournaments-grid {

@@ -1,42 +1,60 @@
 <template>
-  <ui-section
-    title="Teams info"
-    description="Registered and disqualified teams."
+  <ui-card
+    class="teams-card"
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
   >
-    <template #actions>
-      <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
+    <template #header>
+      <div class="teams-header">
+        <div class="teams-header-text">
+          <p class="section-eyebrow">Teams</p>
+          <h2 class="text-2xl">Teams info</h2>
+          <p class="section-subtitle text-base">Registered and disqualified teams.</p>
+        </div>
+        <span class="count-pill">{{ activeTeams?.length ?? 0 }} active</span>
+      </div>
     </template>
 
-    <div
-      v-if="status === 'error'"
-      style="display: flex; height: 300px; justify-content: center; align-items: center"
-    >
-      <p>Error while fetching tournament teams</p>
+    <template #error>
+      <div class="teams-state">
+        <p>Error while fetching tournament teams</p>
+      </div>
+    </template>
+
+    <template #skeleton>
+      <div class="teams-body">
+        <ui-skeleton variant="rect" height="40px" width="100%" />
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem">
+          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
+        </div>
+      </div>
+    </template>
+
+    <div v-if="status === 'empty'" class="teams-state teams-empty">
+      <p class="empty-title">No teams registered yet</p>
+      <p class="empty-hint">Teams will appear here once they register for this tournament.</p>
     </div>
 
-    <ui-skeleton-loader v-else-if="status === 'loading'" :loading="true">
-      <template #skeleton>
-        <div style="display: flex; flex-direction: column; gap: 0.4rem">
-          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="48px" width="100%" />
-        </div>
-      </template>
-    </ui-skeleton-loader>
-
-    <p v-else-if="status === 'empty'" class="card-muted">No teams registered yet</p>
-
-    <div v-else>
-      <ui-input
-        v-model="search"
-        placeholder="Search team"
-        class="team-search"
-        :disabled="isActiveTeamsLoading"
-      />
+    <div v-else class="teams-body">
+      <div class="teams-search-wrap">
+        <SearchIcon class="search-icon" />
+        <ui-input
+          v-model="search"
+          placeholder="Search teams..."
+          class="team-search"
+          :disabled="isActiveTeamsLoading"
+        />
+      </div>
 
       <TournamentTeamSection
         sectionType="active"
         :teams="activeTeams"
         :loading="isActiveTeamsLoading"
         :search="search"
+        @clear-search="search = ''"
       >
         <template #default="{ team }">
           <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
@@ -49,21 +67,22 @@
         :teams="disqualifiedTeams"
         :loading="isDisqualifiedTeamsLoading"
         :search="search"
+        @clear-search="search = ''"
       >
         <template #default="{ team }">
           <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
         </template>
       </TournamentTeamSection>
     </div>
-  </ui-section>
+  </ui-card>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
-import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import { SearchIcon } from 'lucide-vue-next'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -87,7 +106,7 @@ const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
 const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
-const { status } = useCardState(activeTeamsQuery)
+const { status, isFetching, isStale, errorCode, refetch } = useCardState(activeTeamsQuery)
 
 const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()
@@ -95,48 +114,116 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 </script>
 
 <style scoped>
+.teams-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.teams-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.teams-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.teams-header-text h2 {
+  margin: 0.25rem 0 0.25rem;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.teams-header-text .section-subtitle {
+  margin: 0;
+}
+
+.section-eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
 .count-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 0.35rem 0.8rem;
+  min-height: 32px;
+  padding: 0.35rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--muted-foreground);
   white-space: nowrap;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.teams-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0;
+}
+
+.teams-search-wrap {
+  position: relative;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .team-search {
   width: 100%;
-  margin-bottom: 0.9rem;
+  padding-left: 2.25rem;
 }
 
-.card-muted {
+.teams-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.teams-empty .empty-title {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.teams-empty .empty-hint {
+  margin: 0;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 
-.label-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.team-row {
-  display: flex;
-  flex-direction: column;
-  border-bottom: 1px solid var(--border);
-}
-
 @media (max-width: 700px) {
-  .team-item {
-    align-items: flex-start;
+  .teams-header {
     flex-direction: column;
-  }
-
-  .team-action-group {
-    flex-wrap: wrap;
   }
 }
 </style>

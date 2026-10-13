@@ -43,7 +43,11 @@
             No teams to discover. Available teams will show up here when they can be joined.
           </p>
           <div v-else class="team-grid">
-            <ui-card v-for="team in otherTeamsPageItems" :key="`other-${team.id}`" class="team-item">
+            <ui-card
+              v-for="team in otherTeamsPageItems"
+              :key="`other-${team.id}`"
+              class="team-item"
+            >
               <div class="team-body">
                 <div class="team-meta">
                   <ui-truncate :text="team.name" class="team-title" />
@@ -79,6 +83,7 @@
         </ui-skeleton-loader>
 
         <ui-pagination
+          class="teams-pagination"
           v-if="otherPages > 1"
           v-model="otherPage"
           :total-items="otherTeams?.length ?? 0"
@@ -176,6 +181,10 @@ const sendJoinRequest = (teamId: number) => {
 .teams-body {
   display: grid;
   gap: 1rem;
+}
+
+.teams-pagination {
+  margin-top: 1rem;
 }
 
 .team-grid {

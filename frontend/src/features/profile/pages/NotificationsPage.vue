@@ -22,14 +22,13 @@
           :is-deleting-all="notifications.isDeletingAll.value"
           @mark-all-read="notifications.handleMarkAllRead"
           @delete-all="notifications.requestDeleteAllConfirm"
-          @open-settings="isSettingsModalOpen = true"
+          @open-settings="router.push('/profile/notifications/settings')"
         />
       </header>
 
       <div class="notifications-rule" aria-hidden="true"></div>
 
-      <ui-section aria-label="Notifications list">
-        <notifications-list
+      <notifications-list
           :items="notifications.notificationsData.value?.items ?? []"
           :is-loading="notifications.isLoading.value"
           :error="notifications.error.value"
@@ -40,11 +39,8 @@
           @redirect="handleRedirect"
           @prev="prevPage"
           @next="nextPage"
-        />
-      </ui-section>
+      />
     </section>
-
-    <notification-settings-modal v-model:is-open="isSettingsModalOpen" />
 
     <ui-modal
       v-model="notifications.isConfirmModalOpen.value"
@@ -75,16 +71,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
-import UiSection from '@/components/ui/UiSection'
-import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal.vue'
 import NotificationsFilters from '../components/notifications/NotificationsFilters.vue'
 import NotificationsList from '../components/notifications/NotificationsList.vue'
 import { useNotifications } from '../composables/useNotifications'
 import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 
-const isSettingsModalOpen = ref(false)
+const router = useRouter()
 const page = ref(1)
 
 const notifications = useNotifications({ page })
