@@ -144,14 +144,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiNumberInput from '@/components/ui/UiNumberInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiSelect from '@/components/ui/UiSelect'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiBadge from '@/components/ui/UiBadge'
 import {
   useGenerateRoleActivationCodes,
   useListRoleActivationCodes,

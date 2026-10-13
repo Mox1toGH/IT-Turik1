@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="info-card quick-card" variant="form" :is-error="isLoadingUserError">
+  <ui-card class="info-card quick-card" :status="status" :error-code="errorCode">
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch profile info</p>
@@ -74,19 +74,21 @@
 
 <script setup lang="ts">
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import {
   useGetCurrentTask,
   useListMyTeamSubmissions,
   useListTournaments,
 } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import { computed } from 'vue'
 
 const props = defineProps<{
   user?: UserResponse
-  isLoadingUserError: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
   isLoadingUser: boolean
 }>()
 

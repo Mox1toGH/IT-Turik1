@@ -435,7 +435,7 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
 
 @router.patch(
     '/{int:pk}/banner',
-    operation_id='teamBannerPartialUpdate',
+    operation_id='teamBannerUpdate',
     url_name='team_banner',
     response={200: TeamBannerResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )

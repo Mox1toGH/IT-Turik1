@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiModal from '@/components/ui/UiModal'
 import ProfileDetailsForm from './ProfileDetailsForm.vue'
 import PasswordChangeForm from './PasswordChangeForm.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'

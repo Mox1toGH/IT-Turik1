@@ -135,19 +135,12 @@
   --pm-link: #7eb8d4;
 }
 
-* {
-  box-sizing: border-box;
-  border-color: var(--border);
-  outline-color: var(--ring);
-}
-
 html,
 body {
   min-height: 100%;
 }
 
 body {
-  margin: 0;
   font-family: var(--font-body);
   color: var(--foreground);
   background: var(--page-background);

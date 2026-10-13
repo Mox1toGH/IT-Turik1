@@ -123,8 +123,8 @@ import BellIcon from '@/icons/BellIcon.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 
 import TrashIcon from '@/icons/TrashIcon.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import {
   useDeleteAllNotifications,
   useDeleteNotification,
@@ -257,12 +257,6 @@ const getRedirectUrl = (notification: NotificationResponse) => {
   }
   if (type === 'jury_assignment_received') {
     return '/evaluation'
-  }
-  if (type === 'shop_order_status_changed') {
-    return '/shop/orders'
-  }
-  if (type === 'points_balance_changed') {
-    return '/profile/transaction-history'
   }
   return null
 }

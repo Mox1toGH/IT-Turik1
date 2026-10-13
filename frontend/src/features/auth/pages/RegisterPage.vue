@@ -18,7 +18,7 @@
     <div class="auth-rule" aria-hidden="true"></div>
 
     <div class="auth-layout">
-      <ui-card variant="panel" class="register-card">
+      <ui-card class="register-card">
         <template #header>
           <div class="panel-header">
             <span class="step-marker">01</span>
@@ -91,11 +91,11 @@
           </div>
 
           <label class="form-item" v-if="isRestrictedRole">
-            <p class="form-label full-width">Redeem code</p>
+            <p class="form-label full-width">Activation code</p>
             <ui-input
-              v-model="form.fields.value.redeem_code"
-              @blur="form.validateField('redeem_code')"
-              :is-invalid="!!form.errors.value.redeem_code"
+              v-model="form.fields.value.activation_code"
+              @blur="form.validateField('activation_code')"
+              :is-invalid="!!form.errors.value.activation_code"
               placeholder="Enter one-time activation code"
               required
             />
@@ -171,7 +171,7 @@
       </ui-card>
 
       <aside class="summary-panel" aria-label="Registration summary">
-        <ui-card variant="stat" class="summary-stat">
+        <ui-card class="summary-stat">
           <strong>{{ isRestrictedRole ? 'Code' : 'Open' }}</strong>
           <span>{{ isRestrictedRole ? 'Invite required' : 'No invite needed' }}</span>
         </ui-card>
@@ -206,12 +206,12 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
+import UiPasswordField from '@/components/ui/UiPasswordField'
 import PhoneField from '@/components/shared/PhoneField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
+import UiSelect from '@/components/ui/UiSelect'
 import { useNotification } from '@/composables/useNotification'
 import { useUserStore } from '@/stores/user'
 import { useForm } from '@/composables/useForm'
@@ -226,7 +226,7 @@ interface Form {
   email: string
   password: string
   role: UserRole
-  redeem_code: string
+  activation_code: string
   phone: string
   city: string
 }
@@ -236,7 +236,7 @@ const form = useForm<Form>(RegisterSchema, {
   email: '',
   password: '',
   role: 'team',
-  redeem_code: '',
+  activation_code: '',
   full_name: '',
   phone: '',
   city: '',
@@ -264,7 +264,7 @@ watch(
   () => form.fields.value.role,
   (newRole) => {
     if (!restrictedRoles.includes(newRole)) {
-      form.fields.value.redeem_code = ''
+      form.fields.value.activation_code = ''
     }
   },
 )
@@ -281,8 +281,8 @@ function handleRegister() {
     { data: form.fields.value },
     {
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')
@@ -295,7 +295,6 @@ function handleRegister() {
 <style scoped>
 .auth-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .auth-hero {
@@ -409,7 +408,14 @@ function handleRegister() {
 }
 
 .summary-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .summary-card.card {

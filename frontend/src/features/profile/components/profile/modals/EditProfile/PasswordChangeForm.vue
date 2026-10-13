@@ -1,6 +1,6 @@
 <template>
   <form class="password-form" @submit.prevent="handleSubmit">
-    <ui-card variant="form" class="form-panel">
+    <ui-card class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>
@@ -51,7 +51,7 @@
         </small>
       </label>
 
-      <ui-card variant="inset" class="reset-hint">
+      <ui-card class="reset-hint">
         <span>Forgot your current password?</span>
         <ui-button type="button" size="sm" :disabled="isSendingReset" @click="sendResetEmail">
           <LoadingIcon v-if="isSendingReset" />
@@ -73,9 +73,9 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiPasswordField from '@/components/ui/UiPasswordField'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
@@ -124,8 +124,8 @@ const handleSubmit = () => {
         emit('saved')
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof PasswordForm, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
       },
     },

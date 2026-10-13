@@ -160,11 +160,6 @@ def get_notification_settings(request):
     )
 
 
-@router.put('/settings', operation_id='updateNotificationSettings', url_name="notification-settings", response={200: NotificationSettingsResponse, 401: ErrorResponse})
-def update_notification_settings(request):
-    return get_notification_settings(request)
-
-
 @router.post('/settings/config/update', operation_id='updateNotificationConfig', url_name="notification-settings-config-update", response={200: DetailResponse, 401: ErrorResponse, 404: ErrorResponse})
 def update_notification_config(request, payload: NotificationConfigUpdateRequest):
     config = get_object_or_404(NotificationConfig, user=request.auth, event_type=payload.event_type)

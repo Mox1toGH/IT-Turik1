@@ -35,6 +35,37 @@ class ManualJuryAssignmentApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(JuryAssignment.objects.filter(submission__round=self.round_obj).count(), 4)
 
+    def test_jury_can_list_own_assignments(self):
+        own_assignment = JuryAssignment.objects.create(submission=self.submission1, jury=self.jury1)
+        JuryAssignment.objects.create(submission=self.submission2, jury=self.jury2)
+        authenticate(self.client, self.jury1)
+
+        response = self.client.get(reverse('ninja-api:jury-assignments'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item['id'] for item in response.json()['items']], [own_assignment.id])
+
+    def test_jury_can_create_evaluation_with_typed_scores(self):
+        assignment = JuryAssignment.objects.create(submission=self.submission1, jury=self.jury1)
+        authenticate(self.client, self.jury1)
+        payload = {
+            'tournament_id': self.round_obj.tournament_id,
+            'assignment': assignment.id,
+            'scores': [{'criterion_id': 'backend', 'score': 8}],
+            'comment': 'Good work',
+        }
+
+        response = self.client.post(
+            reverse('ninja-api:jury_evaluate_create'),
+            payload,
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json()['scores'], [
+            {'criterion_id': 'backend', 'criterion_name': 'Backend', 'score': 8},
+        ])
+
     def test_assign_jury_requires_full_submission_coverage(self):
         payload = [{'submission': self.submission1.id, 'jury': [self.jury1.id]}]
         authenticate(self.client, self.admin)

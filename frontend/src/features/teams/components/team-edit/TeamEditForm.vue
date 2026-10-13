@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="panel form-panel" variant="form">
+  <ui-card class="panel form-panel">
     <template #header>
       <div class="panel-header">
         <span class="step-marker">01</span>
@@ -135,11 +135,11 @@
         </label>
       </section>
 
-      <ui-card class="form-actions" variant="actions">
+      <ui-card class="form-actions">
         <ui-button
           type="submit"
           size="lg"
-          :disabled="isSavingChanges || props.loading || props.isError"
+          :disabled="isSavingChanges || props.loading || props.status === 'error'"
         >
           <loading-icon v-if="isSavingChanges" />
           Save changes
@@ -158,25 +158,26 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiBadge from '@/components/ui/UiBadge'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
 import { useUpdateTeam } from '@/api/teams/teams'
+import type { CardStatus } from '@/composables/useCardState'
 import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team?: TeamResponse
   loading: boolean
-  isError?: boolean
+  status: CardStatus
 }
 
 const props = defineProps<Props>()

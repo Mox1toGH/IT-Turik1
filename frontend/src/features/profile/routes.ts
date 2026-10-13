@@ -10,18 +10,8 @@ export const profileRoutes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/users/:id/points',
-    component: () => import('./components/profile/sections/TransactionHistorySection.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/users/:id/tournaments-history',
     component: () => import('./components/profile/sections/UserTournamentHistorySection.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/profile/certificates',
-    component: () => import('./components/profile/sections/CertificatesSection.vue'),
     meta: { requiresAuth: true },
   },
   {
@@ -37,11 +27,6 @@ export const profileRoutes = [
   {
     path: '/profile/notifications',
     component: () => import('./pages/NotificationsPage.vue'),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/profile/points',
-    component: () => import('./components/profile/sections/TransactionHistorySection.vue'),
     meta: { requiresAuth: true },
   },
   {

@@ -6,7 +6,7 @@
         <h1>Reset password</h1>
       </div>
 
-      <ui-card variant="form" class="form-panel">
+      <ui-card class="form-panel">
         <div class="panel-header">
           <span class="step-marker">01</span>
           <div>
@@ -73,9 +73,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiPasswordField from '@/components/ui/UiPasswordField'
+import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 

@@ -59,22 +59,12 @@
           <template #skeleton>
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
-
-          <ui-card variant="stat" class="detail-stat-card">
-            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
-            <span class="text-sm">Members</span>
-          </ui-card>
         </ui-skeleton-loader>
 
         <ui-skeleton-loader :loading="isInfoLoading">
           <template #skeleton>
             <ui-skeleton variant="rect" width="148px" height="45px" />
           </template>
-
-          <ui-card variant="stat" class="detail-stat-card">
-            <span class="text-sm">Visibility:</span>
-            <strong class="text-xl">{{ team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-card>
         </ui-skeleton-loader>
 
         <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
@@ -147,7 +137,8 @@
       <team-base-info
         :team="team"
         :loading="isInfoLoading"
-        :loading-error="isInfoLoadingError"
+        :status="status"
+        :error-code="errorCode"
         :is-captain="isCaptain"
         @deleted="router.push('/teams')"
         @leave="router.push('/teams')"
@@ -166,14 +157,15 @@
           <ui-input
             v-model="searchInput"
             placeholder="Search by username or email"
-            :disabled="isInfoLoading || isInfoLoadingError"
+            :disabled="isInfoLoading || status === 'error'"
           />
 
           <team-members
             :team="team"
             :user="user"
             :search-filter="searchInput"
-            :loading-error="isInfoLoadingError"
+            :status="status"
+            :error-code="errorCode"
             :loading="isInfoLoading || isProfileLoading"
             :is-captain="isCaptain"
           />
@@ -251,9 +243,9 @@ import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import DiscordIcon from '@/icons/DiscordIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import TelegramIcon from '@/icons/TelegramIcon.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import TeamBaseInfo from '../components/team-detail/TeamBaseInfo.vue'
 import TeamMembers from '../components/team-detail/TeamMembers.vue'
 import TeamManageZone from '../components/team-detail/TeamManageZone.vue'
@@ -262,10 +254,10 @@ import TeamInvitations from '../components/team-detail/TeamInvitations.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiInput from '@/components/ui/UiInput'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { useNotification } from '@/composables/useNotification'
@@ -276,9 +268,10 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
+import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
-import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 
 const router = useRouter()
 const route = useRoute()
@@ -286,11 +279,9 @@ const teamId = Number(route.params.id)
 
 const searchInput = ref('')
 const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
-const {
-  data: team,
-  isLoading: isInfoLoading,
-  isLoadingError: isInfoLoadingError,
-} = useGetTeam(teamId)
+const teamQuery = useGetTeam(teamId)
+const { data: team, isLoading: isInfoLoading } = teamQuery
+const { status, errorCode } = useCardState(teamQuery)
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },
@@ -440,7 +431,6 @@ watch(
 <style scoped>
 .teams-detail-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .team-detail-hero {
@@ -485,16 +475,6 @@ watch(
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.detail-stat-card strong {
-  font-weight: 800;
-}
-
-.detail-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .teams-rule {

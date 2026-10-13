@@ -123,11 +123,11 @@ import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import PhoneField from '@/components/shared/PhoneField.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiPasswordField from '@/components/ui/UiPasswordField'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiSelect from '@/components/ui/UiSelect'
+import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
@@ -185,8 +185,8 @@ const handleSubmit = async () => {
         router.push('/')
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')

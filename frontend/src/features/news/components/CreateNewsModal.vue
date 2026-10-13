@@ -55,12 +55,12 @@
 
 <script setup lang="ts">
 import type { JSONContent } from '@tiptap/core'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSwitch from '@/components/ui/UiSwitch.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiInput from '@/components/ui/UiInput'
+import UiSwitch from '@/components/ui/UiSwitch'
+import UiButton from '@/components/ui/UiButton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import EditorModal from '@/features/tournaments/components/create-round/modals/EditorModal.vue'
+import EditorModal from '@/features/tournaments/components/tournament/tabs/tournament-rounds/modals/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'
 import { useNotification } from '@/composables/useNotification'
@@ -106,12 +106,8 @@ function handleSubmit() {
         emit('success')
       },
       onError(error) {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          const message = Array.isArray(errors) ? errors[0] : errors
-          form.setError(
-            field as keyof CreateNewsFields,
-            typeof message === 'string' ? message : 'Invalid value',
-          )
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
         showNotification(error?.message, 'error')
       },

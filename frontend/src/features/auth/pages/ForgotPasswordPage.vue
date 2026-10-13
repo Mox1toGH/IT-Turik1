@@ -6,7 +6,7 @@
         <h1>Forgot your password?</h1>
       </div>
 
-      <ui-card variant="form" class="form-panel">
+      <ui-card class="form-panel">
         <div class="panel-header">
           <span class="step-marker">01</span>
           <div>
@@ -46,9 +46,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useRequestPasswordReset } from '@/api/accounts/accounts'

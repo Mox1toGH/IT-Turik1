@@ -25,7 +25,7 @@ Backend частина проєкту `IT-Turik1`: REST API, WebSocket поді�
 
 Ключові доменні модулі:
 
-- `accounts`, `teams`, `tournaments`, `evaluation`, `certificates`, `notifications`, `stats`, `news`, `points`, `shop`, `inventory`.
+- `accounts`, `teams`, `tournaments`, `evaluation`, `notifications`, `stats`, `news`.
 
 ## Документація API: що вважати джерелом правди
 
@@ -42,11 +42,7 @@ Backend частина проєкту `IT-Turik1`: REST API, WebSocket поді�
 - [api_cheat_sheet/leaderboard.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/leaderboard.md)
 - [api_cheat_sheet/notifications.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/notifications.md)
 - [api_cheat_sheet/stats.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/stats.md)
-- [api_cheat_sheet/points.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/points.md)
-- [api_cheat_sheet/shop.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/shop.md)
-- [api_cheat_sheet/inventory.md](/C:/Users/Cougar/Programing/IT-Turik1/api_cheat_sheet/inventory.md)
-
-Правило:
+  Правило:
 
 - Для нової розробки та інтеграцій орієнтуйся на OpenAPI.
 - Cheat sheet використовуй для контексту, бізнес-нюансів та legacy-випадків.
@@ -68,10 +64,13 @@ python manage.py migrate
 Режими запуску:
 
 - З WebSocket (рекомендовано):
+
 ```bash
 daphne -b 0.0.0.0 -p 8000 backend.asgi:application
 ```
+
 - Тільки REST:
+
 ```bash
 python manage.py runserver
 ```
@@ -146,4 +145,3 @@ docker-compose exec backend python manage.py <command>
 - `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
 - `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_CALENDAR_REDIRECT_URI`
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`
-

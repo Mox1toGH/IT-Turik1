@@ -16,11 +16,6 @@
         </div>
 
         <div class="hero-actions">
-          <ui-card variant="stat" class="notifications-stat-card">
-            <span class="text-sm">Unread:</span>
-            <strong class="text-xl">{{ unreadCount }}</strong>
-          </ui-card>
-
           <ui-button
             variant="secondary"
             size="lg"
@@ -43,7 +38,7 @@
 
       <div class="notifications-rule" aria-hidden="true"></div>
 
-      <ui-card variant="form" class="form-panel notifications-panel">
+      <ui-card class="form-panel notifications-panel">
         <div v-if="isLoading" class="loading-state">
           <p class="text-muted">Loading notifications...</p>
         </div>
@@ -138,24 +133,37 @@
 
     <notification-settings-modal v-model:is-open="isSettingsModalOpen" />
 
-    <ui-confirm-modal
+    <ui-modal
       v-model="isConfirmModalOpen"
       :title="confirmModalConfig.title"
-      :message="confirmModalConfig.message"
-      :confirm-variant="confirmModalConfig.confirmVariant"
-      :loading="isDeletingAll"
-      @confirm="confirmModalConfig.onConfirm"
-    />
+      max-width="400px"
+      @close="isConfirmModalOpen = false"
+    >
+      <p>{{ confirmModalConfig.message }}</p>
+      <template #footer>
+        <ui-button size="sm" variant="secondary" @click="isConfirmModalOpen = false"
+          >Cancel</ui-button
+        >
+        <ui-button
+          size="sm"
+          :variant="confirmModalConfig.confirmVariant"
+          :disabled="isDeletingAll"
+          @click="confirmModalConfig.onConfirm"
+        >
+          {{ isDeletingAll ? 'Deleting...' : 'Confirm' }}
+        </ui-button>
+      </template>
+    </ui-modal>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiBadge from '@/components/ui/UiBadge'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import TrashIcon from '@/icons/TrashIcon.vue'
 import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal.vue'
@@ -193,11 +201,7 @@ const confirmModalConfig = ref({
   confirmVariant: 'danger' as const,
 })
 
-const unreadCount = computed(() => {
-  return notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0
-})
-
-const hasUnread = computed(() => unreadCount.value > 0)
+const hasUnread = computed(() => (notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0) > 0)
 
 const hasNotifications = computed(() => {
   return (notificationsData.value?.items.length ?? 0) > 0
@@ -307,12 +311,6 @@ const getRedirectUrl = (notification: NotificationResponse) => {
   if (type === 'jury_assignment_received') {
     return '/evaluation'
   }
-  if (type === 'shop_order_status_changed') {
-    return '/shop/orders'
-  }
-  if (type === 'points_balance_changed') {
-    return '/profile/transaction-history'
-  }
   return null
 }
 
@@ -401,16 +399,6 @@ const formatDate = (dateStr: string) => {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.notifications-stat-card strong {
-  font-weight: 800;
-}
-
-.notifications-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .notifications-rule {

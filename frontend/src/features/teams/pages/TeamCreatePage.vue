@@ -174,7 +174,7 @@
       </form>
 
       <aside class="summary-panel" aria-label="Team summary">
-        <ui-card variant="stat" class="summary-stat">
+        <ui-card class="summary-stat">
           <strong>{{ selectedMembersCount }}</strong>
           <span>Initial members</span>
         </ui-card>
@@ -207,15 +207,15 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiSwitch from '@/components/ui/UiSwitch.vue'
+import UiSelect from '@/components/ui/UiSelect'
+import UiSwitch from '@/components/ui/UiSwitch'
 import { useForm } from '@/composables/useForm'
 import { CreateTeamSchema } from '@/schemas/teams.schema'
 import { useCreateTeam, type CreateTeamMutationBody } from '@/api/teams/teams'
@@ -272,8 +272,8 @@ const handleFormSubmit = () => {
         router.push(`/teams/${data.id}`)
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error.message, 'error')
@@ -292,7 +292,6 @@ const handleFormSubmit = () => {
 
 .team-create-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .create-hero {
@@ -404,7 +403,14 @@ const handleFormSubmit = () => {
 }
 
 .summary-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .summary-stat strong {
@@ -443,7 +449,7 @@ const handleFormSubmit = () => {
   min-height: 3.2rem;
   margin: 0;
   overflow: hidden;
-  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 

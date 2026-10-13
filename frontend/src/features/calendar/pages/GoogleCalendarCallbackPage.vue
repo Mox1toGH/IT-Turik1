@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import SelectedIcon from '@/icons/SelectedIcon.vue'
 import CrossIcon from '@/icons/CrossIcon.vue'
 import { callbackGoogleCalendar } from '@/api/accounts/accounts'

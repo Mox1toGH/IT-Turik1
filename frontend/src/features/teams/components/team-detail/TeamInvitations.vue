@@ -1,5 +1,11 @@
 <template>
-  <ui-card :is-error="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 200px">
         <p>Failed to fetch invitations</p>
@@ -62,7 +68,6 @@
             <div class="team-invitations-user">
               <user-avatar
                 :avatar="invitation.user.avatar"
-                :avatar-frame-url="invitation.user.avatar_frame_url"
                 :username="invitation.user.username"
                 :full-name="invitation.user.full_name"
                 :size="40"
@@ -87,7 +92,6 @@
               <div class="team-invitations-user">
                 <user-avatar
                   :avatar="invitation.user.avatar"
-                  :avatar-frame-url="invitation.user.avatar_frame_url"
                   :username="invitation.user.username"
                   :full-name="invitation.user.full_name"
                   :size="40"
@@ -128,12 +132,13 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -153,7 +158,9 @@ const emit = defineEmits<{
 const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
-const { data: invitations, isLoading, isLoadingError } = useListTeamInvitationsByTeam(props.teamId)
+const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
+const { data: invitations, isLoading, isFetching, refetch } = invitationsQuery
+const { status, errorCode, isStale } = useCardState(invitationsQuery)
 
 const uniqueInvitations = computed(() => {
   const byUserId = new Map<number, TeamInvitationResponse>()

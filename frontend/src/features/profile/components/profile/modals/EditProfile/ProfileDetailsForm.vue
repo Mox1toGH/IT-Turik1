@@ -1,6 +1,6 @@
 <template>
   <form class="profile-form" @submit.prevent="handleSubmit">
-    <ui-card variant="form" class="form-panel">
+    <ui-card class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>
@@ -123,11 +123,11 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
@@ -170,8 +170,8 @@ const handleSubmit = () => {
         emit('saved')
       },
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof ProfileForm, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
         showNotification(error?.message, 'error')
       },

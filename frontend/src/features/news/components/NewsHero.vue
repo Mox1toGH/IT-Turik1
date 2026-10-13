@@ -14,11 +14,6 @@
     </div>
 
     <div class="hero-actions">
-      <ui-card variant="stat" class="news-stat-card">
-        <strong class="text-xl">{{ totalNews }}</strong>
-        <span class="text-sm">Total posts</span>
-      </ui-card>
-
       <ui-button v-if="canManageNews" size="lg" @click="$emit('create')">
         <span class="create-plus text-2xl" aria-hidden="true">+</span>
         Create news
@@ -28,11 +23,9 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 
 defineProps<{
-  totalNews: number
   canManageNews: boolean
 }>()
 
@@ -89,20 +82,6 @@ defineEmits<{
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.news-stat-card {
-  display: flex;
-}
-
-.news-stat-card strong {
-  font-weight: 800;
-}
-
-.news-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .create-plus {

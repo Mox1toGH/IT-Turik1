@@ -1,4 +1,4 @@
-import { MutationCache, QueryClient } from '@tanstack/vue-query'
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/vue-query'
 import { connectNotificationSocket } from '@/lib/notificationSocket'
 
 import {
@@ -40,40 +40,10 @@ import {
 } from '@/api/tournaments/tournaments'
 
 import {
-  getGetMyPointsBalanceQueryKey,
-  getListMyPointsTransactionsQueryKey,
-  getGetAdminUserPointsBalanceQueryKey,
-  getListAdminUserPointsTransactionsQueryKey,
-} from '@/api/points/points'
-
-import {
-  getListProductsQueryKey,
-  getGetProductQueryKey,
-  getListMyOrdersQueryKey,
-  getListAdminCategoriesQueryKey,
-  getGetAdminCategoryQueryKey,
-  getListAdminProductsQueryKey,
-  getGetAdminProductQueryKey,
-  getListAdminOrdersQueryKey,
-  getListAvatarFramesQueryKey,
-  getListAdminAvatarFramesQueryKey,
-  getGetAdminAvatarFrameQueryKey,
-} from '@/api/shop/shop'
-
-import {
-  getListCertificatesQueryKey,
-  getGetCertificateQueryKey,
-  getListCertificateTemplatesQueryKey,
-  getGetCertificateTemplateQueryKey,
-} from '@/api/certificates/certificates'
-
-import {
   getListNotificationsQueryKey,
   getGetUnreadNotificationCountQueryKey,
   getGetNotificationSettingsQueryKey,
 } from '@/api/notifications/notifications'
-
-import { getListMyDigitalInventoryQueryKey } from '@/api/inventory/inventory'
 
 import { getListNewsQueryKey, getGetNewsQueryKey } from '@/api/news/news'
 
@@ -87,6 +57,8 @@ import {
   getGetTournamentStatsQueryKey,
   getGetAdminStatsQueryKey,
 } from '@/api/stats/stats'
+import type { ErrorResponse } from '@/api/backendAPINinja.schemas'
+import type { ErrorType } from './apiClient'
 
 type Ctx = {
   vars: Record<string, unknown>
@@ -305,97 +277,6 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   ],
   deleteNews: [v(() => getListNewsQueryKey())],
 
-  // Points
-  modifyUserPointsBalance: [
-    v(({ vars }) => getGetAdminUserPointsBalanceQueryKey(vars.userId as number)),
-    v(({ vars }) => getListAdminUserPointsTransactionsQueryKey(vars.userId as number)),
-    v(() => getGetAdminStatsQueryKey()),
-  ],
-
-  // Shop
-  purchaseProduct: [
-    v(() => getListMyOrdersQueryKey()),
-    v(() => getGetMyPointsBalanceQueryKey()),
-    v(() => getListMyPointsTransactionsQueryKey()),
-    v(() => getListMyDigitalInventoryQueryKey()),
-    v(() => getGetAdminStatsQueryKey()),
-    v(() => getListProductsQueryKey()),
-  ],
-  cancelMyOrder: [
-    v(() => getListMyOrdersQueryKey()),
-    v(() => getGetMyPointsBalanceQueryKey()),
-    v(() => getListMyPointsTransactionsQueryKey()),
-  ],
-  createAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
-  replaceAdminCategory: [
-    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
-    v(() => getListAdminCategoriesQueryKey()),
-  ],
-  updateAdminCategory: [
-    v(({ vars }) => getGetAdminCategoryQueryKey(vars.id as number)),
-    v(() => getListAdminCategoriesQueryKey()),
-  ],
-  deleteAdminCategory: [v(() => getListAdminCategoriesQueryKey())],
-  createAdminProduct: [v(() => getListAdminProductsQueryKey()), v(() => getListProductsQueryKey())],
-  replaceAdminProduct: [
-    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
-    v(() => getListAdminProductsQueryKey()),
-    v(() => getListProductsQueryKey()),
-    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
-  ],
-  updateAdminProduct: [
-    v(({ vars }) => getGetAdminProductQueryKey(vars.id as number)),
-    v(() => getListAdminProductsQueryKey()),
-    v(() => getListProductsQueryKey()),
-    v(({ vars }) => getGetProductQueryKey(vars.id as number)),
-  ],
-  deleteAdminProduct: [v(() => getListAdminProductsQueryKey()), v(() => getListProductsQueryKey())],
-  updateAdminOrderStatus: [v(() => getListAdminOrdersQueryKey())],
-  cancelAdminOrder: [v(() => getListAdminOrdersQueryKey())],
-  createAdminAvatarFrame: [v(() => getListAdminAvatarFramesQueryKey())],
-  replaceAdminAvatarFrame: [
-    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-  updateAdminAvatarFrame: [
-    v(({ vars }) => getGetAdminAvatarFrameQueryKey(vars.id as number)),
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-  deleteAdminAvatarFrame: [
-    v(() => getListAdminAvatarFramesQueryKey()),
-    v(() => getListAvatarFramesQueryKey()),
-  ],
-
-  // Inventory
-  equipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
-  unequipDigitalInventoryItem: [v(() => getListMyDigitalInventoryQueryKey())],
-
-  // Certificates
-  createCertificate: [v(() => getListCertificatesQueryKey())],
-  certificatesUpdate: [
-    v(({ vars }) => getGetCertificateQueryKey(vars.uniqueCode as string)),
-    v(() => getListCertificatesQueryKey()),
-  ],
-  updateCertificate: [
-    v(({ vars }) => getGetCertificateQueryKey(vars.uniqueCode as string)),
-    v(() => getListCertificatesQueryKey()),
-  ],
-  deleteCertificate: [v(() => getListCertificatesQueryKey())],
-
-  // Certificate Templates
-  createCertificateTemplate: [v(() => getListCertificateTemplatesQueryKey())],
-  replaceCertificateTemplate: [
-    v(({ vars }) => getGetCertificateTemplateQueryKey(vars.id as number)),
-    v(() => getListCertificateTemplatesQueryKey()),
-  ],
-  updateCertificateTemplate: [
-    v(({ vars }) => getGetCertificateTemplateQueryKey(vars.id as number)),
-    v(() => getListCertificateTemplatesQueryKey()),
-  ],
-  deleteCertificateTemplate: [v(() => getListCertificateTemplatesQueryKey())],
-
   // Notifications
   deleteNotification: [
     v(() => getListNotificationsQueryKey()),
@@ -418,6 +299,27 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
 }
 
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (count, err) => {
+        const s = (err as { _axiosError?: { response?: { status?: number } } })?._axiosError
+          ?.response?.status
+        return (!s || s >= 500) && count < 2
+      },
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error) => {
+      const status = (error as ErrorType<ErrorResponse>)?._axiosError?.response?.status
+      // 401 is handled globally (tokens cleared + redirect in the axios
+      // interceptor); cards never render a 401 error state.
+      if (status === 401) {
+        console.warn('[query] unauthorized (401): redirect handled by api interceptor')
+        return
+      }
+      console.error('[query] failed:', error)
+    },
+  }),
   mutationCache: new MutationCache({
     onSuccess: (data, vars, _ctx, mutation) => {
       const key = mutation.options.mutationKey?.[0] as string | undefined
@@ -436,8 +338,6 @@ export const queryClient = new QueryClient({
         vars: (vars ?? {}) as Ctx['vars'],
         data: (data ?? {}) as Ctx['data'],
       }
-
-      console.log(ctx, key)
 
       entries.forEach((entry) => {
         queryClient.invalidateQueries({ queryKey: entry(ctx) })

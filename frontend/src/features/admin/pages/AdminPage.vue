@@ -20,7 +20,6 @@
         <ui-card
           v-for="(section, index) in sections"
           :key="section.to"
-          variant="form"
           class="form-panel admin-link-card"
         >
           <div class="panel-header">
@@ -39,8 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiButton from '@/components/ui/UiButton'
 
 const sections = [
   {
@@ -48,12 +47,6 @@ const sections = [
     description: 'Generate and monitor one-time registration codes for restricted roles.',
     to: '/admin/role-codes',
     cta: 'Open Activation Codes',
-  },
-  {
-    title: 'Certificates Admin',
-    description: 'Create certificates, manage templates, and verify certificate codes.',
-    to: '/admin/certificates',
-    cta: 'Open Certificates Admin',
   },
 ]
 </script>

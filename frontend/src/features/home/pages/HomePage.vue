@@ -26,7 +26,7 @@
       </div>
 
       <div class="hero-actions">
-        <ui-card v-for="item in heroStats" :key="item.label" variant="stat" class="hero-stat">
+        <ui-card v-for="item in heroStats" :key="item.label" class="hero-stat">
           <span class="text-base">{{ item.label }}:</span>
           <strong class="text-base">{{ item.value }}</strong>
         </ui-card>
@@ -42,20 +42,23 @@
         <QuickAccessCard
           :user="user"
           :is-loading-user="isLoadingUser"
-          :is-loading-user-error="isLoadingUserError"
+          :status="status"
+          :error-code="errorCode"
         />
       </template>
 
       <AccountDetailsCard
         :user="user"
         :is-loading-user="isLoadingUser"
-        :is-loading-user-error="isLoadingUserError"
+        :status="status"
+        :error-code="errorCode"
       />
 
       <QuickStatusCard
         :user="user"
         :is-loading-user="isLoadingUser"
-        :is-loading-user-error="isLoadingUserError"
+        :status="status"
+        :error-code="errorCode"
       ></QuickStatusCard>
     </section>
   </section>
@@ -63,20 +66,19 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import AccountDetailsCard from '../components/AccountDetailsCard.vue'
 import QuickStatusCard from '../components/QuickStatusCard.vue'
 import QuickAccessCard from '../components/QuickAccessCard.vue'
+import { useCardState } from '@/composables/useCardState'
 
-const {
-  data: user,
-  isLoading: isLoadingUser,
-  isLoadingError: isLoadingUserError,
-} = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user, isLoading: isLoadingUser } = userQuery
+const { status, errorCode } = useCardState(userQuery)
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 
@@ -92,7 +94,6 @@ const heroStats = computed(() => [
 .home-page {
   display: grid;
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .home-hero {
@@ -150,6 +151,13 @@ const heroStats = computed(() => [
 
 .hero-stat {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
 }
 
 .hero-stat strong {

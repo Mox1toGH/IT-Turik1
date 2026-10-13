@@ -50,9 +50,9 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiModal from '@/components/ui/UiModal'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { ref, watch } from 'vue'

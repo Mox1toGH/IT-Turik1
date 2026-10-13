@@ -15,17 +15,6 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card variant="stat" class="teams-stat-card">
-            <span class="text-sm">Total teams:</span>
-            <strong class="text-xl">{{ teams?.length ?? 0 }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
         <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" size="lg">
           <span class="create-plus text-2xl" aria-hidden="true">+</span>
           Create team
@@ -44,24 +33,18 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
+import UiButton from '@/components/ui/UiButton'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import { useListTeams } from '@/api/teams/teams'
-import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetUserProfile } from '@/api/accounts/accounts.ts'
 
-const { data: teams, isLoading: isLoadingTeams } = useListTeams()
 const { data: user } = useGetUserProfile()
 </script>
 
 <style scoped>
 .teams-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .teams-hero {
@@ -111,22 +94,6 @@ const { data: user } = useGetUserProfile()
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.teams-stat-card {
-  display: flex;
-}
-
-.teams-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.teams-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .create-plus {

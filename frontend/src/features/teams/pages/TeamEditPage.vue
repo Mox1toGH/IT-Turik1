@@ -24,28 +24,6 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card variant="stat" class="edit-stat-card">
-            <span class="text-sm">Members:</span>
-            <strong class="text-xl">{{ team?.members.length ?? 0 }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-
-          <ui-card variant="stat" class="edit-stat-card">
-            <span>Visibility:</span>
-            <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-card>
-        </ui-skeleton-loader>
-
         <ui-button
           asLink
           variant="secondary"
@@ -60,24 +38,30 @@
     <div class="teams-rule" aria-hidden="true"></div>
 
     <div class="workspace-grid" v-if="team">
-      <team-edit-form :is-error="isError" :loading="isLoadingTeamInfo" :team="team" />
+      <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
 
-      <team-manage-members :is-error="isError" :loading="isLoadingTeamInfo" :team="team" />
+      <team-manage-members
+        :status="status"
+        :error-code="errorCode"
+        :loading="isLoadingTeamInfo"
+        :team="team"
+      />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { useGetTeam } from '@/api/teams/teams'
 
 const route = useRoute()
@@ -86,7 +70,9 @@ const router = useRouter()
 const { data: user } = useGetUserProfile()
 
 const teamId = computed(() => Number(route.params.id))
-const { data: team, isLoading: isLoadingTeamInfo, isError } = useGetTeam(teamId.value)
+const teamQuery = useGetTeam(teamId.value)
+const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
+const { status, errorCode } = useCardState(teamQuery)
 
 watchEffect(() => {
   if (user.value && team.value) {
@@ -100,7 +86,6 @@ watchEffect(() => {
 <style scoped>
 .teams-edit-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .edit-hero {
@@ -152,7 +137,18 @@ watchEffect(() => {
   align-items: center;
 }
 
-.edit-stat-card strong {
+  .edit-stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
+  border-color: var(--line-soft);
+}
+
+  .edit-stat-card strong {
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;

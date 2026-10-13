@@ -16,6 +16,10 @@ app.use(VueQueryPlugin, { queryClient: queryClient })
 app.use(createPinia())
 app.use(router)
 
+app.config.errorHandler = (err, instance, info) => {
+  console.error('[app] render error:', err, info, instance)
+}
+
 app.mount('#app')
 
 connectNotificationSocket(queryClient)

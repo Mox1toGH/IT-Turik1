@@ -64,10 +64,10 @@
 <script setup lang="ts">
 import DeleteTeamModal from './modals/DeleteTeamModal.vue'
 import TeamVisibilityModal from './modals/TeamVisibilityModal.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiCard from '@/components/ui/UiCard'
 import DangerIcon from '@/icons/DangerIcon.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiBadge from '@/components/ui/UiBadge'
 import { useRouter } from 'vue-router'
 import type { TeamResponse } from '@/api/backendAPINinja.schemas.ts'
 

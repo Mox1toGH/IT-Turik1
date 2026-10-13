@@ -19,9 +19,6 @@ class Permission(Enum):
     CREATE_NEWS = 'create_news'
     EDIT_NEWS = 'edit_news'
     DELETE_NEWS = 'delete_news'
-
-    MANAGE_CERTIFICATES = 'create_certificates'
-    MANAGE_CERTIFICATE_TEMPLATES = 'manage_certificate_templates'
     
 ROLE_PERMISSIONS = {
     'admin': {
@@ -37,17 +34,12 @@ ROLE_PERMISSIONS = {
         Permission.MANAGE_EVENTS,
 
         # jury
-        Permission.MANAGE_ASSIGNMENTS,
         Permission.MANAGE_EVALUATIONS,
 
         # news
         Permission.CREATE_NEWS,
         Permission.EDIT_NEWS,
         Permission.DELETE_NEWS,
-
-        # certificates
-        Permission.MANAGE_CERTIFICATES,
-        Permission.MANAGE_CERTIFICATE_TEMPLATES
     },
 
     'organizer': {
@@ -68,10 +60,6 @@ ROLE_PERMISSIONS = {
         Permission.CREATE_NEWS,
         Permission.EDIT_NEWS,
         Permission.DELETE_NEWS,
-
-        # certificates
-        Permission.MANAGE_CERTIFICATES,
-        Permission.MANAGE_CERTIFICATE_TEMPLATES
     },
 
     'jury': {

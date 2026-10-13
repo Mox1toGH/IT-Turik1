@@ -1,5 +1,5 @@
 <template>
-  <ui-card :is-error="props.loadingError">
+  <ui-card :status="props.status" :error-code="props.errorCode">
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 502px">
         <p>Failed to fetch team info</p>
@@ -18,7 +18,7 @@
 
     <div>
       <div class="info-grid">
-        <ui-card title="Name" variant="inset" class="info-item">
+        <ui-card title="Name" class="info-item">
           <template #header>
             <span class="card-label">Name</span>
           </template>
@@ -34,7 +34,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Email" variant="inset" class="info-item">
+        <ui-card title="Email" class="info-item">
           <template #header>
             <span class="card-label">Email</span>
           </template>
@@ -48,7 +48,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Organization" variant="inset" class="info-item">
+        <ui-card title="Organization" class="info-item">
           <template #header>
             <span class="card-label">Organization</span>
           </template>
@@ -62,7 +62,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Captain" variant="inset" class="info-item">
+        <ui-card title="Captain" class="info-item">
           <template #header>
             <span class="card-label">Captain</span>
           </template>
@@ -81,7 +81,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Members count" variant="inset" class="info-item">
+        <ui-card title="Members count" class="info-item">
           <template #header>
             <span class="card-label">Members count</span>
           </template>
@@ -95,7 +95,7 @@
           </ui-skeleton-loader>
         </ui-card>
 
-        <ui-card title="Visibility" variant="inset" class="info-item">
+        <ui-card title="Visibility" class="info-item">
           <template #header>
             <span class="card-label">Visibility</span>
           </template>
@@ -138,13 +138,14 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { truncateText } from '@/lib/utils'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -153,7 +154,8 @@ import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 interface Props {
   team?: TeamResponse
   loading: boolean
-  loadingError?: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
   isCaptain: boolean
 }
 

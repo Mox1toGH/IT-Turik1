@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from django.shortcuts import get_object_or_404
 
@@ -26,6 +25,7 @@ from .schemas import (
     JuryAssignmentResponse,
     RoundLeaderboardResponse,
     RoundPassingStatusResponse,
+    ScoreItemRequest,
     SubmissionEvaluationPatchRequest,
     SubmissionEvaluationRequest,
     SubmissionEvaluationResponse,
@@ -44,7 +44,7 @@ class JuryAssignmentPagination(PaginationBase):
         page_size: int = 8
 
     class Output(Schema):
-        items: list[Any]
+        items: list[JuryAssignmentResponse]
         count: int
         evaluated_count: int
 
@@ -107,7 +107,7 @@ def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
 )
 @paginate(JuryAssignmentPagination)
 def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
-    require_permission(request, Permission.MANAGE_ASSIGNMENTS)
+    require_permission(request, Permission.MANAGE_EVALUATIONS)
     logger.debug(
         'Listing jury assignments',
         extra={
@@ -142,7 +142,6 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
 #
 #   POST   /jury-evaluations                    -> create_jury_evaluation
 #   GET    /jury-evaluations/{evaluation_id}    -> get_jury_evaluation
-#   PUT    /jury-evaluations/{evaluation_id}    -> replace_jury_evaluation
 #   PATCH  /jury-evaluations/{evaluation_id}    -> update_jury_evaluation
 #   DELETE /jury-evaluations/{evaluation_id}    -> delete_jury_evaluation
 # =============================================================================
@@ -194,7 +193,7 @@ def _check_tournament(assignment, tournament_id: int | None):
         raise_api_error(HTTPStatus.BAD_REQUEST, 'tournament_id: Assignment does not belong to this tournament.')
 
 
-def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
+def _build_scores(round_obj, scores: list[ScoreItemRequest]) -> list[dict]:
     """Validate scores against the round's criteria and enrich them with criterion names."""
     criteria = round_obj.criteria
     if not criteria:
@@ -208,7 +207,7 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
     enriched = []
 
     for item in scores:
-        c_id = item['criterion_id']
+        c_id = item.criterion_id
         criterion = criteria_by_id.get(c_id)
         if criterion is None:
             logger.warning('Invalid criterion_id', extra={
@@ -223,7 +222,7 @@ def _build_scores(round_obj, scores: list[dict]) -> list[dict]:
             })
             raise_api_error(HTTPStatus.BAD_REQUEST, f'scores: Duplicate criterion_id: {c_id}')
 
-        score = item['score']
+        score = item.score
         max_score = criterion['max_score']
         if score < 0 or score > max_score:
             logger.warning(
@@ -413,7 +412,7 @@ def update_jury_evaluation(
     if data.get('scores') is not None:
         evaluation.scores = _build_scores(
             assignment.submission.round,
-            data['scores'],
+            payload.scores,
         )
 
     if 'comment' in data and data['comment'] is not None:

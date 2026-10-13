@@ -129,12 +129,17 @@
 **Доступні команди капітана — GET `/api/tournaments/{id}/eligible-teams/`**
 ```json
 [
-  { "id": 10, "name": "Team Alpha", "members_count": 3 },
-  { "id": 14, "name": "Team Beta", "members_count": 2 }
+  { "id": 10, "name": "Team Alpha", "members_count": 3, "reason": null },
+  {
+    "id": 14,
+    "name": "Team Beta",
+    "members_count": 2,
+    "reason": "Team must have at least 3 members for this tournament."
+  }
 ]
 ```
 > Повертає тільки команди, де `team.captain_id == request.user.id`.
-> Додаткових перевірок eligibility тут немає (перевірки колізій виконуються на етапі реєстрації).
+> `reason` дорівнює `null`, якщо команда може зареєструватися; інакше містить причину, чому реєстрація недоступна.
 
 **Зареєстровані команди турніру — GET `/api/tournaments/{id}/teams/`**
 ```json

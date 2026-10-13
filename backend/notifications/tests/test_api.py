@@ -57,9 +57,18 @@ class NotificationApiTests(APITestCase):
         self.assertEqual(Notification.objects.filter(recipient=self.user).count(), 0)
 
     def test_get_settings(self):
+        self.assertFalse(
+            NotificationConfig.objects.filter(user=self.user).exists()
+        )
+        self.assertFalse(
+            UserNotificationSettings.objects.filter(user=self.user).exists()
+        )
+
         url = reverse('ninja-api:notification-settings')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()['global_config']['emails_disabled_globally'], False)
+        self.assertGreater(len(response.json()['configs']), 0)
 
     def test_update_global_settings(self):
         url = reverse('ninja-api:notification-settings-global-update')

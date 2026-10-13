@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
+import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar'
 import type { CriterionResponse, JuryAssignmentResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {

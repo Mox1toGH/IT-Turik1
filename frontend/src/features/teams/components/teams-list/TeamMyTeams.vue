@@ -1,5 +1,11 @@
 <template>
-  <ui-card variant="panel" :isError="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching my teams</p>
@@ -98,15 +104,16 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiPagination from '@/components/ui/UiPagination.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiPagination from '@/components/ui/UiPagination'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
@@ -114,7 +121,9 @@ const TEAMS_PER_PAGE = 8
 type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError } = useListTeams()
+const teamsQuery = useListTeams()
+const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
+const { status, errorCode, isStale } = useCardState(teamsQuery)
 
 const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {
@@ -144,7 +153,7 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 }
 
 .section-head h2 {
-  margin: 2rem 0 0.45rem;
+  margin: 0.5rem 0 0.45rem;
   font-family: var(--font-display);
   font-weight: 800;
 }

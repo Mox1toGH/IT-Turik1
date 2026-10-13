@@ -9,9 +9,10 @@
     <div class="news-rule" aria-hidden="true"></div>
 
     <news-list
-      :is-loading="isLoadingNews"
-      :is-error="isLoadingError"
-      :error-code="newsError?.code"
+      :status="status"
+      :error-code="errorCode"
+      :is-fetching="isFetching"
+      :is-stale="isStale"
       :items="newsItems"
       :total-news="totalNews"
       :total-pages="totalPages"
@@ -20,6 +21,7 @@
       :can-modify="canModifyNews"
       @edit="openEditModal"
       @delete="openDeleteConfirm"
+      @retry="refetch"
     />
 
     <create-news-modal v-if="canManageNews" v-model="isCreateOpen" />
@@ -40,7 +42,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import UiConfirmModal from '@/components/ui/UiConfirmModal.vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
 import { useDeleteNews, useListNews } from '@/api/news/news'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -48,6 +50,7 @@ import NewsHero from '../components/NewsHero.vue'
 import NewsList from '../components/NewsList.vue'
 import EditNewsModal from '../components/EditNewsModal.vue'
 import CreateNewsModal from '../components/CreateNewsModal.vue'
+import { useCardState } from '@/composables/useCardState'
 import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 
 const { showNotification } = useNotification()
@@ -64,12 +67,9 @@ const deletingNewsId = ref<number | null>(null)
 const currentPage = ref(1)
 const pageSize = 10
 
-const {
-  data: news,
-  isLoading: isLoadingNews,
-  isLoadingError,
-  error: newsError,
-} = useListNews(computed(() => ({ page: currentPage.value, pageSize })))
+const newsQuery = useListNews(computed(() => ({ page: currentPage.value, pageSize })))
+const { data: news, isFetching, refetch } = newsQuery
+const { status, errorCode, isStale } = useCardState(newsQuery)
 
 const newsItems = computed<NewsArticleResponse[]>(() =>
   (news.value?.items ?? []).map((item) => ({
@@ -137,7 +137,6 @@ watch(
 <style scoped>
 .news-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .news-rule {

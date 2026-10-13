@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -61,7 +61,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
-import UiFileDrop from '@/components/ui/UiFileDrop.vue'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
 
 const props = withDefaults(

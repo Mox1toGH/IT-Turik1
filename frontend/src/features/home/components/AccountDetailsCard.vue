@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="info-card" variant="form" :is-error="isLoadingUserError">
+  <ui-card class="info-card" :status="status" :error-code="errorCode">
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch account info</p>
@@ -35,15 +35,17 @@
 
 <script setup lang="ts">
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { computed } from 'vue'
 
 const props = defineProps<{
   user?: UserResponse
   isLoadingUser: boolean
-  isLoadingUserError: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
 }>()
 
 const teamNames = computed(() => (props.user?.teams ?? []).map((team) => team.name).join(', '))

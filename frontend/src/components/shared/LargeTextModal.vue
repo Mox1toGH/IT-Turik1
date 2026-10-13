@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import UiModal from '@/components/ui/UiModal.vue'
+import UiModal from '@/components/ui/UiModal'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import { ref } from 'vue'
 

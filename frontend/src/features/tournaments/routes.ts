@@ -64,10 +64,4 @@ export const tournamentsRoutes = [
     meta: { requiresAuth: true },
     beforeEnter: (to: { params: { id: number } }) => ensureTournamentExists(to.params.id),
   },
-  {
-    path: '/tournaments/:id/rounds/create',
-    component: () => import('./pages/CreateRoundPage.vue'),
-    meta: { requiresAuth: true },
-    beforeEnter: (to: { params: { id: number } }) => ensureTournamentExists(to.params.id),
-  },
 ]

@@ -1,12 +1,9 @@
 from datetime import datetime
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Literal, Optional
 
 from ninja import Field, Schema
 from pydantic import field_validator
-from tournaments.schemas import CriterionResponse
-
-# Adjust these two imports to whatever your tournaments/schemas.py exports
-# (replacements for SubmissionSerializer / CriterionSerializer).
+from tournaments.schemas import CriterionResponse, SubmissionResponse
 
 # =============================================================================
 # Requests
@@ -98,7 +95,7 @@ class RoundShortResponse(Schema):
 class JuryAssignmentResponse(Schema):
     id: int
     submission: int
-    submission_details: Any # SubmissionResponse
+    submission_details: SubmissionResponse
     round_details: RoundShortResponse
     evaluation: SubmissionEvaluationResponse | None = None
     is_evaluated: bool
@@ -161,7 +158,7 @@ class RoundSummaryResponse(Schema):
     round_name: str
     total_score: float
     average_score: float
-    jury_breakdown: Any | None = None
+    jury_breakdown: dict[str, float] | None = None
 
 
 class TournamentRankingItemResponse(Schema):

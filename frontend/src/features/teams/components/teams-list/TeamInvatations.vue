@@ -1,5 +1,11 @@
 <template>
-  <ui-card variant="panel" :isError="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; height: 136px; justify-content: center; align-items: center">
         <p>Error while fetching invitations</p>
@@ -103,14 +109,15 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiBadge from '@/components/ui/UiBadge'
+import { useCardState } from '@/composables/useCardState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
@@ -119,7 +126,9 @@ import {
 
 const { showNotification } = useNotification()
 
-const { data: inboxInvitations, isLoading: inboxLoading, isLoadingError } = useListTeamInvitations()
+const invitationsQuery = useListTeamInvitations()
+const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
+const { status, errorCode, isStale } = useCardState(invitationsQuery)
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
@@ -159,7 +168,7 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 }
 
 .section-head h2 {
-  margin: 2rem 0 0.45rem;
+  margin: 0.5rem 0 0.45rem;
   font-family: var(--font-display);
   font-weight: 800;
 }

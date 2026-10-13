@@ -1,5 +1,11 @@
 <template>
-  <ui-card :is-error="isLoadingError">
+  <ui-card
+    :status="status"
+    :is-fetching="isFetching"
+    :is-stale="isStale"
+    :error-code="errorCode"
+    @retry="refetch"
+  >
     <template #error>
       <div style="display: flex; justify-content: center; align-items: center; height: 200px">
         <p>Failed to fetch join requests</p>
@@ -46,7 +52,6 @@
           <div class="join-request-user">
             <user-avatar
               :avatar="joinRequest.user.avatar"
-              :avatar-frame-url="joinRequest.user.avatar_frame_url"
               :username="joinRequest.user.username"
               :full-name="joinRequest.user.full_name"
               :size="40"
@@ -95,11 +100,12 @@ import {
   useDeclineTeamJoinRequest,
   useListTeamJoinRequestsByTeam,
 } from '@/api/teams/teams'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 
@@ -111,7 +117,9 @@ interface Props {
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
-const { data: joinRequest, isLoading, isLoadingError } = useListTeamJoinRequestsByTeam(props.teamId)
+const joinRequestsQuery = useListTeamJoinRequestsByTeam(props.teamId)
+const { data: joinRequest, isLoading, isFetching, refetch } = joinRequestsQuery
+const { status, errorCode, isStale } = useCardState(joinRequestsQuery)
 
 const matches = (parts: (string | undefined)[]) => {
   const q = props.searchFilter?.trim().toLowerCase()

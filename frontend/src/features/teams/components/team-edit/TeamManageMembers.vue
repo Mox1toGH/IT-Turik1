@@ -1,5 +1,9 @@
 <template>
-  <ui-card class="panel members-panel" variant="form" :is-error="props.isError">
+  <ui-card
+    class="panel members-panel"
+    :status="props.status"
+    :error-code="props.errorCode"
+  >
     <template #error>
       <div class="empty-state">
         <p>Failed to fetch team members</p>
@@ -18,7 +22,7 @@
             <ui-skeleton variant="rect" width="100px" />
           </template>
 
-          <ui-card variant="stat" class="members-stat">
+          <ui-card class="members-stat">
             <strong>{{ team?.members.length ?? 0 }}</strong>
             <span>People</span>
           </ui-card>
@@ -63,7 +67,6 @@
           v-for="member in filteredMembers"
           :key="`member-${member.id}`"
           class="member-row"
-          variant="inset"
         >
           <div>
             <div class="member-row-top">
@@ -123,7 +126,6 @@
             v-for="invitation in invitations"
             :key="`inv-${invitation.id}`"
             class="member-row"
-            variant="inset"
           >
             <div class="member-row-top">
               <p class="member-name">{{ invitation.user.username }}</p>
@@ -175,28 +177,30 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
+import UiSelect from '@/components/ui/UiSelect'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import {
   useInviteMemberToTeam,
   useListTeamInvitationsByTeam,
   useRemoveMemberFromTeam,
 } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team: TeamResponse
   loading: boolean
-  isError?: boolean
+  status: CardStatus
+  errorCode: CardErrorCode
 }
 
 const props = defineProps<Props>()
@@ -290,7 +294,15 @@ const addMember = () => {
 }
 
 .members-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.5rem 1.1rem;
+  min-height: 30px;
   margin-left: auto;
+  border-color: var(--line-soft);
 }
 
 .members-stat strong {

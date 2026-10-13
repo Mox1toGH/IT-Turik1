@@ -17,11 +17,6 @@
           <template #skeleton>
             <ui-skeleton variant="rect" width="180px" height="64px" />
           </template>
-
-          <ui-card variant="stat" class="jury-stat-card">
-            <span class="text-sm">Evaluated:</span>
-            <strong class="text-xl">{{ evaluatedCount }} / {{ totalCount }}</strong>
-          </ui-card>
         </ui-skeleton-loader>
       </div>
     </header>
@@ -117,11 +112,11 @@
 import { computed, ref, watch } from 'vue'
 import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 import { useListTournaments } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiPagination from '@/components/ui/UiPagination.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiPagination from '@/components/ui/UiPagination'
+import UiSelect from '@/components/ui/UiSelect'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
 
 const selectedRounds = ref<string[]>([])
@@ -235,7 +230,6 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 <style scoped>
 .jury-page {
   gap: 1.4rem;
-  padding: 1.6rem 0 2rem;
 }
 
 .jury-hero {
@@ -285,22 +279,6 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-}
-
-.jury-stat-card {
-  display: flex;
-}
-
-.jury-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.jury-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .jury-rule {
