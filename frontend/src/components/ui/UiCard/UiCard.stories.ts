@@ -15,10 +15,6 @@ const meta: Meta<typeof UiCard> = {
       control: 'select',
       options: ['loading', 'error', 'empty', 'data'],
     },
-    variant: {
-      control: 'select',
-      options: ['default', 'panel', 'stat', 'hero', 'form', 'actions', 'inset'],
-    },
     errorCode: {
       control: 'select',
       options: [null, 'network', 403, 404, 500],
@@ -27,7 +23,6 @@ const meta: Meta<typeof UiCard> = {
   },
   args: {
     status: 'data',
-    variant: 'default',
     isFetching: false,
     isStale: false,
     errorCode: null,
@@ -229,24 +224,7 @@ export const Scrollable: Story = {
   }),
 }
 
-/** All visual variants side by side. */
-export const Variants: Story = {
-  render: () => ({
-    components: { UiCard },
-    setup() {
-      const variants = ['default', 'panel', 'stat', 'hero', 'form', 'actions', 'inset'] as const
-      return { variants }
-    },
-    template: `
-      <div style="display: grid; gap: 1rem; max-width: 560px">
-        <ui-card v-for="variant in variants" :key="variant" :variant="variant">
-          <template #header><strong>{{ variant }}</strong></template>
-          <p class="text-muted">Variant body</p>
-        </ui-card>
-      </div>
-    `,
-  }),
-}
+
 
 function mockQuery(overrides: Partial<CardQuery> = {}): CardQuery {
   return {

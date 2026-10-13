@@ -1,61 +1,27 @@
 <template>
-  <div
+  <section
     :class="[
       'card',
-      variantClass,
-      {
-        scrollable: props.scrollable,
-        'is-fetching': effectiveIsFetching && effectiveStatus === 'data',
-      },
+      `card-${variant}`,
+      { scrollable, 'is-fetching': isFetching && status === 'data' },
     ]"
   >
-    <div class="card-head">
-      <slot v-if="$slots.header" name="header" />
-      <div v-else-if="props.title" class="card-default-header">
-        <div class="card-default-header__text">
-          <h3 class="card-default-header__title">{{ props.title }}</h3>
-          <p v-if="props.subtitle" class="card-default-header__subtitle text-muted">
-            {{ props.subtitle }}
-          </p>
-        </div>
-
-        <div v-if="$slots.controls" class="card-default-header__controls">
-          <slot name="controls" />
-        </div>
-
-        <div v-if="$slots.badge && effectiveStatus === 'data'" class="card-default-header__badge">
-          <slot name="badge" />
-        </div>
-      </div>
-
-      <div v-else-if="$slots.badge && effectiveStatus === 'data'" class="card-badge-row">
-        <slot name="badge" />
-      </div>
-    </div>
+    <header v-if="$slots.header || title" class="card-header">
+      <slot name="header">
+        <h3 class="card-title">{{ title }}</h3>
+        <p v-if="subtitle" class="card-subtitle">{{ subtitle }}</p>
+      </slot>
+    </header>
 
     <div class="card-body">
-      <div
-        v-if="effectiveIsStale && effectiveStatus === 'data'"
-        class="stale-banner"
-        role="status"
-      >
+      <div v-if="isStale && status === 'data'" class="stale-banner" role="status">
         <span>Update failed</span>
-        <button
-          type="button"
-          class="stale-banner__retry"
-          :disabled="effectiveIsFetching"
-          @click="handleRetry"
-        >
-          {{ effectiveIsFetching ? 'Retrying…' : 'Retry' }}
+        <button type="button" :disabled="isFetching" @click="handleRetry">
+          {{ isFetching ? 'Retrying…' : 'Retry' }}
         </button>
       </div>
 
-      <div
-        v-if="effectiveStatus === 'loading'"
-        class="card-status-block"
-        aria-busy="true"
-        aria-live="polite"
-      >
+      <div v-if="status === 'loading'" class="card-state" aria-busy="true" aria-live="polite">
         <slot name="skeleton">
           <ui-skeleton height="18px" />
           <ui-skeleton height="18px" />
@@ -63,68 +29,62 @@
         </slot>
       </div>
 
-      <div v-else-if="effectiveStatus === 'error'" class="card-status-block">
-        <div v-if="$slots.error" role="alert">
-          <slot name="error" />
-        </div>
-        <p
-          v-else-if="effectiveErrorCode === 'network' && !isOnline"
-          class="card-empty__text text-muted"
-        >
+      <div v-else-if="status === 'error'" class="card-state">
+        <div v-if="$slots.error" role="alert"><slot name="error" /></div>
+        <p v-else-if="errorCode === 'network' && !isOnline" class="card-muted">
           Waiting for connection…
         </p>
         <ui-card-error
           v-else
-          :title="props.title"
-          :error-code="effectiveErrorCode"
-          :is-fetching="effectiveIsFetching"
+          :title="title"
+          :error-code="errorCode"
+          :is-fetching="isFetching"
           @retry="handleRetry"
         />
       </div>
 
-      <div v-else-if="effectiveStatus === 'empty'" class="card-status-block card-empty">
-        <p class="card-empty__text text-muted">{{ props.emptyText ?? 'Nothing here yet.' }}</p>
+      <div v-else-if="status === 'empty'" class="card-state card-empty">
+        <p class="card-muted">{{ emptyText ?? 'Nothing here yet.' }}</p>
         <slot name="empty-action" />
       </div>
 
-      <div
-        v-else
-        :class="['card-data', { dimmed: effectiveIsFetching }]"
-        :aria-busy="effectiveIsFetching || undefined"
-      >
+      <div v-else :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
         <ui-error-boundary>
           <slot />
         </ui-error-boundary>
       </div>
     </div>
 
-    <div v-if="$slots.footer" class="card-foot">
+    <footer v-if="$slots.footer" class="card-footer">
       <slot name="footer" />
-    </div>
-  </div>
+    </footer>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, toRefs } from 'vue'
 import UiCardError from '@/components/ui/UiCardError'
 import UiErrorBoundary from '@/components/ui/UiErrorBoundary'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useConnection } from '@/composables/useConnection'
-import { useCardState, type CardErrorCode, type CardQuery, type CardStatus } from '@/composables/useCardState'
+import {
+  useCardState,
+  type CardErrorCode,
+  type CardQuery,
+  type CardStatus,
+} from '@/composables/useCardState'
 
 interface Props {
   title?: string
   subtitle?: string
-  /** Primary query mode: the card derives status/error/retry from it. */
   query?: CardQuery
-  /** Manual fallback mode (ignored when query is provided). */
   status?: CardStatus
   isFetching?: boolean
   isStale?: boolean
   errorCode?: CardErrorCode
   emptyText?: string
   scrollable?: boolean
-  variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'actions' | 'inset'
+  variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'inset'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -134,59 +94,42 @@ const props = withDefaults(defineProps<Props>(), {
   isStale: false,
   errorCode: null,
 })
+const emit = defineEmits<{ (e: 'retry'): void }>()
 
-const emit = defineEmits<{
-  (e: 'retry'): void
-}>()
-
-const hasQuery = computed(() => props.query !== undefined)
-const querySource = computed<CardQuery>(
-  () => props.query ?? { isPending: false, isError: false, data: null, error: null },
-)
-const {
-  status: queryStatus,
-  errorCode: queryErrorCode,
-  isStale: queryIsStale,
-  isFetching: queryIsFetching,
-  refetch: refetchQuery,
-} = useCardState(querySource)
-
-const effectiveStatus = computed<CardStatus>(() =>
-  hasQuery.value ? queryStatus.value : props.status,
-)
-const effectiveErrorCode = computed<CardErrorCode>(() =>
-  hasQuery.value ? queryErrorCode.value : props.errorCode,
-)
-const effectiveIsStale = computed(() => (hasQuery.value ? queryIsStale.value : props.isStale))
-const effectiveIsFetching = computed(() =>
-  hasQuery.value ? queryIsFetching.value : props.isFetching,
-)
-
-const handleRetry = () => {
-  if (props.query) refetchQuery()
-  else emit('retry')
-}
-
+const { title, subtitle, emptyText, scrollable, variant } = toRefs(props)
 const { isOnline } = useConnection()
 
-const variantClass = computed(() => `card-${props.variant}`)
+const q = useCardState(
+  computed<CardQuery>(
+    () => props.query ?? { isPending: false, isError: false, data: null, error: null },
+  ),
+)
+
+const fromQuery = computed(() => props.query !== undefined)
+const status = computed<CardStatus>(() => (fromQuery.value ? q.status.value : props.status))
+const errorCode = computed<CardErrorCode>(() =>
+  fromQuery.value ? q.errorCode.value : props.errorCode,
+)
+const isStale = computed(() => (fromQuery.value ? q.isStale.value : props.isStale))
+const isFetching = computed(() => (fromQuery.value ? q.isFetching.value : props.isFetching))
+
+const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
 </script>
 
 <style scoped>
 .card {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
   background: var(--card);
   color: var(--card-foreground);
-  box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.05);
+  box-shadow: 0 5px 20px rgb(0 0 0 / 0.05);
 }
-
 .dark .card {
-  box-shadow: 0 5px 20px 0 rgb(0 0 0 / 0.25);
+  box-shadow: 0 5px 20px rgb(0 0 0 / 0.25);
 }
 
 .card-panel {
@@ -194,22 +137,16 @@ const variantClass = computed(() => `card-${props.variant}`)
   padding: 2.4rem 2rem 1.8rem;
   border-color: var(--line-soft);
   border-radius: 20px;
-  background: var(--card);
 }
-
 .card-stat {
-  min-width: 100px;
-  min-height: 30px;
-  padding: 0.5rem 1.1rem;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  flex-direction: row;
   gap: 0.7rem;
+  min-width: 100px;
+  padding: 0.5rem 1.1rem;
   border-color: var(--line-soft);
-  border-radius: 14px;
-  background: var(--card);
 }
-
 .card-hero {
   padding: 1.5rem;
   border-color: var(--line-soft);
@@ -218,23 +155,12 @@ const variantClass = computed(() => `card-${props.variant}`)
     linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 44%),
     var(--card);
 }
-
 .card-form {
   gap: 1rem;
   padding: 1.25rem;
   border-color: var(--line-soft);
   border-radius: 18px;
-  background: var(--card);
 }
-
-.card-actions {
-  padding: 0.8rem;
-  border-color: var(--line-soft);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--card) 92%, transparent);
-  backdrop-filter: blur(12px);
-}
-
 .card-inset {
   padding: 0.8rem;
   border-color: var(--line-soft);
@@ -242,86 +168,46 @@ const variantClass = computed(() => `card-${props.variant}`)
   background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
 }
 
-.card-head,
-.card-body,
-.card-foot {
-  display: contents;
+.card-title {
+  margin: 0;
+  font-size: 1rem;
+}
+.card-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
 }
 
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 .card.scrollable {
-  max-height: calc(100vh - 16px * 2);
+  max-height: calc(100vh - 32px);
 }
-
 .card.scrollable > .card-body {
-  display: block;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
 }
 
-@media (max-width: 700px) {
-  .card-panel {
-    padding: 1.4rem;
-  }
-}
-
-.error-fade-enter-active,
-.error-fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-
-.error-fade-enter-from,
-.error-fade-leave-to {
-  opacity: 0;
-}
-
-.card-default-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.card-default-header__title {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.card-default-header__subtitle {
-  margin: 0.15rem 0 0;
-  font-size: 0.85rem;
-}
-
-.card-default-header__controls,
-.card-default-header__badge,
-.card-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.card-status-block {
+.card-state {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-
 .card-empty {
   align-items: center;
   text-align: center;
   padding: 1rem 0;
 }
-
-.card-empty__text {
+.card-muted {
   margin: 0;
   font-size: 0.9rem;
+  color: var(--muted-foreground);
 }
-
-.card-data {
-  display: contents;
-}
-
-.card-data.dimmed > * {
+.dimmed > * {
   opacity: 0.6;
 }
 
@@ -330,42 +216,39 @@ const variantClass = computed(() => `card-${props.variant}`)
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--muted);
   color: var(--muted-foreground);
   font-size: 0.8rem;
-  padding: 0.35rem 0.6rem;
 }
-
-.stale-banner__retry {
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  color: inherit;
-  text-decoration: underline;
+.stale-banner button {
   padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
-
-.stale-banner__retry:disabled {
+.stale-banner button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
-
-.stale-banner__retry:focus-visible {
+.stale-banner button:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-.is-fetching {
-  scroll-behavior: auto;
+@media (max-width: 700px) {
+  .card-panel {
+    padding: 1.4rem;
+  }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .card-data.dimmed > * {
+  .dimmed > * {
     opacity: 0.75;
   }
 }

@@ -107,7 +107,6 @@ describe('UiCard', () => {
 
   it('keeps data content layout-transparent (no wrapper box)', async () => {
     render(UiCard, {
-      props: { variant: 'stat' },
       slots: { default: 'Body' },
     })
 
