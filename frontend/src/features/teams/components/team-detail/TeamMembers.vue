@@ -22,8 +22,8 @@
         <ui-skeleton-loader :loading="props.loading">
           <template #skeleton>
             <div class="member-list">
-              <ui-card v-for="i in 2" :key="i" class="card-item">
-                <div style="display: flex; flex-direction: column; gap: 4px">
+              <div v-for="i in 2" :key="i" class="member-row member-row--skeleton">
+                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1">
                   <div style="display: flex; justify-content: space-between; gap: 10px">
                     <ui-skeleton variant="rect" width="100%" />
                     <ui-skeleton variant="rect" width="100px" />
@@ -31,42 +31,40 @@
 
                   <ui-skeleton variant="rect" width="200px" />
                 </div>
-              </ui-card>
+              </div>
             </div>
           </template>
 
           <div class="member-list">
-            <ui-card
-              class="card-item"
+            <div
+              class="member-row"
               v-for="member in filteredMembers"
               :key="`member-${member.id}`"
             >
-              <div class="member-row">
-                <user-avatar
-                  :avatar="member.avatar"
-                  :username="member.username"
-                  :full-name="member.full_name || ''"
-                  :size="42"
-                />
+              <user-avatar
+                :avatar="member.avatar"
+                :username="member.username"
+                :full-name="member.full_name || ''"
+                :size="42"
+              />
 
-                <div class="member-main">
-                  <div style="display: flex; justify-content: space-between">
-                    <p class="member-name">
-                      <RouterLink :to="`/users/${member.id}`" class="member-link">
-                        {{ member.username }}
-                      </RouterLink>
-                    </p>
+              <div class="member-main">
+                <div class="member-top">
+                  <p class="member-name">
+                    <RouterLink :to="`/users/${member.id}`" class="member-link">
+                      {{ member.username }}
+                    </RouterLink>
+                  </p>
 
-                    <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
-                      >Captain</ui-badge
-                    >
-                    <ui-badge v-else variant="gray">Member</ui-badge>
-                  </div>
-
-                  <p class="text-muted member-email">{{ member.email }}</p>
+                  <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
+                    >Captain</ui-badge
+                  >
+                  <ui-badge v-else variant="gray">Member</ui-badge>
                 </div>
+
+                <p class="text-muted member-email">{{ member.email }}</p>
               </div>
-            </ui-card>
+            </div>
 
             <p v-if="filteredMembers?.length === 0" class="text-muted">
               No accepted members match your search.
@@ -112,28 +110,6 @@ const filteredMembers = computed(() =>
 </script>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--line-soft);
-  height: 100%;
-}
-
-.panel-head {
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
-}
-
-.panel-head h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-}
-
-.card-item {
-  background-color: var(--muted);
-}
-
 .members-sections {
   display: flex;
   flex-direction: column;
@@ -161,8 +137,29 @@ const filteredMembers = computed(() =>
   overflow-y: auto;
   max-height: 300px;
   display: grid;
+  gap: 0;
+}
+
+.member-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.7rem 0;
+}
+
+.member-row + .member-row {
+  border-top: 1px solid var(--border);
+}
+
+.member-row--skeleton {
+  border-top: 0;
+}
+
+.member-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
-  grid-template-rows: auto;
 }
 
 .member-name,
@@ -172,12 +169,8 @@ const filteredMembers = computed(() =>
 
 .member-name {
   font-weight: 700;
-}
-
-.member-row {
-  display: flex;
-  gap: 0.7rem;
-  align-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .member-main {
@@ -186,25 +179,18 @@ const filteredMembers = computed(() =>
 }
 
 .member-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
 }
 
+.member-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .member-email {
   font-size: 0.84rem;
-}
-
-.member-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.45rem;
-}
-
-@media (max-width: 640px) {
-  .member-side {
-    align-items: flex-start;
-  }
+  overflow-wrap: anywhere;
 }
 </style>

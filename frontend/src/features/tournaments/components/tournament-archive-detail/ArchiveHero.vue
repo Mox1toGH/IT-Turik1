@@ -34,12 +34,11 @@ const props = defineProps<{
 const heroStyle = computed(() => {
   if (props.banner) {
     return {
-      backgroundImage: `linear-gradient(120deg, rgb(15 23 42 / 70%), rgb(30 41 59 / 30%)), url(${props.banner})`,
+      backgroundImage: `url(${props.banner})`,
     }
   }
   return {
-    backgroundImage:
-      'linear-gradient(120deg, color-mix(in srgb, var(--primary) 45%, transparent), color-mix(in srgb, var(--muted) 85%, transparent))',
+    backgroundImage: 'linear-gradient(120deg, var(--primary-soft), var(--subtle))',
   }
 })
 </script>
@@ -48,7 +47,7 @@ const heroStyle = computed(() => {
 .hero-card {
   overflow: hidden;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--line-soft) 70%, transparent);
+  border: 1px solid var(--border);
 }
 
 .hero {
@@ -63,13 +62,13 @@ const heroStyle = computed(() => {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgb(2 6 23 / 8%), rgb(2 6 23 / 68%));
+  background: var(--scrim);
 }
 
 .hero-content {
   position: relative;
   z-index: 1;
-  color: white;
+  color: var(--on-image);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;

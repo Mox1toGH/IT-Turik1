@@ -29,7 +29,7 @@
     </template>
 
     <div class="tournament-info">
-      <div class="tournament-name">
+      <div class="info-row">
         <p class="text-muted">Name</p>
         <ui-skeleton-loader :loading="isLoading">
           <template #skeleton>
@@ -39,11 +39,11 @@
             </div>
           </template>
 
-          <p :title="tournament?.name">{{ truncateText(tournament?.name ?? '', 200) }}</p>
+          <ui-truncate :text="tournament?.name ?? ''" />
         </ui-skeleton-loader>
       </div>
 
-      <div class="tournament-description">
+      <div class="info-row">
         <p class="text-muted">Description</p>
 
         <ui-skeleton-loader :loading="isLoading">
@@ -55,60 +55,47 @@
             </div>
           </template>
 
-          <large-text-modal
-            v-model="isDesciptionOpen"
-            title="Tournament description"
-            :text="tournament?.description ?? ''"
-            max-length="190"
-          >
-            <template #trigger="{ toggleOpen }">
-              <p
-                :title="tournament?.description"
-                @click="toggleOpen"
-                :class="['tournament-description-text', { large: isDescriptionLarge }]"
-              >
-                {{ truncateText(tournament?.description ?? '', 190) }}
-              </p>
-            </template>
-          </large-text-modal>
+          <ui-expandable-text :text="tournament?.description ?? ''" :lines="3" />
         </ui-skeleton-loader>
       </div>
 
-      <div class="tournament-dates">
-        <div>
-          <p class="text-muted">Start / end date</p>
-          <div class="">
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="180px" />
-              </template>
+      <div class="info-row">
+        <div class="dates-row">
+          <div>
+            <p class="text-muted">Start / end date</p>
+            <div class="">
+              <ui-skeleton-loader :loading="isLoading">
+                <template #skeleton>
+                  <ui-skeleton variant="rect" width="180px" />
+                </template>
 
-              <p>
-                {{
-                  tournament?.start_date
-                    ? formatDate(tournament.start_date, { showHours: true })
-                    : '-'
-                }}
-              </p>
-              <p>
-                {{
-                  tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
-                }}
-              </p>
-            </ui-skeleton-loader>
+                <p>
+                  {{
+                    tournament?.start_date
+                      ? formatDate(tournament.start_date, { showHours: true })
+                      : '-'
+                  }}
+                </p>
+                <p>
+                  {{
+                    tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
+                  }}
+                </p>
+              </ui-skeleton-loader>
+            </div>
           </div>
+
+          <ui-skeleton-loader :loading="isLoading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100px" />
+            </template>
+
+            <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
+          </ui-skeleton-loader>
         </div>
-
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="100px" />
-          </template>
-
-          <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
-        </ui-skeleton-loader>
       </div>
 
-      <div class="tournament-limits">
+      <div class="info-row limits-row">
         <div>
           <p class="text-muted">Minimum team members</p>
           <ui-skeleton-loader :loading="isLoading">
@@ -192,13 +179,13 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { computed, ref } from 'vue'
-import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
 import { useNotification } from '@/composables/useNotification'
 import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -217,7 +204,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const isDesciptionOpen = ref(false)
 const selectedTeamId = ref<number | null>(null)
 
 const { showNotification } = useNotification()
@@ -259,7 +245,6 @@ const canManageRegistration = computed(
   () => user.value?.role === 'team' && ((teams.value?.length ?? 0) > 0 || !!registeredTeamId.value),
 )
 
-const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)
 const statusBadgeVariant = computed(() => {
   if (tournament.value?.status === 'draft') return 'gray'
   if (tournament.value?.status === 'finished') return 'gray'
@@ -297,6 +282,7 @@ function handleJoin() {
 <style scoped>
 .tournament-card {
   flex: 1;
+  min-width: 0;
 }
 
 .tournament-header {
@@ -317,88 +303,62 @@ function handleJoin() {
   margin: 0;
 }
 
-.status-timeline {
-  display: flex;
-  gap: 0.3rem;
-}
-
 .tournament-info {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
 }
 
-.tournament-name,
-.tournament-dates,
-.tournament-description {
-  padding: 0.95rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: var(--background);
+.info-row {
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--border);
 }
 
-.tournament-name p,
-.tournament-dates p,
-.tournament-description p {
+.info-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.info-row p {
   margin: 0;
 }
 
-.tournament-name .text-muted,
-.tournament-dates .text-muted,
-.tournament-description .text-muted {
+.info-row > .text-muted {
   margin-bottom: 0.45rem;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 700;
 }
 
-.tournament-description-text {
-  border-radius: 6px;
-  transition: background 2s ease-in;
-  word-break: break-word;
-}
-
-.tournament-dates {
+.dates-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
 }
 
-.tournament-limits {
+.limits-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.8rem;
 }
 
-.tournament-limits > div {
-  padding: 0.95rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: var(--background);
-}
-
-.tournament-limits p {
+.limits-row p {
   margin: 0;
 }
 
-.tournament-limits .text-muted {
+.limits-row .text-muted {
   margin-bottom: 0.45rem;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 700;
 }
 
-.tournament-label {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.7rem;
-}
-
 .tournament-action {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
 }
 
 .join-controls {
@@ -423,7 +383,7 @@ function handleJoin() {
 
 @media (max-width: 700px) {
   .tournament-header,
-  .tournament-dates {
+  .dates-row {
     align-items: flex-start;
     flex-direction: column;
   }

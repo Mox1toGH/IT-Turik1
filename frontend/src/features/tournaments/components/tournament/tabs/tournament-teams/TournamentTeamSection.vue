@@ -1,5 +1,5 @@
 <template>
-  <ui-card :class="['teams-list-wrap', { 'disqualified-wrap': sectionType === 'disqualified' }]">
+  <div :class="['teams-list-wrap', { 'disqualified-wrap': sectionType === 'disqualified' }]">
     <div class="team-label">
       <p>{{ sectionTitle }}</p>
 
@@ -31,12 +31,11 @@
         <p v-else class="text-muted">No teams found.</p>
       </ui-skeleton-loader>
     </div>
-  </ui-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'

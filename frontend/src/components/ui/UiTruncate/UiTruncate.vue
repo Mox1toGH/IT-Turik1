@@ -1,16 +1,22 @@
 <template>
   <UiHoverCard v-if="tooltip && isTruncated" :open-delay="300">
     <template #trigger>
-      <span ref="textRef" :class="truncateClass" :title="plainText"><slot>{{ text }}</slot></span>
+      <span ref="textRef" :class="truncateClass" v-bind="$attrs" :title="plainText"
+        ><slot>{{ text }}</slot></span
+      >
     </template>
     <span class="ui-truncate__full">{{ fullText }}<slot name="tooltip" /></span>
   </UiHoverCard>
-  <span v-else ref="textRef" :class="truncateClass"><slot>{{ text }}</slot></span>
+  <span v-else ref="textRef" :class="truncateClass" v-bind="$attrs" :title="plainText"
+    ><slot>{{ text }}</slot></span
+  >
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 import UiHoverCard from '../UiHoverCard'
+
+defineOptions({ inheritAttrs: false })
 
 interface Props {
   text?: string

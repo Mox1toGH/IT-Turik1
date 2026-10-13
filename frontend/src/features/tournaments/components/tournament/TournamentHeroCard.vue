@@ -1,47 +1,54 @@
 <template>
-  <header
-    class="tournament-hero"
-    :class="{ 'tournament-hero--with-banner': Boolean(tournament?.banner) }"
-  >
-    <button
-      v-if="user?.role === 'admin'"
-      class="banner-edit-btn"
-      type="button"
-      aria-label="Edit tournament banner"
-      @click="isBannerModalOpen = true"
-    >
-      <avatar-edit-icon />
-    </button>
-    <div v-if="tournament?.banner" class="hero-banner" :style="heroBannerStyle" />
-    <div v-if="tournament?.banner" class="hero-overlay" />
-    <UpdateBannerModal v-model="isBannerModalOpen" :tournament-id="tournamentId" />
-
-    <div class="hero-content tournament-hero-copy">
-      <div class="breadcrumb-label">
-        <span>Workspace</span>
-        <span aria-hidden="true">/</span>
-        <span>Tournament</span>
-      </div>
-
-      <h1 class="text-6xl">{{ tournament?.name ?? `Tournament ${tournamentId}` }}</h1>
-      <p class="section-subtitle text-xl">
-        Review tournament information, rounds, teams, and results.
-      </p>
-    </div>
-
-    <div class="hero-actions hero-content">
-      <ui-button asLink to="/tournaments" variant="secondary" size="lg" class="tournament-link">
+  <div class="tournament-hero-wrap">
+    <div class="hero-topbar">
+      <router-link to="/tournaments" class="back-link">
+        <arrow-left class="back-icon" aria-hidden="true" />
         Back to tournaments
-      </ui-button>
+      </router-link>
+      <button
+        v-if="user?.role === 'admin'"
+        class="banner-edit-btn"
+        type="button"
+        aria-label="Edit tournament banner"
+        @click="isBannerModalOpen = true"
+      >
+        <avatar-edit-icon />
+      </button>
     </div>
-  </header>
+
+    <header
+      class="tournament-hero"
+      :class="{ 'tournament-hero--with-banner': Boolean(tournament?.banner) }"
+    >
+      <img
+        v-if="tournament?.banner"
+        class="hero-img"
+        :src="tournament.banner"
+        :alt="`${tournament?.name ?? 'Tournament'} banner`"
+        :style="{ objectPosition: bannerObjectPosition }"
+      />
+      <div v-else class="hero-fallback" aria-hidden="true" />
+      <div v-if="tournament?.banner" class="hero-overlay" aria-hidden="true" />
+
+      <div class="hero-content">
+        <h1 class="text-6xl">
+          <ui-truncate :text="tournament?.name ?? `Tournament ${tournamentId}`" />
+        </h1>
+        <p class="section-subtitle text-xl">
+          Review tournament information, rounds, teams, and results.
+        </p>
+      </div>
+    </header>
+
+    <UpdateBannerModal v-model="isBannerModalOpen" :tournament-id="tournamentId" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
+import ArrowLeft from '@/icons/ArrowLeft.vue'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import UpdateBannerModal from './modals/UpdateBannerModal.vue'
@@ -56,52 +63,119 @@ const isBannerModalOpen = ref(false)
 const { data: user } = useGetUserProfile()
 const { data: tournament } = useGetTournament(props.tournamentId)
 const { objectPosition: bannerObjectPosition } = useBannerPosition(props.tournamentId)
-
-const heroBannerStyle = computed(() =>
-  tournament.value?.banner
-    ? {
-        backgroundImage: `url(${tournament.value.banner})`,
-        backgroundPosition: bannerObjectPosition.value,
-      }
-    : {},
-)
 </script>
 
 <style scoped>
+.tournament-hero-wrap {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.hero-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.back-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.banner-edit-btn {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.banner-edit-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.banner-edit-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .tournament-hero {
   position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: flex-end;
-  gap: 1.5rem;
+  height: 200px;
   overflow: hidden;
-  min-height: 220px;
-  padding: 1.5rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--card);
+}
+
+.hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-fallback {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, var(--primary-soft), var(--subtle));
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--scrim) 92%, transparent) 0%,
+    color-mix(in srgb, var(--scrim) 45%, transparent) 55%,
+    transparent 85%
+  );
 }
 
 .hero-content {
   position: relative;
-  z-index: 2;
-}
-
-.tournament-hero-copy {
+  z-index: 1;
   min-width: 0;
-}
-
-.breadcrumb-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.75rem;
-  color: var(--accent-strong);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  max-width: 760px;
 }
 
 .tournament-hero h1 {
@@ -117,84 +191,24 @@ const heroBannerStyle = computed(() =>
 .tournament-hero .section-subtitle {
   margin: 0.45rem 0 0;
   max-width: 780px;
+  color: var(--muted-foreground);
   font-size: var(--text-base);
   line-height: var(--text-base--line-height);
 }
 
-.tournament-hero--with-banner h1,
+.tournament-hero--with-banner h1 {
+  color: var(--on-image);
+}
+
 .tournament-hero--with-banner .section-subtitle {
-  color: #fff;
+  color: var(--on-image);
+  opacity: 0.85;
 }
 
-.tournament-hero--with-banner .breadcrumb-label {
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.hero-banner {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  z-index: 0;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(135deg, rgba(5, 11, 23, 0.78), rgba(5, 11, 23, 0.42));
-}
-
-.banner-edit-btn {
-  position: absolute;
-  top: 0.9rem;
-  right: 0.9rem;
-  z-index: 3;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.banner-edit-btn:hover {
-  border-color: var(--brand-500);
-  color: var(--brand-700);
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 1rem;
-}
-
-.tournament-link {
-  width: max-content;
-}
-
-.tournament-hero--with-banner h1,
-.tournament-hero--with-banner .section-subtitle {
-  color: #fff;
-}
-
-.tournament-hero--with-banner .breadcrumb-label {
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.banner-edit-btn {
+@media (max-width: 700px) {
   .tournament-hero {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 1rem;
-    min-height: 0;
-    padding: 1.2rem;
+    height: 160px;
+    padding: 1rem;
   }
 
   .tournament-hero h1 {
@@ -205,10 +219,6 @@ const heroBannerStyle = computed(() =>
   .tournament-hero .section-subtitle {
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-  }
-
-  .hero-actions {
-    justify-content: flex-start;
   }
 }
 </style>

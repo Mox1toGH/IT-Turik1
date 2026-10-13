@@ -157,7 +157,18 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
 .card-body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.card-footer {
+  margin-top: auto;
+}
+
+.card-actions-divided > .card-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
 }
 .card.scrollable {
   max-height: calc(100vh - 32px);

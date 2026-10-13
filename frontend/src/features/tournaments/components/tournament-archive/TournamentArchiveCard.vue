@@ -1,25 +1,17 @@
 <template>
   <ui-card class="archive-card">
-    <div
-      class="archive-top"
-      :class="{ 'archive-top--with-banner': Boolean(tournament.banner) }"
-      :style="
-        tournament.banner
-          ? {
-              backgroundImage: `linear-gradient(rgba(5, 11, 23, 0.72), rgba(5, 11, 23, 0.45)), url(${tournament.banner})`,
-            }
-          : {}
-      "
-    >
-      <h3 class="archive-card-title" :title="tournament.name">
-        {{ truncateText(tournament.name, 80) }}
-      </h3>
-      <p class="archive-description" :title="tournament.description">
-        {{ truncateText(tournament.description || 'No description provided.', 180) }}
-      </p>
-    </div>
+    <img
+      v-if="tournament.banner"
+      class="archive-media"
+      :src="tournament.banner"
+      :alt="`${tournament.name} banner`"
+    />
 
-    <div class="archive-info">
+    <div class="archive-body">
+      <ui-truncate :text="tournament.name" class="archive-card-title" />
+
+      <p class="archive-description">{{ tournament.description || 'No description provided.' }}</p>
+
       <div class="archive-meta">
         <div class="archive-date">
           <p>Finished:</p>
@@ -28,6 +20,7 @@
         <p class="archive-count">{{ tournament.standings.length }} standings</p>
       </div>
     </div>
+
     <template #footer>
       <ui-button
         asLink
@@ -45,8 +38,9 @@
 <script setup lang="ts">
 import type { TournamentArchiveListResponse } from '@/api/backendAPINinja.schemas'
 import UiCard from '@/components/ui/UiCard'
+import UiButton from '@/components/ui/UiButton'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { formatDate } from '@/lib/date'
-import { truncateText } from '@/lib/utils'
 
 interface Props {
   tournament: TournamentArchiveListResponse
@@ -57,48 +51,53 @@ defineProps<Props>()
 
 <style scoped>
 .archive-card {
-  background: var(--muted) !important;
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.archive-top {
-  border-radius: 12px;
-  padding: 12px;
-  margin: -4px -4px 12px;
-  background: color-mix(in srgb, var(--muted) 90%, #000 10%);
-  background-size: cover;
-  background-position: center;
-  min-height: 140px;
+.archive-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+.archive-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.archive-top--with-banner {
-  color: #fff;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
 }
 
 .archive-card-title {
   margin: 0;
-  word-break: break-word;
+  font-weight: 800;
+  font-size: 1.1rem;
 }
 
 .archive-description {
-  flex: 1;
-  margin-bottom: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  min-width: 0;
   line-height: 1.5;
-  word-break: break-word;
-}
-
-.archive-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
 }
 
 .archive-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   color: var(--muted-foreground);
 }
 
@@ -106,6 +105,7 @@ defineProps<Props>()
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .archive-date p,
@@ -115,6 +115,10 @@ defineProps<Props>()
 
 .archive-details-btn {
   width: 100%;
+}
+
+.archive-card :deep(.card-footer) {
+  padding: 0 1.25rem 1.25rem;
 }
 
 @media (max-width: 768px) {

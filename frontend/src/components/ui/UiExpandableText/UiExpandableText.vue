@@ -4,7 +4,6 @@
       ref="bodyRef"
       class="ui-expandable__body"
       :class="{ 'ui-expandable__body--clamped': !expanded }"
-      :style="!expanded ? { maxHeight: `${collapsedHeight}px` } : undefined"
     >
       <slot>{{ text }}</slot>
     </div>
@@ -28,7 +27,6 @@ interface Props {
   lines?: number
   expandLabel?: string
   collapseLabel?: string
-  lineHeight?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,7 +34,6 @@ const props = withDefaults(defineProps<Props>(), {
   lines: 3,
   expandLabel: 'Show more',
   collapseLabel: 'Show less',
-  lineHeight: 24,
 })
 
 const slots = useSlots()
@@ -45,8 +42,7 @@ const expanded = ref(false)
 const isOverflowing = ref(false)
 let observer: ResizeObserver | null = null
 
-// Max-height clamp (instead of line-clamp) so rich/tiptap HTML also clamps.
-const collapsedHeight = computed(() => props.lines * props.lineHeight)
+const clampLines = computed(() => Math.max(1, Math.round(props.lines)))
 
 const checkOverflow = () => {
   const el = bodyRef.value
@@ -54,22 +50,29 @@ const checkOverflow = () => {
     isOverflowing.value = false
     return
   }
-  isOverflowing.value = el.scrollHeight > collapsedHeight.value + 1
+  isOverflowing.value = el.scrollHeight > el.clientHeight + 1
   // If content shrank back to fit, collapse again so no toggle lingers.
   if (!isOverflowing.value) expanded.value = false
 }
 
-onMounted(() => {
+const scheduleCheck = () => {
   void nextTick(checkOverflow)
+}
+
+onMounted(() => {
+  scheduleCheck()
   if (typeof ResizeObserver !== 'undefined' && bodyRef.value) {
     observer = new ResizeObserver(checkOverflow)
     observer.observe(bodyRef.value)
   }
+  // Webfonts can change line breaks after mount; re-check once they settle.
+  const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts
+  if (fonts) {
+    void fonts.ready.then(checkOverflow)
+  }
 })
 
-watch([() => props.text, () => props.lines, () => slots.default], () => {
-  void nextTick(checkOverflow)
-})
+watch([() => props.text, () => props.lines, () => slots.default], scheduleCheck)
 
 onBeforeUnmount(() => {
   observer?.disconnect()
@@ -86,10 +89,15 @@ defineExpose({ expanded, isOverflowing, checkOverflow })
 
 .ui-expandable__body {
   min-width: 0;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .ui-expandable__body--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: v-bind(clampLines);
+  line-clamp: v-bind(clampLines);
   overflow: hidden;
 }
 

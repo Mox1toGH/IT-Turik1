@@ -1,7 +1,5 @@
 <template>
-  <section class="stats-shell">
-    <h2 class="stats-title">System Stats</h2>
-
+  <ui-section title="System Stats">
     <div v-if="isLoading" class="stats-grid">
       <div v-for="n in 6" :key="n" class="stats-card loading-card">
         <UiSkeleton variant="rect" height="16px" width="50%" />
@@ -18,11 +16,12 @@
         <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
       </div>
     </template>
-  </section>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import UiSection from '@/components/ui/UiSection/UiSection.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'

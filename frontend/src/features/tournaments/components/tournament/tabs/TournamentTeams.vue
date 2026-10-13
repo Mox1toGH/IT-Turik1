@@ -1,28 +1,30 @@
 <template>
-  <ui-card
-    class="tournament-card"
-    :query="activeTeamsQuery"
-    empty-text="No teams registered yet"
+  <ui-section
+    title="Teams info"
+    description="Registered and disqualified teams."
   >
-    <template #header>
-      <div class="tournament-card-head">
-        <div>
-          <p class="section-eyebrow">Teams</p>
-          <h2 class="text-3xl">Teams info</h2>
-          <p class="section-subtitle text-base">Registered and disqualified teams.</p>
+    <template #actions>
+      <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
+    </template>
+
+    <div
+      v-if="status === 'error'"
+      style="display: flex; height: 300px; justify-content: center; align-items: center"
+    >
+      <p>Error while fetching tournament teams</p>
+    </div>
+
+    <ui-skeleton-loader v-else-if="status === 'loading'" :loading="true">
+      <template #skeleton>
+        <div style="display: flex; flex-direction: column; gap: 0.4rem">
+          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="48px" width="100%" />
         </div>
+      </template>
+    </ui-skeleton-loader>
 
-        <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
-      </div>
-    </template>
+    <p v-else-if="status === 'empty'" class="card-muted">No teams registered yet</p>
 
-    <template #error>
-      <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament teams</p>
-      </div>
-    </template>
-
-    <div>
+    <div v-else>
       <ui-input
         v-model="search"
         placeholder="Search team"
@@ -53,16 +55,19 @@
         </template>
       </TournamentTeamSection>
     </div>
-  </ui-card>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
+import UiSection from '@/components/ui/UiSection'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useCardState } from '@/composables/useCardState'
 import TeamCard from '../TeamCard.vue'
 
 interface Props {
@@ -73,15 +78,16 @@ const props = defineProps<Props>()
 const search = ref('')
 
 const { data: tournament } = useGetTournament(props.tournamentId)
-// Primary query: drives the card's status. 'active' filters is_active=True on the
+// Primary query: drives the section's status. 'active' filters is_active=True on the
 // backend ('all' would also return disqualified and inactive registrations).
 const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'active' })
-// Secondary query: own loading state, never affects the card's status.
+// Secondary query: own loading state, never affects the section's status.
 const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
   status: 'disqualified',
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
 const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
+const { status } = useCardState(activeTeamsQuery)
 
 const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()
@@ -89,34 +95,12 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 </script>
 
 <style scoped>
-.tournament-card {
-  flex: 1;
-}
-
-.tournament-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.tournament-card-head h2 {
-  margin: 0.5rem 0 0.45rem;
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.tournament-card-head .section-subtitle {
-  margin: 0;
-}
-
 .count-pill {
   display: inline-flex;
   align-items: center;
   min-height: 38px;
   padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--muted-foreground);
   white-space: nowrap;
@@ -127,17 +111,10 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
   margin-bottom: 0.9rem;
 }
 
-.teams-list-wrap {
-  background-color: var(--muted);
-}
-
-.teams-list {
-  overflow-y: auto;
-  max-height: 400px;
-}
-
-.disqualified-wrap {
-  margin-top: 1rem;
+.card-muted {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
 }
 
 .label-with-icon {
@@ -153,7 +130,6 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 }
 
 @media (max-width: 700px) {
-  .tournament-card-head,
   .team-item {
     align-items: flex-start;
     flex-direction: column;

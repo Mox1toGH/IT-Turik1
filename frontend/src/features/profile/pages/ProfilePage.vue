@@ -140,7 +140,7 @@ const logout = () => {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -174,7 +174,7 @@ const logout = () => {
   gap: 0.7rem;
   padding: 0.5rem 1.1rem;
   min-height: 30px;
-  border-color: var(--line-soft);
+  border-color: var(--border);
 }
 
 .joined-card strong {
@@ -201,7 +201,7 @@ const logout = () => {
 .profile-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .profile-layout {
@@ -274,15 +274,15 @@ const logout = () => {
 }
 
 .rail-link + .rail-link {
-  border-top: 1px solid var(--line-soft);
+  border-top: 1px solid var(--border);
 }
 
 .rail-link:hover {
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  background: var(--hover);
 }
 
 .rail-link.active {
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
+  background: var(--primary-soft);
   color: var(--primary);
 }
 
@@ -326,9 +326,8 @@ const logout = () => {
   justify-content: space-between;
   gap: 1rem;
   padding: 1.35rem;
-  border-color: var(--destructive);
-  border-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
-  background: color-mix(in srgb, var(--destructive) 8%, var(--card));
+  border-color: var(--destructive-ring);
+  background: var(--destructive-soft);
 }
 
 .danger-title,
@@ -345,7 +344,7 @@ const logout = () => {
 
 .danger-text {
   margin-top: 0.35rem;
-  color: color-mix(in srgb, var(--destructive) 72%, var(--foreground));
+  color: var(--muted-foreground);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
 }
@@ -354,9 +353,9 @@ const logout = () => {
   display: grid;
   min-height: 360px;
   place-items: center;
-  border: 1px solid var(--destructive);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+  border: 1px solid var(--destructive-ring);
+  border-radius: var(--radius);
+  background: var(--destructive-soft);
   color: var(--destructive);
 }
 

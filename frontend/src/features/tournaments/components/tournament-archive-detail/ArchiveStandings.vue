@@ -1,12 +1,6 @@
 <template>
-  <ui-card class="section-block">
-    <template #header>
-      <div class="section-head">
-        <h2>Final Standings</h2>
-        <p class="section-note">Saved final ranking</p>
-      </div>
-    </template>
-    <ui-card v-if="standings.length" class="table-wrap">
+  <ui-section title="Final Standings" description="Saved final ranking">
+    <div v-if="standings.length" class="table-wrap">
       <div class="table-row table-head">
         <span>Rank</span>
         <span>Team</span>
@@ -24,15 +18,13 @@
         </router-link>
         <span>{{ formatScore(row.total_score) }}</span>
       </div>
-    </ui-card>
-    <ui-card v-else>
-      <p class="empty-state">No saved standings.</p>
-    </ui-card>
-  </ui-card>
+    </div>
+    <p v-else class="empty-state">No saved standings.</p>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
 import { formatScore } from './lib/format'
 import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
 
@@ -49,33 +41,11 @@ const rankClass = (rank: number) => {
 </script>
 
 <style scoped>
-.section-block {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.section-block h2 {
-  margin: 0;
-}
-
-.section-note {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
-}
-
 .table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
   overflow: hidden;
-  padding: 0;
-  border: 1px solid var(--line-soft);
 }
 
 .table-row {
@@ -83,36 +53,54 @@ const rankClass = (rank: number) => {
   grid-template-columns: 80px 1fr 160px;
   gap: 0.5rem;
   padding: 0.65rem 0.85rem;
-  border-top: 1px solid color-mix(in srgb, var(--line-soft) 85%, transparent);
+  border-top: 1px solid var(--border);
   align-items: center;
 }
 
-.table-head {
+.table-row:first-child {
   border-top: 0;
+}
+
+.table-head {
   font-weight: 600;
-  background: var(--muted);
+  color: var(--muted-foreground);
+  background: var(--subtle);
 }
 
 .rank-pill {
   width: fit-content;
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
-  background: color-mix(in srgb, var(--muted) 65%, transparent);
+  background: var(--subtle);
+  color: var(--muted-foreground);
 }
 
 .rank-gold .rank-pill {
-  background: #f6d365;
-  color: #3a2d00;
+  background: var(--medal-gold);
+  color: var(--medal-gold-fg);
 }
 
 .rank-silver .rank-pill {
-  background: #dce1e8;
-  color: #1f2937;
+  background: var(--medal-silver);
+  color: var(--medal-silver-fg);
 }
 
 .rank-bronze .rank-pill {
-  background: #e8b28d;
-  color: #4b2a12;
+  background: var(--medal-bronze);
+  color: var(--medal-bronze-fg);
+}
+
+.team-link {
+  color: var(--foreground);
+  text-decoration: none;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
 }
 
 .empty-state {
@@ -121,10 +109,6 @@ const rankClass = (rank: number) => {
 }
 
 @media (max-width: 720px) {
-  .section-note {
-    width: 100%;
-  }
-
   .table-row {
     grid-template-columns: 62px 1fr 95px;
     font-size: 0.83rem;

@@ -51,7 +51,7 @@ defineEmits<{
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;

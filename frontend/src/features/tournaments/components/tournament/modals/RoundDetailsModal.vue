@@ -33,17 +33,17 @@
       </div>
 
       <div>
-        <ui-card v-if="activeSection === 'description'" class="editor-card">
+        <div v-if="activeSection === 'description'" class="editor-zone">
           <editor-content class="details-editor" :editor="descriptionEditor" />
-        </ui-card>
+        </div>
 
-        <ui-card v-if="activeSection === 'tech_requirements'" class="editor-card">
+        <div v-if="activeSection === 'tech_requirements'" class="editor-zone">
           <editor-content class="details-editor" :editor="requirementsEditor" />
-        </ui-card>
+        </div>
 
-        <ui-card v-if="activeSection === 'must_have'" class="editor-card">
+        <div v-if="activeSection === 'must_have'" class="editor-zone">
           <editor-content class="details-editor" :editor="mustHaveEditor" />
-        </ui-card>
+        </div>
       </div>
     </div>
   </ui-modal>
@@ -51,7 +51,6 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import UiModal from '@/components/ui/UiModal'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
@@ -153,9 +152,16 @@ const handleClose = () => {
   color: var(--primary-foreground);
 }
 
-.editor-card {
+.editor-zone {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--subtle);
   overflow-y: auto;
   max-height: 450px;
-  background: var(--accent);
+  padding: 0.75rem;
+}
+
+.details-editor :deep(.ProseMirror) {
+  outline: none;
 }
 </style>

@@ -45,19 +45,8 @@
               </div>
 
               <div class="event-info">
-                <p>{{ event.title }}</p>
-                <LargeTextModal
-                  v-model="isDescriptionOpen"
-                  title="Event description"
-                  :text="event.description ?? '-'"
-                  max-length="100"
-                >
-                  <template #trigger="{ toggleOpen }">
-                    <p class="event-description" @click="toggleOpen">
-                      {{ truncateText(event.description ?? '-', 100) }}
-                    </p>
-                  </template>
-                </LargeTextModal>
+                <p class="event-title">{{ event.title }}</p>
+                <ui-expandable-text :text="event.description ?? '-'" :lines="2" />
               </div>
             </div>
 
@@ -97,6 +86,7 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
+import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import FinishIcon from '@/icons/FinishIcon.vue'
@@ -106,8 +96,6 @@ import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
 import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
-import LargeTextModal from '@/components/shared/LargeTextModal.vue'
-import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
@@ -123,7 +111,6 @@ const { data: user } = useGetUserProfile()
 const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
-const isDescriptionOpen = ref(false)
 
 const {
   data: events,
@@ -153,6 +140,7 @@ const {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 .events-list {
@@ -170,8 +158,9 @@ const {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex: 0 0 auto;
   background: var(--primary);
-  color: #fff;
+  color: var(--primary-foreground);
   border-radius: 50%;
 }
 
@@ -179,11 +168,12 @@ const {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  min-width: 0;
 }
 
-.event-description {
-  word-break: break-word;
-  max-width: 600px;
+.event-title {
+  margin: 0;
+  font-weight: 700;
 }
 
 .event-left-side,
@@ -191,6 +181,10 @@ const {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.event-right-side p {
+  margin: 0;
 }
 
 .top-actions,
@@ -202,6 +196,7 @@ const {
 }
 
 .event-actions {
+  margin-bottom: 0;
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }

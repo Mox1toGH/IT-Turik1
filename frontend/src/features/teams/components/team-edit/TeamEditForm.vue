@@ -135,7 +135,7 @@
         </label>
       </section>
 
-      <ui-card class="form-actions">
+      <div class="form-actions">
         <ui-button
           type="submit"
           size="lg"
@@ -152,7 +152,7 @@
           :disabled="props.loading"
           >Cancel</ui-button
         >
-      </ui-card>
+      </div>
     </form>
   </ui-card>
 </template>
@@ -255,7 +255,7 @@ const handleSubmit = () => {
 }
 
 .section-number {
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 900;
@@ -267,14 +267,15 @@ const handleSubmit = () => {
   grid-column: 1 / -1;
 }
 
-.form-actions.card {
+.form-actions {
   margin-top: 0.1rem;
   flex-direction: row;
   justify-content: flex-end;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1px solid var(--line-soft);
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
 }
 
 @media (max-width: 760px) {
@@ -296,7 +297,7 @@ const handleSubmit = () => {
     text-align: left;
   }
 
-  .form-actions.card {
+  .form-actions {
     position: static;
     flex-direction: column-reverse;
     align-items: stretch;

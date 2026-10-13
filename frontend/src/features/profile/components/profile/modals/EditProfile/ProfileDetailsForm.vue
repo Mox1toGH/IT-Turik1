@@ -1,6 +1,6 @@
 <template>
   <form class="profile-form" @submit.prevent="handleSubmit">
-    <ui-card class="form-panel">
+    <div class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>
@@ -93,7 +93,7 @@
           <small v-if="form.errors.value.city" class="error">{{ form.errors.value.city }}</small>
         </label>
       </div>
-    </ui-card>
+    </div>
 
     <div class="footer-actions">
       <ui-button
@@ -124,7 +124,6 @@
 import { watch } from 'vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
@@ -203,7 +202,7 @@ defineExpose({ isSubmitting: isUpdatingProfile })
   gap: 14px;
 }
 
-.form-panel.card {
+.form-panel {
   display: grid;
   gap: 14px;
 }

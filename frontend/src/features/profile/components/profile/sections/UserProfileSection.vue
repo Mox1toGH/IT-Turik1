@@ -33,10 +33,8 @@
       </template>
 
       <div class="details">
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Username</span>
-          </template>
+        <div class="field-row">
+          <span class="field-label">Username</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -44,12 +42,9 @@
 
             <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Email</span>
-          </template>
-
+        </div>
+        <div class="field-row">
+          <span class="field-label">Email</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -57,12 +52,9 @@
 
             <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Role</span>
-          </template>
-
+        </div>
+        <div class="field-row">
+          <span class="field-label">Role</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -70,12 +62,9 @@
 
             <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Full name</span>
-          </template>
-
+        </div>
+        <div class="field-row">
+          <span class="field-label">Full name</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -83,12 +72,9 @@
 
             <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">City</span>
-          </template>
-
+        </div>
+        <div class="field-row">
+          <span class="field-label">City</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -96,12 +82,9 @@
 
             <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Phone</span>
-          </template>
-
+        </div>
+        <div class="field-row">
+          <span class="field-label">Phone</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
@@ -109,12 +92,9 @@
 
             <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Teams</span>
-          </template>
-
+        </div>
+        <div class="field-row field-row--wide">
+          <span class="field-label">Teams</span>
           <div>
             <ui-skeleton-loader :loading="isLoading">
               <template #skeleton>
@@ -137,15 +117,13 @@
               <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
             </ui-skeleton-loader>
           </div>
-        </ui-card>
+        </div>
       </div>
 
       <div v-if="user?.active_tournament" class="tournament-overview-row">
         <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
-          <ui-card class="active-tournament-card">
-            <template #header>
-              <span class="card-text-title">Active tournament</span>
-            </template>
+          <div class="active-tournament-card">
+            <span class="card-text-title">Active tournament</span>
             <div class="active-tournament-content">
               <div>
                 <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
@@ -165,7 +143,7 @@
                 Tournament history
               </ui-button>
             </div>
-          </ui-card>
+          </div>
         </router-link>
       </div>
     </ui-card>
@@ -206,49 +184,45 @@ const { status, errorCode, isStale } = useCardState(userQuery)
 
 .meta {
   margin: 0;
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
 }
 
 .details {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0 1.5rem;
   margin-top: 1rem;
-  align-items: start;
+  border-top: 1px solid var(--border);
 }
 
-.item {
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.85);
-  min-width: 0;
+.field-row {
   display: grid;
   gap: 0.3rem;
   align-content: start;
+  min-width: 0;
+  padding: 0.7rem 0;
 }
 
-.item-label {
-  color: var(--color-gray-500);
+.details .field-row + .field-row {
+  border-top: 1px solid var(--border);
+}
+
+.field-label {
+  color: var(--muted-foreground);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 600;
-  line-height: 1.2;
 }
 
-.field-card {
-  background: var(--muted);
-  color: var(--muted-foreground);
-  gap: 0;
-}
-
-.item-phone {
-  align-content: start;
-}
-
-.item-wide {
+.field-row--wide {
   grid-column: 1 / -1;
+}
+
+.item-value {
+  color: var(--foreground);
+  overflow-wrap: anywhere;
 }
 
 .team-list {
@@ -258,16 +232,16 @@ const { status, errorCode, isStale } = useCardState(userQuery)
 }
 
 .team-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.badge {
-  width: max-content;
-  text-transform: uppercase;
+.team-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .tournament-overview-row {
@@ -283,9 +257,21 @@ const { status, errorCode, isStale } = useCardState(userQuery)
 }
 
 .active-tournament-card {
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
   min-height: 100%;
+}
+
+.card-text-title {
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .active-tournament-content {
@@ -305,52 +291,16 @@ const { status, errorCode, isStale } = useCardState(userQuery)
   color: var(--foreground);
 }
 
+.active-tournament-meta {
+  color: var(--muted-foreground);
+}
+
 .history-btn {
   align-self: center;
-  border-color: color-mix(in srgb, var(--primary) 75%, #ffffff 25%);
-  background: var(--primary);
-  color: white;
-  font-weight: 700;
   white-space: nowrap;
 }
 
-.history-btn:hover,
-.history-btn:focus-visible,
-.history-btn:active {
-  background: color-mix(in srgb, var(--primary) 84%, black 16%);
-  color: white;
-  border-color: color-mix(in srgb, var(--primary) 72%, black 28%);
-}
-
-.danger-zone {
-  margin-top: 1.4rem;
-  padding-top: 1rem;
-  border: 1px solied var(--destructive);
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
-}
-
-.danger-text {
-  margin: 0 0 0.6rem;
-  color: color-mix(in srgb, var(--destructive) 80%, transparent);
-  font-weight: 600;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: grid;
-  place-items: center;
-  z-index: 50;
-  padding: 1rem;
-}
-
 @media (max-width: 760px) {
-  .profile-card {
-    max-width: 100%;
-    margin: 0;
-  }
-
   .head {
     flex-direction: column;
     align-items: flex-start;

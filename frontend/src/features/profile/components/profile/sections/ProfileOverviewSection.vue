@@ -3,14 +3,13 @@
     <ProfileMiniCard :user="user" :is-loading="isLoading" @edit-profile="openEditProfile" />
     <EditProfileModal ref="editProfileModal" />
 
-    <ui-card class="details-section" aria-labelledby="profile-details-title">
-      <div>
-        <p class="section-eyebrow">Profile details</p>
-        <h1 id="profile-details-title" class="text-3xl">Your information</h1>
-      </div>
-
+    <ui-section
+      title="Your information"
+      description="Profile details"
+      aria-labelledby="profile-details-title"
+    >
       <div class="details-grid">
-        <ui-card v-for="field in profileFields" :key="field.label" class="field-card">
+        <div v-for="field in profileFields" :key="field.label" class="field-row">
           <span class="field-label">{{ field.label }}</span>
           <ui-skeleton-loader :loading="isLoading">
             <template #skeleton>
@@ -19,17 +18,15 @@
             <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
             <strong v-else class="field-value">{{ field.value }}</strong>
           </ui-skeleton-loader>
-        </ui-card>
-      </div>
-    </ui-card>
-
-    <ui-card v-if="user?.teams?.length" class="supporting-section">
-      <div class="section-heading compact-heading">
-        <div>
-          <p class="section-eyebrow">Membership</p>
-          <h2 class="text-3xl">Your teams</h2>
         </div>
       </div>
+    </ui-section>
+
+    <ui-section
+      v-if="user?.teams?.length"
+      title="Your teams"
+      description="Membership"
+    >
       <div class="team-list">
         <router-link
           v-for="team in user.teams"
@@ -42,15 +39,13 @@
           <ArrowRight />
         </router-link>
       </div>
-    </ui-card>
+    </ui-section>
 
-    <ui-card v-if="user?.active_tournament" class="supporting-section">
-      <div class="section-heading compact-heading">
-        <div>
-          <p class="section-eyebrow">Current event</p>
-          <h2 class="text-3xl">Active tournament</h2>
-        </div>
-      </div>
+    <ui-section
+      v-if="user?.active_tournament"
+      title="Active tournament"
+      description="Current event"
+    >
       <router-link :to="`/tournaments/${user.active_tournament.id}`" class="tournament-link">
         <span>
           <strong>{{ user.active_tournament.name }}</strong>
@@ -61,14 +56,14 @@
         </span>
         <ArrowRight />
       </router-link>
-    </ui-card>
+    </ui-section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
-import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import ArrowRight from '@/icons/ArrowRight.vue'
@@ -100,49 +95,26 @@ const openEditProfile = () => {
 </script>
 
 <style scoped>
-.overview-content,
-.details-section,
-.supporting-section {
+.overview-content {
   display: grid;
-  gap: 1rem;
-}
-
-.balance-card {
-  justify-content: flex-start;
-  margin-bottom: 0.4rem;
-}
-
-.balance-value {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.details-section h1,
-.section-heading h1,
-.section-heading h2 {
-  margin: 1.2rem 0 0;
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.compact-heading {
-  align-items: start;
+  gap: 2.5rem;
 }
 
 .details-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--border);
 }
 
-.field-card {
-  min-height: 78px;
-  padding: 1rem;
+.field-row {
+  display: grid;
   gap: 0.45rem;
-  border-color: var(--line-soft);
-  background: var(--background);
+  padding: 0.8rem 0;
+}
+
+.details-grid .field-row + .field-row {
+  border-top: 1px solid var(--border);
 }
 
 .field-label {
@@ -159,15 +131,9 @@ const openEditProfile = () => {
   font-weight: 800;
 }
 
-.field-card :deep(.badge) {
-  width: max-content;
-  padding: 0.15rem 0.55rem;
-  text-transform: uppercase;
-}
-
 .team-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.8rem;
 }
 
@@ -182,10 +148,9 @@ const openEditProfile = () => {
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   text-decoration: none;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: var(--background);
-  transition: background 0.2s ease;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
 }
 
 .team-link {
@@ -195,7 +160,7 @@ const openEditProfile = () => {
 
 .team-link:hover,
 .tournament-link:hover {
-  background: var(--secondary);
+  background: var(--hover);
 }
 
 .team-link :deep(svg:first-child),
@@ -221,18 +186,8 @@ const openEditProfile = () => {
 }
 
 @media (max-width: 560px) {
-  .details-grid,
   .team-list {
     grid-template-columns: 1fr;
-  }
-
-  .section-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .edit-details-link {
-    align-self: stretch;
   }
 }
 </style>

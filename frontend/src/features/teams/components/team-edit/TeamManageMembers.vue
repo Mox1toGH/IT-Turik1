@@ -22,10 +22,10 @@
             <ui-skeleton variant="rect" width="100px" />
           </template>
 
-          <ui-card class="members-stat">
+          <p class="members-stat">
             <strong>{{ team?.members.length ?? 0 }}</strong>
             <span>People</span>
-          </ui-card>
+          </p>
         </ui-skeleton-loader>
       </div>
     </template>
@@ -45,25 +45,21 @@
     <ui-skeleton-loader :loading="props.loading">
       <template #skeleton>
         <div class="member-list">
-          <ui-card v-for="i in 2" :key="i" class="member-row">
-            <template #header>
-              <div class="member-row-top">
-                <ui-skeleton variant="rect" width="140px" />
-                <ui-skeleton variant="rect" width="120px" />
-              </div>
-            </template>
+          <div v-for="i in 2" :key="i" class="member-row member-row-skeleton">
+            <div class="member-row-top">
+              <ui-skeleton variant="rect" width="140px" />
+              <ui-skeleton variant="rect" width="120px" />
+            </div>
 
             <ui-skeleton variant="rect" width="100px" />
 
-            <template #footer>
-              <ui-skeleton variant="rect" height="30px" width="70px" />
-            </template>
-          </ui-card>
+            <ui-skeleton variant="rect" height="30px" width="70px" />
+          </div>
         </div>
       </template>
 
       <div class="member-list">
-        <ui-card
+        <div
           v-for="member in filteredMembers"
           :key="`member-${member.id}`"
           class="member-row"
@@ -83,20 +79,18 @@
             <p class="text-muted member-email">{{ member.email }}</p>
           </div>
 
-          <template #footer>
-            <ui-button
-              v-if="member.id !== team?.captain_id && !team.is_in_active_tournament"
-              variant="danger"
-              size="sm"
-              class="remove-member-btn"
-              :disabled="kickLoadingIds.has(member.id)"
-              @click="removeMember(member)"
-            >
-              <loading-icon v-if="kickLoadingIds.has(member.id)" />
-              Remove
-            </ui-button>
-          </template>
-        </ui-card>
+          <ui-button
+            v-if="member.id !== team?.captain_id && !team.is_in_active_tournament"
+            variant="danger"
+            size="sm"
+            class="remove-member-btn"
+            :disabled="kickLoadingIds.has(member.id)"
+            @click="removeMember(member)"
+          >
+            <loading-icon v-if="kickLoadingIds.has(member.id)" />
+            Remove
+          </ui-button>
+        </div>
       </div>
     </ui-skeleton-loader>
 
@@ -109,12 +103,12 @@
       <ui-skeleton-loader :loading="props.loading">
         <template #skeleton>
           <div class="member-list">
-            <ui-card v-for="i in 2" :key="i" class="member-row">
+            <div v-for="i in 2" :key="i" class="member-row member-row-skeleton">
               <div class="member-row-top">
                 <ui-skeleton variant="rect" width="80px" />
                 <ui-skeleton variant="rect" width="100px" />
               </div>
-            </ui-card>
+            </div>
           </div>
         </template>
 
@@ -122,7 +116,7 @@
           <p v-if="!isLoadingInvitations && !invitations?.length" class="text-muted">
             No invitations yet.
           </p>
-          <ui-card
+          <div
             v-for="invitation in invitations"
             :key="`inv-${invitation.id}`"
             class="member-row"
@@ -138,7 +132,7 @@
               }}</ui-badge>
               <ui-badge v-else>{{ invitation.status }}</ui-badge>
             </div>
-          </ui-card>
+          </div>
         </div>
       </ui-skeleton-loader>
     </div>
@@ -290,19 +284,15 @@ const addMember = () => {
 .teams-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .members-stat {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
   gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  margin-left: auto;
-  border-color: var(--line-soft);
+  margin: 0 0 0 auto;
 }
 
 .members-stat strong {
@@ -331,9 +321,20 @@ const addMember = () => {
   gap: 0.65rem;
 }
 
-.member-row.card {
-  gap: 0.65rem;
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
   color: var(--muted-foreground);
+}
+
+.member-row-skeleton {
+  display: grid;
+  gap: 0.5rem;
 }
 
 .member-row-top,
@@ -374,7 +375,7 @@ const addMember = () => {
 }
 
 .member-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
 }
@@ -394,9 +395,8 @@ const addMember = () => {
   display: grid;
   gap: 0.75rem;
   margin-top: 0.35rem;
-  padding: 1rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 .add-member-box h3 {

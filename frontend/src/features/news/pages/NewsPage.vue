@@ -142,7 +142,7 @@ watch(
 .news-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 @media (max-width: 760px) {

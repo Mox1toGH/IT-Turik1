@@ -52,17 +52,7 @@ import ClockIcon from '@/icons/ClockIcon.vue'
 import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import { formatDate } from '@/lib/date'
-
-interface CalendarItem {
-  id: string
-  title: string
-  description: string
-  date: Date
-  type: 'meet' | 'event' | 'round-start' | 'round-deadline'
-  color: 'primary' | 'green' | 'orange' | 'red'
-  link?: string
-  tournamentId?: number
-}
+import type { CalendarItem } from '../composables/useCalendarGrid'
 
 interface Props {
   date: Date
@@ -127,7 +117,9 @@ function formatTime(date: Date): string {
 .day-detail-item {
   padding: 0.6rem;
   border-radius: var(--radius);
+  border: 1px solid var(--border);
   border-left: 3px solid;
+  background: var(--card);
 }
 
 .day-detail-item--clickable {
@@ -135,27 +127,23 @@ function formatTime(date: Date): string {
 }
 
 .day-detail-item--clickable:hover {
-  filter: brightness(0.97);
+  background: var(--subtle);
 }
 
 .day-detail-item--primary {
   border-left-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
 }
 
 .day-detail-item--green {
-  border-left-color: #22940d;
-  background: rgba(34, 148, 13, 0.05);
+  border-left-color: var(--success);
 }
 
 .day-detail-item--orange {
   border-left-color: var(--warning);
-  background: color-mix(in srgb, var(--warning) 5%, transparent);
 }
 
 .day-detail-item--red {
   border-left-color: var(--destructive);
-  background: color-mix(in srgb, var(--destructive) 5%, transparent);
 }
 
 .day-detail-item-header {

@@ -46,7 +46,15 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316']
+const palette = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-1)',
+]
 
 const minScore = 0
 const maxScore = computed(() =>
@@ -135,9 +143,8 @@ const totalPercent = computed(() => {
   gap: 1rem;
   color: var(--foreground);
   padding: 0.45rem 0.55rem;
-  border: 1px solid var(--border);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--muted) 55%, transparent);
+  background: var(--subtle);
 }
 
 .criterion {

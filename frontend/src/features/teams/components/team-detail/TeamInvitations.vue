@@ -39,8 +39,8 @@
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
           <div class="team-invitations-list">
-            <ui-card v-for="i in 2" :key="i" class="card-item">
-              <div style="display: flex; flex-direction: column; gap: 4px">
+            <div v-for="i in 2" :key="i" class="invitation-row">
+              <div style="display: flex; flex-direction: column; gap: 4px; flex: 1">
                 <div style="display: flex; justify-content: space-between; gap: 10px">
                   <ui-skeleton variant="rect" width="100%" />
                   <ui-skeleton variant="rect" width="70px" />
@@ -48,7 +48,7 @@
 
                 <ui-skeleton variant="rect" width="200px" />
               </div>
-            </ui-card>
+            </div>
           </div>
         </template>
 
@@ -60,10 +60,10 @@
         </p>
 
         <div v-else class="team-invitations-list">
-          <ui-card
+          <div
             v-for="invitation in filteredPendingInvitations"
             :key="`invitation-pending-${invitation.id}`"
-            class="card-item"
+            class="invitation-row"
           >
             <div class="team-invitations-user">
               <user-avatar
@@ -72,59 +72,55 @@
                 :full-name="invitation.user.full_name"
                 :size="40"
               />
-              <div>
-                <div style="display: flex; justify-content: space-between">
+              <div class="invitation-main">
+                <div class="invitation-top">
                   <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                  <ui-badge class>invited</ui-badge>
+                  <ui-badge>invited</ui-badge>
                 </div>
 
                 <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
               </div>
             </div>
-          </ui-card>
+          </div>
 
-          <ui-card
+          <div
             v-for="invitation in filteredDeclinedInvitations"
             :key="`invitation-declined-${invitation.id}`"
-            class="card-item"
+            class="invitation-row"
           >
-            <template #header>
-              <div class="team-invitations-user">
-                <user-avatar
-                  :avatar="invitation.user.avatar"
-                  :username="invitation.user.username"
-                  :full-name="invitation.user.full_name"
-                  :size="40"
-                />
-                <div style="flex: 1">
-                  <div style="display: flex; justify-content: space-between">
-                    <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                    <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
-                    <div v-else style="display: flex; gap: 4px">
-                      <ui-badge variant="red">Declined</ui-badge>
-                      <ui-badge>Invatation</ui-badge>
-                    </div>
+            <div class="team-invitations-user">
+              <user-avatar
+                :avatar="invitation.user.avatar"
+                :username="invitation.user.username"
+                :full-name="invitation.user.full_name"
+                :size="40"
+              />
+              <div class="invitation-main">
+                <div class="invitation-top">
+                  <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                  <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
+                  <div v-else class="declined-badges">
+                    <ui-badge variant="red">Declined</ui-badge>
+                    <ui-badge>Invatation</ui-badge>
                   </div>
                 </div>
               </div>
-            </template>
+            </div>
 
             <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
 
-            <template #footer>
-              <div class="row-actions">
-                <ui-button
-                  variant="secondary"
-                  size="sm"
-                  :disabled="loadingInvitationIds.has(invitation.id)"
-                  @click="resendInvitation(invitation.user.id)"
-                >
-                  <loading-icon v-if="loadingInvitationIds.has(invitation.id)" />
-                  Resend invitation
-                </ui-button>
-              </div>
-            </template>
-          </ui-card>
+            <div class="row-actions">
+              <ui-button
+                variant="secondary"
+                size="sm"
+                :disabled="loadingInvitationIds.has(invitation.id)"
+                @click="resendInvitation(invitation.user.id)"
+              >
+                <loading-icon v-if="loadingInvitationIds.has(invitation.id)" />
+                Resend invitation
+              </ui-button>
+            </div>
+          </div>
         </div>
       </ui-skeleton-loader>
     </section>
@@ -238,39 +234,59 @@ const resendInvitation = (userId: number) => {
   overflow-y: auto;
   max-height: 350px;
   display: grid;
-  gap: 0.55rem;
+  gap: 0;
   grid-template-rows: auto;
 }
 
-.card-item {
-  background-color: var(--muted);
+.invitation-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.7rem 0;
+}
+
+.team-invitations-list .invitation-row + .invitation-row {
+  border-top: 1px solid var(--border);
 }
 
 .team-invitations-name {
   margin: 0;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .team-invitations-email {
   margin: 0;
   font-size: 0.84rem;
+  overflow-wrap: anywhere;
 }
 
 .team-invitations-user {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  min-width: 0;
+}
+
+.invitation-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.invitation-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.declined-badges {
+  display: flex;
+  gap: 4px;
 }
 
 .row-actions {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-
-@media (max-width: 640px) {
-  .team-invitations-meta {
-    align-items: flex-start;
-  }
 }
 </style>

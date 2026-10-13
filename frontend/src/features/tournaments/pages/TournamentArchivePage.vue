@@ -86,13 +86,8 @@ const { data: tournaments, isLoading } = useListTournamentArchive()
 
 .archive-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-/* Потрібні для скелетона */
-.archive-card {
-  background: var(--muted) !important;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
 }
 
 .archive-description {
@@ -124,17 +119,7 @@ const { data: tournaments, isLoading } = useListTournamentArchive()
   margin: 0;
 }
 
-@media (max-width: 900px) {
-  .archive-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
-  .archive-grid {
-    grid-template-columns: 1fr;
-  }
-
   .archive-meta {
     flex-direction: column;
     align-items: flex-start;

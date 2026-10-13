@@ -169,9 +169,9 @@ function handleConfirmAction() {
   gap: 0.8rem;
   margin-top: 0.55rem;
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--background);
+  background: var(--card);
   color: var(--foreground);
   text-decoration: none;
 }
