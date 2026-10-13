@@ -244,9 +244,6 @@ def delete_round(round_obj):
     round_obj = Round.objects.select_for_update().select_related('tournament').get(id=round_obj.id)
     tournament = round_obj.tournament
 
-    rounds_count = Round.objects.filter(tournament=tournament).count()
-    if rounds_count <= 1:
-        raise ValidationError({'round': 'Cannot delete the last remaining round.'})
     round_obj.delete()
     tournament.save(update_fields=['updated_at'])
     return tournament
