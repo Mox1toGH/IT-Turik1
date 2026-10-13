@@ -32,33 +32,33 @@
   --text-9xl: 8rem;
   --text-9xl--line-height: 1;
 
-  --background: #faf9f5;
-  --foreground: #141413;
+  --background: #f6f8f3;
+  --foreground: #161a14;
 
   --card: #ffffff;
-  --card-foreground: #141413;
+  --card-foreground: #161a14;
 
-  --subtle: #f0eee6;
-  --muted-foreground: #73726c;
+  --subtle: #ecf0e7;
+  --muted-foreground: #6b7466;
 
-  --border: rgba(31, 30, 29, 0.12);
-  --border-strong: rgba(31, 30, 29, 0.24);
+  --border: rgba(22, 26, 20, 0.12);
+  --border-strong: rgba(22, 26, 20, 0.24);
 
-  --primary: #a95532;
+  --primary: #4d7c3f;
   --primary-foreground: #ffffff;
 
   --destructive: #cf131c;
   --warning: #d97706;
   --success: #15803d;
 
-  --input: #f0eee6;
-  --ring: rgba(193, 95, 60, 0.35);
+  --input: #ecf0e7;
+  --ring: rgba(77, 124, 63, 0.35);
   --popover: #ffffff;
 
   --radius: 12px;
   --radius-sm: 8px;
 
-  --shadow-overlay: 0 16px 48px rgba(31, 30, 29, 0.22);
+  --shadow-overlay: 0 16px 48px rgba(22, 26, 20, 0.22);
 
   --primary-soft: color-mix(in srgb, var(--primary) 10%, transparent);
   --destructive-soft: color-mix(in srgb, var(--destructive) 10%, transparent);
@@ -83,57 +83,57 @@
   --medal-bronze: #e8b28d;
   --medal-bronze-fg: #4b2a12;
 
-  --scrim: rgba(20, 20, 18, 0.55);
+  --scrim: rgba(14, 18, 12, 0.55);
   --on-image: #ffffff;
 
-  --pm-bg: #faf9f5;
+  --pm-bg: #f6f8f3;
 
-  --pm-text: #44433e;
-  --pm-heading: #141413;
+  --pm-text: #3b4237;
+  --pm-heading: #161a14;
 
-  --pm-muted: #73726c;
-  --pm-border: rgba(31, 30, 29, 0.12);
+  --pm-muted: #6b7466;
+  --pm-border: rgba(22, 26, 20, 0.12);
 
-  --pm-accent: #c15f3c;
-  --pm-accent-soft: #d3a07c;
+  --pm-accent: #4d7c3f;
+  --pm-accent-soft: #a9c79d;
 
-  --pm-placeholder: #a6a49c;
+  --pm-placeholder: #9aa294;
 
   --pm-link: #2f6f8f;
 }
 
 :root[data-theme='dark'] {
-  --background: #262624;
-  --foreground: #faf9f5;
+  --background: #1b1b1b;
+  --foreground: #e8eae5;
 
-  --card: #30302e;
-  --card-foreground: #faf9f5;
+  --card: #232323;
+  --card-foreground: #e8eae5;
 
-  --subtle: #1f1e1d;
-  --muted-foreground: #9c9a92;
+  --subtle: #161616;
+  --muted-foreground: #8d908a;
 
-  --border: rgba(222, 220, 209, 0.14);
-  --border-strong: rgba(222, 220, 209, 0.26);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
 
-  --primary: #de7f5e;
-  --primary-foreground: #1a1918;
+  --primary: #a8cc9a;
+  --primary-foreground: #12190f;
 
   --destructive: #ff6c6c;
   --warning: #ffa237;
   --success: #4ade80;
 
-  --input: #3a3a38;
-  --ring: rgba(217, 119, 87, 0.4);
-  --popover: #30302e;
+  --input: #2a2a2a;
+  --ring: rgba(168, 204, 154, 0.4);
+  --popover: #232323;
 
-  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.6);
 
-  --primary-soft: color-mix(in srgb, var(--primary) 10%, transparent);
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, transparent);
   --destructive-soft: color-mix(in srgb, var(--destructive) 10%, transparent);
   --destructive-ring: color-mix(in srgb, var(--destructive) 20%, transparent);
   --border-soft: color-mix(in srgb, var(--border) 40%, transparent);
   --placeholder: color-mix(in srgb, var(--foreground) 42%, transparent);
-  --hover: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   --track: color-mix(in srgb, var(--muted-foreground) 24%, transparent);
   --success-soft: color-mix(in srgb, var(--success) 12%, transparent);
 
@@ -151,21 +151,21 @@
   --medal-bronze: #5f3a1e;
   --medal-bronze-fg: #f0c9a8;
 
-  --scrim: rgba(20, 20, 18, 0.55);
+  --scrim: rgba(0, 0, 0, 0.6);
   --on-image: #ffffff;
 
-  --pm-bg: #262624;
+  --pm-bg: #1b1b1b;
 
-  --pm-text: #cfccc0;
-  --pm-heading: #faf9f5;
+  --pm-text: #cfd3cb;
+  --pm-heading: #f2f4ef;
 
-  --pm-muted: #9c9a92;
-  --pm-border: rgba(222, 220, 209, 0.14);
+  --pm-muted: #8d908a;
+  --pm-border: rgba(255, 255, 255, 0.1);
 
-  --pm-accent: #d97757;
-  --pm-accent-soft: #6e4a35;
+  --pm-accent: #a8cc9a;
+  --pm-accent-soft: #3d4f37;
 
-  --pm-placeholder: #6e6b64;
+  --pm-placeholder: #6a6d66;
 
   --pm-link: #8abdd6;
 }
