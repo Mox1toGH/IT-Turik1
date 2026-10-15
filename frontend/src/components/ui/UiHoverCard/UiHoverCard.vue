@@ -5,7 +5,15 @@
     </HoverCardTrigger>
 
     <HoverCardPortal>
-      <HoverCardContent class="hover-card-content" :side="side" :align="align" :side-offset="6">
+      <HoverCardContent
+        class="hover-card-content"
+        :side="side"
+        :align="align"
+        :side-offset="6"
+        :avoid-collisions="avoidCollisions"
+        :collision-padding="collisionPadding"
+        :sticky="sticky"
+      >
         <slot />
         <HoverCardArrow class="hover-card-arrow" />
       </HoverCardContent>
@@ -26,10 +34,16 @@ withDefaults(
   defineProps<{
     side?: 'top' | 'right' | 'bottom' | 'left'
     align?: 'start' | 'center' | 'end'
+    avoidCollisions?: boolean
+    collisionPadding?: number
+    sticky?: 'partial' | 'always'
   }>(),
   {
     side: 'top',
     align: 'center',
+    avoidCollisions: true,
+    collisionPadding: 8,
+    sticky: 'partial',
   },
 )
 </script>

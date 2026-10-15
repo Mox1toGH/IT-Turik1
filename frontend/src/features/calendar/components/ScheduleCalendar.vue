@@ -33,20 +33,10 @@
           :selected="isSelectedCell(cell)"
           :max-chips="3"
           :chip-max-length="12"
-          @select="selectDay"
+          @select="handleSelectDay"
           @navigate="navigateToItem"
         />
       </div>
-
-      <calendar-day-detail
-        v-if="selectedDate"
-        :date="selectedDate"
-        :items="selectedDayItems"
-        :gcal-connected="gcalConnected"
-        @close="selectedDate = null"
-        @navigate="navigateToItem"
-        @export-item="emitExport"
-      />
     </template>
 
     <!-- WEEK VIEW -->
@@ -62,20 +52,10 @@
           :max-chips="6"
           :chip-max-length="18"
           week
-          @select="selectDay"
+          @select="handleSelectDay"
           @navigate="navigateToItem"
         />
       </div>
-
-      <calendar-day-detail
-        v-if="selectedDate"
-        :date="selectedDate"
-        :items="selectedDayItems"
-        :gcal-connected="gcalConnected"
-        @close="selectedDate = null"
-        @navigate="navigateToItem"
-        @export-item="emitExport"
-      />
     </template>
 
     <!-- DAY VIEW -->
@@ -116,11 +96,18 @@
         </div>
       </div>
     </template>
+
+    <calendar-day-sheet
+      v-model="isSheetOpen"
+      :date="selectedDate"
+      :items="selectedDayItems"
+      @navigate="navigateToItem"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 import ArrowLeftIcon from '@/icons/ArrowLeft.vue'
 import ArrowRightIcon from '@/icons/ArrowRight.vue'
@@ -129,11 +116,12 @@ import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
-import CalendarDayDetail from './CalendarDayDetail.vue'
 import CalendarCell from './CalendarCell.vue'
+import CalendarDaySheet from './CalendarDaySheet.vue'
 import {
   WEEK_DAY_LABELS,
   useCalendarGrid,
+  type CalendarCellData,
   type CalendarItem,
   type CalendarViewMode,
 } from '../composables/useCalendarGrid'
@@ -170,6 +158,17 @@ const {
   typeLabel,
   formatTime,
 } = useCalendarGrid(toRef(props, 'events'), toRef(props, 'rounds'))
+
+const isSheetOpen = ref(false)
+
+function handleSelectDay(cell: CalendarCellData): void {
+  selectDay(cell)
+  // Touch devices have no hover, so tapping a day with events opens
+  // them in a dialog instead of the hover card.
+  if (cell.chips.length > 0 && window.matchMedia('(hover: none)').matches) {
+    isSheetOpen.value = true
+  }
+}
 
 function navigateToItem(item: CalendarItem) {
   if (!item.tournamentId) return
