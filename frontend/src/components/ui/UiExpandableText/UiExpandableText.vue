@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 interface Props {
   text?: string
@@ -36,7 +36,6 @@ const props = withDefaults(defineProps<Props>(), {
   collapseLabel: 'Show less',
 })
 
-const slots = useSlots()
 const bodyRef = ref<HTMLElement | null>(null)
 const expanded = ref(false)
 const isOverflowing = ref(false)
@@ -50,9 +49,11 @@ const checkOverflow = () => {
     isOverflowing.value = false
     return
   }
+  // While expanded the full content is visible, so scrollHeight ~= clientHeight.
+  // Measuring now would wrongly report "no overflow", hide the toggle and
+  // immediately collapse again — making "Show more" look broken.
+  if (expanded.value) return
   isOverflowing.value = el.scrollHeight > el.clientHeight + 1
-  // If content shrank back to fit, collapse again so no toggle lingers.
-  if (!isOverflowing.value) expanded.value = false
 }
 
 const scheduleCheck = () => {
@@ -72,7 +73,14 @@ onMounted(() => {
   }
 })
 
-watch([() => props.text, () => props.lines, () => slots.default], scheduleCheck)
+watch([() => props.text, () => props.lines], () => {
+  // New content must be measured in clamped state; otherwise a previous
+  // expanded=true would skip the overflow check and leave a stale toggle.
+  expanded.value = false
+  scheduleCheck()
+})
+// Slot content has no reactive prop to watch — ResizeObserver above already
+// re-checks when slotted content changes the body size.
 
 onBeforeUnmount(() => {
   observer?.disconnect()
