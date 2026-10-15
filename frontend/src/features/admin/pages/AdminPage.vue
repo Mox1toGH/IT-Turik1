@@ -17,13 +17,8 @@
       <div class="admin-rule" aria-hidden="true"></div>
 
       <div class="admin-links">
-        <ui-card
-          v-for="(section, index) in sections"
-          :key="section.to"
-          class="form-panel admin-link-card"
-        >
+        <ui-card v-for="section in sections" :key="section.to" class="form-panel admin-link-card">
           <div class="panel-header">
-            <span class="step-marker">{{ String(index + 1).padStart(2, '0') }}</span>
             <div>
               <h3>{{ section.title }}</h3>
               <p class="text-muted">{{ section.description }}</p>
@@ -130,7 +125,7 @@ const sections = [
 }
 
 .card-btn {
-  margin-top: auto;
+  margin-top: 1rem;
   align-self: flex-start;
 }
 
