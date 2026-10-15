@@ -144,6 +144,7 @@ const {
 <style scoped>
 .submissions-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;

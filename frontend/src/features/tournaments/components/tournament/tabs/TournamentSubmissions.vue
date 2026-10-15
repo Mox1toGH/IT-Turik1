@@ -338,6 +338,7 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
 .submissions-header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.6rem;
