@@ -112,7 +112,7 @@ const heroStats = computed(() => [
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -157,7 +157,7 @@ const heroStats = computed(() => [
   gap: 0.7rem;
   padding: 0.5rem 1.1rem;
   min-height: 30px;
-  border-color: var(--line-soft);
+  border-color: var(--border);
 }
 
 .hero-stat strong {
@@ -177,7 +177,7 @@ const heroStats = computed(() => [
 .home-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .dashboard-grid {
@@ -218,9 +218,8 @@ const heroStats = computed(() => [
   align-items: center;
   min-width: 0;
   padding: 0.8rem;
-  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+  background: var(--subtle);
 }
 
 :deep(.data-list li),
@@ -280,7 +279,7 @@ const heroStats = computed(() => [
 }
 
 :deep(.quick-link) {
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-weight: 800;
   text-decoration: none;
 }

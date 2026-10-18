@@ -88,7 +88,7 @@ onMounted(async () => {
 }
 
 .status-icon--success {
-  color: #22940d;
+  color: var(--success);
 }
 
 .status-icon--error {

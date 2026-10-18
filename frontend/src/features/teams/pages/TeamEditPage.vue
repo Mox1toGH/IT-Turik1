@@ -1,68 +1,63 @@
 <template>
   <section class="page-shell teams-edit-page">
-    <header class="edit-hero">
-      <div class="edit-hero-copy">
-        <div class="breadcrumb-label">
-          <span>Workspace</span>
-          <span aria-hidden="true">/</span>
-          <span>Teams</span>
-          <span aria-hidden="true">/</span>
-          <span>Edit</span>
-        </div>
+    <header class="edit-header">
+      <router-link class="back-link" :to="team ? `/teams/${team.id}` : '/teams'">
+        <arrow-left class="back-icon" aria-hidden="true" />
+        Back to team
+      </router-link>
 
+      <div class="edit-header-copy">
         <ui-skeleton-loader :loading="isLoadingTeamInfo">
           <template #skeleton>
-            <ui-skeleton variant="rect" height="48px" width="320px" />
+            <ui-skeleton variant="rect" height="34px" width="280px" />
           </template>
 
-          <h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 45) }}</h1>
+          <h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 40) }}</h1>
         </ui-skeleton-loader>
 
-        <p class="section-subtitle">
-          Update team identity, contact channels, and member access from one workspace.
-        </p>
-      </div>
-
-      <div class="hero-actions">
-        <ui-button
-          asLink
-          variant="secondary"
-          size="lg"
-          class="back-btn"
-          :to="team ? `/teams/${team.id}` : '/teams'"
-          >Back to team</ui-button
-        >
+        <p class="section-subtitle">Update the team profile and manage who belongs to it.</p>
       </div>
     </header>
 
-    <div class="teams-rule" aria-hidden="true"></div>
+    <template v-if="team">
+      <div class="teams-rule" aria-hidden="true"></div>
 
-    <div class="workspace-grid" v-if="team">
-      <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
+      <ui-tabs :items="tabItems" query-key="tab" sticky>
+        <template #profile>
+          <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
+        </template>
 
-      <team-manage-members
-        :status="status"
-        :error-code="errorCode"
-        :loading="isLoadingTeamInfo"
-        :team="team"
-      />
-    </div>
+        <template #members>
+          <team-manage-members :loading="isLoadingTeamInfo" :team="team" />
+        </template>
+
+        <template #invitations>
+          <team-invitations :loading="isLoadingTeamInvitations" :invitations="invitationList" />
+        </template>
+
+        <template v-if="!team.is_in_active_tournament" #invite>
+          <team-invite :team="team" />
+        </template>
+      </ui-tabs>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
+import ArrowLeft from '@/icons/ArrowLeft.vue'
 import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
+import TeamInvitations from '../components/team-edit/TeamInvitations.vue'
+import TeamInvite from '../components/team-edit/TeamInvite.vue'
+import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useCardState } from '@/composables/useCardState'
-import { useGetTeam } from '@/api/teams/teams'
+import { useGetTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,7 +67,32 @@ const { data: user } = useGetUserProfile()
 const teamId = computed(() => Number(route.params.id))
 const teamQuery = useGetTeam(teamId.value)
 const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
-const { status, errorCode } = useCardState(teamQuery)
+const { status } = useCardState(teamQuery)
+
+// Invitations query lives at page level (same cache key as any nested use, so
+// no extra fetch): the pending count is needed here for the tab badge.
+const { data: invitationsData, isLoading: isLoadingTeamInvitations } =
+  useListTeamInvitationsByTeam(teamId)
+const invitationList = computed(() => invitationsData.value ?? [])
+const pendingInvitationCount = computed(
+  () => invitationList.value.filter((invitation) => invitation.status === 'invited').length,
+)
+
+const tabItems = computed<TabItem[]>(() => {
+  const items: TabItem[] = [
+    { value: 'profile', label: 'Team profile' },
+    { value: 'members', label: 'Members', count: team.value?.members.length },
+    {
+      value: 'invitations',
+      label: 'Invitations',
+      count: pendingInvitationCount.value > 0 ? pendingInvitationCount.value : undefined,
+    },
+  ]
+  if (team.value && !team.value.is_in_active_tournament) {
+    items.push({ value: 'invite', label: 'Invite' })
+  }
+  return items
+})
 
 watchEffect(() => {
   if (user.value && team.value) {
@@ -88,99 +108,63 @@ watchEffect(() => {
   gap: 1.4rem;
 }
 
-.edit-hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 1.5rem;
-}
-
-.edit-hero-copy {
+.edit-header {
+  display: grid;
+  gap: 0.6rem;
   min-width: 0;
 }
 
-.breadcrumb-label {
+.back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  gap: 0.4rem;
+  width: max-content;
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.edit-hero h1 {
+.back-link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.back-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.edit-header h1 {
   margin: 0;
   max-width: 760px;
   overflow: hidden;
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: var(--text-4xl);
-  line-height: var(--text-4xl--line-height);
+  font-size: var(--text-3xl);
+  line-height: var(--text-3xl--line-height);
   font-weight: 800;
   text-overflow: ellipsis;
 }
 
 .section-subtitle {
   max-width: 680px;
-  margin: 0.55rem 0 0;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-  .edit-stat-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-  .edit-stat-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.edit-stat-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
+  margin: 0.35rem 0 0;
 }
 
 .teams-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
-}
-
-.back-btn {
-  width: max-content;
-}
-
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 1.08fr 0.92fr;
-  gap: 1rem;
-  align-items: start;
-}
-
-@media (max-width: 980px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
+  background: var(--border);
 }
 
 @media (max-width: 720px) {
@@ -188,19 +172,9 @@ watchEffect(() => {
     padding: 1rem 1rem 2rem;
   }
 
-  .edit-hero {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .edit-hero h1 {
-    font-size: var(--text-3xl);
-    line-height: var(--text-3xl--line-height);
-  }
-
-  .hero-actions {
-    justify-content: flex-start;
+  .edit-header h1 {
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
   }
 }
 </style>

@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
 import UiCard from './UiCard.vue'
-import UiButton from '../UiButton'
 import UiSkeleton from '../UiSkeleton'
 import type { CardQuery } from '@/composables/useCardState'
 
@@ -11,6 +10,10 @@ const meta: Meta<typeof UiCard> = {
   component: UiCard,
   tags: ['autodocs'],
   argTypes: {
+    variant: {
+      control: 'select',
+      options: ['default', 'stat', 'inset'],
+    },
     status: {
       control: 'select',
       options: ['loading', 'error', 'empty', 'data'],
@@ -22,6 +25,7 @@ const meta: Meta<typeof UiCard> = {
     query: { table: { disable: true } },
   },
   args: {
+    variant: 'default',
     status: 'data',
     isFetching: false,
     isStale: false,
@@ -56,26 +60,53 @@ export const Data: Story = {
   }),
 }
 
-/** Title/subtitle header rendered by the card itself, with controls and badge slots. */
+/** Title/subtitle header rendered by the card itself. */
 export const WithTitleHeader: Story = {
   args: {
     title: 'Active tournaments',
     subtitle: 'Filter competitions by name or registration status.',
   },
   render: (args) => ({
-    components: { UiCard, UiButton },
+    components: { UiCard },
     setup() {
       return { args }
     },
     template: `
       <ui-card v-bind="args" style="max-width: 560px">
-        <template #controls>
-          <ui-button size="sm" variant="secondary">Filter</ui-button>
-        </template>
-        <template #badge>
-          <span class="count-pill">12 active</span>
-        </template>
-        <p>Card body. Badge and controls only render in the data state.</p>
+        <p>Card body. The header above comes from the title/subtitle props.</p>
+      </ui-card>
+    `,
+  }),
+}
+
+/** Stat variant: compact centered row for a single metric. */
+export const Stat: Story = {
+  args: { variant: 'stat' },
+  render: (args) => ({
+    components: { UiCard },
+    setup() {
+      return { args }
+    },
+    template: `
+      <ui-card v-bind="args" style="max-width: 280px">
+        <strong>12</strong>
+        <span class="text-muted">Active tournaments</span>
+      </ui-card>
+    `,
+  }),
+}
+
+/** Inset variant: borderless subtle zone for content inside a card. */
+export const Inset: Story = {
+  args: { variant: 'inset' },
+  render: (args) => ({
+    components: { UiCard },
+    setup() {
+      return { args }
+    },
+    template: `
+      <ui-card v-bind="args" style="max-width: 480px">
+        <p class="text-muted">Grouped details without another bordered box.</p>
       </ui-card>
     `,
   }),

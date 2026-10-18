@@ -24,22 +24,52 @@
 
     <div class="teams-rule" aria-hidden="true"></div>
 
-    <team-invatations />
+    <ui-tabs v-model="activeTab" :items="tabItems" query-key="tab">
+      <template #my>
+        <team-my-teams />
+      </template>
 
-    <team-my-teams />
+      <template #all>
+        <teams-other-teams />
+      </template>
 
-    <teams-other-teams id="other-teams" />
+      <template #invitations>
+        <team-invatations @browse-teams="activeTab = 'all'" />
+      </template>
+    </ui-tabs>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
+import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts.ts'
+import { useListTeamInvitations } from '@/api/teams/teams'
 
 const { data: user } = useGetUserProfile()
+
+const activeTab = ref('my')
+
+// The invitations query stays at page level (same key as the tab panel, so no
+// extra fetch): the pending count is needed outside the tab for the tab badge.
+const { data: inboxInvitations } = useListTeamInvitations()
+const pendingCount = computed(
+  () => inboxInvitations.value?.filter((invitation) => invitation.status === 'invited').length ?? 0,
+)
+
+const tabItems = computed<TabItem[]>(() => [
+  { value: 'my', label: 'My teams' },
+  { value: 'all', label: 'All teams' },
+  {
+    value: 'invitations',
+    label: 'Invitations',
+    count: pendingCount.value > 0 ? pendingCount.value : undefined,
+  },
+])
 </script>
 
 <style scoped>
@@ -63,7 +93,7 @@ const { data: user } = useGetUserProfile()
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -104,7 +134,7 @@ const { data: user } = useGetUserProfile()
 .teams-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 @media (max-width: 760px) {

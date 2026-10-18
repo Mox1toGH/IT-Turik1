@@ -1,11 +1,5 @@
 <template>
-  <ui-card class="section-block">
-    <template #header>
-      <div class="section-head">
-        <h2>Submissions by Round</h2>
-        <p class="section-note">Projects grouped by tournament round</p>
-      </div>
-    </template>
+  <ui-section title="Submissions by Round" description="Projects grouped by tournament round">
     <div v-if="groupedSubmissions.length" class="accordion-list">
       <details v-for="group in groupedSubmissions" :key="group.roundId" class="accordion-item">
         <summary>
@@ -37,11 +31,11 @@
             <details v-if="hasEvaluations(submission)" class="eval-details">
               <summary>Evaluations</summary>
               <div class="eval-list">
-                <ui-card
+                <div
                   v-for="assignment in submission.assignments"
                   :key="assignment.id"
                   v-show="assignment.evaluation"
-                  class="eval-card"
+                  class="eval-zone"
                 >
                   <p>
                     <strong>Jury:</strong>
@@ -69,22 +63,21 @@
                       </li>
                     </ul>
                   </div>
-                </ui-card>
+                </div>
               </div>
             </details>
           </ui-card>
         </div>
       </details>
     </div>
-    <ui-card v-else>
-      <p class="empty-state">No submissions found.</p>
-    </ui-card>
-  </ui-card>
+    <p v-else class="empty-state">No submissions found.</p>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
 import { formatScore } from './lib/format'
 import { type SubmissionResponse } from '@/api/backendAPINinja.schemas'
 
@@ -114,39 +107,18 @@ const hasEvaluations = (submission: Submission) =>
 </script>
 
 <style scoped>
-.section-block {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.section-block h2 {
-  margin: 0;
-}
-
-.section-note {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
-}
-
 .accordion-list {
   display: grid;
-  gap: 0.7rem;
+  gap: 0;
 }
 
 .accordion-item {
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: var(--card-background, transparent);
+  border-top: 1px solid var(--border);
   overflow: hidden;
+}
+
+.accordion-item:last-child {
+  border-bottom: 1px solid var(--border);
 }
 
 .accordion-item > summary {
@@ -155,9 +127,8 @@ const hasEvaluations = (submission: Submission) =>
   display: flex;
   justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.75rem 0.9rem;
+  padding: 0.75rem 0.25rem;
   font-weight: 600;
-  background: var(--muted);
 }
 
 .accordion-item > summary::marker,
@@ -191,23 +162,15 @@ const hasEvaluations = (submission: Submission) =>
   font-weight: 700;
   border-radius: 999px;
   padding: 0.15rem 0.52rem;
-  background: color-mix(in srgb, var(--background) 75%, transparent);
+  background: var(--subtle);
+  color: var(--muted-foreground);
 }
 
 .submissions-grid {
   display: grid;
   gap: 0.75rem;
-  padding: 0.8rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.submission-card {
-  background: linear-gradient(
-    135deg,
-    var(--muted),
-    color-mix(in srgb, var(--background) 86%, transparent)
-  ) !important;
-  border: 1px solid color-mix(in srgb, var(--line-soft) 72%, transparent);
+  padding: 0.8rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .submission-card p {
@@ -237,12 +200,13 @@ const hasEvaluations = (submission: Submission) =>
   margin-top: 0.45rem;
 }
 
-.eval-card {
-  background: var(--background, white) !important;
-  border: 1px solid color-mix(in srgb, var(--line-soft) 65%, transparent);
+.eval-zone {
+  padding: 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
 }
 
-.eval-card p {
+.eval-zone p {
   margin: 0;
 }
 
@@ -254,17 +218,5 @@ const hasEvaluations = (submission: Submission) =>
 .empty-state {
   margin: 0;
   color: var(--muted-foreground);
-}
-
-@media (max-width: 980px) {
-  .submissions-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .section-note {
-    width: 100%;
-  }
 }
 </style>

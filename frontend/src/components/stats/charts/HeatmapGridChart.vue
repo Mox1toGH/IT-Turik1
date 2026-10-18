@@ -38,10 +38,10 @@ const maxValue = computed(() => Math.max(...props.cells.map((cell) => cell.value
 }
 
 .heat-cell {
-  border: 1px solid var(--stats-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--stats-accent);
-  color: white;
+  color: var(--primary-foreground);
   min-height: 24px;
   cursor: pointer;
   transition: transform 0.15s ease;

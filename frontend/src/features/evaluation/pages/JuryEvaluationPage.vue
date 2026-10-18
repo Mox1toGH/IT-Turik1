@@ -70,60 +70,35 @@
         </div>
       </header>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="assignments-grid">
-            <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="assignment-skeleton">
-              <ui-skeleton variant="rect" width="60%" height="20px" />
-              <ui-skeleton variant="rect" width="30%" height="16px" />
-              <ui-skeleton variant="rect" width="100%" height="14px" />
-              <ui-skeleton variant="rect" width="80%" height="14px" />
-            </ui-card>
-          </div>
-        </template>
+      <assignment-grid
+        :assignments="pagedAssignments"
+        :loading="isLoading"
+        @evaluated="refetch"
+      />
 
-        <template #default>
-          <ui-card v-if="pagedAssignments.length === 0" class="empty-card">
-            <p class="empty-text">No assignments found for selected filters</p>
-          </ui-card>
-
-          <div v-else class="assignments-grid">
-            <evaluation-assignment-card
-              v-for="assignment in pagedAssignments"
-              :key="assignment.id"
-              :assignment="assignment"
-              @evaluated="refetch"
-            />
-          </div>
-
-          <ui-pagination
-            v-if="totalCount > pageSize"
-            v-model="currentPage"
-            :total-items="totalCount"
-            :page-size="pageSize"
-          />
-        </template>
-      </ui-skeleton-loader>
+      <ui-pagination
+        v-if="totalCount > pageSize"
+        v-model="currentPage"
+        :total-items="totalCount"
+        :page-size="pageSize"
+      />
     </section>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 import { useListTournaments } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
-
-const selectedRounds = ref<string[]>([])
-const selectedTournamentIds = ref<string[]>([])
-const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
-const currentPage = ref(1)
-const pageSize = 10
+import AssignmentGrid from '../components/AssignmentGrid.vue'
+import {
+  EVALUATION_STATUS_OPTIONS,
+  useEvaluationFilters,
+} from '../composables/useEvaluationFilters'
 
 const { data: assignmentsResponse, isLoading, isError, refetch } = useListJuryAssignments()
 
@@ -141,90 +116,21 @@ const {
 const assignments = computed(() => assignmentsResponse.value?.items ?? [])
 const tournaments = computed(() => tournamentsResponse.value?.data ?? [])
 
-const evaluationStatusOptions = [
-  { value: 'all', label: 'All evaluations' },
-  { value: 'evaluated', label: 'Evaluated' },
-  { value: 'not_evaluated', label: 'Not evaluated' },
-]
+const evaluationStatusOptions = EVALUATION_STATUS_OPTIONS
 
-const roundOptions = computed(() => {
-  const unique = new Map<string, string>()
-
-  assignments.value.forEach((assignment) => {
-    unique.set(
-      String(assignment.round_details.id),
-      assignment.round_details.name ?? `Round #${assignment.round_details.id}`,
-    )
-  })
-
-  tournaments.value.forEach((tournament) => {
-    const rounds = Array.isArray(tournament.rounds) ? tournament.rounds : []
-    rounds.forEach((round) => {
-      unique.set(String(round.id), round.name ?? `Round #${round.id}`)
-    })
-  })
-
-  return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
-})
-
-const tournamentOptions = computed(() => {
-  const byId = new Map<string, string>()
-
-  tournaments.value.forEach((tournament) => {
-    byId.set(String(tournament.id), tournament.name)
-  })
-
-  assignments.value.forEach((assignment) => {
-    const id = assignment.round_details.tournament
-    if (id == null) return
-    const key = String(id)
-    if (!byId.has(key)) byId.set(key, `Tournament #${key}`)
-  })
-
-  return Array.from(byId.entries()).map(([value, label]) => ({ value, label }))
-})
-
-const filteredAssignments = computed(() => {
-  let list = assignments.value
-
-  if (selectedRounds.value.length) {
-    list = list.filter((assignment) =>
-      selectedRounds.value.includes(String(assignment.round_details.id)),
-    )
-  }
-
-  if (selectedTournamentIds.value.length) {
-    list = list.filter((assignment) =>
-      selectedTournamentIds.value.includes(String(assignment.round_details.tournament)),
-    )
-  }
-
-  if (evaluationStatus.value === 'evaluated') {
-    list = list.filter((assignment) => assignment.is_evaluated)
-  } else if (evaluationStatus.value === 'not_evaluated') {
-    list = list.filter((assignment) => !assignment.is_evaluated)
-  }
-
-  return list
-})
-
-const pagedAssignments = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredAssignments.value.slice(start, end)
-})
-
-const totalCount = computed(() => filteredAssignments.value.length)
-const evaluatedCount = computed(
-  () => filteredAssignments.value.filter((item) => item.is_evaluated).length,
-)
-const progressPercent = computed(() =>
-  totalCount.value ? Math.round((evaluatedCount.value / totalCount.value) * 100) : 0,
-)
-
-watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
-  currentPage.value = 1
-})
+const {
+  selectedRounds,
+  selectedTournamentIds,
+  evaluationStatus,
+  currentPage,
+  pageSize,
+  roundOptions,
+  tournamentOptions,
+  pagedAssignments,
+  totalCount,
+  evaluatedCount,
+  progressPercent,
+} = useEvaluationFilters(assignments, tournaments)
 </script>
 
 <style scoped>
@@ -248,7 +154,7 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -284,7 +190,7 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
 .jury-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .evaluation-section {
@@ -325,40 +231,13 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  background: var(--track);
 }
 
 .progress-value {
   height: 100%;
   background: var(--primary);
   transition: width 0.2s ease;
-}
-
-.assignments-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.assignment-skeleton {
-  background: var(--muted);
-}
-
-.empty-card {
-  border-color: var(--border);
-}
-
-.empty-text {
-  margin: 0;
-  color: var(--muted-foreground);
-  text-align: center;
-  padding: 0.8rem 0;
-}
-
-@media (max-width: 980px) {
-  .assignments-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 760px) {

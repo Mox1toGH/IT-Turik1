@@ -1,10 +1,9 @@
 <template>
   <ui-modal
-    :model-value="props.modelValue"
+    :model-value="modelValue"
     @update:model-value="toggleOpen"
     @close="toggleClose"
     max-width="1200px"
-    scrollable
   >
     <template #title>
       <h2>Edit round</h2>
@@ -150,6 +149,7 @@
 </template>
 
 <script setup lang="ts">
+import { toRaw } from 'vue'
 import UiDatePicker from '@/components/ui/UiDatePicker'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
@@ -169,25 +169,35 @@ interface Props {
   round: RoundResponse
 }
 
+// Don't destructure props: keep `props` so the template/render context stays valid
 const props = defineProps<Props>()
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
 const { showNotification } = useNotification()
+
 const pad = (value: number) => String(value).padStart(2, '0')
-const startDate = new Date(props.round.start_date)
-const endDate = new Date(props.round.end_date)
+
+// The parent may pass a reactive proxy (e.g. from a ref).
+// structuredClone (used inside useForm) can't clone proxies, so unwrap to plain data.
+const round = toRaw(props.round)
+
+const startDate = new Date(round.start_date)
+const endDate = new Date(round.end_date)
 
 const form = useForm(EditRoundSchema, {
-  name: props.round.name ?? '',
-  passing_count: props.round.passing_count ?? 1,
-  description: props.round.description ?? '',
-  tech_requirements: props.round.tech_requirements ?? {},
-  must_have_requirements: props.round.must_have_requirements ?? {},
-  criteria: props.round.criteria,
+  name: round.name ?? '',
+  passing_count: round.passing_count ?? 1,
+  description: round.description ?? '',
+  tech_requirements: round.tech_requirements ?? {},
+  must_have_requirements: round.must_have_requirements ?? {},
+  criteria: round.criteria,
+
   start_date: startDate,
   start_time: `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`,
+
   end_date: endDate,
   end_time: `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`,
 })
@@ -196,14 +206,16 @@ const { mutate: editRound, isPending } = useUpdateRound()
 
 function handleSubmit() {
   if (!form.validate()) return
+
   const { start_time, end_time, ...rest } = form.fields.value
 
   editRound(
     {
-      id: props.round.id,
+      id: round.id,
       data: {
         ...rest,
         start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+
         end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
@@ -212,22 +224,24 @@ function handleSubmit() {
         emit('update:modelValue', false)
         showNotification('Successfully changed round info', 'success')
       },
+
       onError(error) {
         for (const [field, message] of Object.entries(error?.details || {})) {
           form.setError(field, message)
         }
+
         showNotification(error?.message, 'error')
       },
     },
   )
 }
 
-const toggleOpen = () => {
-  emit('update:modelValue', !props.modelValue)
+function toggleOpen(value: boolean) {
+  emit('update:modelValue', value)
 }
 
-const toggleClose = () => {
-  toggleOpen()
+function toggleClose() {
+  emit('update:modelValue', false)
   form.reset()
 }
 </script>

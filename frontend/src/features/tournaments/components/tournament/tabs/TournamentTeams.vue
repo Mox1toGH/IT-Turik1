@@ -1,40 +1,40 @@
 <template>
-  <ui-card
-    class="tournament-card"
-    :query="activeTeamsQuery"
-    empty-text="No teams registered yet"
-  >
+  <ui-card class="teams-card" :query="activeTeamsQuery" empty-text="No teams registered yet">
     <template #header>
-      <div class="tournament-card-head">
-        <div>
+      <div class="teams-header">
+        <div class="teams-header-text">
           <p class="section-eyebrow">Teams</p>
-          <h2 class="text-3xl">Teams info</h2>
+          <h2 class="text-2xl">Teams info</h2>
           <p class="section-subtitle text-base">Registered and disqualified teams.</p>
         </div>
-
-        <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
+        <span class="count-pill">{{ activeTeams?.length ?? 0 }} active</span>
       </div>
     </template>
 
-    <template #error>
-      <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament teams</p>
+    <template #skeleton>
+      <div class="skeleton-stack">
+        <ui-skeleton variant="rect" height="40px" width="100%" />
+        <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
       </div>
     </template>
 
-    <div>
-      <ui-input
-        v-model="search"
-        placeholder="Search team"
-        class="team-search"
-        :disabled="isActiveTeamsLoading"
-      />
+    <div class="teams-body">
+      <div class="teams-search-wrap">
+        <SearchIcon class="search-icon" />
+        <ui-input
+          v-model="search"
+          placeholder="Search teams..."
+          class="team-search"
+          :disabled="isActiveTeamsLoading"
+        />
+      </div>
 
       <TournamentTeamSection
         sectionType="active"
         :teams="activeTeams"
         :loading="isActiveTeamsLoading"
         :search="search"
+        @clear-search="search = ''"
       >
         <template #default="{ team }">
           <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
@@ -47,6 +47,7 @@
         :teams="disqualifiedTeams"
         :loading="isDisqualifiedTeamsLoading"
         :search="search"
+        @clear-search="search = ''"
       >
         <template #default="{ team }">
           <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
@@ -60,6 +61,8 @@
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import { SearchIcon } from 'lucide-vue-next'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -73,10 +76,10 @@ const props = defineProps<Props>()
 const search = ref('')
 
 const { data: tournament } = useGetTournament(props.tournamentId)
-// Primary query: drives the card's status. 'active' filters is_active=True on the
+// Primary query: drives the section's status. 'active' filters is_active=True on the
 // backend ('all' would also return disqualified and inactive registrations).
 const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'active' })
-// Secondary query: own loading state, never affects the card's status.
+// Secondary query: own loading state, never affects the section's status.
 const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
   status: 'disqualified',
 })
@@ -89,78 +92,99 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 </script>
 
 <style scoped>
-.tournament-card {
-  flex: 1;
+.teams-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
-.tournament-card-head {
+.teams-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 1rem;
 }
 
-.tournament-card-head h2 {
-  margin: 0.5rem 0 0.45rem;
+.teams-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.teams-header-text h2 {
+  margin: 0.25rem 0 0.25rem;
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;
 }
 
-.tournament-card-head .section-subtitle {
+.teams-header-text .section-subtitle {
   margin: 0;
+}
+
+.section-eyebrow {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
 }
 
 .count-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line-soft);
+  min-height: 32px;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--muted-foreground);
   white-space: nowrap;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.teams-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0;
+}
+
+.teams-search-wrap {
+  position: relative;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .team-search {
   width: 100%;
-  margin-bottom: 0.9rem;
+  padding-left: 2.25rem;
 }
 
-.teams-list-wrap {
-  background-color: var(--muted);
-}
-
-.teams-list {
-  overflow-y: auto;
-  max-height: 400px;
-}
-
-.disqualified-wrap {
-  margin-top: 1rem;
-}
-
-.label-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.team-row {
+.skeleton-stack {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
 }
 
 @media (max-width: 700px) {
-  .tournament-card-head,
-  .team-item {
-    align-items: flex-start;
+  .teams-header {
     flex-direction: column;
-  }
-
-  .team-action-group {
-    flex-wrap: wrap;
   }
 }
 </style>

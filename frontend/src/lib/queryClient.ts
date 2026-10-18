@@ -69,41 +69,59 @@ type InvalidationEntry = (ctx: Ctx) => readonly unknown[]
 
 const v = (fn: InvalidationEntry): InvalidationEntry => fn
 
+/**
+ * Generated key helpers always emit a slot for every path param and fill the ones
+ * the caller omitted with `undefined`. React Query compares a filter key element by
+ * element, so a key with a hole in the middle compares unequal to the real key and
+ * the invalidation silently does nothing. Cutting the key off at the first unknown
+ * slot leaves a prefix that does match every key of that endpoint family.
+ */
+const knownKey = (key: readonly unknown[]): readonly unknown[] => {
+  const unknownAt = key.findIndex((part) => part === undefined || part === null)
+  return unknownAt === -1 ? key : key.slice(0, unknownAt)
+}
+
+/** Read a numeric id out of a mutation payload whose shape we do not control. */
+const nestedId = (source: unknown, ...path: string[]): number | null => {
+  let current: unknown = source
+  for (const part of path) {
+    if (current === null || typeof current !== 'object') return null
+    current = (current as Record<string, unknown>)[part]
+  }
+  return typeof current === 'number' ? current : null
+}
+
 const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   // Teams
   createTeam: [v(() => getListTeamsQueryKey())],
-  replaceTeam: [
-    v(() => getListTeamsQueryKey()),
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
-  ],
   updateTeam: [
     v(() => getListTeamsQueryKey()),
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
   ],
-  updateTeamBanner: [
+  teamBannerUpdate: [
     v(() => getListTeamsQueryKey()),
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
   ],
   deleteTeamBanner: [
     v(() => getListTeamsQueryKey()),
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
   ],
   deleteTeam: [v(() => getListTeamsQueryKey())],
   leaveTeam: [
     v(() => getListTeamsQueryKey()),
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
   ],
-  removeMemberFromTeam: [v(({ vars }) => getGetTeamQueryKey(vars.id as number))],
+  removeMemberFromTeam: [v(({ vars }) => getGetTeamQueryKey(vars.pk as number))],
   inviteMemberToTeam: [
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
-    v(({ vars }) => getListTeamInvitationsByTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
+    v(({ vars }) => getListTeamInvitationsByTeamQueryKey(vars.pk as number)),
   ],
   acceptTeamJoinRequest: [
-    v(({ vars }) => getGetTeamQueryKey(vars.id as number)),
-    v(({ vars }) => getListTeamJoinRequestsByTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getGetTeamQueryKey(vars.pk as number)),
+    v(({ vars }) => getListTeamJoinRequestsByTeamQueryKey(vars.pk as number)),
   ],
   declineTeamJoinRequest: [
-    v(({ vars }) => getListTeamJoinRequestsByTeamQueryKey(vars.id as number)),
+    v(({ vars }) => getListTeamJoinRequestsByTeamQueryKey(vars.pk as number)),
   ],
   createTeamJoinRequest: [v(() => getListTeamsQueryKey())],
   acceptTeamInvitation: [
@@ -115,33 +133,25 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   // Evaluation
   createJuryEvaluation: [
     v(() => getListJuryAssignmentsQueryKey()),
-    v(() => getGetJuryEvaluationQueryKey()),
-  ],
-  replaceJuryEvaluation: [
-    v(({ vars }) => getGetJuryEvaluationQueryKey(vars.id as number)),
-    v(() => getListJuryAssignmentsQueryKey()),
+    v(({ data }) => getGetJuryEvaluationQueryKey(nestedId(data, 'id') ?? undefined)),
   ],
   updateJuryEvaluation: [
-    v(({ vars }) => getGetJuryEvaluationQueryKey(vars.id as number)),
+    v(({ vars }) => getGetJuryEvaluationQueryKey(vars.evaluationId as number)),
     v(() => getListJuryAssignmentsQueryKey()),
   ],
   deleteJuryEvaluation: [
-    v(({ vars }) => getGetJuryEvaluationQueryKey(vars.id as number)),
+    v(({ vars }) => getGetJuryEvaluationQueryKey(vars.evaluationId as number)),
     v(() => getListJuryAssignmentsQueryKey()),
   ],
   assignJuryToRound: [
     v(() => getListJuryAssignmentsQueryKey()),
-    v(({ vars }) => getListAvailableJuryQueryKey(vars.id as number)),
-    v(({ vars }) => getGetRoundPassingStatusQueryKey(vars.id as number)),
+    v(({ vars }) => getListAvailableJuryQueryKey(vars.roundId as number)),
+    v(({ vars }) => getGetRoundPassingStatusQueryKey(vars.roundId as number)),
+    v(({ vars }) => getListRoundSubmissionsQueryKey(vars.roundId as number)),
   ],
 
   // Tournaments
   createTournament: [v(() => getListTournamentsQueryKey())],
-  replaceTournament: [
-    v(() => getListTournamentsQueryKey()),
-    v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
-    v(({ vars }) => getGetTournamentForUpdateQueryKey(vars.id as number)),
-  ],
   updateTournament: [
     v(() => getListTournamentsQueryKey()),
     v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
@@ -162,7 +172,7 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getListTournamentTeamsQueryKey(vars.id as number)),
     v(({ vars }) => getListEligibleTeamsForTournamentQueryKey(vars.id as number)),
     v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
-    v(() => getGetTournamentTeamRegistrationQueryKey()),
+    v(({ vars }) => getGetTournamentTeamRegistrationQueryKey(vars.id as number)),
     v(() => getGetTeamActiveTournamentQueryKey()),
     v(({ vars }) => getGetTournamentStatsQueryKey(vars.id as number)),
     v(() => getGetAdminStatsQueryKey()),
@@ -176,7 +186,7 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   ],
   disqualifyTeamFromTournament: [
     v(({ vars }) => getListTournamentTeamsQueryKey(vars.id as number)),
-    v(() => getGetTournamentTeamRegistrationQueryKey()),
+    v(({ vars }) => getGetTournamentTeamRegistrationQueryKey(vars.id as number)),
     v(({ vars }) => getGetTournamentStatsQueryKey(vars.id as number)),
     v(() => getGetAdminStatsQueryKey()),
   ],
@@ -186,14 +196,12 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
     v(({ vars }) => getListRoundsQueryKey(vars.tournamentPk as number)),
     v(() => getGetMyCalendarQueryKey()),
   ],
-  replaceRound: [
-    v(({ vars }) => getGetRoundQueryKey(vars.id as number)),
-    v(({ data }) => getListRoundsQueryKey(data.tournament as number)),
-  ],
   updateRound: [
     v(({ vars }) => getGetRoundQueryKey(vars.id as number)),
     v(({ data }) => getListRoundsQueryKey(data.tournament as number)),
   ],
+  // The round id alone cannot address a rounds list, so this refreshes every
+  // tournament-scoped query (the round card lives on the tournament page anyway).
   deleteRound: [v(() => getListRoundsQueryKey()), v(() => getGetMyCalendarQueryKey())],
   startTournamentRegistration: [
     v(({ vars }) => getGetTournamentQueryKey(vars.id as number)),
@@ -226,20 +234,29 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   // Submissions
   createSubmission: [
     v(() => getListSubmissionsQueryKey()),
-    v(() => getListMyTeamSubmissionsQueryKey()),
-    v(() => getListRoundSubmissionsQueryKey()),
-    v(() => getListTournamentSubmissionsQueryKey()),
+    // The submission response nests the ids the list keys need; when a payload has
+    // no body the key falls back to the endpoint family prefix (see knownKey).
+    v(({ data }) =>
+      getListMyTeamSubmissionsQueryKey(nestedId(data, 'round_details', 'tournament') ?? undefined),
+    ),
+    v(({ data }) => getListRoundSubmissionsQueryKey(nestedId(data, 'round') ?? undefined)),
+    v(({ data }) =>
+      getListTournamentSubmissionsQueryKey(
+        nestedId(data, 'round_details', 'tournament') ?? undefined,
+      ),
+    ),
     v(() => getGetCurrentTaskQueryKey()),
     v(() => getGetPlayerStatsQueryKey()),
     v(() => getGetAdminStatsQueryKey()),
   ],
-  replaceSubmission: [
-    v(() => getListSubmissionsQueryKey()),
-    v(({ vars }) => getGetSubmissionQueryKey(vars.id as number)),
-  ],
   updateSubmission: [
     v(() => getListSubmissionsQueryKey()),
     v(({ vars }) => getGetSubmissionQueryKey(vars.id as number)),
+    // "My submissions" lives under the tournament, which only the response knows.
+    v(({ data }) =>
+      getListMyTeamSubmissionsQueryKey(nestedId(data, 'round_details', 'tournament') ?? undefined),
+    ),
+    v(({ data }) => getListRoundSubmissionsQueryKey(nestedId(data, 'round') ?? undefined)),
   ],
 
   // Events
@@ -257,23 +274,16 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   login: [v(() => getGetUserProfileQueryKey())],
   googleAuth: [v(() => getGetUserProfileQueryKey())],
 
-  replaceUserProfile: [v(() => getGetUserProfileQueryKey())],
-
   updateUserAvatar: [v(() => getGetUserProfileQueryKey())],
-  updateUserAvatar2: [v(() => getGetUserProfileQueryKey())],
   deleteUserAvatar: [v(() => getGetUserProfileQueryKey())],
 
   generateRoleActivationCodes: [v(() => getListRoleActivationCodesQueryKey())],
 
   // News
   createNews: [v(() => getListNewsQueryKey())],
-  replaceNews: [
-    v(() => getListNewsQueryKey()),
-    v(({ vars }) => getGetNewsQueryKey(vars.id as number)),
-  ],
   updateNews: [
     v(() => getListNewsQueryKey()),
-    v(({ vars }) => getGetNewsQueryKey(vars.id as number)),
+    v(({ vars }) => getGetNewsQueryKey(vars.articleId as number)),
   ],
   deleteNews: [v(() => getListNewsQueryKey())],
 
@@ -296,6 +306,27 @@ const MUTATION_INVALIDATION_MAP: Record<string, InvalidationEntry[]> = {
   ],
   updateNotificationConfig: [v(() => getGetNotificationSettingsQueryKey())],
   updateGlobalNotificationConfig: [v(() => getGetNotificationSettingsQueryKey())],
+}
+
+/**
+ * Filter keys to invalidate after a mutation succeeded. Exported so the wiring can
+ * be asserted against the generated query keys in tests.
+ */
+export const invalidationKeys = (
+  mutationKey: string | undefined,
+  vars: unknown,
+  data: unknown,
+): readonly (readonly unknown[])[] => {
+  if (!mutationKey) return []
+  const entries = MUTATION_INVALIDATION_MAP[mutationKey] ?? []
+  const ctx: Ctx = {
+    vars: (vars ?? {}) as Ctx['vars'],
+    data: (data ?? {}) as Ctx['data'],
+  }
+
+  // `vars` and `data` come from the generated client and are only as complete as the
+  // endpoint makes them, so every key is trimmed to its known part.
+  return entries.map((entry) => knownKey(entry(ctx)))
 }
 
 export const queryClient = new QueryClient({
@@ -333,14 +364,8 @@ export const queryClient = new QueryClient({
         connectNotificationSocket(queryClient)
       }
 
-      const entries = MUTATION_INVALIDATION_MAP[key] ?? []
-      const ctx: Ctx = {
-        vars: (vars ?? {}) as Ctx['vars'],
-        data: (data ?? {}) as Ctx['data'],
-      }
-
-      entries.forEach((entry) => {
-        queryClient.invalidateQueries({ queryKey: entry(ctx) })
+      invalidationKeys(key, vars, data).forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey })
       })
     },
   }),

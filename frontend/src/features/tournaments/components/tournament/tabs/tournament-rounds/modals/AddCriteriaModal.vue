@@ -3,19 +3,17 @@
     {{ criteriaCount > 0 ? `Edit criteria (${criteriaCount})` : 'Add criteria' }}
   </ui-button>
 
-  <ui-modal v-model="isOpen" :maxWidth="'760px'" scrollable @close="closeModal">
+  <ui-modal v-model="isOpen" :maxWidth="'760px'" @close="closeModal">
     <template #title>
       <h2>Add criteria</h2>
     </template>
 
     <div class="criteria-panel">
-      <ui-card class="add-criteria">
-        <template #header>
-          <div class="add-criteria-header">
-            <h3>New criterion</h3>
-            <p class="hint">Add one criterion at a time to keep scoring simple.</p>
-          </div>
-        </template>
+      <div class="add-criteria">
+        <div class="add-criteria-header">
+          <h3>New criterion</h3>
+          <p class="hint">Add one criterion at a time to keep scoring simple.</p>
+        </div>
 
         <div class="add-criteria-grid">
           <label class="form-item">
@@ -37,42 +35,34 @@
           </label>
         </div>
 
-        <template #footer>
-          <div class="button-row">
-            <ui-button type="button" @click="addCriterion">Add criterion</ui-button>
-          </div>
-        </template>
-      </ui-card>
+        <div class="button-row">
+          <ui-button type="button" @click="addCriterion">Add criterion</ui-button>
+        </div>
+      </div>
 
-      <ui-card v-if="criteriaCount === 0" class="empty-card">
-        <p class="empty-error">No criteria added</p>
-      </ui-card>
+      <p v-if="criteriaCount === 0" class="empty-error">No criteria added</p>
 
       <div v-else class="criteria-list">
-        <ui-card v-for="criterion in criteriaList" :key="criterion.id" class="criteria-card">
-          <template #header>
-            <div class="criteria-card-info">
-              <div class="criteria-card-title">
-                <h3 :title="criterion.name">{{ truncateText(criterion.name, 100) }}</h3>
-                <span class="criteria-score">Max {{ criterion.max_score }}</span>
-              </div>
-              <pre class="criteria-description">{{ criterion.description }}</pre>
+        <div v-for="criterion in criteriaList" :key="criterion.id" class="criteria-card">
+          <div class="criteria-card-info">
+            <div class="criteria-card-title">
+              <h3 :title="criterion.name">{{ truncateText(criterion.name, 100) }}</h3>
+              <span class="criteria-score">Max {{ criterion.max_score }}</span>
             </div>
-          </template>
+            <pre class="criteria-description">{{ criterion.description }}</pre>
+          </div>
 
-          <template #footer>
-            <div class="criteria-card-actions">
-              <ui-button
-                variant="secondary"
-                class="delete-button"
-                type="button"
-                @click="removeCriterion(criterion.id)"
-              >
-                Delete
-              </ui-button>
-            </div>
-          </template>
-        </ui-card>
+          <div class="criteria-card-actions">
+            <ui-button
+              variant="secondary"
+              class="delete-button"
+              type="button"
+              @click="removeCriterion(criterion.id)"
+            >
+              Delete
+            </ui-button>
+          </div>
+        </div>
       </div>
     </div>
   </ui-modal>
@@ -84,7 +74,6 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiModal from '@/components/ui/UiModal'
-import UiCard from '@/components/ui/UiCard'
 import UiTextArea from '@/components/ui/UiTextArea'
 import { truncateText } from '@/lib/utils'
 import type { CriterionResponse } from '@/api/backendAPINinja.schemas'
@@ -149,7 +138,16 @@ function removeCriterion(id: string) {
 
 .criteria-list {
   display: grid;
-  gap: 0.95rem;
+  gap: 0;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.criteria-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--border);
 }
 
 .criteria-card-info {
@@ -193,7 +191,10 @@ function removeCriterion(id: string) {
 }
 
 .add-criteria {
-  background: var(--muted);
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .add-criteria-header {

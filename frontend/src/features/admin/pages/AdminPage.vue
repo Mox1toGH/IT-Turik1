@@ -17,13 +17,8 @@
       <div class="admin-rule" aria-hidden="true"></div>
 
       <div class="admin-links">
-        <ui-card
-          v-for="(section, index) in sections"
-          :key="section.to"
-          class="form-panel admin-link-card"
-        >
+        <ui-card v-for="section in sections" :key="section.to" class="form-panel admin-link-card">
           <div class="panel-header">
-            <span class="step-marker">{{ String(index + 1).padStart(2, '0') }}</span>
             <div>
               <h3>{{ section.title }}</h3>
               <p class="text-muted">{{ section.description }}</p>
@@ -64,7 +59,7 @@ const sections = [
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -92,12 +87,12 @@ const sections = [
 .admin-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .admin-links {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.85rem;
 }
 
@@ -107,7 +102,8 @@ const sections = [
 }
 
 .admin-link-card {
-  background: var(--muted);
+  height: 100%;
+  background: var(--card);
 }
 
 .panel-header {
@@ -129,14 +125,8 @@ const sections = [
 }
 
 .card-btn {
-  margin-top: auto;
+  margin-top: 1rem;
   align-self: flex-start;
-}
-
-@media (max-width: 900px) {
-  .admin-links {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 760px) {

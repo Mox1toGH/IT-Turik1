@@ -2,8 +2,12 @@
   <div class="notification-dropdown-container" ref="dropdownContainer">
     <button class="notification-bell" @click="toggleDropdown" :class="{ active: isOpen }">
       <bell-icon class="icon" />
-      <span v-if="unreadCount?.unread_count" class="badge">
-        {{ unreadCount.unread_count > 99 ? '99+' : unreadCount.unread_count }}
+      <span v-if="notifications.unreadCount.value?.unread_count" class="badge">
+        {{
+          (notifications.unreadCount.value?.unread_count ?? 0) > 99
+            ? '99+'
+            : notifications.unreadCount.value?.unread_count
+        }}
       </span>
     </button>
 
@@ -12,18 +16,18 @@
         <h4>Notifications</h4>
         <div class="header-actions">
           <button
-            v-if="hasUnread"
+            v-if="notifications.hasUnread.value"
             class="action-link"
-            @click="handleMarkAllRead"
-            :disabled="isMarkingAll"
+            @click="notifications.handleMarkAllRead"
+            :disabled="notifications.isMarkingAll.value"
           >
             Mark read
           </button>
           <button
-            v-if="hasNotifications"
+            v-if="notifications.hasNotifications.value"
             class="action-link danger"
-            @click="handleDeleteAll"
-            :disabled="isDeletingAll"
+            @click="notifications.requestDeleteAllConfirm"
+            :disabled="notifications.isDeletingAll.value"
           >
             Delete all
           </button>
@@ -31,70 +35,20 @@
       </div>
 
       <div class="dropdown-body">
-        <div v-if="isLoading" class="state-message">Loading...</div>
-        <div v-else-if="error" class="state-message">Error loading</div>
-        <div v-else-if="unreadNotifications.length === 0" class="state-message">
+        <div v-if="notifications.isLoading.value" class="state-message">Loading...</div>
+        <div v-else-if="notifications.error.value" class="state-message">Error loading</div>
+        <div v-else-if="notifications.unreadNotifications.value.length === 0" class="state-message">
           There are currently no new notifications
         </div>
         <div v-else class="notifications-list">
-          <div
-            v-for="notification in unreadNotifications"
+          <notification-item
+            v-for="notification in notifications.unreadNotifications.value"
             :key="notification.id"
-            class="notification-item is-unread"
-            @click="markAsRead({ notificationId: notification.id })"
-          >
-            <div class="item-content">
-              <div class="item-title-row">
-                <span v-if="!notification.is_read" class="unread-dot"></span>
-                <span class="item-title">{{ notification.title }}</span>
-                <button
-                  v-if="getRedirectUrl(notification)"
-                  class="redirect-btn-mini"
-                  @click.stop="handleNotificationClick(notification)"
-                  title="Go to page"
-                >
-                  <external-link-icon class="icon" />
-                </button>
-                <button
-                  class="delete-btn-mini"
-                  @click.stop="handleDelete(notification.id)"
-                  title="Delete notification"
-                >
-                  <trash-icon class="icon" />
-                </button>
-              </div>
-              <span class="item-message">
-                <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                  <a
-                    v-if="part.type === 'user'"
-                    :href="`/users/${part.id}`"
-                    class="user-link"
-                    @click.stop
-                  >
-                    {{ part.text }}
-                  </a>
-                  <router-link
-                    v-else-if="part.type === 'team'"
-                    :to="`/teams/${part.id}`"
-                    class="user-link"
-                    @click.stop
-                  >
-                    {{ part.text }}
-                  </router-link>
-                  <router-link
-                    v-else-if="part.type === 'news'"
-                    :to="`/news#news-${part.id}`"
-                    class="user-link"
-                    @click.stop
-                  >
-                    {{ part.text }}
-                  </router-link>
-                  <span v-else>{{ part.text }}</span>
-                </template>
-              </span>
-              <span class="item-date">{{ formatDate(notification.created_at) }}</span>
-            </div>
-          </div>
+            :notification="notification"
+            @mark-read="notifications.handleMarkRead"
+            @delete="notifications.requestDeleteConfirm"
+            @redirect="handleRedirect"
+          />
         </div>
       </div>
 
@@ -107,199 +61,49 @@
   </div>
 
   <ui-confirm-modal
-    v-model="isConfirmModalOpen"
-    :title="confirmModalConfig.title"
-    :message="confirmModalConfig.message"
-    :confirm-variant="confirmModalConfig.confirmVariant"
-    :loading="isDeletingAll"
-    @confirm="confirmModalConfig.onConfirm"
+    v-model="notifications.isConfirmModalOpen.value"
+    :title="notifications.confirmModalConfig.value.title"
+    :message="notifications.confirmModalConfig.value.message"
+    :confirm-variant="notifications.confirmModalConfig.value.confirmVariant"
+    :loading="notifications.isDeletingAll.value"
+    @confirm="notifications.confirmModalConfig.value.onConfirm"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BellIcon from '@/icons/BellIcon.vue'
-import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
-
-import TrashIcon from '@/icons/TrashIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
-import {
-  useDeleteAllNotifications,
-  useDeleteNotification,
-  useGetUnreadNotificationCount,
-  useListNotifications,
-  useMarkAllNotificationsRead,
-  useMarkNotificationRead,
-} from '@/api/notifications/notifications'
+import NotificationItem from './NotificationItem.vue'
+import { useNotifications } from '../../composables/useNotifications'
 import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
-import { useNotification } from '@/composables/useNotification'
 
 const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
 
-const { data: notifications, isLoading, error } = useListNotifications()
-const { data: unreadCount } = useGetUnreadNotificationCount()
-const { mutate: markAsRead } = useMarkNotificationRead()
-const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
-const { mutate: deleteNotification } = useDeleteNotification()
-const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
+const notifications = useNotifications()
 
-// Confirmation Modal State
-const isConfirmModalOpen = ref(false)
-const confirmModalConfig = ref({
-  title: '',
-  message: '',
-  onConfirm: () => {},
-  confirmVariant: 'danger' as const,
-})
-
-const { showNotification } = useNotification()
-
-const unreadNotifications = computed(() => {
-  return notifications.value?.items.filter((n) => !n.is_read) || []
-})
-
-const hasUnread = computed(() => unreadNotifications.value.length > 0)
-const hasNotifications = computed(() => (notifications.value?.items.length ?? 0) > 0)
-
-const toggleDropdown = () => {
+const toggleDropdown = (): void => {
   isOpen.value = !isOpen.value
 }
 
-const closeDropdown = (e: MouseEvent) => {
+const closeDropdown = (e: MouseEvent): void => {
   if (dropdownContainer.value && !dropdownContainer.value.contains(e.target as Node)) {
     isOpen.value = false
   }
 }
 
-const handleMarkAllRead = () => {
-  markAllAsRead(void 0, {})
+const handleRedirect = (notification: NotificationResponse): void => {
+  isOpen.value = false
+  notifications.handleNotificationClick(notification)
 }
 
-const handleDelete = (id: number) => {
-  confirmModalConfig.value = {
-    title: 'Delete Notification',
-    message: 'Delete this notification?',
-    confirmVariant: 'danger',
-    onConfirm: () => {
-      deleteNotification(
-        { notificationId: id },
-        {
-          onSuccess: () => {
-            isConfirmModalOpen.value = false
-          },
-        },
-      )
-    },
-  }
-  isConfirmModalOpen.value = true
-}
-
-const handleDeleteAll = () => {
-  confirmModalConfig.value = {
-    title: 'Delete All Notifications',
-    message: 'Delete ALL notifications? This cannot be undone.',
-    confirmVariant: 'danger',
-    onConfirm: () => {
-      deleteAllNotifications(undefined, {
-        onSuccess: () => {
-          isConfirmModalOpen.value = false
-        },
-        onError: (error) => {
-          showNotification(error.message, 'error')
-        },
-      })
-    },
-  }
-  isConfirmModalOpen.value = true
-}
-
-const handleNotificationClick = (notification: NotificationResponse) => {
-  if (!notification.is_read) {
-    markAsRead({ notificationId: notification.id })
-  }
-
-  const url = getRedirectUrl(notification)
-  if (url) {
-    isOpen.value = false
-    router.push(url)
-  }
-}
-
-const getRedirectUrl = (notification: NotificationResponse) => {
-  const type = notification.event_type
-
-  // Only invitations go to /teams — recipient hasn't joined yet
-  if (type === 'team_invitation_received') {
-    return '/teams'
-  }
-
-  if (type.startsWith('team_')) {
-    // Other team events can still link directly if possible
-    const match = notification.message.match(/\[team:(\d+):.+?\]/)
-    if (match) {
-      return `/teams/${match[1]}`
-    }
-    return '/teams'
-  }
-  if (type === 'news_published') {
-    const match = notification.message.match(/\[news:(\d+):.+?\]/)
-    if (match) {
-      return `/news#news-${match[1]}`
-    }
-    return '/news'
-  }
-  if (type.startsWith('tournament_')) {
-    return '/tournaments'
-  }
-  if (type === 'jury_assignment_received') {
-    return '/evaluation'
-  }
-  return null
-}
-
-const parseMessage = (message: string) => {
-  const parts = []
-  // Matches [user:id:name], [team:id:name], or [news:id:title]
-  const regex = /\[(user|team|news):(\d+):(.+?)\]/g
-  let lastIndex = 0
-  let match
-
-  while ((match = regex.exec(message)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: 'text', text: message.substring(lastIndex, match.index) })
-    }
-    parts.push({
-      type: match[1], // 'user' or 'team'
-      id: match[2],
-      text: match[3],
-    })
-    lastIndex = regex.lastIndex
-  }
-
-  if (lastIndex < message.length) {
-    parts.push({ type: 'text', text: message.substring(lastIndex) })
-  }
-
-  return parts.length > 0 ? parts : [{ type: 'text', text: message }]
-}
-
-const goToAllNotifications = () => {
+const goToAllNotifications = (): void => {
   isOpen.value = false
   router.push('/profile/notifications')
-}
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 onMounted(() => {
@@ -328,12 +132,11 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
 .notification-bell:hover,
 .notification-bell.active {
-  background-color: var(--secondary);
+  background-color: var(--subtle);
 }
 
 .notification-bell .icon {
@@ -346,7 +149,7 @@ onUnmounted(() => {
   top: -2px;
   right: -2px;
   background-color: var(--destructive);
-  color: white;
+  color: var(--primary-foreground);
   font-size: 0.65rem;
   font-weight: bold;
   padding: 2px 5px;
@@ -363,8 +166,8 @@ onUnmounted(() => {
   width: 320px;
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-overlay);
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -387,25 +190,20 @@ onUnmounted(() => {
 .action-link {
   background: none;
   border: none;
-  color: var(--brand-600);
+  color: var(--primary);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
-  transition: color 0.2s;
 }
 
 .action-link:hover:not(:disabled) {
   text-decoration: underline;
-  color: var(--brand-700);
+  text-underline-offset: 2px;
 }
 
 .action-link.danger {
   color: var(--destructive);
-}
-
-.action-link.danger:hover:not(:disabled) {
-  color: #c4000a;
 }
 
 .action-link:disabled {
@@ -437,142 +235,9 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-.notification-item {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  transition: background-color 0.2s ease;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
-}
-
-.notification-item.is-unread {
-  background: color-mix(in srgb, var(--brand-500) 5%, transparent);
-  cursor: pointer;
-}
-
-.notification-item.is-unread:hover {
-  background: color-mix(in srgb, var(--brand-500) 10%, transparent);
-}
-
-.item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.item-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.unread-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--brand-500);
-  flex-shrink: 0;
-}
-
-.item-title {
-  font-weight: 600;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.redirect-btn-mini {
-  background: none;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 2px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  opacity: 0;
-}
-
-.notification-item:hover .redirect-btn-mini {
-  opacity: 1;
-}
-
-.redirect-btn-mini:hover {
-  color: var(--brand-600);
-  background: color-mix(in srgb, var(--brand-500) 10%, transparent);
-}
-
-.redirect-btn-mini .icon {
-  width: 12px;
-  height: 12px;
-}
-
-.delete-btn-mini {
-  background: none;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 2px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  opacity: 0;
-}
-
-.notification-item:hover .delete-btn-mini {
-  opacity: 1;
-}
-
-.delete-btn-mini:hover {
-  color: #c4000a;
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
-}
-
-.delete-btn-mini .icon {
-  width: 12px;
-  height: 12px;
-}
-
-.item-message {
-  font-size: 0.8rem;
-  color: var(--foreground);
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.item-date {
-  font-size: 0.7rem;
-  color: var(--muted-foreground);
-}
-
 .dropdown-footer {
   padding: 0.75rem;
   border-top: 1px solid var(--border);
-  background: var(--muted);
-}
-
-.user-link {
-  color: var(--brand-600);
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.user-link:hover {
-  color: var(--brand-700);
-  text-decoration: underline;
+  background: var(--subtle);
 }
 </style>

@@ -97,12 +97,10 @@ defineExpose({ open, close, isOpen })
   z-index: 200;
   background: var(--popover, var(--background));
   color: var(--popover-foreground, var(--foreground));
-  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
   padding: 0.6rem;
-  box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.07),
-    0 12px 24px -4px rgb(0 0 0 / 0.1);
+  box-shadow: var(--shadow-overlay);
   outline: none;
 }
 

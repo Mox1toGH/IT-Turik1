@@ -14,7 +14,7 @@
     </div>
 
     <div class="hero-actions">
-      <ui-button asLink to="/tournaments/archive" variant="default" size="lg">Archive</ui-button>
+      <ui-button asLink to="/tournaments/archive" variant="secondary" size="lg">Archive</ui-button>
       <ui-button v-if="isAdmin" asLink to="/tournaments/create" size="lg">
         <span class="create-plus text-2xl" aria-hidden="true">+</span>
         Create tournament
@@ -27,7 +27,6 @@
 import UiButton from '@/components/ui/UiButton'
 
 defineProps<{
-  loading: boolean
   isAdmin: boolean
 }>()
 </script>
@@ -49,7 +48,7 @@ defineProps<{
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;

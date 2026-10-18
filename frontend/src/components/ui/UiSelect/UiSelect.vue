@@ -150,7 +150,7 @@ const selectedLabel = computed(() => {
 <style scoped>
 .select-chevron {
   flex-shrink: 0;
-  color: color-mix(in srgb, var(--foreground) 42%, transparent);
+  color: var(--placeholder);
   transition: transform 0.2s ease;
 }
 
@@ -164,9 +164,9 @@ const selectedLabel = computed(() => {
 :deep(.select-dropdown) {
   background: var(--popover);
   color: var(--foreground);
-  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgb(0 0 0 / 11%);
+  box-shadow: var(--shadow-overlay);
   overflow: hidden;
 }
 
@@ -223,7 +223,7 @@ const selectedLabel = computed(() => {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--warning, #b7791f);
+  color: var(--warning);
   cursor: help;
 }
 
@@ -234,7 +234,7 @@ const selectedLabel = computed(() => {
 
 .select-option:hover,
 .select-option[data-highlighted] {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  background: var(--hover);
 }
 
 .select-option[data-disabled] {
@@ -244,13 +244,13 @@ const selectedLabel = computed(() => {
 }
 
 .select-option[data-state='checked'] {
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: color-mix(in srgb, var(--primary) 88%, var(--foreground));
+  background: var(--primary-soft);
+  color: var(--primary);
   font-weight: 500;
 }
 
 .select-option[data-state='checked'][data-highlighted] {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  background: var(--primary-soft);
 }
 
 .select-error,

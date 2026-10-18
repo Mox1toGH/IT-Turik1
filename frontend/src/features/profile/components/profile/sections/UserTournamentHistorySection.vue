@@ -1,27 +1,25 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">Tournaments</p>
-            <h1 class="section-title">
-              {{ isOwnView ? 'My tournament history' : `${displayUserName} tournament history` }}
-            </h1>
-          </div>
-          <ui-button variant="secondary" @click="goBack">Back</ui-button>
+    <div class="history-page">
+      <div class="head">
+        <div>
+          <p class="section-eyebrow">Tournaments</p>
+          <h1 class="section-title">
+            {{ isOwnView ? 'My tournament history' : `${displayUserName} tournament history` }}
+          </h1>
         </div>
-      </template>
+        <ui-button variant="secondary" @click="goBack">Back</ui-button>
+      </div>
 
       <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
           <div class="history-list">
-            <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="history-card">
+            <div v-for="i in 4" :key="`skeleton-${i}`" class="history-card history-card-skeleton">
               <ui-skeleton variant="rect" width="60%" height="24px" />
               <ui-skeleton variant="rect" width="100%" height="18px" />
               <ui-skeleton variant="rect" width="45%" height="18px" />
               <ui-skeleton variant="rect" width="100%" height="34px" />
-            </ui-card>
+            </div>
           </div>
         </template>
 
@@ -69,7 +67,7 @@
           </ui-card>
         </div>
       </ui-skeleton-loader>
-    </ui-card>
+    </div>
   </section>
 </template>
 
@@ -157,14 +155,24 @@ const statusVariant = (status?: string) => {
   gap: 12px;
 }
 
+.history-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .history-list {
   display: grid;
   gap: 10px;
 }
 
-.history-card {
-  background: var(--muted);
-  color: var(--muted-foreground);
+.history-card-skeleton {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
 }
 
 .history-head {

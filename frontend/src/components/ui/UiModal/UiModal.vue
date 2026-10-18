@@ -7,6 +7,7 @@
           ref="modalBackdrop"
           class="modal-backdrop"
           data-testid="modal-backdrop"
+          :style="{ zIndex: 50 + level * 2 }"
         />
       </Transition>
 
@@ -101,31 +102,27 @@ function getOpenedCount() {
 }
 
 function incrementOpenedCount() {
+  level.value = getOpenedCount()
+  document.documentElement.setAttribute('modals-opened', String(level.value + 1))
   level.value += 1
-  document.documentElement.setAttribute('modals-opened', level.value.toString())
 }
 
 function decrementOpenedCount() {
-  if (level.value != 0) level.value -= 1
-  document.documentElement.setAttribute('modals-opened', level.value.toString())
+  if (level.value > 1) level.value -= 1
+  document.documentElement.setAttribute('modals-opened', String(level.value))
 }
 
 function open() {
   isOpen.value = true
-  incrementOpenedCount()
 }
 
 function close() {
   isOpen.value = false
-  decrementOpenedCount()
-  emit('close')
 }
 
 function handleOpenChange(value: boolean) {
   isOpen.value = value
-
   if (value) {
-    level.value = getOpenedCount()
     incrementOpenedCount()
   } else {
     decrementOpenedCount()
@@ -147,7 +144,7 @@ defineExpose({ open, close, isOpen })
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: #00000073;
+  background: var(--scrim);
   backdrop-filter: blur(3px);
   z-index: 50;
 }

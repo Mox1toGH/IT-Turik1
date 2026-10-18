@@ -1,91 +1,56 @@
 <template>
-  <ui-card
-    class="panel members-panel"
-    :status="props.status"
-    :error-code="props.errorCode"
-  >
-    <template #error>
-      <div class="empty-state">
-        <p>Failed to fetch team members</p>
-      </div>
-    </template>
-
-    <template #header>
-      <div class="panel-header">
-        <span class="step-marker">02</span>
-        <div>
-          <h2>Members</h2>
-          <p class="text-muted">Review current members and manage pending invitations.</p>
-        </div>
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="100px" />
-          </template>
-
-          <ui-card class="members-stat">
-            <strong>{{ team?.members.length ?? 0 }}</strong>
-            <span>People</span>
-          </ui-card>
-        </ui-skeleton-loader>
-      </div>
-    </template>
-
-    <div class="teams-rule" aria-hidden="true"></div>
-
-    <div class="form-item search-field">
-      <p class="form-label">Search members</p>
-      <ui-input
-        class="search-input"
-        v-model="memberSearch"
-        placeholder="Search by username or email"
-        :disabled="props.loading"
-      />
-    </div>
+  <div class="members-panel">
+    <ui-input
+      v-model="memberSearch"
+      class="search-input"
+      placeholder="Search by username or email"
+      :disabled="props.loading"
+    />
 
     <ui-skeleton-loader :loading="props.loading">
       <template #skeleton>
-        <div class="member-list">
-          <ui-card v-for="i in 2" :key="i" class="member-row">
-            <template #header>
-              <div class="member-row-top">
-                <ui-skeleton variant="rect" width="140px" />
-                <ui-skeleton variant="rect" width="120px" />
+        <div class="member-grid">
+          <div v-for="i in 4" :key="`member-skeleton-${i}`" class="member-card-skeleton">
+            <div class="member-card-skeleton-top">
+              <ui-skeleton variant="rounded" width="44px" height="44px" />
+              <div class="member-card-skeleton-lines">
+                <ui-skeleton variant="rect" width="120px" height="14px" />
+                <ui-skeleton variant="rect" width="160px" height="12px" />
               </div>
-            </template>
-
-            <ui-skeleton variant="rect" width="100px" />
-
-            <template #footer>
-              <ui-skeleton variant="rect" height="30px" width="70px" />
-            </template>
-          </ui-card>
+            </div>
+          </div>
         </div>
       </template>
 
-      <div class="member-list">
+      <div class="member-grid">
         <ui-card
           v-for="member in filteredMembers"
           :key="`member-${member.id}`"
-          class="member-row"
+          class="member-card card-actions-divided"
         >
-          <div>
-            <div class="member-row-top">
+          <div class="member-top">
+            <user-avatar
+              :avatar="member.avatar"
+              :username="member.username"
+              :full-name="member.full_name || ''"
+              :size="44"
+            />
+
+            <div class="member-main">
               <p class="member-name">
                 <RouterLink :to="`/users/${member.id}`" class="member-link">
                   {{ member.username }}
                 </RouterLink>
               </p>
-              <div class="member-badges">
-                <ui-badge v-if="member.id === team?.captain_id" variant="green">Captain</ui-badge>
-              </div>
+              <p class="text-muted member-email">{{ member.email }}</p>
             </div>
 
-            <p class="text-muted member-email">{{ member.email }}</p>
+            <ui-badge v-if="member.id === team?.captain_id" variant="green">Captain</ui-badge>
+            <ui-badge v-else variant="gray">Member</ui-badge>
           </div>
 
-          <template #footer>
+          <template v-if="canRemove(member)" #footer>
             <ui-button
-              v-if="member.id !== team?.captain_id && !team.is_in_active_tournament"
               variant="danger"
               size="sm"
               class="remove-member-btn"
@@ -98,82 +63,12 @@
           </template>
         </ui-card>
       </div>
+
+      <p v-if="filteredMembers?.length === 0" class="text-muted members-note">
+        No members match your search.
+      </p>
     </ui-skeleton-loader>
-
-    <div class="add-member-box">
-      <div class="box-header">
-        <h3>Invitations status</h3>
-        <span class="text-muted">{{ invitations?.length ?? 0 }} pending total</span>
-      </div>
-
-      <ui-skeleton-loader :loading="props.loading">
-        <template #skeleton>
-          <div class="member-list">
-            <ui-card v-for="i in 2" :key="i" class="member-row">
-              <div class="member-row-top">
-                <ui-skeleton variant="rect" width="80px" />
-                <ui-skeleton variant="rect" width="100px" />
-              </div>
-            </ui-card>
-          </div>
-        </template>
-
-        <div class="member-list">
-          <p v-if="!isLoadingInvitations && !invitations?.length" class="text-muted">
-            No invitations yet.
-          </p>
-          <ui-card
-            v-for="invitation in invitations"
-            :key="`inv-${invitation.id}`"
-            class="member-row"
-          >
-            <div class="member-row-top">
-              <p class="member-name">{{ invitation.user.username }}</p>
-
-              <ui-badge v-if="invitation.status === 'declined'" variant="red">
-                {{ invitation.status }}
-              </ui-badge>
-              <ui-badge v-if="invitation.status === 'accepted'" variant="green">{{
-                invitation.status
-              }}</ui-badge>
-              <ui-badge v-else>{{ invitation.status }}</ui-badge>
-            </div>
-          </ui-card>
-        </div>
-      </ui-skeleton-loader>
-    </div>
-
-    <p v-if="filteredMembers?.length === 0" class="text-muted member-note">
-      No members match your search.
-    </p>
-
-    <div class="add-member-box" v-if="!team.is_in_active_tournament">
-      <div class="box-header">
-        <h3>Invite user</h3>
-        <span class="text-muted">Add a new teammate by invitation.</span>
-      </div>
-
-      <div class="form-item">
-        <p class="form-label">User</p>
-        <ui-select
-          placeholder="Select user"
-          v-model="addMemberSelection"
-          :options="userOptions"
-          :isLoading="isLoadingUsers"
-        />
-      </div>
-
-      <ui-button
-        size="lg"
-        class="invite-btn"
-        @click="addMember"
-        :disabled="addMemberLoading || isLoadingUsers || !addMemberSelection"
-      >
-        <loading-icon v-if="addMemberLoading" />
-        {{ addMemberLoading ? 'Sending...' : 'Send invitation' }}
-      </ui-button>
-    </div>
-  </ui-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -181,44 +76,26 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
-import UiSelect from '@/components/ui/UiSelect'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import {
-  useInviteMemberToTeam,
-  useListTeamInvitationsByTeam,
-  useRemoveMemberFromTeam,
-} from '@/api/teams/teams'
-import { useListUsers } from '@/api/accounts/accounts'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import { RouterLink } from 'vue-router'
+import { useRemoveMemberFromTeam } from '@/api/teams/teams'
 import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team: TeamResponse
   loading: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
 }
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: users, isLoading: isLoadingUsers } = useListUsers()
-const { data: invitations, isLoading: isLoadingInvitations } = useListTeamInvitationsByTeam(
-  props.team.id,
-)
-
 const memberSearch = ref('')
-const addMemberSelection = ref<number | null>(null)
 const kickLoadingIds = ref<Set<number>>(new Set())
-
-const availableUsers = computed(() => {
-  const currentIds = new Set(props.team?.members.map((member) => member.id))
-  return users.value?.filter((user) => !currentIds.has(user.id))
-})
 
 const filteredMembers = computed(() => {
   const search = memberSearch.value.trim().toLowerCase()
@@ -231,12 +108,8 @@ const filteredMembers = computed(() => {
   )
 })
 
-const userOptions = computed(() => [
-  ...(availableUsers.value?.map((user) => ({
-    value: String(user.id),
-    label: `${user.username} (${user.email})`,
-  })) || []),
-])
+const canRemove = (member: TeamMemberResponse) =>
+  member.id !== props.team.captain_id && !props.team.is_in_active_tournament
 
 const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
@@ -260,170 +133,96 @@ const removeMember = (member: TeamMemberResponse) => {
     },
   )
 }
-
-const { mutate: addMemberMutate, isPending: addMemberLoading } = useInviteMemberToTeam()
-
-const addMember = () => {
-  if (!props.team) return
-
-  if (!addMemberSelection.value) {
-    showNotification('Select a user to add.', 'error')
-    return
-  }
-
-  addMemberMutate(
-    { pk: props.team.id, data: { user_id: Number(addMemberSelection.value) } },
-    {
-      onSuccess: () => {
-        addMemberSelection.value = null
-        showNotification('Invitation sent.', 'success')
-      },
-      onError: (error) => {
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
 </script>
 
 <style scoped>
-.teams-rule {
-  height: 1px;
-  margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
-}
-
-.members-stat {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  margin-left: auto;
-  border-color: var(--line-soft);
-}
-
-.members-stat strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  line-height: var(--text-xl--line-height);
-  font-weight: 800;
-}
-
-.members-stat span {
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.search-field {
-  margin-top: 0.25rem;
-}
-
-.member-list {
+.members-panel {
   display: grid;
-  gap: 0.65rem;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
-.member-row.card {
-  gap: 0.65rem;
-  color: var(--muted-foreground);
+.search-input {
+  width: 100%;
 }
 
-.member-row-top,
-.box-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
-.member-row-top {
-  align-items: flex-start;
+.member-card {
+  height: 100%;
+  min-width: 0;
+  gap: 1rem;
 }
 
-.box-header {
-  align-items: baseline;
-}
-
-.box-header span {
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  text-align: right;
-}
-
-.member-badges {
+.member-top {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
-.member-name,
-.member-email {
-  margin: 0;
+.member-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .member-name {
+  margin: 0;
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .member-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
 }
 
-.member-email {
-  font-size: 0.84rem;
+.member-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.member-note {
-  margin-top: 0.8rem;
+
+.member-email {
+  margin: 0.15rem 0 0;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
 }
 
 .remove-member-btn {
   width: max-content;
 }
 
-.add-member-box {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 0.35rem;
-  padding: 1rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-}
-
-.add-member-box h3 {
+.members-note {
   margin: 0;
-  font-size: 1rem;
+  padding: 1rem 0;
+  text-align: center;
 }
 
-.empty-state {
+.member-card-skeleton {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 302px;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
 }
 
-@media (max-width: 760px) {
-  .panel-header,
-  .member-row-top,
-  .box-header {
-    flex-direction: column;
-  }
+.member-card-skeleton-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 
-  .box-header span {
-    text-align: left;
-  }
-
-  .remove-member-btn {
-    width: 100%;
-  }
+.member-card-skeleton-lines {
+  display: grid;
+  gap: 0.4rem;
 }
 </style>

@@ -1,16 +1,12 @@
 <template>
-  <section class="jury-assign-shell">
-    <ui-card
-      :status="status"
-      :is-fetching="isFetching"
-      :is-stale="isStale"
-      :error-code="errorCode"
-      @retry="refetchAll"
-    >
-      <template #error>
-        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-          <p>{{ error?.message || 'Something went wrong' }}</p>
-        </div>
+  <ui-section
+    title="Assign jury"
+    description="Assign jury members to evaluate round submissions."
+    class="jury-assign-shell"
+  >
+    <ui-card :query="cardQuery" empty-text="No submissions to evaluate yet">
+      <template #empty-action>
+        <p class="text-sm text-muted">Assignments appear once teams submit to the closed round.</p>
       </template>
 
       <template #header>
@@ -20,7 +16,8 @@
               <ui-skeleton variant="rect" width="150px" />
             </template>
 
-            <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
+            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
+            <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
           </ui-skeleton-loader>
           <div class="header-actions">
             <ui-select
@@ -52,34 +49,7 @@
         </div>
       </template>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="submissions-table">
-            <div class="table-head">
-              <span>Team</span>
-              <span>Submitted On</span>
-              <span>Assigned Jury</span>
-              <span style="text-align: end">Actions</span>
-            </div>
-
-            <div v-for="i in 2" :key="`skeleton-${i}`" class="table-row">
-              <div class="team-cell">
-                <div class="team-avatar">
-                  <ui-skeleton variant="rounded" width="40px" height="40px" />
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; flex: 1">
-                  <ui-skeleton variant="rect" width="100px" />
-                  <ui-skeleton variant="rect" width="140px" />
-                </div>
-              </div>
-
-              <ui-skeleton variant="rect" width="100px" />
-              <ui-skeleton variant="rect" width="100px" />
-              <ui-skeleton variant="rect" width="100px" />
-            </div>
-          </div>
-        </template>
-
+      <template #skeleton>
         <div class="submissions-table">
           <div class="table-head">
             <span>Team</span>
@@ -88,74 +58,59 @@
             <span style="text-align: end">Actions</span>
           </div>
 
-          <ui-card v-if="submissions?.length === 0" class="empty-card"
-            ><p class="empty-error">No submissions was submited to this round</p></ui-card
-          >
-          <div v-else v-for="submission in submissions" :key="submission.id" class="table-row">
+          <div v-for="i in 2" :key="`skeleton-${i}`" class="table-row">
             <div class="team-cell">
-              <div class="team-avatar">{{ teamAbbr(submission.team_details.name) }}</div>
-              <div>
-                <p class="team-name">{{ submission.team_details.name }}</p>
-                <p class="team-meta" :title="submission.description">
-                  {{ truncateText(submission.description || 'No description', 25) }}
-                </p>
+              <div class="team-avatar">
+                <ui-skeleton variant="rounded" width="40px" height="40px" />
+              </div>
+              <div class="skeleton-lines">
+                <ui-skeleton variant="rect" width="100px" />
+                <ui-skeleton variant="rect" width="140px" />
               </div>
             </div>
 
-            <p class="text-muted">{{ formatDate(submission.created_at, { showHours: true }) }}</p>
-
-            <div class="assigned-cell">
-              <ui-badge
-                v-for="juryId in assignedJury[submission.id] ?? []"
-                :key="juryId"
-                variant="primary"
-              >
-                {{ juryLabel(juryId) }}
-              </ui-badge>
-              <span v-if="!assignedJury[submission.id]?.length" class="empty-state"
-                >No jury assigned</span
-              >
-            </div>
-
-            <div class="actions-cell">
-              <ui-select
-                multiple
-                min-width="150px"
-                v-model="assignedJury[submission.id]!"
-                :options="juryOptions"
-                placeholder="Assign jury"
-                class="jury-select"
-                :is-error="isFailedToFetchJury"
-                :error="juryFetchError?.message"
-                :is-loading="isFetchingJury"
-              />
-            </div>
+            <ui-skeleton variant="rect" width="100px" />
+            <ui-skeleton variant="rect" width="100px" />
+            <ui-skeleton variant="rect" width="100px" />
           </div>
         </div>
-      </ui-skeleton-loader>
+      </template>
+
+      <div class="submissions-table">
+        <div class="table-head">
+          <span>Team</span>
+          <span>Submitted On</span>
+          <span>Assigned Jury</span>
+          <span style="text-align: end">Actions</span>
+        </div>
+
+        <jury-assign-row
+          v-for="submission in submissions"
+          :key="submission.id"
+          :submission="submission"
+          v-model:assigned="assignedJury[submission.id]"
+          :jury-options="juryOptions"
+          :is-failed-to-fetch-jury="isFailedToFetchJury"
+          :jury-fetch-error-message="juryFetchError?.message"
+          :is-fetching-jury="isFetchingJury"
+          :team-abbr="teamAbbr"
+          :jury-label="juryLabel"
+        />
+      </div>
     </ui-card>
-  </section>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import UiBadge from '@/components/ui/UiBadge'
-import UiSelect, { type SelectOption } from '@/components/ui/UiSelect'
-import { formatDate } from '@/lib/date'
-import UiCard from '@/components/ui/UiCard'
-import { truncateText } from '@/lib/utils'
 import UiButton from '@/components/ui/UiButton'
-import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
+import UiSelect from '@/components/ui/UiSelect'
 import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import { useCardState } from '@/composables/useCardState'
-import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
-import {
-  useAssignJuryToRound,
-  useListAvailableJury,
-  type AssignJuryToRoundMutationBody,
-} from '@/api/evaluation/evaluation'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
+import JuryAssignRow from './JuryAssignRow.vue'
+import { useJuryAssign } from '../../../../composables/useJuryAssign'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas'
 
 interface Props {
@@ -164,149 +119,32 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const { showNotification } = useNotification()
-
-const tournamentQuery = useGetTournament(props.tournamentId)
-const {
-  data: tournament,
-  isLoading: tournamentLoading,
-  isError: tournamentError,
-  error: tournamentErrorData,
-} = tournamentQuery
-
-const closedRound = computed(() =>
-  tournament.value?.rounds.find((round) => round.status === 'submission_closed'),
-)
-
-const submissionsQuery = useListRoundSubmissions(
-  computed(() => closedRound.value?.id ?? 0),
-
-  {
-    query: { enabled: computed(() => !!closedRound.value) },
-  },
-)
-const {
-  data: submissions,
-  isLoading: submissionsLoading,
-  error: submissionsErrorData,
-} = submissionsQuery
 
 const {
-  data: availableJury,
-  isLoading: isFetchingJury,
-  isError: isFailedToFetchJury,
-  error: juryFetchError,
-} = useListAvailableJury(
-  computed(() => closedRound.value?.id ?? 0),
-  undefined,
-  {
-    query: { enabled: computed(() => !!closedRound.value) },
-  },
-)
-
-const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
-const isLoadingRound = computed(() => tournamentLoading.value)
-const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
-const cardQuery = computed(() => ({
-  isPending: tournamentQuery.isPending.value || submissionsQuery.isPending.value,
-  isError: noClosedRound.value || tournamentQuery.isError.value || submissionsQuery.isError.value,
-  data: noClosedRound.value ? undefined : (submissions.value ?? tournament.value),
-  error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
-}))
-const { status, errorCode, isStale } = useCardState(cardQuery)
-const isFetching = computed(
-  () => tournamentQuery.isFetching.value || submissionsQuery.isFetching.value,
-)
-const refetchAll = () => {
-  void tournamentQuery.refetch()
-  void submissionsQuery.refetch()
-}
-const error = computed(() => {
-  if (noClosedRound.value) {
-    return { message: 'No finished round available' }
-  }
-  if (tournamentError.value) {
-    return tournamentErrorData.value ?? { message: 'Failed to fetch tournament info' }
-  }
-
-  return submissionsErrorData.value ?? { message: 'Failed to fetch submissions' }
-})
-
-const juryOptions = computed<SelectOption[]>(
-  () =>
-    availableJury.value?.map((jury) => ({
-      value: jury.id,
-      label: jury.username,
-    })) ?? [],
-)
-
-const assignJuryForAll = ref<number[]>([])
-const assignedJury = reactive<Record<number, number[]>>({})
-watch(
+  closedRound,
   submissions,
-  (value) => {
-    if (!value) return
-    value.forEach((submission) => {
-      const nextAssigned = (submission.assignments ?? [])
-        .map((assignment) => assignment.jury?.id)
-        .filter((id): id is number => typeof id === 'number')
-
-      assignedJury[submission.id] = Array.from(new Set(nextAssigned))
-    })
-  },
-  { immediate: true },
-)
-
-const { mutate: assign, isPending } = useAssignJuryToRound()
-
-const applyJuryToAllSubmissions = () => {
-  if (!submissions.value?.length) return
-  const nextAssigned = Array.from(new Set(assignJuryForAll.value))
-  submissions.value.forEach((submission) => {
-    assignedJury[submission.id] = [...nextAssigned]
-  })
-}
-
-const handleAssignJury = () => {
-  if (!closedRound.value) return
-  const payload = submissions.value?.map((submission) => {
-    return {
-      submission: submission.id,
-      jury: assignedJury[submission.id],
-    }
-  })
-
-  assign(
-    {
-      roundId: closedRound.value?.id,
-      data: payload as unknown as AssignJuryToRoundMutationBody,
-    },
-    {
-      onError: (error) => {
-        showNotification(error?.message, 'error')
-      },
-      onSuccess: () => {
-        showNotification('Assigment was sucessfully replaced', 'success')
-      },
-    },
-  )
-}
-
-const juryLabel = (value: number) =>
-  juryOptions.value.find((option) => option.value === value)?.label ?? String(value)
-
-const teamAbbr = (teamName: string) =>
-  teamName
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 3)
+  noClosedRound,
+  isLoadingRound,
+  isLoading,
+  cardQuery,
+  juryOptions,
+  juryFetchError,
+  isFetchingJury,
+  isFailedToFetchJury,
+  assignJuryForAll,
+  assignedJury,
+  isPending,
+  applyJuryToAllSubmissions,
+  handleAssignJury,
+  juryLabel,
+  teamAbbr,
+} = useJuryAssign(() => props.tournamentId)
 </script>
 
 <style scoped>
 .submissions-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
@@ -323,39 +161,15 @@ const teamAbbr = (teamName: string) =>
 }
 
 .jury-assign-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  min-width: 0;
 }
 
-.section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.section-eyebrow {
-  margin: 0;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--muted-foreground);
-}
-
-.section-title {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.section-subtitle {
-  margin: 0;
-  color: var(--muted-foreground);
-  line-height: 1.5;
+.no-closed-round {
+  font-size: var(--text-lg);
 }
 
 .submissions-table {
   display: grid;
-  gap: 0.5rem;
 }
 
 .table-head,
@@ -364,17 +178,21 @@ const teamAbbr = (teamName: string) =>
   grid-template-columns: 2.5fr 2fr 2.3fr 2fr;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1rem;
-  border-radius: 1rem;
-  background: var(--muted);
-  border: 1px solid var(--border);
+  padding: 1rem;
 }
 
 .table-head {
-  background: transparent;
-  border-color: transparent;
   color: var(--muted-foreground);
   font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-row {
+  border-top: 1px solid var(--border);
+}
+
+.table-row:first-child {
+  border-top: 0;
 }
 
 .team-cell {
@@ -391,41 +209,15 @@ const teamAbbr = (teamName: string) =>
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: white;
+  color: var(--primary-foreground);
   background: var(--primary);
 }
 
-.team-name {
-  margin: 0;
-  font-weight: 700;
-}
-
-.team-meta {
-  margin: 0.15rem 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.92rem;
-}
-
-.assigned-cell {
+.skeleton-lines {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  min-height: 2.6rem;
-}
-
-.empty-state {
-  color: var(--muted-foreground);
-  font-size: 0.92rem;
-}
-
-.actions-cell {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.jury-select {
-  min-width: 220px;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .jury-select-all {
@@ -440,10 +232,6 @@ const teamAbbr = (teamName: string) =>
   .table-row {
     grid-template-columns: 1fr;
     row-gap: 0.75rem;
-  }
-
-  .actions-cell {
-    justify-content: flex-start;
   }
 }
 </style>

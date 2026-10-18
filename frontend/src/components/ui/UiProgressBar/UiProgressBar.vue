@@ -15,7 +15,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   height: 12,
-  fillColor: 'color-mix(in srgb, var(--foreground) 35%, transparent)',
+  fillColor: 'var(--muted-foreground)',
 })
 
 const safePercent = computed(() => Math.max(0, Math.min(Number(props.percent || 0), 100)))
@@ -27,7 +27,7 @@ const safePercent = computed(() => Math.max(0, Math.min(Number(props.percent || 
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  background: var(--track);
 }
 
 .fill {

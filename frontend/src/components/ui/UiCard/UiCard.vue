@@ -29,7 +29,7 @@
         </slot>
       </div>
 
-      <div v-else-if="status === 'error'" class="card-state">
+      <div v-else-if="status === 'error'" class="card-state card-state-error">
         <div v-if="$slots.error" role="alert"><slot name="error" /></div>
         <p v-else-if="errorCode === 'network' && !isOnline" class="card-muted">
           Waiting for connection…
@@ -45,7 +45,9 @@
 
       <div v-else-if="status === 'empty'" class="card-state card-empty">
         <p class="card-muted">{{ emptyText ?? 'Nothing here yet.' }}</p>
-        <slot name="empty-action" />
+        <div v-if="$slots['empty-action']" class="card-empty-action">
+          <slot name="empty-action" />
+        </div>
       </div>
 
       <div v-else :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
@@ -84,7 +86,7 @@ interface Props {
   errorCode?: CardErrorCode
   emptyText?: string
   scrollable?: boolean
-  variant?: 'default' | 'panel' | 'stat' | 'hero' | 'form' | 'inset'
+  variant?: 'default' | 'stat' | 'inset'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -123,21 +125,11 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.75rem;
   padding: 1.2rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: var(--card);
   color: var(--card-foreground);
-  box-shadow: 0 5px 20px rgb(0 0 0 / 0.05);
-}
-.dark .card {
-  box-shadow: 0 5px 20px rgb(0 0 0 / 0.25);
 }
 
-.card-panel {
-  gap: 1.7rem;
-  padding: 2.4rem 2rem 1.8rem;
-  border-color: var(--line-soft);
-  border-radius: 20px;
-}
 .card-stat {
   flex-direction: row;
   align-items: center;
@@ -145,27 +137,13 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.7rem;
   min-width: 100px;
   padding: 0.5rem 1.1rem;
-  border-color: var(--line-soft);
 }
-.card-hero {
-  padding: 1.5rem;
-  border-color: var(--line-soft);
-  border-radius: 20px;
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, transparent), transparent 44%),
-    var(--card);
-}
-.card-form {
-  gap: 1rem;
-  padding: 1.25rem;
-  border-color: var(--line-soft);
-  border-radius: 18px;
-}
+
 .card-inset {
   padding: 0.8rem;
-  border-color: var(--line-soft);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
 }
 
 .card-title {
@@ -181,7 +159,18 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
 .card-body {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 0.5rem;
+  min-width: 0;
+}
+
+.card-footer {
+  margin-top: auto;
+}
+
+.card-actions-divided > .card-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
 }
 .card.scrollable {
   max-height: calc(100vh - 32px);
@@ -197,14 +186,31 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   flex-direction: column;
   gap: 0.5rem;
 }
+
+/* Loading keeps the card's own surface; error and empty are placeholders, so they
+   sit on a soft panel with a dashed outline. */
+.card-state-error,
+.card-empty {
+  padding: 0.75rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+}
 .card-empty {
   align-items: center;
   text-align: center;
-  padding: 1rem 0;
+  padding: 1.25rem 1rem;
 }
 .card-muted {
   margin: 0;
   font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+/* Keeps every "nothing here yet" helper line across the app identical. */
+.card-empty-action :slotted(p) {
+  margin: 0;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 .dimmed > * {
@@ -218,8 +224,8 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   gap: 0.5rem;
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--muted);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
   color: var(--muted-foreground);
   font-size: 0.8rem;
 }
@@ -242,11 +248,6 @@ const handleRetry = () => (fromQuery.value ? q.refetch() : emit('retry'))
   outline-offset: 2px;
 }
 
-@media (max-width: 700px) {
-  .card-panel {
-    padding: 1.4rem;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .dimmed > * {
     opacity: 0.75;

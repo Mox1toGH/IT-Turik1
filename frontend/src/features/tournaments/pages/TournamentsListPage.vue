@@ -1,64 +1,57 @@
 <template>
   <section class="tournaments-page page-shell">
-    <tournaments-hero :total="tournaments?.total ?? 0" :loading="isLoading" :is-admin="isAdmin" />
+    <tournaments-hero :is-admin="isAdmin" />
 
     <div class="tournaments-rule" aria-hidden="true"></div>
 
-    <section class="tournaments-section">
-      <ui-card
-        class="tournaments-panel"
-        :status="status"
-        :is-fetching="isFetching"
-        :is-stale="isStale"
-        :error-code="errorCode"
-        empty-text="No tournaments found"
-        @retry="refetch"
-      >
-        <template #header>
-          <div class="section-head">
-            <div>
-              <p class="section-eyebrow">Discover</p>
-              <h2 class="text-3xl">Active tournaments</h2>
-              <p class="section-subtitle text-base">
-                Filter competitions by name or registration status.
-              </p>
+    <tournament-filters
+      v-model:status="statusFilter"
+      :status-options="statusOptions"
+      @search="onSearch"
+    />
+
+    <section class="tournaments-section" aria-label="Tournaments">
+      <div v-if="isStale && status === 'data'" class="stale-banner" role="status">
+        <span>Update failed</span>
+        <button type="button" :disabled="isFetching" @click="() => refetch()">
+          {{ isFetching ? 'Retrying…' : 'Retry' }}
+        </button>
+      </div>
+
+      <div v-if="status === 'loading'" class="tournaments-grid">
+        <div v-for="i in pageSize" :key="i" class="tournament-card-skeleton">
+          <ui-skeleton variant="rect" class="skeleton-media" />
+          <div class="skeleton-body">
+            <ui-skeleton variant="rect" width="70%" height="24px" />
+            <ui-skeleton variant="rect" width="100%" height="32px" />
+            <div class="tournaments-meta">
+              <ui-skeleton variant="rect" width="130px" />
+              <ui-skeleton variant="rect" width="90px" height="28px" />
             </div>
+            <ui-skeleton variant="rect" width="100%" height="36px" />
           </div>
+        </div>
+      </div>
 
-          <tournament-filters
-            v-model:status="statusFilter"
-            :status-options="statusOptions"
-            @search="onSearch"
-          />
-        </template>
+      <div v-else-if="status === 'error'" class="tournaments-state">
+        <p v-if="errorCode === 'network' && !isOnline" class="card-muted">
+          Waiting for connection…
+        </p>
+        <ui-card-error
+          v-else
+          title="tournaments"
+          :error-code="errorCode"
+          :is-fetching="isFetching"
+          @retry="refetch"
+        />
+      </div>
 
-        <template #skeleton>
-          <div class="tournaments-grid">
-            <ui-card v-for="i in pageSize" :key="i" class="tournament-card">
-              <template #header>
-                <ui-skeleton variant="rect" width="70%" height="24px" />
-              </template>
+      <div v-else-if="status === 'empty'" class="tournaments-state">
+        <p class="card-muted">No tournaments found</p>
+        <p class="text-base text-muted">Try changing the search text or status filters.</p>
+      </div>
 
-              <ui-skeleton variant="rect" class="tournaments-description" height="48px" />
-
-              <div class="tournaments-meta">
-                <div class="tournaments-date">
-                  <ui-skeleton variant="rect" width="60px" />
-                  <ui-skeleton variant="rect" width="130px" />
-                </div>
-
-                <ui-skeleton variant="rect" width="120px" height="28px" />
-              </div>
-
-              <ui-skeleton variant="rect" width="100%" height="36px" />
-            </ui-card>
-          </div>
-        </template>
-
-        <template #empty-action>
-          <p class="text-base text-muted">Try changing the search text or status filters.</p>
-        </template>
-
+      <div v-else :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
         <div v-if="tournaments?.total" class="tournaments-grid">
           <tournament-card
             v-for="tournament in tournaments.data"
@@ -67,15 +60,14 @@
           />
         </div>
 
-        <template #footer>
-          <ui-pagination
-            v-if="status === 'data' && (tournaments?.total ?? 0) > pageSize"
-            v-model="currentPage"
-            :total-items="tournaments?.total ?? 0"
-            :page-size="pageSize"
-          />
-        </template>
-      </ui-card>
+        <ui-pagination
+          class="tournaments-pagination"
+          v-if="(tournaments?.total ?? 0) > pageSize"
+          v-model="currentPage"
+          :total-items="tournaments?.total ?? 0"
+          :page-size="pageSize"
+        />
+      </div>
     </section>
   </section>
 </template>
@@ -83,10 +75,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
-import UiCard from '@/components/ui/UiCard'
+import UiCardError from '@/components/ui/UiCardError'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
 import { useCardState } from '@/composables/useCardState'
+import { useConnection } from '@/composables/useConnection'
 import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'
 import TournamentFilters from '../components/tournament-list/TournamentFilters.vue'
 import TournamentCard from '../components/tournament-list/TournamentCard.vue'
@@ -101,6 +94,7 @@ const statusFilter = ref<TournamentStatus[]>([])
 
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin')
+const { isOnline } = useConnection()
 
 const statusOptions = computed(() => {
   const base = [
@@ -124,7 +118,7 @@ const tournamentsQuery = useListTournaments(params, {
   query: { staleTime: 1000 * 60 * 5, placeholderData: keepPreviousData },
 })
 
-const { data: tournaments, isLoading, isFetching, refetch } = tournamentsQuery
+const { data: tournaments, isFetching, refetch } = tournamentsQuery
 const { status, errorCode, isStale } = useCardState(tournamentsQuery)
 
 const onSearch = (query: string) => {
@@ -145,40 +139,50 @@ watch(statusFilter, () => {
 .tournaments-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
-.tournaments-section,
-.tournaments-panel {
+.tournaments-section {
+  display: grid;
+  gap: 1rem;
   min-width: 0;
 }
 
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.section-head h2 {
-  margin: 0.3rem 0 0.45rem;
-  font-family: var(--font-display);
-  font-weight: 800;
-}
-
-.section-head .section-subtitle {
-  margin: 0;
+.tournaments-pagination {
+  margin-top: 1rem;
 }
 
 .tournaments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
 }
 
-.tournaments-description {
+.tournament-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.skeleton-body {
   flex: 1;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.skeleton-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
+  height: auto;
+  border-radius: 0;
 }
 
 .tournaments-meta {
@@ -188,25 +192,65 @@ watch(statusFilter, () => {
   gap: 12px;
 }
 
-.tournaments-date {
+.tournaments-state {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  /* Same placeholder panel the cards use for their error and empty states. */
+  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+}
+
+.card-muted {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.dimmed > * {
+  opacity: 0.6;
+}
+
+.stale-banner {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.stale-banner button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.stale-banner button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.stale-banner button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 760px) {
   .tournaments-page {
     padding: 1rem 1rem 2rem;
-  }
-
-  .section-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .tournaments-meta {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 </style>

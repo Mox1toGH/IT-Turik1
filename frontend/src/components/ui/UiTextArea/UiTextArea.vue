@@ -36,7 +36,7 @@ function handleInput(event: Event) {
 <style scoped>
 .textarea {
   width: 100%;
-  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
   font: inherit;
@@ -62,15 +62,15 @@ function handleInput(event: Event) {
 .textarea:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-  background: color-mix(in srgb, var(--input) 80%, var(--muted));
+  background: var(--subtle);
 }
 
 .textarea.invalid {
   border-color: var(--destructive);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 12%, transparent);
+  box-shadow: 0 0 0 3px var(--destructive-soft);
 }
 
 .textarea::placeholder {
-  color: color-mix(in srgb, var(--foreground) 40%, transparent);
+  color: var(--placeholder);
 }
 </style>

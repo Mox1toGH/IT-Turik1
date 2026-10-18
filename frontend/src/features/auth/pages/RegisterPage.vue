@@ -35,125 +35,11 @@
         </div>
 
         <form v-else @submit.prevent="handleRegister" class="register-form">
-          <div class="form-grid">
-            <label class="form-item">
-              <p class="form-label">Username</p>
-              <ui-input
-                v-model="form.fields.value.username"
-                @blur="form.validateField('username')"
-                placeholder="johndoe"
-                required
-                :is-invalid="!!form.errors.value.username"
-              />
-              <small v-if="form.errors.value.username" class="text-error">{{
-                form.errors.value.username
-              }}</small>
-            </label>
-
-            <label class="form-item">
-              <p class="form-label">Email</p>
-              <ui-input
-                v-model="form.fields.value.email"
-                @blur="form.validateField('email')"
-                :is-invalid="!!form.errors.value.email"
-                placeholder="name@mail.com"
-                required
-              />
-              <small v-if="form.errors.value.email" class="text-error">{{
-                form.errors.value.email
-              }}</small>
-            </label>
-
-            <label class="form-item">
-              <p class="form-label">Password</p>
-              <ui-password-field
-                v-model="form.fields.value.password"
-                autocomplete="new-password"
-                :is-invalid="!!form.errors.value.password"
-                placeholder="********"
-                required
-                @blur="form.validateField('password')"
-              />
-              <small v-if="form.errors.value.password" class="text-error">{{
-                form.errors.value.password
-              }}</small>
-            </label>
-
-            <label class="form-item">
-              <p class="form-label">Role</p>
-              <ui-select
-                v-model="form.fields.value.role"
-                @blur="form.validateField('role')"
-                :options="roleOptions"
-                class="select-control"
-              />
-            </label>
-          </div>
-
-          <label class="form-item" v-if="isRestrictedRole">
-            <p class="form-label full-width">Activation code</p>
-            <ui-input
-              v-model="form.fields.value.activation_code"
-              @blur="form.validateField('activation_code')"
-              :is-invalid="!!form.errors.value.activation_code"
-              placeholder="Enter one-time activation code"
-              required
-            />
-            <small v-if="form.errors.value.redeem_code" class="text-error">{{
-              form.errors.value.redeem_code
-            }}</small>
-          </label>
-
-          <div class="profile-fields">
-            <div class="panel-header profile-header">
-              <span class="step-marker">02</span>
-              <div>
-                <p class="section-eyebrow">Profile</p>
-                <h2>Optional info</h2>
-              </div>
-            </div>
-
-            <label class="form-item">
-              <p class="form-label full-width">Full name</p>
-              <ui-input
-                v-model="form.fields.value.full_name"
-                :is-invalid="!!form.errors.value.full_name"
-                placeholder="John Doe"
-                @blur="form.validateField('full_name')"
-              />
-              <small v-if="form.errors.value.full_name" class="text-error">{{
-                form.errors.value.full_name
-              }}</small>
-            </label>
-
-            <div class="form-grid">
-              <label class="form-item">
-                <p class="form-label">Phone</p>
-                <PhoneField
-                  v-model="form.fields.value.phone"
-                  placeholder="Enter phone number"
-                  :is-invalid="!!form.errors.value.phone"
-                  @blur="form.validateField('phone')"
-                />
-                <small v-if="form.errors.value.phone" class="text-error">{{
-                  form.errors.value.phone
-                }}</small>
-              </label>
-
-              <label class="form-item">
-                <p class="form-label">City</p>
-                <ui-input
-                  v-model="form.fields.value.city"
-                  @blur="form.validateField('city')"
-                  :is-invalid="!!form.errors.value.city"
-                  placeholder="Kyiv"
-                />
-                <small v-if="form.errors.value.city" class="text-error">{{
-                  form.errors.value.city
-                }}</small>
-              </label>
-            </div>
-          </div>
+          <register-fields
+            :form="form"
+            :role-options="roleOptions"
+            :is-restricted-role="isRestrictedRole"
+          />
 
           <ui-button type="submit" class="submit-btn" :disabled="isLoading">
             {{ isLoading ? 'Creating account...' : 'Create account' }}
@@ -170,35 +56,14 @@
         </template>
       </ui-card>
 
-      <aside class="summary-panel" aria-label="Registration summary">
-        <ui-card class="summary-stat">
-          <strong>{{ isRestrictedRole ? 'Code' : 'Open' }}</strong>
-          <span>{{ isRestrictedRole ? 'Invite required' : 'No invite needed' }}</span>
-        </ui-card>
-
-        <ui-card class="summary-card">
-          <p class="section-eyebrow">Draft summary</p>
-          <h2>{{ form.fields.value.username || 'New account' }}</h2>
-          <p class="summary-description text-muted">
-            {{ form.fields.value.email || 'Email will appear here when added.' }}
-          </p>
-
-          <div class="summary-list">
-            <div>
-              <span>Role</span>
-              <strong>{{ roleLabel }}</strong>
-            </div>
-            <div>
-              <span>Name</span>
-              <strong>{{ form.fields.value.full_name || 'Not set' }}</strong>
-            </div>
-            <div>
-              <span>City</span>
-              <strong>{{ form.fields.value.city || 'Not set' }}</strong>
-            </div>
-          </div>
-        </ui-card>
-      </aside>
+      <register-summary
+        :username="form.fields.value.username"
+        :email="form.fields.value.email"
+        :full-name="form.fields.value.full_name"
+        :city="form.fields.value.city"
+        :role-label="roleLabel"
+        :is-restricted-role="isRestrictedRole"
+      />
     </div>
   </section>
 </template>
@@ -206,32 +71,18 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
-import UiPasswordField from '@/components/ui/UiPasswordField'
-import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiInput from '@/components/ui/UiInput'
-import UiSelect from '@/components/ui/UiSelect'
 import { useNotification } from '@/composables/useNotification'
 import { useUserStore } from '@/stores/user'
 import { useForm } from '@/composables/useForm'
 import { RegisterSchema } from '@/schemas/auth.schema'
 import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
 import { useRouter } from 'vue-router'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import RegisterFields, { type RegisterFormValues } from '../components/RegisterFields.vue'
+import RegisterSummary from '../components/RegisterSummary.vue'
 
-interface Form {
-  username: string
-  full_name: string
-  email: string
-  password: string
-  role: UserRole
-  activation_code: string
-  phone: string
-  city: string
-}
-
-const form = useForm<Form>(RegisterSchema, {
+const form = useForm<RegisterFormValues>(RegisterSchema, {
   username: '',
   email: '',
   password: '',
@@ -313,7 +164,7 @@ function handleRegister() {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -338,26 +189,10 @@ function handleRegister() {
   line-height: var(--text-base--line-height);
 }
 
-.summary-stat strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  line-height: var(--text-2xl--line-height);
-  font-weight: 800;
-}
-
-.summary-stat span {
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .auth-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .auth-layout {
@@ -377,113 +212,13 @@ function handleRegister() {
   gap: 0.9rem;
 }
 
-.profile-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  margin-top: 0.2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line-soft);
-}
-
-.profile-header {
-  margin-bottom: 0.1rem;
-}
-
-.full-width {
-  grid-column: 1 / -1;
-}
-
 .submit-btn {
   width: 100%;
-}
-
-.summary-panel {
-  position: sticky;
-  top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
-}
-
-.summary-stat {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--line-soft);
-}
-
-.summary-card.card {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  border-radius: 18px;
-  border-color: var(--line-soft);
-}
-
-.summary-card h2 {
-  margin: 0;
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  line-height: var(--text-xl--line-height);
-  font-weight: 800;
-}
-
-.summary-description {
-  display: -webkit-box;
-  min-height: 3.2rem;
-  margin: 0;
-  overflow: hidden;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-
-.summary-list {
-  display: grid;
-  gap: 0.65rem;
-  padding-top: 0.15rem;
-}
-
-.summary-list div {
-  display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
-  gap: 0.75rem;
-  padding: 0.8rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--card) 92%, var(--foreground) 8%);
-}
-
-.summary-list span {
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-}
-
-.summary-list strong {
-  overflow: hidden;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
 }
 
 @media (max-width: 980px) {
   .auth-layout {
     grid-template-columns: 1fr;
-  }
-
-  .summary-panel {
-    position: static;
   }
 }
 
@@ -506,10 +241,6 @@ function handleRegister() {
   .auth-hero .section-subtitle {
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>
