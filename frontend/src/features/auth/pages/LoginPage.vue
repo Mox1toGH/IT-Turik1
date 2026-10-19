@@ -74,7 +74,12 @@ import { useUserStore } from '@/stores/user'
 import { useLogin } from '@/api/accounts/accounts'
 import { useForm } from '@/composables/useForm'
 import { LoginSchema } from '@/schemas/auth.schema'
-import type { LoginResponse } from '@/api/backendAPINinja.schemas'
+
+interface LoginResult {
+  access: string
+  refresh: string
+  onboarding_required?: boolean
+}
 
 const store = useUserStore()
 
@@ -83,7 +88,7 @@ const router = useRouter()
 
 const { mutate: login, isPending, error } = useLogin()
 
-function saveAndRedirect(data: LoginResponse) {
+function saveAndRedirect(data: LoginResult) {
   store.setTokens(data)
   router.push('/')
 }

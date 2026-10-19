@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 import UiCard from '@/components/ui/UiCard'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -42,7 +42,7 @@ import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user?: UserResponse
+  user?: UserSummary
   query: QueryLike
 }>()
 

@@ -138,7 +138,7 @@ import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
-import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { Round } from '@/features/tournaments/types'
 
 interface Props {
   tournamentId: number
@@ -153,26 +153,26 @@ const roundsQuery = useListRounds(props.tournamentId)
 const { data } = roundsQuery
 const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
-const rounds = computed(() => data.value ?? [])
+const rounds = computed(() => data.value?.items ?? [])
 const submittedRoundIds = computed(
-  () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
+  () => new Set((submissions.value?.items ?? []).map((submission) => submission.round_details.id)),
 )
 
 const isDetailsOpen = ref(false)
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
 const isSubmitOpen = ref(false)
-const selectedRound = ref<RoundResponse | null>(null)
+const selectedRound = ref<Round | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
 
-function getEffectiveRoundStatus(round: RoundResponse): RoundResponse['status'] {
+function getEffectiveRoundStatus(round: Round): Round['status'] {
   if (round.status !== 'active') return round.status
   const endTimestamp = new Date(round.end_date).getTime()
   if (!Number.isFinite(endTimestamp)) return round.status
   return Date.now() >= endTimestamp ? 'submission_closed' : 'active'
 }
 
-function openDetails(round: RoundResponse) {
+function openDetails(round: Round) {
   selectedRound.value = round
   isDetailsOpen.value = true
 }
@@ -181,7 +181,7 @@ function openCreate() {
   isCreateOpen.value = true
 }
 
-function openEdit(round: RoundResponse) {
+function openEdit(round: Round) {
   selectedRound.value = round
   isEditOpen.value = true
 }
@@ -206,14 +206,14 @@ watch(isSubmitOpen, (isOpen) => {
   }
 })
 
-function badgeVariant(status: RoundResponse['status']): Variants {
+function badgeVariant(status: Round['status']): Variants {
   if (status === 'active') return 'primary'
   if (status === 'evaluated') return 'green'
   if (status === 'submission_closed') return 'red'
   return 'gray'
 }
 
-function badgeStatus(status: RoundResponse['status']) {
+function badgeStatus(status: Round['status']) {
   if (status === 'draft') return 'Draft'
   if (status === 'active') return 'Active'
   if (status === 'evaluated') return 'Evaluated'

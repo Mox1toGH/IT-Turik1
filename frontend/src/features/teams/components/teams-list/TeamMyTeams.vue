@@ -102,17 +102,18 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
+import { useListTeams } from '@/api/teams/teams'
+import type { Team } from '@/features/teams/types'
 
 const TEAMS_PER_PAGE = 8
-
-type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
 const { data: teams, isLoading: isLoadingTeams } = teamsQuery
 
-const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
+const myTeams = computed(() =>
+  (teams.value?.items ?? []).filter((team) => isAcceptedMember(team)),
+)
 const myTeamsPageItems = computed(() => {
   const from = (myPage.value - 1) * TEAMS_PER_PAGE
   return myTeams.value?.slice(from, from + TEAMS_PER_PAGE)

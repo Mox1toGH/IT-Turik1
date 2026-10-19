@@ -48,12 +48,12 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarModal from './modals/AvatarModal.vue'
-import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { UserSummary } from '@/shared/types/user'
 import { Pencil } from 'lucide-vue-next'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 
 const props = defineProps<{
-  user?: UserResponse
+  user?: UserSummary
   isLoading?: boolean
 }>()
 

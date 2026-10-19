@@ -34,9 +34,9 @@
           </div>
         </template>
 
-        <div v-if="tournaments" class="archive-grid">
+        <div v-if="tournamentItems.length" class="archive-grid">
           <tournament-archive-card
-            v-for="tournament in tournaments"
+            v-for="tournament in tournamentItems"
             :key="tournament.id"
             :tournament="tournament"
           />
@@ -55,11 +55,13 @@ import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
+import { computed } from 'vue'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 import TournamentArchiveCard from '../components/tournament-archive/TournamentArchiveCard.vue'
 
 const archiveQuery = useListTournamentArchive()
 const { data: tournaments } = archiveQuery
+const tournamentItems = computed(() => tournaments.value?.items ?? [])
 </script>
 
 <style scoped>

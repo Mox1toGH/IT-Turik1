@@ -189,23 +189,24 @@ const {
 } = useListEligibleTeamsForTournament(props.tournamentId)
 const { mutate: register, isPending: isRegistering } = useRegisterTeamForTournament()
 const { mutate: leave, isPending: isLeaving } = useUnregisterTeamFromTournament()
+const eligibleTeamItems = computed(() => teams.value?.items ?? [])
 
 const registeredTeamId = computed(() => tournament.value?.registered_team?.id ?? null)
 const teamOptions = computed(() =>
-  (teams.value ?? []).map((team) => ({
+  eligibleTeamItems.value.map((team) => ({
     value: team.id,
     label: team.name,
     disabled: !!team.reason,
     reason: team.reason,
   })),
 )
-const selectedTeam = computed(() => teams.value?.find((team) => team.id === selectedTeamId.value))
+const selectedTeam = computed(() => eligibleTeamItems.value.find((team) => team.id === selectedTeamId.value))
 const canJoinSelectedTeam = computed(
   () => !!selectedTeam.value && !selectedTeam.value.reason && !isRegistering.value,
 )
 
 const canManageRegistration = computed(
-  () => user.value?.role === 'team' && ((teams.value?.length ?? 0) > 0 || !!registeredTeamId.value),
+  () => user.value?.role === 'team' && (eligibleTeamItems.value.length > 0 || !!registeredTeamId.value),
 )
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)

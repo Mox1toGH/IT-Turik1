@@ -168,7 +168,7 @@ import CalendarDayDetail from './CalendarDayDetail.vue'
 import { truncateText } from '@/lib/utils'
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { EventResponse, RoundResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { CalendarEvent, CalendarRound } from '@/shared/types/calendar'
 
 interface CalendarItem {
   id: string
@@ -182,8 +182,8 @@ interface CalendarItem {
 }
 
 interface Props {
-  events: EventResponse[]
-  rounds: RoundResponse[]
+  events: CalendarEvent[]
+  rounds: CalendarRound[]
   gcalConnected?: boolean
 }
 

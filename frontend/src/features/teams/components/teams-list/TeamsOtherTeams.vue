@@ -113,12 +113,10 @@ import { useGetUserProfile } from '@/api/accounts/accounts'
 import {
   useCreateTeamJoinRequest,
   useListTeams,
-  type ListTeamsQueryResult,
 } from '@/api/teams/teams'
+import type { Team } from '@/features/teams/types'
 
 const OTHER_TEAMS_PER_PAGE = 8
-
-type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
@@ -136,7 +134,9 @@ const captainName = (team: Team) => {
 }
 const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 
-const otherTeams = computed(() => teams.value?.filter((team) => !isAcceptedMember(team)))
+const otherTeams = computed(() =>
+  (teams.value?.items ?? []).filter((team) => !isAcceptedMember(team)),
+)
 const otherPages = computed(() =>
   Math.max(1, Math.ceil((otherTeams.value?.length ?? 0) / OTHER_TEAMS_PER_PAGE)),
 )

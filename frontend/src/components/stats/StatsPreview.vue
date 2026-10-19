@@ -35,7 +35,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import UiCard from '../ui/UiCard'
-import type { UserRole } from '@/api/backendAPINinja.schemas.ts'
+import type { UserRole } from '@/shared/types/user'
 
 type TeamRef = { id: number; name: string }
 type ProfileLike = {

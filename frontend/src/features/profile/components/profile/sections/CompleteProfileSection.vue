@@ -133,7 +133,7 @@ import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
 import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
 import { useNotification } from '@/composables/useNotification'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 interface Form {
   username: string

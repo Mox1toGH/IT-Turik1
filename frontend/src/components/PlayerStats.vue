@@ -33,7 +33,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 type TeamRef = { id: number; name: string }
 type ProfileLike = {

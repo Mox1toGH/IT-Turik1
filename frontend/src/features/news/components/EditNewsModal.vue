@@ -56,7 +56,7 @@ import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'
 import { useNotification } from '@/composables/useNotification'
 import { useUpdateNews } from '@/api/news/news'
-import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas'
+import type { NewsArticle } from '../types'
 
 interface EditNewsFields {
   title: string
@@ -67,7 +67,7 @@ interface EditNewsFields {
 const isOpen = defineModel<boolean>({ required: true })
 
 const props = defineProps<{
-  item: NewsArticleResponse | null
+  item: NewsArticle | null
 }>()
 
 const emit = defineEmits<{
@@ -105,8 +105,7 @@ function handleSubmit() {
       articleId: props.item.id,
       data: {
         title: editForm.fields.value.title,
-        content: editForm.fields.value.content as JSONContent,
-        send_notification: editForm.fields.value.send_notification,
+        content: JSON.stringify(editForm.fields.value.content ?? {}),
       },
     },
     {

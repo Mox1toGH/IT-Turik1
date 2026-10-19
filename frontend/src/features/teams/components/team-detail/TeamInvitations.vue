@@ -108,7 +108,7 @@ import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useInviteMemberToTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
-import type { TeamInvitationResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team, TeamInvitation } from '@/features/teams/types'
 
 interface Props {
   teamId: number
@@ -117,7 +117,7 @@ interface Props {
 }
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: TeamResponse): void
+  (e: 'updateTeam', newTeamValue: Team): void
 }>()
 
 const { showNotification } = useNotification()
@@ -127,8 +127,8 @@ const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
 const { data: invitations } = invitationsQuery
 
 const uniqueInvitations = computed(() => {
-  const byUserId = new Map<number, TeamInvitationResponse>()
-  for (const inv of invitations.value ?? []) {
+  const byUserId = new Map<number, TeamInvitation>()
+  for (const inv of invitations.value?.items ?? []) {
     const uid = inv.user.id
 
     const prev = byUserId.get(uid)

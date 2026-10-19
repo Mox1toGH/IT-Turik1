@@ -74,13 +74,13 @@
       <div class="add-member-box">
         <div class="box-header">
           <h3>Invitations status</h3>
-          <span class="text-muted">{{ invitations?.length ?? 0 }} pending total</span>
+          <span class="text-muted">{{ invitationItems.length }} pending total</span>
         </div>
 
         <ui-query-state :query="invitationsQuery" empty-text="No invitations yet.">
           <div class="member-list">
             <ui-card
-              v-for="invitation in invitations"
+              v-for="invitation in invitationItems"
               :key="`inv-${invitation.id}`"
               class="member-row"
             >
@@ -152,10 +152,10 @@ import {
 } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
 import { useQueryState, type QueryLike } from '@/composables/useQueryState'
-import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team, TeamMember } from '@/features/teams/types'
 
 interface Props {
-  team: TeamResponse
+  team: Team
   query: QueryLike
 }
 
@@ -167,6 +167,7 @@ const { status } = useQueryState(computed(() => props.query))
 const { data: users, isLoading: isLoadingUsers } = useListUsers()
 const invitationsQuery = useListTeamInvitationsByTeam(props.team.id)
 const { data: invitations } = invitationsQuery
+const invitationItems = computed(() => invitations.value?.items ?? [])
 
 const memberSearch = ref('')
 const addMemberSelection = ref<number | null>(null)
@@ -174,7 +175,7 @@ const kickLoadingIds = ref<Set<number>>(new Set())
 
 const availableUsers = computed(() => {
   const currentIds = new Set(props.team?.members.map((member) => member.id))
-  return users.value?.filter((user) => !currentIds.has(user.id))
+  return (users.value?.items ?? []).filter((user) => !currentIds.has(user.id))
 })
 
 const filteredMembers = computed(() => {
@@ -197,7 +198,7 @@ const userOptions = computed(() => [
 
 const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
-const removeMember = (member: TeamMemberResponse) => {
+const removeMember = (member: TeamMember) => {
   if (!props.team) return
   if (member.id === props.team.captain_id) return
   kickLoadingIds.value.add(member.id)

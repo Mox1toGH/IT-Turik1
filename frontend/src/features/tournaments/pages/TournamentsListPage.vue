@@ -87,7 +87,7 @@ import TournamentFilters from '../components/tournament-list/TournamentFilters.v
 import TournamentCard from '../components/tournament-list/TournamentCard.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListTournaments } from '@/api/tournaments/tournaments'
-import type { ListTournamentsParams, TournamentStatus } from '@/api/backendAPINinja.schemas'
+import type { TournamentListFilters, TournamentStatus } from '@/features/tournaments/types'
 
 const currentPage = ref(1)
 const pageSize = 12
@@ -108,7 +108,7 @@ const statusOptions = computed(() => {
   return isAdmin.value ? base : base.filter((option) => option.value !== 'draft')
 })
 
-const params = computed<ListTournamentsParams>(() => ({
+const params = computed<TournamentListFilters>(() => ({
   page: currentPage.value,
   searchQuery: searchQuery.value,
   page_size: pageSize,

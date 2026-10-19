@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 import type { QueryLike } from '@/composables/useQueryState'
 import {
   useGetCurrentTask,
@@ -78,7 +78,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user?: UserResponse
+  user?: UserSummary
   query: QueryLike
 }>()
 
@@ -127,7 +127,7 @@ const isLoadingSubmissionsBlock = computed(
 )
 
 const lastSubmission = computed(() => {
-  const list = submissions.value ?? []
+  const list = submissions.value?.items ?? []
   if (list.length === 0) return null
   return list.reduce((latest, current) =>
     new Date(current.created_at).getTime() > new Date(latest.created_at).getTime()

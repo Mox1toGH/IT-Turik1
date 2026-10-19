@@ -55,20 +55,20 @@ import UiPagination from '@/components/ui/UiPagination'
 import NewsItemCard from './NewsItemCard.vue'
 import { computed } from 'vue'
 import { useQueryState, type QueryLike } from '@/composables/useQueryState'
-import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { NewsArticle } from '../types'
 
 const props = defineProps<{
   query: QueryLike
-  items: NewsArticleResponse[]
+  items: NewsArticle[]
   totalNews: number
   totalPages: number
   pageSize: number
-  canModify: (item: NewsArticleResponse) => boolean
+  canModify: (item: NewsArticle) => boolean
 }>()
 
 defineEmits<{
-  edit: [item: NewsArticleResponse]
-  delete: [item: NewsArticleResponse]
+  edit: [item: NewsArticle]
+  delete: [item: NewsArticle]
 }>()
 
 const { status } = useQueryState(computed(() => props.query))

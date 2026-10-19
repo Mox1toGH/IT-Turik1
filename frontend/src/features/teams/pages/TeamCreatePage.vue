@@ -243,7 +243,7 @@ const resetForm = () => {
 const { data: user } = useGetUserProfile()
 
 const createCandidateUsers = computed(() => {
-  return users.value?.filter((u) => {
+  return (users.value?.items ?? []).filter((u) => {
     if (u.id === user.value?.id) return false
     return [u.username, u.email, u.full_name || ''].join(' ').toLowerCase()
   })

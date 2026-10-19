@@ -145,9 +145,9 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import {
   useGetTournamentLeaderboard,
-  type GetTournamentLeaderboardQueryResult,
 } from '@/api/evaluation/evaluation'
 import { useListRounds } from '@/api/tournaments/tournaments'
+import type { TournamentLeaderboardEntry } from '@/features/tournaments/types'
 import { customInstance } from '@/lib/apiClient'
 import { queryClient } from '@/lib/queryClient'
 import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
@@ -161,7 +161,7 @@ interface RoundColumn {
   name: string
   maxScore: number
 }
-type TournamentEntry = GetTournamentLeaderboardQueryResult['rankings'][number]
+type TournamentEntry = TournamentLeaderboardEntry
 type ParsedApiError = { message?: string }
 
 function parseApiError(error: unknown): ParsedApiError | null {
@@ -187,7 +187,7 @@ const isCreatingGoogleSheet = ref(false)
 const { showNotification } = useNotification()
 
 const { data: roundsData } = useListRounds(props.tournamentId)
-const rounds = computed(() => roundsData.value ?? [])
+const rounds = computed(() => roundsData.value?.items ?? [])
 
 const leaderboardQuery = useGetTournamentLeaderboard(props.tournamentId, {
   query: {

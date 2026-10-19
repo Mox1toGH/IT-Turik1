@@ -1,8 +1,8 @@
-import type { ErrorResponse } from '@/api/backendAPINinja.schemas'
+import type { ApiErrorResponse } from '@/shared/types/apiError'
 import type { ErrorType } from '@/lib/apiClient'
 
 declare module '@tanstack/vue-query' {
   interface Register {
-    defaultError: ErrorType<ErrorResponse>
+    defaultError: ErrorType<ApiErrorResponse>
   }
 }

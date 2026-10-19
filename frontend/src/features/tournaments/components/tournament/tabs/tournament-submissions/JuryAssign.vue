@@ -82,10 +82,10 @@
             <span style="text-align: end">Actions</span>
           </div>
 
-          <ui-card v-if="submissions?.length === 0" class="empty-card"
+          <ui-card v-if="submissionItems.length === 0" class="empty-card"
             ><p class="empty-error">No submissions was submited to this round</p></ui-card
           >
-          <div v-else v-for="submission in submissions" :key="submission.id" class="table-row">
+          <div v-else v-for="submission in submissionItems" :key="submission.id" class="table-row">
             <div class="team-cell">
               <div class="team-avatar">{{ teamAbbr(submission.team_details.name) }}</div>
               <div>
@@ -149,7 +149,7 @@ import {
   useListAvailableJury,
   type AssignJuryToRoundMutationBody,
 } from '@/api/evaluation/evaluation'
-import type { TournamentStatus } from '@/api/backendAPINinja.schemas'
+import type { TournamentStatus } from '@/features/tournaments/types'
 
 interface Props {
   tournamentId: number
@@ -173,7 +173,7 @@ const closedRound = computed(() =>
 
 const submissionsQuery = useListRoundSubmissions(
   computed(() => closedRound.value?.id ?? 0),
-
+  undefined,
   {
     query: { enabled: computed(() => !!closedRound.value) },
   },
@@ -183,6 +183,7 @@ const {
   isLoading: submissionsLoading,
   error: submissionsErrorData,
 } = submissionsQuery
+const submissionItems = computed(() => submissions.value?.items ?? [])
 
 const {
   data: availableJury,
@@ -212,7 +213,7 @@ const error = computed(() => {
 
 const juryOptions = computed<SelectOption[]>(
   () =>
-    availableJury.value?.map((jury) => ({
+    availableJury.value?.items.map((jury) => ({
       value: jury.id,
       label: jury.username,
     })) ?? [],
@@ -224,7 +225,7 @@ watch(
   submissions,
   (value) => {
     if (!value) return
-    value.forEach((submission) => {
+    value.items.forEach((submission) => {
       const nextAssigned = (submission.assignments ?? [])
         .map((assignment) => assignment.jury?.id)
         .filter((id): id is number => typeof id === 'number')
@@ -238,16 +239,16 @@ watch(
 const { mutate: assign, isPending } = useAssignJuryToRound()
 
 const applyJuryToAllSubmissions = () => {
-  if (!submissions.value?.length) return
+  if (!submissions.value?.items.length) return
   const nextAssigned = Array.from(new Set(assignJuryForAll.value))
-  submissions.value.forEach((submission) => {
+  submissions.value.items.forEach((submission) => {
     assignedJury[submission.id] = [...nextAssigned]
   })
 }
 
 const handleAssignJury = () => {
   if (!closedRound.value) return
-  const payload = submissions.value?.map((submission) => {
+  const payload = submissions.value?.items.map((submission) => {
     return {
       submission: submission.id,
       jury: assignedJury[submission.id],

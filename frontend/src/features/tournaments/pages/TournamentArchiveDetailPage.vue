@@ -71,7 +71,7 @@ const archiveQuery = useGetTournamentArchive(id)
 const { data: archive } = archiveQuery
 const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 
-const submissions = computed(() => submissionsData.value ?? [])
+const submissions = computed(() => submissionsData.value?.items ?? [])
 
 const winnerName = computed(() => {
   const winner = archive.value?.standings?.find((item) => item.rank === 1)

@@ -50,9 +50,9 @@ import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { truncateText } from '@/lib/utils'
 import { useDeleteTeam } from '@/api/teams/teams'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 interface Props {
-  team?: TeamResponse
+  team?: Team
   disabled?: boolean
 }
 

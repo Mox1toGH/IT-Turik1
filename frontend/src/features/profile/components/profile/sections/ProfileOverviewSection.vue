@@ -82,11 +82,11 @@ import TeamIcon from '@/icons/TeamIcon.vue'
 import { formatDate } from '@/lib/date'
 import ProfileMiniCard from '../ProfileMiniCard.vue'
 import EditProfileModal from '../modals/EditProfile/EditProfileModal.vue'
-import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { UserSummary } from '@/shared/types/user'
 import { useQueryState, type QueryLike } from '@/composables/useQueryState'
 
 const props = defineProps<{
-  user?: UserResponse
+  user?: UserSummary
   query: QueryLike
 }>()
 

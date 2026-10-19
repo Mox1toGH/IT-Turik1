@@ -8,7 +8,7 @@
           <p class="section-subtitle text-base">Registered and disqualified teams.</p>
         </div>
 
-        <span class="count-pill text-base">{{ activeTeams?.length ?? 0 }} active</span>
+        <span class="count-pill text-base">{{ activeTeamItems.length }} active</span>
       </div>
     </template>
 
@@ -29,7 +29,7 @@
 
         <TournamentTeamSection
           sectionType="active"
-          :teams="activeTeams"
+          :teams="activeTeamItems"
           :search="search"
         >
           <template #default="{ team }">
@@ -40,7 +40,7 @@
         <TournamentTeamSection
           v-if="hasDisqualifiedTeams"
           sectionType="disqualified"
-          :teams="disqualifiedTeams"
+          :teams="disqualifiedTeamItems"
           :query="disqualifiedTeamsQuery"
           :search="search"
         >
@@ -80,8 +80,10 @@ const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
 const { data: disqualifiedTeams } = disqualifiedTeamsQuery
+const activeTeamItems = computed(() => activeTeams.value?.items ?? [])
+const disqualifiedTeamItems = computed(() => disqualifiedTeams.value?.items ?? [])
 
-const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
+const hasDisqualifiedTeams = computed(() => disqualifiedTeamItems.value.length > 0)
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 </script>

@@ -250,7 +250,7 @@ import { truncateText } from '@/lib/utils'
 import { computed, ref } from 'vue'
 import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
-import type { RoundStatus } from '@/api/backendAPINinja.schemas.ts'
+import type { RoundStatus } from '@/features/tournaments/types'
 
 interface Props {
   tournamentId: number
@@ -270,7 +270,7 @@ const {
 } = useListRounds(props.tournamentId)
 
 const filterOptions = computed(() =>
-  rounds.value?.map((round) => ({
+  rounds.value?.items.map((round) => ({
     value: round.name ?? '',
     label: round.name ?? '',
   })),
@@ -279,10 +279,10 @@ const filterOptions = computed(() =>
 const filterOption = ref<string[]>([])
 const filteredSubmissions = computed(() => {
   if (!filterOption.value.length) {
-    return submissions.value ?? []
+    return submissions.value?.items ?? []
   }
 
-  return (submissions.value ?? []).filter((submission) =>
+  return (submissions.value?.items ?? []).filter((submission) =>
     filterOption.value.includes(submission.round_details.name ?? ''),
   )
 })
@@ -294,11 +294,11 @@ const badgeVariant = (roundStatus?: RoundStatus): Variants => {
   return roundStatus === 'active' ? 'primary' : 'red'
 }
 
-const submissionEvaluations = (submission: NonNullable<typeof submissions.value>[number]) => {
+const submissionEvaluations = (submission: NonNullable<typeof submissions.value>['items'][number]) => {
   return (submission.assignments ?? []).filter((assignment) => assignment.evaluation)
 }
 
-const submissionAssignments = (submission: NonNullable<typeof submissions.value>[number]) => {
+const submissionAssignments = (submission: NonNullable<typeof submissions.value>['items'][number]) => {
   return [...submission.assignments].sort((a, b) => {
     const left = (a.jury.full_name || a.jury.username || '').toLowerCase()
     const right = (b.jury.full_name || b.jury.username || '').toLowerCase()
@@ -306,18 +306,18 @@ const submissionAssignments = (submission: NonNullable<typeof submissions.value>
   })
 }
 
-const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number]) => {
+const evaluatedCount = (submission: NonNullable<typeof submissions.value>['items'][number]) => {
   return submissionEvaluations(submission).length
 }
 
 const roundMaxScore = (roundId: number) => {
-  const round = rounds.value?.find((item) => item.id === roundId)
+  const round = rounds.value?.items.find((item) => item.id === roundId)
   if (!round?.criteria) return 0
   return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
 }
 
 const criterionMaxScore = (roundId: number, criterionId: string) => {
-  const round = rounds.value?.find((item) => item.id === roundId)
+  const round = rounds.value?.items.find((item) => item.id === roundId)
   const criterion = round?.criteria?.find((item) => item.id === criterionId)
   return Number(criterion?.max_score || 0)
 }
@@ -329,7 +329,7 @@ const scorePercent = (roundId: number, totalScore: number) => {
   return (clamped / max) * 100
 }
 
-const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+const averageFinalScore = (submission: NonNullable<typeof submissions.value>['items'][number]) => {
   const evaluations = submissionEvaluations(submission)
   if (!evaluations.length) return 0
   const total = evaluations.reduce(

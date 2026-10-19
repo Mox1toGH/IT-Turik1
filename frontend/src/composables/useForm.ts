@@ -3,7 +3,10 @@ import { computed, ref, toRaw, type Ref } from 'vue'
 
 export type FormErrors = Record<string, string>
 
-export function useForm<T extends object>(schema: v.GenericSchema<T, unknown>, initialValues: T) {
+export function useForm<T extends object>(
+  schema: v.GenericSchema<unknown, unknown>,
+  initialValues: T,
+) {
   let initial = structuredClone(toRaw(initialValues))
   const fields = ref(structuredClone(initial)) as Ref<T>
   const errors = ref<FormErrors>({})

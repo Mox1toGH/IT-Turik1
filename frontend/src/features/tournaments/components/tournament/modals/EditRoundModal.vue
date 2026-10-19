@@ -162,11 +162,11 @@ import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
 import EditorModal from '@/components/shared/EditorModal.vue'
-import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { Round } from '@/features/tournaments/types'
 
 interface Props {
   modelValue: boolean
-  round: RoundResponse
+  round: Round
 }
 
 const props = defineProps<Props>()

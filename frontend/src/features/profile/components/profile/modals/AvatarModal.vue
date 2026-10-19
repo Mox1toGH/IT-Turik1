@@ -62,11 +62,11 @@ import {
 } from '@/lib/imagePosition'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
 import UiFileDrop from '@/components/ui/UiFileDrop'
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 
 const props = withDefaults(
   defineProps<{
-    user?: UserResponse
+    user?: UserSummary
     disabled?: boolean
     showTrigger?: boolean
   }>(),

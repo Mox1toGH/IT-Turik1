@@ -114,10 +114,10 @@ import type { QueryLike } from '@/composables/useQueryState'
 import { truncateText } from '@/lib/utils'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
+  team?: Team
   query: QueryLike
   isCaptain: boolean
 }

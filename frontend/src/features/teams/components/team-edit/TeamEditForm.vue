@@ -152,10 +152,10 @@ import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
 import { useUpdateTeam } from '@/api/teams/teams'
 import { useQueryState, type QueryLike } from '@/composables/useQueryState'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
+  team?: Team
   query: QueryLike
 }
 

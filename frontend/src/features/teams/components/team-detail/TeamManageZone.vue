@@ -69,10 +69,10 @@ import DangerIcon from '@/icons/DangerIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
 import { useRouter } from 'vue-router'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
+  team?: Team
   loading: boolean
   isCaptain: boolean
 }
@@ -81,7 +81,7 @@ const props = defineProps<Props>()
 const router = useRouter()
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: TeamResponse): void
+  (e: 'updateTeam', newTeamValue: Team): void
 }>()
 </script>
 

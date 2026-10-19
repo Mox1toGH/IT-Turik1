@@ -42,9 +42,9 @@ import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
-import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { UserSummary } from '@/shared/types/user'
 
-type ProfileLike = UserResponse
+type ProfileLike = UserSummary
 
 interface Props {
   user?: ProfileLike | null

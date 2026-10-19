@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { RoundStatus } from '@/api/backendAPINinja.schemas'
+import type { RoundStatus } from '@/features/tournaments/types'
 import {
   useCloseRoundSubmissions,
   useDeleteRound,

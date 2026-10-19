@@ -145,7 +145,7 @@ import {
   useListRoleActivationCodes,
   type GenerateRoleActivationCodesMutationBody,
 } from '@/api/accounts/accounts'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 interface Errors {
   role: UserRole[]

@@ -29,7 +29,7 @@
       </ui-card>
 
       <ui-card
-        v-else-if="events?.length === 0"
+        v-else-if="eventItems.length === 0"
         class="empty-card"
         style="display: flex; align-items: center; justify-content: center; height: 300px"
       >
@@ -37,7 +37,7 @@
       </ui-card>
 
       <div v-else class="events-list">
-        <ui-card v-for="event in events" :key="event.title" class="event-card">
+        <ui-card v-for="event in eventItems" :key="event.title" class="event-card">
           <div class="event-content">
             <div class="event-left-side">
               <div class="event-icon">
@@ -104,13 +104,13 @@ import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
 import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListEvents } from '@/api/tournaments/tournaments'
-import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
+import type { TournamentStatus } from '@/features/tournaments/types'
 
 interface Props {
   tournamentId: number
@@ -127,6 +127,7 @@ const isDescriptionOpen = ref(false)
 
 const eventsQuery = useListEvents({ tournament: props.tournamentId })
 const { data: events, isError: isEventsError } = eventsQuery
+const eventItems = computed(() => events.value?.items ?? [])
 </script>
 
 <style scoped>

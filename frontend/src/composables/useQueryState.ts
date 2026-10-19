@@ -1,5 +1,5 @@
 import { computed, toValue, unref, type MaybeRef, type MaybeRefOrGetter } from 'vue'
-import type { ErrorResponse } from '@/api/backendAPINinja.schemas'
+import type { ApiErrorResponse } from '@/shared/types/apiError'
 import type { ErrorType } from '@/lib/apiClient'
 
 export type QueryStatus = 'loading' | 'error' | 'empty' | 'data'
@@ -33,7 +33,7 @@ export interface QueryLike {
 }
 
 export function getErrorCode(error: unknown): QueryErrorCode {
-  const err = error as Partial<ErrorType<ErrorResponse>> | null | undefined
+  const err = error as Partial<ErrorType<ApiErrorResponse>> | null | undefined
   const status = err?._axiosError?.response?.status
   if (typeof status === 'number') return status
   return 'network'

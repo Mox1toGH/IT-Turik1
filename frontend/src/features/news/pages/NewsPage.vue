@@ -46,7 +46,7 @@ import NewsHero from '../components/NewsHero.vue'
 import NewsList from '../components/NewsList.vue'
 import EditNewsModal from '../components/EditNewsModal.vue'
 import CreateNewsModal from '../components/CreateNewsModal.vue'
-import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { NewsArticle } from '../types'
 
 const { showNotification } = useNotification()
 const route = useRoute()
@@ -57,7 +57,7 @@ const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteConfirmOpen = ref(false)
-const editingNews = ref<NewsArticleResponse | null>(null)
+const editingNews = ref<NewsArticle | null>(null)
 const deletingNewsId = ref<number | null>(null)
 const currentPage = ref(1)
 const pageSize = 10
@@ -65,30 +65,25 @@ const pageSize = 10
 const newsQuery = useListNews(computed(() => ({ page: currentPage.value, pageSize })))
 const { data: news } = newsQuery
 
-const newsItems = computed<NewsArticleResponse[]>(() =>
-  (news.value?.items ?? []).map((item) => ({
-    ...item,
-    created_by: item.created_by ?? null,
-  })),
-)
+const newsItems = computed<NewsArticle[]>(() => news.value?.items ?? [])
 const totalNews = computed(() => news.value?.count ?? 0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
 
 const { mutate: deleteNews, isPending: isDeleting } = useDeleteNews()
 
-function canModifyNews(item: NewsArticleResponse) {
+function canModifyNews(item: NewsArticle) {
   if (user.value?.role === 'admin') return true
   if (user.value?.role === 'organizer') return item.created_by === user.value.id
   return false
 }
 
-function openEditModal(item: NewsArticleResponse) {
+function openEditModal(item: NewsArticle) {
   if (!canModifyNews(item)) return
   editingNews.value = item
   isEditOpen.value = true
 }
 
-function openDeleteConfirm(item: NewsArticleResponse) {
+function openDeleteConfirm(item: NewsArticle) {
   if (!canModifyNews(item)) return
   deletingNewsId.value = item.id
   isDeleteConfirmOpen.value = true

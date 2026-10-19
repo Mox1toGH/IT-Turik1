@@ -34,10 +34,10 @@
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import { formatScore } from './lib/format'
-import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
+import type { ArchiveStanding } from '@/features/tournaments/types'
 
 defineProps<{
-  standings: TournamentArchiveDetailResponse['standings']
+  standings: ArchiveStanding[]
 }>()
 
 const rankClass = (rank: number) => {

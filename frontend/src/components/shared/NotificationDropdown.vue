@@ -147,7 +147,7 @@ import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
 } from '@/api/notifications/notifications'
-import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
+import type { Notification } from '@/shared/types/notification'
 import { useNotification } from '@/composables/useNotification'
 
 const isOpen = ref(false)
@@ -232,7 +232,7 @@ const handleDeleteAll = () => {
   isConfirmModalOpen.value = true
 }
 
-const handleNotificationClick = (notification: NotificationResponse) => {
+const handleNotificationClick = (notification: Notification) => {
   if (!notification.is_read) {
     markAsRead({ notificationId: notification.id })
   }
@@ -244,7 +244,7 @@ const handleNotificationClick = (notification: NotificationResponse) => {
   }
 }
 
-const getRedirectUrl = (notification: NotificationResponse) => {
+const getRedirectUrl = (notification: Notification) => {
   const type = notification.event_type
 
   // Only invitations go to /teams — recipient hasn't joined yet

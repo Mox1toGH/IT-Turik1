@@ -120,7 +120,7 @@ const matches = (parts: (string | undefined)[]) => {
 }
 
 const filteredPendingJoinRequests = computed(() =>
-  joinRequest.value
+  (joinRequest.value?.items ?? [])
     ?.filter((r) => r.status === 'pending')
     .filter((r) => matches([r.user.username, r.user.email, r.user.full_name])),
 )

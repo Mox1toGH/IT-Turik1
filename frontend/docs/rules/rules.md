@@ -425,3 +425,127 @@ The project MUST NOT require or encourage the following patterns without a concr
 - Hand-editing generated files in `src/api/`.
 - Putting modal markup directly in page templates when a dedicated modal component would keep the page clearer.
 - A global abstraction that hides business behavior without reducing meaningful complexity.
+
+## FE-017 Frontend Types and Orval Compatibility
+
+Generated Orval types represent backend API request and response contracts. They MUST remain isolated at the API integration boundary and MUST NOT be used as frontend application types.
+
+The frontend MUST maintain its own types for application models, component props, and feature-level data contracts. API-to-frontend and frontend-to-API transformations MUST be handled explicitly at the integration boundary.
+
+### Frontend-Owned Types
+
+- All frontend application models MUST use frontend-owned types rather than generated Orval types.
+- Shared UI components MUST define their own frontend prop types.
+- Feature components SHOULD use feature-owned types describing only the data they actually need.
+- Feature-level models MUST be owned by the feature that uses them.
+- Shared frontend types MAY live in `shared/` only when the same contract is genuinely used by multiple features.
+- Frontend types MUST describe frontend requirements and MUST NOT automatically mirror complete backend API schemas.
+- Developers MUST NOT create separate types for every component automatically. Existing frontend types SHOULD be reused when their semantics match.
+
+### Orval Type Isolation
+
+- Generated Orval types MUST NOT be imported directly into Vue components, feature composables, frontend models, or shared frontend modules.
+- Generated Orval types MUST NOT be used directly or indirectly as frontend component prop contracts.
+- TypeScript utilities such as `Pick`, `Omit`, and `Partial` MUST NOT be used to derive frontend types from generated Orval schemas.
+- Generated Orval types MAY be used only at the API integration boundary, including API request and response handling, validation of compatibility, and data mapping.
+- API query and mutation hooks MAY expose generated types internally, but their results MUST be converted into frontend-owned types before being passed into frontend application logic.
+- Generated Orval types MUST NOT leak into feature-level business logic or application state.
+
+### API-to-Frontend Mapping
+
+- API responses MUST be mapped into frontend-owned types at the API integration boundary.
+- Mapping MUST explicitly select the properties required by the frontend rather than forwarding complete API response objects.
+- Mapping SHOULD normalize nullable values, apply frontend defaults, rename fields, and perform other necessary transformations.
+- API response changes that affect frontend requirements MUST be addressed in the corresponding mapping function.
+- Changes to unrelated API properties MUST NOT require changes to frontend models or components.
+- Mapping functions SHOULD be located in the owning feature's API integration layer or another appropriate feature-specific module.
+- Mapping MUST NOT be duplicated across multiple consumers. Shared mapping logic SHOULD have one authoritative implementation.
+
+### Frontend-to-API Mapping
+
+- Frontend-owned form and application models MUST remain independent of generated API request types.
+- Mapping from frontend models to API request payloads MUST be performed at the API integration boundary.
+- Mutation payloads MUST be checked against the generated Orval request types.
+- API-specific fields, naming conventions, and serialization requirements MUST NOT leak into frontend form models unnecessarily.
+
+### Type Compatibility and Safety
+
+- TypeScript MUST verify compatibility between mapped frontend data and frontend-owned types.
+- TypeScript MUST verify compatibility between mapped request payloads and generated API request types.
+- Developers MUST NOT silence type incompatibilities using unjustified type assertions or casts.
+- API changes affecting frontend requirements MUST produce errors at the integration boundary rather than propagating generated types throughout the frontend.
+- Frontend-owned types MUST NOT depend on generated Orval declarations.
+
+### Examples
+
+**API response mapping**
+
+```ts
+// features/news/api/news.mapper.ts
+import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas'
+import type { NewsCardItem } from '../types'
+
+export function mapNewsArticle(article: NewsArticleResponse): NewsCardItem {
+  return {
+    id: article.id,
+    title: article.title ?? 'Untitled',
+  }
+}
+```
+
+**Frontend-owned type**
+
+```ts
+// features/news/types.ts
+export interface NewsCardItem {
+  id: number
+  title: string
+}
+```
+
+**Using the mapped result**
+
+```ts
+const { data: newsResponse } = useListNews()
+
+const newsItems = computed<NewsCardItem[]>(() =>
+  (newsResponse.value?.items ?? []).map(mapNewsArticle),
+)
+```
+
+**Component contract**
+
+```vue
+<script setup lang="ts">
+import type { NewsCardItem } from '../types'
+
+defineProps<{
+  article: NewsCardItem
+}>()
+</script>
+```
+
+**Frontend-to-API mapping**
+
+```ts
+import type { UpdateNewsRequest } from '@/api/backendAPINinja.schemas'
+
+interface EditNewsForm {
+  title: string
+}
+
+function mapEditNewsForm(form: EditNewsForm): UpdateNewsRequest {
+  return {
+    title: form.title,
+  }
+}
+```
+
+**Mutation**
+
+```ts
+updateNews({
+  articleId,
+  data: mapEditNewsForm(form),
+})
+```

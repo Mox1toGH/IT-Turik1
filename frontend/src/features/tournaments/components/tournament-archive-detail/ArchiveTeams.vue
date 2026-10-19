@@ -17,10 +17,10 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
+import type { TournamentArchive } from '@/features/tournaments/types'
 
 defineProps<{
-  teams: NonNullable<TournamentArchiveDetailResponse['teams']>
+  teams: NonNullable<TournamentArchive['teams']>
 }>()
 </script>
 

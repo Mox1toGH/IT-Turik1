@@ -102,12 +102,12 @@ const targetUserId = computed(() =>
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
 })
-const historyQuery = useListUserTournamentHistory(targetUserId, {
+const historyQuery = useListUserTournamentHistory(targetUserId, undefined, {
   query: { enabled: computed(() => targetUserId.value > 0) },
 })
 const history = historyQuery.data
 
-const historyItems = computed(() => history.value ?? [])
+const historyItems = computed(() => history.value?.items ?? [])
 const displayUserName = computed(
   () => viewedUser.value?.full_name || viewedUser.value?.username || 'User',
 )

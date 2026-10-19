@@ -118,7 +118,7 @@ const invitationsQuery = useListTeamInvitations()
 const { data: inboxInvitations, isLoading: inboxLoading } = invitationsQuery
 
 const pendingInboxInvitations = computed(() =>
-  inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
+  (inboxInvitations.value?.items ?? []).filter((invitation) => invitation.status === 'invited'),
 )
 
 const { mutate: accept } = useAcceptTeamInvitation()

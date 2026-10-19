@@ -218,7 +218,7 @@ import { useForm } from '@/composables/useForm'
 import { RegisterSchema } from '@/schemas/auth.schema'
 import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
 import { useRouter } from 'vue-router'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 interface Form {
   username: string

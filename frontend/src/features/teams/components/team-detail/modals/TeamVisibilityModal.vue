@@ -118,14 +118,14 @@ import LockIcon from '@/icons/LockIcon.vue'
 import { ref } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { useUpdateTeam } from '@/api/teams/teams'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
+  team?: Team
 }
 
 const emit = defineEmits<{
-  (e: 'changedTeamVisibility', newTeamValue: TeamResponse): void
+  (e: 'changedTeamVisibility', newTeamValue: Team): void
 }>()
 
 const props = defineProps<Props>()

@@ -24,10 +24,10 @@
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import { formatArchiveDateTime, formatDateRange } from './lib/format'
-import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
+import type { TournamentArchive } from '@/features/tournaments/types'
 
 defineProps<{
-  rounds: NonNullable<TournamentArchiveDetailResponse['rounds']>
+  rounds: NonNullable<TournamentArchive['rounds']>
 }>()
 </script>
 

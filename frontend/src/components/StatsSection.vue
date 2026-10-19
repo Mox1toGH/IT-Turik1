@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import AdminStats from './AdminStats.vue'
 import PlayerStats from './PlayerStats.vue'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 type TeamRef = { id: number; name: string }
 type ProfileLike = {

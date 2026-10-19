@@ -81,11 +81,12 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
-import type { TeamResponse, UserResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
+import type { UserSummary } from '@/shared/types/user'
 
 interface Props {
-  team?: TeamResponse
-  user?: UserResponse
+  team?: Team
+  user?: UserSummary
   loading: boolean
   query: QueryLike
   searchFilter?: string

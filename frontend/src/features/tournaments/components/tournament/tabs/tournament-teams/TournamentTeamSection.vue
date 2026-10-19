@@ -59,9 +59,9 @@ import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import type { QueryLike } from '@/composables/useQueryState'
-import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
+import type { TournamentTeam } from '@/features/tournaments/types'
 
-type Team = TournamentTeamResponse
+type Team = TournamentTeam
 
 interface Props {
   sectionType: 'active' | 'disqualified'

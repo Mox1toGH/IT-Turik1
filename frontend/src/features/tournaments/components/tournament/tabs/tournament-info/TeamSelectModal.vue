@@ -25,7 +25,7 @@
       </ul>
 
       <ui-card v-else class="team-empty">
-        <p>{{ teams?.length ? 'No teams match your search.' : 'No eligible teams found.' }}</p>
+        <p>{{ allTeams.length ? 'No teams match your search.' : 'No eligible teams found.' }}</p>
       </ui-card>
     </template>
   </ui-modal>
@@ -53,11 +53,12 @@ const search = ref('')
 const { data: teams, isLoading: isLoadingTeams } = useListEligibleTeamsForTournament(
   props.tournamentId,
 )
+const allTeams = computed(() => teams.value?.items ?? [])
 const { mutate: register, isPending } = useRegisterTeamForTournament()
 
 const filteredTeams = computed(() => {
   const query = search.value.trim().toLowerCase()
-  const all = teams.value ?? []
+  const all = allTeams.value
   if (!query) return all
   return all.filter((team) => team.name.toLowerCase().includes(query))
 })
