@@ -37,11 +37,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar'
-import type { CriterionResponse, JuryAssignmentResponse } from '@/api/backendAPINinja.schemas'
+import type { Criterion, Evaluation } from '@/features/evaluation/types'
 
 interface Props {
-  evaluation: JuryAssignmentResponse['evaluation']
-  criteria: readonly CriterionResponse[]
+  evaluation?: Evaluation | null
+  criteria: readonly Criterion[]
 }
 
 const props = defineProps<Props>()

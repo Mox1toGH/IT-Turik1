@@ -51,13 +51,12 @@ import UiTextArea from '@/components/ui/UiTextArea'
 import {
   useCreateJuryEvaluation,
   useUpdateJuryEvaluation,
-  type GetJuryEvaluationQueryResult,
 } from '@/api/evaluation/evaluation'
-import type { JuryAssignmentResponse, ScoreItemResponse } from '@/api/backendAPINinja.schemas'
+import type { EvaluationScore, JuryAssignment, JuryEvaluation } from '@/features/evaluation/types'
 
 interface Props {
-  assignment: JuryAssignmentResponse
-  existingEvaluation?: GetJuryEvaluationQueryResult | null
+  assignment: JuryAssignment
+  existingEvaluation?: JuryEvaluation | null
 }
 
 const props = defineProps<Props>()
@@ -79,7 +78,7 @@ const scoresMap = reactive<Record<string, number>>(
 
 const comment = ref(props.existingEvaluation?.comment ?? '')
 
-const scoreItems = computed<ScoreItemResponse[]>(() =>
+const scoreItems = computed<EvaluationScore[]>(() =>
   props.assignment.round_details.criteria.map((criterion) => ({
     criterion_id: criterion.id,
     criterion_name: criterion.name,

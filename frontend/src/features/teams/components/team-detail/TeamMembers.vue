@@ -1,41 +1,14 @@
 <template>
-  <ui-card :status="props.status" :error-code="props.errorCode">
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch team members</p>
-      </div>
-    </template>
-
+  <ui-card>
+    <ui-query-state :query="props.query" title="team members">
     <div class="members-sections">
       <section class="members-section">
         <header class="section-subhead">
           <h3>Members</h3>
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="80px" />
-            </template>
-
-            <span class="text-muted">{{ filteredMembers?.length }} people</span>
-          </ui-skeleton-loader>
+          <span class="text-muted">{{ filteredMembers?.length }} people</span>
         </header>
 
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <div class="member-list">
-              <div v-for="i in 2" :key="i" class="member-row member-row--skeleton">
-                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1">
-                  <div style="display: flex; justify-content: space-between; gap: 10px">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="100px" />
-                  </div>
-
-                  <ui-skeleton variant="rect" width="200px" />
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <div class="member-list">
+        <div class="member-list">
             <div
               class="member-row"
               v-for="member in filteredMembers"
@@ -70,28 +43,26 @@
               No accepted members match your search.
             </p>
           </div>
-        </ui-skeleton-loader>
       </section>
     </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import UiBadge from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
-import type { TeamResponse, UserResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
-  user?: UserResponse
+  team?: Team
+  query: QueryLike
   loading: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
   searchFilter?: string
   isCaptain: boolean
 }

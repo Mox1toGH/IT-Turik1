@@ -15,7 +15,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
-export type Variant = 'default' | 'secondary' | 'ghost' | 'danger' | 'warning'
+export type Variant = 'default' | 'secondary' | 'ghost' | 'danger' | 'warning' | 'link'
 
 export type Size = 'xs' | 'sm' | 'md' | 'lg'
 
@@ -39,6 +39,7 @@ const variants: Record<Variant, string> = {
   ghost: 'ghost-btn',
   danger: 'danger-btn',
   warning: 'warning-btn',
+  link: 'link-btn',
 }
 
 const sizes: Record<Size, string> = {
@@ -158,5 +159,29 @@ const sizeClass = computed(() => sizes[props.size])
 
 .warning-btn:hover {
   background: color-mix(in srgb, var(--warning) 20%, transparent);
+}
+
+/* Text-only link. Drops the chrome so it reads as inline body text. */
+.link-btn {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary);
+  font-weight: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: from-font;
+}
+
+.link-btn:hover {
+  background: transparent;
+  opacity: 0.75;
+}
+
+.link-btn:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 </style>

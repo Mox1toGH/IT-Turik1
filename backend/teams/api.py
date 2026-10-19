@@ -7,9 +7,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import File, Router
 from ninja.files import UploadedFile
+from ninja.pagination import paginate
+from backend.pagination import APIPageNumberPagination
 
 from accounts.models import User
 from backend.auth import JWTAuth
+from backend.media import absolute_media_url
 from backend.permissions import is_platform_admin
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
@@ -17,15 +20,25 @@ from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
 from http import HTTPStatus
 from .schemas import (
-    DetailResponse,
+    AcceptTeamInvitationResponse,
+    AcceptTeamJoinRequestResponse,
+    CreateTeamJoinRequestResponse,
+    CreateTeamResponse,
+    DeclineTeamInvitationResponse,
+    DeclineTeamJoinRequestResponse,
+    DeleteTeamBannerResponse,
+    GetTeamResponse,
     InviteMemberRequest,
+    InviteMemberResponse,
+    LeaveTeamResponse,
+    ListTeamsItemResponse,
     TeamBannerResponse,
     TeamCreateRequest,
     TeamInvitationInboxResponse,
     TeamInvitationResponse,
     TeamJoinRequestResponse,
-    TeamResponse,
     TeamUpdateRequest,
+    UpdateTeamResponse,
 )
 from .services import assert_can_remove_member, assert_team_not_in_active_tournament
 from .signals import (
@@ -46,6 +59,8 @@ router = Router(tags=['teams'], auth=JWTAuth(),)
 # --------------------------------------------------------------------------
 
 def get_team_queryset():
+    from tournaments.models import Tournament, TournamentTeamRegistration
+
     return (
         Team.objects.select_related('captain')
         .prefetch_related(
@@ -57,6 +72,14 @@ def get_team_queryset():
             Prefetch(
                 'join_requests',
                 queryset=TeamJoinRequest.objects.select_related('user', 'reviewed_by').order_by('-created_at'),
+            ),
+            Prefetch(
+                'tournament_registrations',
+                queryset=TournamentTeamRegistration.objects.filter(
+                    is_active=True,
+                    tournament__status__in=[Tournament.STATUS_REGISTRATION, Tournament.STATUS_RUNNING],
+                ).select_related('tournament'),
+                to_attr='_active_tournament_registrations',
             ),
         )
         .order_by('id')
@@ -78,6 +101,70 @@ def get_accessible_team(request, pk):
         extra={'team_id': pk, 'user_id': request.auth.id},
     )
     raise_api_error(HTTPStatus.FORBIDDEN, 'You do not have access to this private team.')
+
+
+def _team_response_data(team, request):
+    members = team._prefetched_objects_cache.get('members', [])
+    invitations = team._prefetched_objects_cache.get('invitations', [])
+    join_requests = team._prefetched_objects_cache.get('join_requests', [])
+    active_registrations = getattr(team, '_active_tournament_registrations', [])
+    user = getattr(request, 'auth', None)
+    user_id = getattr(user, 'id', None)
+    member_ids = {member.id for member in members}
+    is_member = user_id in member_ids or team.captain_id == user_id
+    has_pending_invitation = any(
+        invitation.user_id == user_id
+        and invitation.status == TeamInvitation.STATUS_INVITED
+        for invitation in invitations
+    )
+    has_pending_join_request = any(
+        join_request.user_id == user_id
+        and join_request.status == TeamJoinRequest.STATUS_PENDING
+        for join_request in join_requests
+    )
+
+    return {
+        'id': team.id,
+        'name': team.name,
+        'email': team.email,
+        'captain_id': team.captain_id,
+        'is_public': team.is_public,
+        'organization': team.organization or '',
+        'contact_telegram': team.contact_telegram or '',
+        'contact_discord': team.contact_discord or '',
+        'banner': absolute_media_url(team.banner, {'request': request}),
+        'members': [
+            {
+                'id': member.id,
+                'username': member.username,
+                'email': member.email,
+                'full_name': member.full_name,
+                'role': member.role,
+                'avatar': absolute_media_url(member.avatar, {'request': request}) or '',
+            }
+            for member in members
+        ],
+        'is_member': is_member,
+        'can_request_to_join': bool(
+            user_id is not None
+            and team.is_public
+            and not is_member
+            and not has_pending_invitation
+            and not has_pending_join_request
+        ),
+        'is_in_active_tournament': bool(active_registrations),
+    }
+
+
+def _member_response_data(user, request):
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'role': user.role,
+        'avatar': absolute_media_url(user.avatar, {'request': request}) or '',
+    }
 
 
 def assert_can_create_team(user):
@@ -227,8 +314,9 @@ def invite_user_to_team(*, team, user, invited_by):
     '/',
     operation_id='listTeams',
     url_name='teams',
-    response={200: list[TeamResponse], 401: ErrorResponse},
+    response={200: list[ListTeamsItemResponse], 401: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_teams(request):
     user = request.auth
     logger.debug('Listing teams', extra={'user_id': user.id})
@@ -238,14 +326,15 @@ def list_teams(request):
             Q(is_public=True) | Q(captain_id=user.id) | Q(team_members__user_id=user.id)
         ).distinct()
 
-    return list(queryset.iterator(chunk_size=100))
+    teams = list(queryset)
+    return [_team_response_data(team, request) for team in teams]
 
 
 @router.post(
     '/',
     operation_id='createTeam',
     url_name='listTeams',
-    response={201: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
+    response={201: CreateTeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_team(request, payload: TeamCreateRequest):
     user = request.auth
@@ -298,19 +387,19 @@ def create_team(request, payload: TeamCreateRequest):
     )
 
     team = get_object_or_404(get_team_queryset(), pk=team.pk)
-    return 201, TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return 201, _team_response_data(team, request)
 
 
 @router.get(
     '/{int:pk}',
     operation_id='getTeam',
     url_name='team_detail',
-    response={200: TeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: GetTeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_team(request, pk: int):
     logger.debug('Fetching team', extra={'team_id': pk, 'user_id': request.auth.id})
     team = get_accessible_team(request, pk)
-    return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return _team_response_data(team, request)
 
 
 def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
@@ -363,13 +452,13 @@ def apply_team_update(request, pk: int, payload: TeamUpdateRequest):
     logger.info('Team updated', extra={'team_id': team.id, 'user_id': request.auth.id})
 
     team = get_object_or_404(get_team_queryset(), pk=team.pk)
-    return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return _team_response_data(team, request)
 
 @router.patch(
     '/{int:pk}',
     operation_id='updateTeam',
     url_name='team_detail',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: UpdateTeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def update_team(request, pk: int, payload: TeamUpdateRequest):
     return apply_team_update(request, pk, payload)
@@ -430,7 +519,7 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
             'file_size': banner.size,
         },
     )
-    return TeamBannerResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return {'banner': absolute_media_url(team.banner, {'request': request})}
 
 
 @router.patch(
@@ -447,7 +536,7 @@ def update_team_banner(request, pk: int, banner: UploadedFile = File(...)):
     '/{int:pk}/banner',
     operation_id='deleteTeamBanner',
     url_name='team_banner',
-    response={200: TeamResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: DeleteTeamBannerResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def delete_team_banner(request, pk: int):
     team = get_accessible_team(request, pk)
@@ -463,7 +552,7 @@ def delete_team_banner(request, pk: int):
         team.banner = None
         team.save(update_fields=['banner'])
         logger.info('Team banner deleted', extra={'team_id': pk, 'user_id': request.auth.id})
-    return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return _team_response_data(team, request)
 
 
 # --------------------------------------------------------------------------
@@ -474,7 +563,7 @@ def delete_team_banner(request, pk: int):
     '/{int:pk}/members/invite',
     operation_id='inviteMemberToTeam',
     url_name='team_members',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: InviteMemberResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
     team = get_object_or_404(get_team_queryset(), pk=pk)
@@ -528,9 +617,7 @@ def invite_member_to_team(request, pk: int, payload: InviteMemberRequest):
         )
 
     team = get_object_or_404(get_team_queryset(), pk=pk)
-    return TeamResponse.model_validate(
-        team, from_attributes=True, context={'request': request}
-    )
+    return _team_response_data(team, request)
 
 
 @router.delete(
@@ -583,7 +670,7 @@ def remove_member_from_team(request, pk: int, user_id: int):
     '/{int:pk}/leave',
     operation_id='leaveTeam',
     url_name='team_leave',
-    response={200: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: LeaveTeamResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def leave_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
@@ -611,9 +698,7 @@ def leave_team(request, pk: int):
     clear_invitation_states_for_member(team=team, user=request.auth)
     clear_join_request_states_for_member(team=team, user=request.auth)
     logger.info('User left team', extra={'team_id': pk, 'user_id': request.auth.id})
-    return DetailResponse(
-        detail='You left the team.'
-    )
+    return {'detail': 'You left the team.'}
 
 
 # --------------------------------------------------------------------------
@@ -626,6 +711,7 @@ def leave_team(request, pk: int):
     url_name='team_invitations',
     response={200: list[TeamInvitationInboxResponse], 401: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_team_invitations(request):
     logger.debug('Listing invitation inbox', extra={'user_id': request.auth.id})
     queryset = (
@@ -634,8 +720,23 @@ def list_team_invitations(request):
         .exclude(team__team_members__user=request.auth)
         .order_by('-created_at')
     )
-    ctx = {'request': request}
-    return [TeamInvitationInboxResponse.model_validate(i, from_attributes=True, context=ctx) for i in queryset]
+    invitations = list(queryset)
+    return [
+        {
+            'id': invitation.id,
+            'team': {
+                'id': invitation.team_id,
+                'name': invitation.team.name,
+                'is_public': invitation.team.is_public,
+            },
+            'status': invitation.status,
+            'created_at': invitation.created_at,
+            'responded_at': invitation.responded_at,
+            'invited_by': _member_response_data(invitation.invited_by, request)
+            if invitation.invited_by_id else None,
+        }
+        for invitation in invitations
+    ]
 
 
 def respond_to_invitation(request, invitation_id: int, new_status: str):
@@ -699,14 +800,14 @@ def respond_to_invitation(request, invitation_id: int, new_status: str):
     )
 
     team = get_object_or_404(get_team_queryset(), pk=invitation.team_id)
-    return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return _team_response_data(team, request)
 
 
 @router.post(
     '/invitations/{int:invitation_id}/accept',
     operation_id='acceptTeamInvitation',
     url_name='team_invitation_accept',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: AcceptTeamInvitationResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def accept_team_invitation(request, invitation_id: int):
     return respond_to_invitation(request, invitation_id, TeamInvitation.STATUS_ACCEPTED)
@@ -716,7 +817,7 @@ def accept_team_invitation(request, invitation_id: int):
     '/invitations/{int:invitation_id}/decline',
     operation_id='declineTeamInvitation',
     url_name='team_invitation_decline',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: DeclineTeamInvitationResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def decline_team_invitation(request, invitation_id: int):
     return respond_to_invitation(request, invitation_id, TeamInvitation.STATUS_DECLINED)
@@ -730,7 +831,7 @@ def decline_team_invitation(request, invitation_id: int):
     '/{int:pk}/join-requests',
     operation_id='createTeamJoinRequest',
     url_name='team_join_request_create',
-    response={200: DetailResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: CreateTeamJoinRequestResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def create_team_join_request(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
@@ -789,7 +890,7 @@ def create_team_join_request(request, pk: int):
 
     join_request_received.send(sender=create_team_join_request, join_request=join_request)
 
-    return 200, DetailResponse(detail='Join request sent.')
+    return 200, {'detail': 'Join request sent.'}
 
 
 def review_join_request(request, pk: int, request_id: int, new_status: str):
@@ -850,14 +951,14 @@ def review_join_request(request, pk: int, request_id: int, new_status: str):
     join_request_responded.send(sender=review_join_request, join_request=join_request)
 
     team = get_object_or_404(get_team_queryset(), pk=pk)
-    return TeamResponse.model_validate(team, from_attributes=True, context={'request': request})
+    return _team_response_data(team, request)
 
 
 @router.post(
     '/{int:pk}/join-requests/{int:request_id}/accept',
     operation_id='acceptTeamJoinRequest',
     url_name='team_join_request_accept',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: AcceptTeamJoinRequestResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def accept_team_join_request(request, pk: int, request_id: int):
     return review_join_request(request, pk, request_id, TeamJoinRequest.STATUS_ACCEPTED)
@@ -867,7 +968,7 @@ def accept_team_join_request(request, pk: int, request_id: int):
     '/{int:pk}/join-requests/{int:request_id}/decline',
     operation_id='declineTeamJoinRequest',
     url_name='team_join_request_decline',
-    response={200: TeamResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: DeclineTeamJoinRequestResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def decline_team_join_request(request, pk: int, request_id: int):
     return review_join_request(request, pk, request_id, TeamJoinRequest.STATUS_DECLINED)
@@ -883,6 +984,7 @@ def decline_team_join_request(request, pk: int, request_id: int):
     url_name='team_invitations_by_team',
     response={200: list[TeamInvitationResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_team_invitations_by_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id and not is_platform_admin(request.auth):
@@ -905,8 +1007,18 @@ def list_team_invitations_by_team(request, pk: int):
         .select_related('user', 'invited_by')
         .order_by('-created_at')
     )
-    ctx = {'request': request}
-    return [TeamInvitationResponse.model_validate(i, from_attributes=True, context=ctx) for i in queryset]
+    invitations = list(queryset)
+    return [
+        {
+            'id': invitation.id,
+            'user': _member_response_data(invitation.user, request),
+            'status': invitation.status,
+            'created_at': invitation.created_at,
+            'responded_at': invitation.responded_at,
+            'invited_by_id': invitation.invited_by_id,
+        }
+        for invitation in invitations
+    ]
 
 
 @router.get(
@@ -915,6 +1027,7 @@ def list_team_invitations_by_team(request, pk: int):
     url_name='team_join_request_list',
     response={200: list[TeamJoinRequestResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_team_join_requests_by_team(request, pk: int):
     team = get_object_or_404(get_team_queryset(), pk=pk)
     if team.captain_id != request.auth.id and not is_platform_admin(request.auth):
@@ -933,4 +1046,15 @@ def list_team_join_requests_by_team(request, pk: int):
         .select_related('user', 'reviewed_by')
         .order_by('-created_at')
     )
-    return queryset
+    join_requests = list(queryset)
+    return [
+        {
+            'id': join_request.id,
+            'user': _member_response_data(join_request.user, request),
+            'status': join_request.status,
+            'created_at': join_request.created_at,
+            'reviewed_at': join_request.reviewed_at,
+            'reviewed_by_id': join_request.reviewed_by_id,
+        }
+        for join_request in join_requests
+    ]

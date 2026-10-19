@@ -17,7 +17,7 @@ class AccountsApiAdvancedTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertGreaterEqual(len(data), 2)
+        self.assertGreaterEqual(len(data['items']), 2)
 
     def test_list_users_authenticated(self):
         url = reverse('ninja-api:users')
@@ -54,15 +54,15 @@ class AccountsApiAdvancedTests(APITestCase):
         authenticate(self.client, self.user2)
         response = self.client.get(url)
         data = response.json()
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['username'], 'acc_user1')
+        self.assertEqual(len(data['items']), 1)
+        self.assertEqual(data['items'][0]['username'], 'acc_user1')
 
     def test_search_users_not_found(self):
         url = reverse('ninja-api:users') + '?search=nobody'
         authenticate(self.client, self.user2)
         response = self.client.get(url)
         data = response.json()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(len(data['items']), 0)
 
     def test_create_user_endpoint_not_allowed(self):
         # Creating user usually done via registration endpoint, not user-list

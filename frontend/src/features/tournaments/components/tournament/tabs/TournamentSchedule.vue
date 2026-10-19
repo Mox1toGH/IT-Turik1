@@ -6,25 +6,23 @@
 
   <section class="page-shell">
     <div v-if="status === 'loading'" class="events-list">
-      <ui-card v-for="i in 5" :key="`event-skeleton-${i}`" class="event-card" status="loading">
-        <template #skeleton>
-          <div class="event-content">
-            <div class="event-left-side">
-              <ui-skeleton variant="rounded" width="50px" height="50px" />
-              <div class="event-info">
-                <ui-skeleton variant="rect" width="140px" />
-                <ui-skeleton variant="rect" width="220px" />
-              </div>
-            </div>
-            <div class="event-right-side">
-              <ui-skeleton variant="rect" width="150px" />
+      <ui-card v-for="i in 5" :key="`event-skeleton-${i}`" class="event-card">
+        <div class="event-content">
+          <div class="event-left-side">
+            <ui-skeleton variant="rounded" width="50px" height="50px" />
+            <div class="event-info">
+              <ui-skeleton variant="rect" width="140px" />
+              <ui-skeleton variant="rect" width="220px" />
             </div>
           </div>
-        </template>
+          <div class="event-right-side">
+            <ui-skeleton variant="rect" width="150px" />
+          </div>
+        </div>
       </ui-card>
     </div>
 
-    <ui-card
+    <ui-query-state
       v-else-if="status !== 'data'"
       :query="eventsQuery"
       class="events-state"
@@ -33,7 +31,7 @@
       <template #empty-action>
         <p class="text-sm text-muted">Events added to this tournament appear here.</p>
       </template>
-    </ui-card>
+    </ui-query-state>
 
     <div v-else class="events-list">
       <ui-card v-for="event in events" :key="event.id" class="event-card">
@@ -88,6 +86,7 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import FinishIcon from '@/icons/FinishIcon.vue'
@@ -98,7 +97,7 @@ import AddEventModal from '../modals/AddEventModal.vue'
 import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
 import { truncateText } from '@/lib/utils.ts'
@@ -134,8 +133,8 @@ watch(isDeleteOpen, (val) => {
 })
 
 const eventsQuery = useListEvents({ tournament: props.tournamentId })
-const { status } = useCardState(eventsQuery)
-const events = computed(() => eventsQuery.data.value ?? [])
+const { status } = useQueryState(eventsQuery)
+const events = computed(() => eventsQuery.data.value?.items ?? [])
 </script>
 
 <style scoped>

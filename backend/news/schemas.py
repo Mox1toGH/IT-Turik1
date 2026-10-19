@@ -23,6 +23,36 @@ class NewsArticleResponse(Schema):
     updated_at: datetime
 
 
+class CreateNewsResponse(Schema):
+    id: int
+    title: str
+    content: dict[str, JsonValue]
+    created_by: int | None
+    created_by_name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class GetNewsResponse(Schema):
+    id: int
+    title: str
+    content: dict[str, JsonValue]
+    created_by: int | None
+    created_by_name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class UpdateNewsResponse(Schema):
+    id: int
+    title: str
+    content: dict[str, JsonValue]
+    created_by: int | None
+    created_by_name: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class NewsListResponse(Schema):
     items: list[NewsArticleResponse]
     count: int

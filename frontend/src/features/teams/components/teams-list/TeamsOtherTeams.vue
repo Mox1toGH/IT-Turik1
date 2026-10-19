@@ -16,8 +16,8 @@
       </div>
 
       <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
+        <ui-query-state :query="teamsQuery">
+<template #skeleton>
             <div class="team-grid">
               <div class="team-item-skeleton" v-for="i in 2" :key="i">
                 <div class="team-skeleton-body">
@@ -37,12 +37,9 @@
                 </div>
               </div>
             </div>
-          </template>
-
-          <p v-if="otherTeams?.length === 0" class="empty-text text-muted">
+          </template><p v-if="otherTeams?.length === 0" class="empty-text text-muted">
             No teams to discover. Available teams will show up here when they can be joined.
-          </p>
-          <div v-else class="team-grid">
+          </p><div v-else class="team-grid">
             <ui-card
               v-for="team in otherTeamsPageItems"
               :key="`other-${team.id}`"
@@ -80,7 +77,7 @@
               </template>
             </ui-card>
           </div>
-        </ui-skeleton-loader>
+</ui-query-state>
 
         <ui-pagination
           class="teams-pagination"
@@ -103,10 +100,9 @@ import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import {
   useCreateTeamJoinRequest,
   useListTeams,
@@ -115,12 +111,12 @@ import {
 
 const OTHER_TEAMS_PER_PAGE = 8
 
-type Team = ListTeamsQueryResult[number]
+type Team = ListTeamsQueryResult['items'][number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
 const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, isStale } = useCardState(teamsQuery)
+const { status, isStale } = useQueryState(teamsQuery)
 
 const { showNotification } = useNotification()
 
@@ -134,7 +130,9 @@ const captainName = (team: Team) => {
 }
 const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 
-const otherTeams = computed(() => teams.value?.filter((team) => !isAcceptedMember(team)))
+const otherTeams = computed(() =>
+  (teams.value?.items ?? []).filter((team) => !isAcceptedMember(team)),
+)
 const otherPages = computed(() =>
   Math.max(1, Math.ceil((otherTeams.value?.length ?? 0) / OTHER_TEAMS_PER_PAGE)),
 )

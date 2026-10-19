@@ -35,7 +35,7 @@ class UserRoleTests(APITestCase):
         User.objects.create_user(username='super', email='s@e.com', password='P', role='team', is_active=True, is_superuser=True)
         authenticate(self.client, requester)
         response = self.client.get(self.users_url)
-        data = response.json()
+        data = response.json()['items']
         usernames = [user['username'] for user in data]
         self.assertIn('team-user', usernames)
         self.assertNotIn('super', usernames)

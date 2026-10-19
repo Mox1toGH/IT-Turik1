@@ -13,11 +13,7 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="180px" height="64px" />
-          </template>
-        </ui-skeleton-loader>
+        <ui-skeleton v-if="isLoading" variant="rect" width="180px" height="64px" />
       </div>
     </header>
 
@@ -70,11 +66,23 @@
         </div>
       </header>
 
-      <assignment-grid
-        :assignments="pagedAssignments"
-        :loading="isLoading"
-        @evaluated="refetch"
-      />
+      <ui-query-state
+        :query="assignmentsQuery"
+        :is-empty="pagedAssignments.length === 0"
+        empty-text="No assignments found for selected filters"
+      >
+        <template #skeleton>
+          <div class="assignments-grid">
+            <ui-card v-for="i in 4" :key="i" class="assignment-skeleton">
+              <ui-skeleton variant="rect" width="60%" height="20px" />
+              <ui-skeleton variant="rect" width="30%" height="16px" />
+              <ui-skeleton variant="rect" width="100%" height="14px" />
+              <ui-skeleton variant="rect" width="80%" height="14px" />
+            </ui-card>
+          </div>
+        </template>
+        <assignment-grid :assignments="pagedAssignments" @evaluated="refetch" />
+      </ui-query-state>
 
       <ui-pagination
         v-if="totalCount > pageSize"
@@ -92,15 +100,16 @@ import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 import { useListTournaments } from '@/api/tournaments/tournaments'
 import UiPagination from '@/components/ui/UiPagination'
 import UiSelect from '@/components/ui/UiSelect'
+import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import AssignmentGrid from '../components/AssignmentGrid.vue'
 import {
   EVALUATION_STATUS_OPTIONS,
   useEvaluationFilters,
 } from '../composables/useEvaluationFilters'
 
-const { data: assignmentsResponse, isLoading, isError, refetch } = useListJuryAssignments()
+const assignmentsQuery = useListJuryAssignments()
+const { data: assignmentsResponse, isLoading, isError, refetch } = assignmentsQuery
 
 const {
   data: tournamentsResponse,

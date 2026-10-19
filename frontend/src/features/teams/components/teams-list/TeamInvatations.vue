@@ -16,8 +16,8 @@
       </div>
 
       <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-skeleton-loader :loading="inboxLoading">
-          <template #skeleton>
+        <ui-query-state :query="invitationsQuery">
+<template #skeleton>
             <div class="team-grid">
               <div class="team-item-skeleton" v-for="i in 2" :key="i">
                 <div class="team-skeleton-body">
@@ -35,16 +35,12 @@
                 </div>
               </div>
             </div>
-          </template>
-
-          <div v-if="pendingInboxInvitations?.length === 0" class="empty-text text-muted">
+          </template><div v-if="pendingInboxInvitations?.length === 0" class="empty-text text-muted">
             <p>No invitations. When someone invites you, it will appear here.</p>
             <button type="button" class="empty-link text-sm" @click="emit('browse-teams')">
               Browse available teams <span aria-hidden="true">-&gt;</span>
             </button>
-          </div>
-
-          <div v-else class="team-grid">
+          </div><div v-else class="team-grid">
             <ui-card
               v-for="invitation in pendingInboxInvitations"
               :key="`invite-${invitation.id}`"
@@ -83,7 +79,7 @@
               </template>
             </ui-card>
           </div>
-        </ui-skeleton-loader>
+</ui-query-state>
       </div>
     </div>
   </div>
@@ -92,15 +88,13 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiSection from '@/components/ui/UiSection'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
@@ -115,10 +109,10 @@ const { showNotification } = useNotification()
 
 const invitationsQuery = useListTeamInvitations()
 const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
-const { status, isStale } = useCardState(invitationsQuery)
+const { status, isStale } = useQueryState(invitationsQuery)
 
 const pendingInboxInvitations = computed(() =>
-  inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
+  inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited'),
 )
 
 const { mutate: accept } = useAcceptTeamInvitation()

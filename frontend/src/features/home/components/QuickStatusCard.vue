@@ -1,11 +1,5 @@
 <template>
-  <ui-card class="info-card" :status="status" :error-code="errorCode">
-    <template #error>
-      <div class="empty-state">
-        <p>Failed to fetch profile info</p>
-      </div>
-    </template>
-
+  <ui-card class="info-card">
     <template #header>
       <div>
         <h2>Quick status</h2>
@@ -13,7 +7,13 @@
       </div>
     </template>
 
-    <ui-skeleton-loader class="panel-body" :loading="isLoadingUser" min-height="90px">
+    <ui-query-state class="panel-body" :query="query">
+      <template #error>
+        <div class="empty-state">
+          <p>Failed to fetch profile info</p>
+        </div>
+      </template>
+
       <template #skeleton>
         <div class="skeleton-stack">
           <ui-skeleton variant="rect" width="45%" />
@@ -29,23 +29,21 @@
           <strong>{{ item.ready ? 'Ready' : 'Missing' }}</strong>
         </li>
       </ul>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  user?: UserResponse
-  status: CardStatus
-  errorCode: CardErrorCode
-  isLoadingUser: boolean
+  user?: UserSummary
+  query: QueryLike
 }>()
 
 const statusItems = computed(() => [

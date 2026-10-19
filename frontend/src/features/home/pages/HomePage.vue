@@ -10,13 +10,13 @@
 
         <h1>
           Welcome back,
-          <ui-skeleton-loader :loading="isLoadingUser" class="name-loader">
+          <ui-query-state :query="userQuery" class="name-loader">
             <template #skeleton>
               <ui-skeleton variant="rect" width="160px" />
             </template>
 
             <span>{{ displayName }}</span>
-          </ui-skeleton-loader>
+          </ui-query-state>
         </h1>
 
         <p class="section-subtitle">
@@ -39,27 +39,12 @@
 
     <section class="dashboard-grid" aria-label="Account overview">
       <template v-if="isTeamRole">
-        <QuickAccessCard
-          :user="user"
-          :is-loading-user="isLoadingUser"
-          :status="status"
-          :error-code="errorCode"
-        />
+        <QuickAccessCard :user="user" :query="userQuery" />
       </template>
 
-      <AccountDetailsCard
-        :user="user"
-        :is-loading-user="isLoadingUser"
-        :status="status"
-        :error-code="errorCode"
-      />
+      <AccountDetailsCard :user="user" :query="userQuery" />
 
-      <QuickStatusCard
-        :user="user"
-        :is-loading-user="isLoadingUser"
-        :status="status"
-        :error-code="errorCode"
-      ></QuickStatusCard>
+      <QuickStatusCard :user="user" :query="userQuery"></QuickStatusCard>
     </section>
   </section>
 </template>
@@ -67,22 +52,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import AccountDetailsCard from '../components/AccountDetailsCard.vue'
 import QuickStatusCard from '../components/QuickStatusCard.vue'
 import QuickAccessCard from '../components/QuickAccessCard.vue'
-import { useCardState } from '@/composables/useCardState'
 
 const userQuery = useGetUserProfile()
-const { data: user, isLoading: isLoadingUser } = userQuery
-const { status, errorCode } = useCardState(userQuery)
+const { data: user } = userQuery
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 
-const isTeamRole = computed(() => user.value?.role === 'team')
+const isTeamRole = computed(() => hasRole(user.value, 'team'))
 
 const heroStats = computed(() => [
   { label: 'Role', value: user.value?.role ?? '-' },

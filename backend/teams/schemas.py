@@ -3,35 +3,10 @@ from typing import Optional
 
 from ninja import Schema
 
-from backend.media import absolute_media_url
 from backend.schemas import UserRole
 from pydantic import PositiveInt
 
 from accounts.schemas import AvatarSchema
-
-from .models import TeamInvitation, TeamJoinRequest
-from .services import get_active_tournament_registration
-
-
-def _context_user(context):
-    request = (context or {}).get('request')
-    user = getattr(request, 'auth', None)
-    if user is None or not getattr(user, 'is_authenticated', False):
-        return None
-    return user
-
-
-def _absolute_url(file_field, context) -> Optional[str]:
-    return absolute_media_url(file_field, context)
-
-
-# --------------------------------------------------------------------------
-# Common
-# --------------------------------------------------------------------------
-
-class DetailResponse(Schema):
-    detail: str
-
 
 # --------------------------------------------------------------------------
 # Nested
@@ -49,12 +24,12 @@ class TeamSummaryResponse(Schema):
     name: str
     is_public: bool
 
-
 # --------------------------------------------------------------------------
 # Team
 # --------------------------------------------------------------------------
 
-class TeamResponse(Schema):
+# Success contracts are intentionally independent per endpoint (API-002).
+class ListTeamsItemResponse(Schema):
     id: int
     name: str
     email: str
@@ -69,42 +44,146 @@ class TeamResponse(Schema):
     can_request_to_join: bool
     is_in_active_tournament: bool
 
-    @staticmethod
-    def resolve_banner(obj, context):
-        return _absolute_url(obj.banner, context)
+class CreateTeamResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-    @staticmethod
-    def resolve_members(obj):
-        return list(obj.members.all())
+class GetTeamResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-    @staticmethod
-    def resolve_is_member(obj, context):
-        user = _context_user(context)
-        if not user:
-            return False
-        return any(member.id == user.id for member in obj.members.all())
+class UpdateTeamResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-    @staticmethod
-    def resolve_can_request_to_join(obj, context):
-        user = _context_user(context)
-        if not user or not obj.is_public:
-            return False
-        if obj.captain_id == user.id or any(member.id == user.id for member in obj.members.all()):
-            return False
+class DeleteTeamBannerResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-        for invitation in obj.invitations.all():
-            if invitation.user_id == user.id and invitation.status == TeamInvitation.STATUS_INVITED:
-                return False
+class InviteMemberResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-        for join_request in obj.join_requests.all():
-            if join_request.user_id == user.id and join_request.status == TeamJoinRequest.STATUS_PENDING:
-                return False
-        return True
+class AcceptTeamInvitationResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
-    @staticmethod
-    def resolve_is_in_active_tournament(obj):
-        return get_active_tournament_registration(obj) is not None
+class DeclineTeamInvitationResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
 
+class AcceptTeamJoinRequestResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
+
+class DeclineTeamJoinRequestResponse(Schema):
+    id: int
+    name: str
+    email: str
+    captain_id: int
+    is_public: bool
+    organization: str = ''
+    contact_telegram: str = ''
+    contact_discord: str = ''
+    banner: str | None = None
+    members: list[TeamMemberResponse]
+    is_member: bool
+    can_request_to_join: bool
+    is_in_active_tournament: bool
+
+class LeaveTeamResponse(Schema):
+    detail: str
+
+class CreateTeamJoinRequestResponse(Schema):
+    detail: str
 
 class TeamCreateRequest(Schema):
     name: str
@@ -115,7 +194,6 @@ class TeamCreateRequest(Schema):
     contact_discord: str = ''
     member_ids: list[PositiveInt] = []
 
-
 class TeamUpdateRequest(Schema):
     name: Optional[str] = None
     email: Optional[str] = None
@@ -125,14 +203,8 @@ class TeamUpdateRequest(Schema):
     contact_discord: Optional[str] = None
     member_ids: Optional[list[PositiveInt]] = None
 
-
 class TeamBannerResponse(Schema):
     banner: Optional[str] = None
-
-    @staticmethod
-    def resolve_banner(obj, context):
-        return _absolute_url(obj.banner, context)
-
 
 # --------------------------------------------------------------------------
 # Invitations / join requests
@@ -140,7 +212,6 @@ class TeamBannerResponse(Schema):
 
 class InviteMemberRequest(Schema):
     user_id: Optional[int] = None
-
 
 class TeamInvitationResponse(Schema):
     id: int
@@ -150,7 +221,6 @@ class TeamInvitationResponse(Schema):
     responded_at: Optional[datetime] = None
     invited_by_id: Optional[int] = None
 
-
 class TeamInvitationInboxResponse(Schema):
     id: int
     team: TeamSummaryResponse
@@ -158,7 +228,6 @@ class TeamInvitationInboxResponse(Schema):
     created_at: datetime
     responded_at: Optional[datetime] = None
     invited_by: Optional[TeamMemberResponse] = None
-
 
 class TeamJoinRequestResponse(Schema):
     id: int

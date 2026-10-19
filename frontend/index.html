@@ -9,8 +9,9 @@
 
     <script>
       ;(function () {
-        const theme = localStorage.getItem('theme') ?? 'light'
+        const theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
         document.documentElement.setAttribute('data-theme', theme)
+        document.documentElement.classList.toggle('dark', theme === 'dark')
       })()
     </script>
   </head>

@@ -76,19 +76,19 @@ import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiModal from '@/components/ui/UiModal'
 import UiTextArea from '@/components/ui/UiTextArea'
 import { truncateText } from '@/lib/utils'
-import type { CriterionResponse } from '@/api/backendAPINinja.schemas'
+import type { Criterion } from '@/features/tournaments/types'
 
 const emit = defineEmits<{
   (e: 'blur'): void
 }>()
 
-const modelValue = defineModel<CriterionResponse[]>({ default: () => [] })
+const modelValue = defineModel<Criterion[]>({ default: () => [] })
 
 const isOpen = ref(false)
 const criteriaList = computed(() => modelValue.value ?? [])
 const criteriaCount = computed(() => criteriaList.value.length)
 
-const newCriterion = ref<Omit<CriterionResponse, 'id'>>({
+const newCriterion = ref<Omit<Criterion, 'id'>>({
   name: '',
   description: '',
   max_score: 1,

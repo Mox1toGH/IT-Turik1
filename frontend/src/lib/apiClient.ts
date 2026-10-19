@@ -1,4 +1,4 @@
-﻿import Axios, { AxiosError, type AxiosRequestConfig, isAxiosError } from 'axios'
+import Axios, { AxiosError, type AxiosRequestConfig, isAxiosError } from 'axios'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
@@ -31,6 +31,13 @@ function toFormData(data: Record<string, unknown>): FormData {
   }
 
   return formData
+}
+
+function toApiPath(url: string | undefined): string | undefined {
+  if (!url?.startsWith('http://') && !url?.startsWith('https://')) return url
+
+  const parsedUrl = new URL(url)
+  return `${parsedUrl.pathname}${parsedUrl.search}`
 }
 
 export const AXIOS_INSTANCE = Axios.create({
@@ -93,30 +100,24 @@ export const customInstance = <T>(
   config: AxiosRequestConfig,
   options?: AxiosRequestConfig,
 ): Promise<T> => {
-  let finalConfig = { ...config, ...options }
+  const finalConfig = {
+    ...config,
+    ...options,
+    url: toApiPath(options?.url ?? config.url),
+  }
 
-  if (finalConfig.data instanceof FormData) {
-    finalConfig = {
-      ...finalConfig,
-      headers: {
-        ...finalConfig.headers,
-        'Content-Type': 'multipart/form-data',
-      },
+  if (finalConfig.data instanceof FormData || (finalConfig.data && containsFile(finalConfig.data))) {
+    if (!(finalConfig.data instanceof FormData)) {
+      finalConfig.data = toFormData(finalConfig.data as Record<string, unknown>)
     }
-  } else if (finalConfig.data && containsFile(finalConfig.data)) {
-    finalConfig = {
-      ...finalConfig,
-      data: toFormData(finalConfig.data as Record<string, unknown>),
-      headers: {
-        ...finalConfig.headers,
-        'Content-Type': 'multipart/form-data',
-      },
+
+    finalConfig.headers = {
+      ...finalConfig.headers,
+      'Content-Type': 'multipart/form-data',
     }
   }
 
-  const promise = AXIOS_INSTANCE(finalConfig).then(({ data }) => data)
-
-  return promise
+  return AXIOS_INSTANCE(finalConfig).then(({ data }) => data)
 }
 
 export type ErrorType<Error> = Error & { _axiosError: AxiosError }

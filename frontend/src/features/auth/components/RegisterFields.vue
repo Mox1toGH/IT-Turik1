@@ -123,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { toRefs } from 'vue'
 import type { Ref } from 'vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
 import UiPasswordField from '@/components/ui/UiPasswordField'
@@ -159,7 +160,9 @@ interface Props {
   isRestrictedRole: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+const form = { ...props.form }
+const { roleOptions, isRestrictedRole } = toRefs(props)
 </script>
 
 <style scoped>

@@ -1,65 +1,24 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch invitations</p>
-      </div>
-    </template>
-
+  <ui-card>
+    <ui-query-state :query="invitationsQuery" title="team invitations">
     <section class="team-invitations-section">
       <header class="team-invitations-subhead">
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="90px" />
-          </template>
+        <h3>Invitations</h3>
 
-          <h3>Invitations</h3>
-        </ui-skeleton-loader>
-
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="130px" />
-          </template>
-
-          <span class="text-muted">
+        <span class="text-muted">
             {{ filteredPendingInvitations.length }} awaiting response
             <span v-if="filteredDeclinedInvitations.length">
               , {{ filteredDeclinedInvitations.length }} declined
             </span>
           </span>
-        </ui-skeleton-loader>
       </header>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="team-invitations-list">
-            <div v-for="i in 2" :key="i" class="invitation-row">
-              <div style="display: flex; flex-direction: column; gap: 4px; flex: 1">
-                <div style="display: flex; justify-content: space-between; gap: 10px">
-                  <ui-skeleton variant="rect" width="100%" />
-                  <ui-skeleton variant="rect" width="70px" />
-                </div>
-
-                <ui-skeleton variant="rect" width="200px" />
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <p
+      <p
           v-if="filteredPendingInvitations.length === 0 && filteredDeclinedInvitations.length === 0"
           class="text-muted"
         >
           No invitations yet.
-        </p>
-
-        <div v-else class="team-invitations-list">
+        </p><div v-else class="team-invitations-list">
           <div
             v-for="invitation in filteredPendingInvitations"
             :key="`invitation-pending-${invitation.id}`"
@@ -122,8 +81,8 @@
             </div>
           </div>
         </div>
-      </ui-skeleton-loader>
     </section>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -131,15 +90,14 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useInviteMemberToTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
-import type { TeamInvitationResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { TeamInvitationResponse, UpdateTeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   teamId: number
@@ -148,19 +106,18 @@ interface Props {
 }
 
 const emit = defineEmits<{
-  (e: 'updateTeam', newTeamValue: TeamResponse): void
+  (e: 'updateTeam', newTeamValue: UpdateTeamResponse): void
 }>()
 
 const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
 const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
-const { data: invitations, isLoading, isFetching, refetch } = invitationsQuery
-const { status, errorCode, isStale } = useCardState(invitationsQuery)
+const { data: invitations, isLoading } = invitationsQuery
 
 const uniqueInvitations = computed(() => {
   const byUserId = new Map<number, TeamInvitationResponse>()
-  for (const inv of invitations.value ?? []) {
+  for (const inv of invitations.value?.items ?? []) {
     const uid = inv.user.id
 
     const prev = byUserId.get(uid)

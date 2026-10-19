@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="tournament-card" :query="tournamentQuery">
+  <ui-card class="tournament-card">
     <template #header>
       <div class="tournament-header">
         <div>
@@ -15,7 +15,8 @@
       </div>
     </template>
 
-    <template #skeleton>
+    <ui-query-state :query="tournamentQuery" title="tournament">
+      <template #skeleton>
       <div class="tournament-info">
         <div class="info-section">
           <p class="section-label">Name</p>
@@ -52,7 +53,7 @@
           </div>
         </div>
       </div>
-    </template>
+      </template>
 
     <div class="tournament-info">
       <div class="info-section">
@@ -155,6 +156,7 @@
         </ui-button>
       </template>
     </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -162,6 +164,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -209,20 +212,23 @@ const { mutate: leave, isPending: isLeaving } = useUnregisterTeamFromTournament(
 
 const registeredTeamId = computed(() => tournament.value?.registered_team?.id ?? null)
 const teamOptions = computed(() =>
-  (teams.value ?? []).map((team) => ({
+  (teams.value?.items ?? []).map((team) => ({
     value: team.id,
     label: team.name,
     disabled: !!team.reason,
     reason: team.reason,
   })),
 )
-const selectedTeam = computed(() => teams.value?.find((team) => team.id === selectedTeamId.value))
+const selectedTeam = computed(() =>
+  teams.value?.items.find((team) => team.id === selectedTeamId.value),
+)
 const canJoinSelectedTeam = computed(
   () => !!selectedTeam.value && !selectedTeam.value.reason && !isRegistering.value,
 )
 
 const canManageRegistration = computed(
-  () => user.value?.role === 'team' && ((teams.value?.length ?? 0) > 0 || !!registeredTeamId.value),
+  () =>
+    user.value?.role === 'team' && ((teams.value?.items.length ?? 0) > 0 || !!registeredTeamId.value),
 )
 
 const statusBadgeVariant = computed(() => {

@@ -37,7 +37,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiSelect from '@/components/ui/UiSelect'
 import ArrowRight from '@/icons/ArrowRight.vue'
-import type { TournamentStatus } from '@/api/backendAPINinja.schemas'
+import type { TournamentStatus } from '@/features/tournaments/types'
 
 const status = defineModel<TournamentStatus[]>('status', { required: true })
 

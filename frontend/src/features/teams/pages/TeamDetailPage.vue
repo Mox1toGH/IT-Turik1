@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell teams-detail-page">
-    <team-header :team="team" :loading="isInfoLoading" />
+    <team-header :team="team" :query="teamQuery" />
 
     <div class="teams-rule" aria-hidden="true"></div>
 
@@ -10,8 +10,7 @@
           <team-base-info
             :team="team"
             :loading="isInfoLoading"
-            :status="status"
-            :error-code="errorCode"
+            :query="teamQuery"
             :is-captain="isCaptain"
             @deleted="router.push('/teams')"
             @leave="router.push('/teams')"
@@ -42,10 +41,9 @@
             <team-members
               :team="team"
               :user="user"
+              :query="teamQuery"
               :search-filter="searchInput"
-              :status="status"
-              :error-code="errorCode"
-              :loading="isInfoLoading || isProfileLoading"
+              :loading="isInfoLoading"
               :is-captain="isCaptain"
             />
 
@@ -111,14 +109,14 @@
       </template>
 
       <template v-if="isCaptain" #settings>
-        <ui-skeleton-loader :loading="isInfoLoading">
-          <team-manage-zone
+        <ui-query-state :query="teamQuery">
+<team-manage-zone
             :team="team"
             :loading="isInfoLoading"
             :is-captain="isCaptain"
             @update-team="(newTeamValue) => (team = newTeamValue)"
           />
-        </ui-skeleton-loader>
+</ui-query-state>
       </template>
     </ui-tabs>
 
@@ -192,10 +190,9 @@ import { useTeamBanner } from '../composables/useTeamBanner'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiInput from '@/components/ui/UiInput'
+import { useQueryState } from '@/composables/useQueryState'
 import { formatDate } from '@/lib/date'
-import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeam } from '@/api/teams/teams'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
@@ -206,10 +203,10 @@ const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
-const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
+const { data: user } = useGetUserProfile()
 const teamQuery = useGetTeam(teamId)
 const { data: team, isLoading: isInfoLoading } = teamQuery
-const { status, errorCode } = useCardState(teamQuery)
+const { status } = useQueryState(teamQuery)
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },

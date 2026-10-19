@@ -26,10 +26,10 @@
 <script setup lang="ts">
 import UiSection from '@/components/ui/UiSection'
 import { formatScore } from './lib/format'
-import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
+import type { ArchiveStanding } from '@/features/tournaments/types'
 
 defineProps<{
-  standings: TournamentArchiveDetailResponse['standings']
+  standings: ArchiveStanding[]
 }>()
 
 const rankClass = (rank: number) => {

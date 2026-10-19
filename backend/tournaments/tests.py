@@ -348,7 +348,7 @@ class TournamentApiTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()['items'], [])
 
     def test_unregistered_user_does_not_see_draft_rounds_in_rounds_list(self):
         tournament = Tournament.objects.create(
@@ -373,7 +373,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:rounds', kwargs={'tournament_pk': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
@@ -585,7 +585,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
@@ -636,7 +636,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
@@ -688,7 +688,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -739,7 +739,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_my_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -776,7 +776,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_my_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -829,7 +829,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_my_submissions', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -1068,7 +1068,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_eligible_teams', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -1113,7 +1113,7 @@ class TournamentApiTests(APITestCase):
         authenticate(self.client, self.captain)
         url = reverse('ninja-api:tournament_eligible_teams', kwargs={'id': tournament.id})
         response = self.client.get(url)
-        data = {team['id']: team for team in response.json()}
+        data = {team['id']: team for team in response.json()['items']}
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -1187,7 +1187,7 @@ class TournamentApiTests(APITestCase):
         authenticate(self.client, self.captain)
         url = reverse('ninja-api:tournament_eligible_teams', kwargs={'id': tournament.id})
         response = self.client.get(url)
-        data = {team['id']: team for team in response.json()}
+        data = {team['id']: team for team in response.json()['items']}
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
@@ -1274,7 +1274,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_teams', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -1319,7 +1319,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_teams', kwargs={'id': tournament.id})
         response = self.client.get(url, {'status': 'all'})
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
@@ -1381,7 +1381,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_teams', kwargs={'id': tournament.id})
         response = self.client.get(url, {'status': 'disqualified'})
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -1425,7 +1425,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_teams', kwargs={'id': tournament.id})
         response = self.client.get(url, {'status': 'active'})
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -1467,7 +1467,7 @@ class TournamentApiTests(APITestCase):
         url = reverse('ninja-api:tournament_teams', kwargs={'id': tournament.id})
         response = self.client.get(url)
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -2004,7 +2004,7 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         authenticate(self.client, self.admin)
         response = self.client.get(reverse('ninja-api:round_submissions', kwargs={'id': self.round_obj.id}))
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
@@ -2035,7 +2035,7 @@ class RoundSubmissionsAssignmentsTests(APITestCase):
         authenticate(self.client, self.admin)
         response = self.client.get(reverse('ninja-api:round_submissions', kwargs={'id': self.round_obj.id}))
 
-        data = response.json()
+        data = response.json()['items']
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)

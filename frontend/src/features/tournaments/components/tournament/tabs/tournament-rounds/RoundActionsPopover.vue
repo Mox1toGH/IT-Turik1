@@ -21,7 +21,7 @@
           "
           >Start round</ui-button
         >
-        <template v-if="profile?.role === 'admin'">
+        <template v-if="hasRole(profile, 'admin')">
           <ui-button
             size="sm"
             :disabled="props.status !== 'active'"
@@ -70,7 +70,8 @@
 
 <script setup lang="ts">
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import type { RoundStatus } from '@/api/backendAPINinja.schemas'
+import { hasRole } from '@/shared/lib/permissions'
+import type { RoundStatus } from '@/features/tournaments/types'
 import {
   useCloseRoundSubmissions,
   useDeleteRound,

@@ -79,9 +79,7 @@ import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiSection from '@/components/ui/UiSection'
 import { formatScore } from './lib/format'
-import { type SubmissionResponse } from '@/api/backendAPINinja.schemas'
-
-type Submission = SubmissionResponse
+import type { ArchiveSubmission as Submission } from '@/features/tournaments/types'
 
 const props = defineProps<{
   submissions: Submission[]

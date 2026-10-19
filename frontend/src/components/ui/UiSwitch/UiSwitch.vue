@@ -13,7 +13,7 @@ interface Props {
 
 defineProps<Props>()
 
-const modelValue = defineModel<boolean>()
+const modelValue = defineModel<boolean>({ default: false })
 </script>
 
 <style>

@@ -1,18 +1,6 @@
 <template>
   <section class="page-shell">
-    <ui-card
-      :status="status"
-      :is-fetching="isFetching"
-      :is-stale="isStale"
-      :error-code="errorCode"
-      @retry="refetch"
-    >
-      <template #error>
-        <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info</p>
-        </div>
-      </template>
-
+    <ui-card>
       <template #header>
         <div class="head">
           <div>
@@ -32,78 +20,36 @@
         />
       </template>
 
+      <ui-query-state :query="userQuery" title="profile">
       <div class="details">
         <div class="field-row">
           <span class="field-label">Username</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
         </div>
         <div class="field-row">
           <span class="field-label">Email</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
         </div>
         <div class="field-row">
           <span class="field-label">Role</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
-          </ui-skeleton-loader>
+          <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
         </div>
         <div class="field-row">
           <span class="field-label">Full name</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
         </div>
         <div class="field-row">
           <span class="field-label">City</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
         </div>
         <div class="field-row">
           <span class="field-label">Phone</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
         </div>
         <div class="field-row field-row--wide">
           <span class="field-label">Teams</span>
           <div>
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 2" :key="i" variant="rect" width="150px" />
-                </div>
-              </template>
-
-              <div class="team-list">
+            <div class="team-list">
                 <router-link
                   v-for="team in user?.teams || []"
                   :key="team.id"
@@ -112,10 +58,7 @@
                 >
                   {{ team.name }}
                 </router-link>
-              </div>
-
-              <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-            </ui-skeleton-loader>
+              </div><p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
           </div>
         </div>
       </div>
@@ -146,6 +89,7 @@
           </div>
         </router-link>
       </div>
+      </ui-query-state>
     </ui-card>
   </section>
 </template>
@@ -155,19 +99,17 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiBadge from '@/components/ui/UiBadge'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUser } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import { formatDate } from '@/lib/date'
 
 const route = useRoute()
 const userId = computed(() => Number(route.params.id))
 const userQuery = useGetUser(userId)
-const { data: user, isLoading, isFetching, refetch } = userQuery
-const { status, errorCode, isStale } = useCardState(userQuery)
+const { data: user, isLoading } = userQuery
 </script>
 
 <style scoped>

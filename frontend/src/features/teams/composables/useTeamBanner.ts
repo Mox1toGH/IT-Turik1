@@ -7,7 +7,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 export interface UseTeamBannerReturn {
   isBannerModalOpen: Ref<boolean>
@@ -25,7 +25,7 @@ export interface UseTeamBannerReturn {
 
 export function useTeamBanner(
   teamId: number,
-  team: Ref<TeamResponse | undefined>,
+  team: Ref<Team | undefined>,
 ): UseTeamBannerReturn {
   const isBannerModalOpen = ref(false)
   const selectedBanner = ref<File[]>([])

@@ -1,36 +1,40 @@
 <template>
-  <ui-card class="stats-section" :query="playerQuery" title="statistics">
+  <ui-card class="stats-section" title="statistics">
     <template #header>
       <h2>Statistics</h2>
     </template>
 
-    <template #error>
-      <div class="error-state">
-        <p>{{ errorMessage }}</p>
-      </div>
-    </template>
+    <ui-query-state :query="playerQuery">
+      <template #error>
+        <div class="error-state">
+          <p>{{ errorMessage }}</p>
+        </div>
+      </template>
 
-    <template #skeleton>
+      <template #skeleton>
+        <div class="stats-grid">
+          <ui-skeleton v-for="n in 6" :key="n" variant="rect" height="84px" />
+        </div>
+      </template>
+
       <div class="stats-grid">
-        <ui-skeleton v-for="n in 6" :key="n" variant="rect" height="84px" />
+        <ui-card v-for="item in statsCards" :key="item.label" class="stat-card">
+          <p class="stat-label">{{ item.label }}</p>
+          <p class="stat-value">{{ item.value }}</p>
+        </ui-card>
       </div>
-    </template>
-
-    <div class="stats-grid">
-      <ui-card v-for="item in statsCards" :key="item.label" class="stat-card">
-        <p class="stat-label">{{ item.label }}</p>
-        <p class="stat-value">{{ item.value }}</p>
-      </ui-card>
-    </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hasRole } from '@/shared/lib/permissions'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
@@ -52,7 +56,7 @@ const playerQuery = useGetPlayerStats()
 // Secondary query: own loading state, never affects the card's status.
 const teamQuery = useGetTeamStats(firstTeamId, {
   query: {
-    enabled: computed(() => props.user?.role === 'team' && firstTeamId.value > 0),
+    enabled: computed(() => hasRole(props.user, 'team') && firstTeamId.value > 0),
     retry: false,
   },
 })
@@ -82,7 +86,7 @@ const statsCards = computed(() => {
     { label: 'Current team', value: playerStats.value?.current_team_name || 'No team' },
   ]
 
-  if (props.user?.role === 'team') {
+  if (hasRole(props.user, 'team')) {
     cards.push(
       { label: 'Team win rate', value: formatPercent(teamStats.value?.win_rate) },
       { label: 'Active team members', value: String(teamStats.value?.active_members_count ?? 0) },

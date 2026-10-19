@@ -47,9 +47,10 @@ import UiCard from '@/components/ui/UiCard'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import type { TournamentFormController } from '../../composables/useTournamentForm'
 
-defineProps<{
+const props = defineProps<{
   form: TournamentFormController
 }>()
+const form = { ...props.form }
 </script>
 
 <style scoped>

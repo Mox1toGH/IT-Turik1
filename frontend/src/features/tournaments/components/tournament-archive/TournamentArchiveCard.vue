@@ -36,14 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import type { TournamentArchiveListResponse } from '@/api/backendAPINinja.schemas'
+import type { TournamentArchive } from '@/features/tournaments/types'
 import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { formatDate } from '@/lib/date'
 
 interface Props {
-  tournament: TournamentArchiveListResponse
+  tournament: TournamentArchive
 }
 
 defineProps<Props>()

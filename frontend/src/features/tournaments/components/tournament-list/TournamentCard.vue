@@ -44,10 +44,10 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { formatDate } from '@/lib/date'
-import type { TournamentResponse, TournamentStatus } from '@/api/backendAPINinja.schemas'
+import type { Tournament, TournamentStatus } from '@/features/tournaments/types'
 
 defineProps<{
-  tournament: TournamentResponse
+  tournament: Tournament
 }>()
 
 const statusBadgeVariant = (status?: TournamentStatus) => {

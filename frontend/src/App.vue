@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="app-shell">
-    <VueQueryDevtools hidden />
+    <VueQueryDevtools />
 
     <app-navbar />
 
@@ -44,21 +44,10 @@ import UiButton from './components/ui/UiButton'
 import UiOfflineBanner from './components/ui/UiOfflineBanner'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import CrossIcon from './icons/CrossIcon.vue'
+import { useThemeStore } from '@/stores/theme'
 
 const { notification, hideNotification } = useNotification()
-
-const applyTheme = () => {
-  const html = document.documentElement
-  const currentTheme = localStorage.getItem('theme') ?? 'light'
-
-  if (currentTheme === 'dark') {
-    html.classList.add('dark')
-  } else {
-    html.classList.remove('dark')
-  }
-}
-
-applyTheme()
+useThemeStore()
 </script>
 
 <style scoped>

@@ -18,7 +18,8 @@ import { getGetTeamQueryKey, getListTeamsQueryKey } from '@/api/teams/teams'
 import { getGetNewsQueryKey, getListNewsQueryKey } from '@/api/news/news'
 
 /** True when invalidating with `filter` marks the query registered under `key`. */
-const invalidates = (filter: readonly unknown[], key: readonly unknown[]): boolean => {
+const invalidates = (filter: readonly unknown[] | undefined, key: readonly unknown[]): boolean => {
+  if (!filter) return false
   const scoped = new QueryClient()
   scoped.setQueryData(key, [])
   scoped.invalidateQueries({ queryKey: filter })

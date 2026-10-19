@@ -4,13 +4,15 @@
       <h2 id="stats-preview-title">Statistics</h2>
     </div>
 
-    <p v-if="isError" class="preview-error">Unable to load stats preview right now.</p>
-
-    <ui-skeleton-loader :loading="isLoading">
+    <ui-query-state v-if="props.user" :query="activeQuery">
       <template #skeleton>
         <div class="preview-grid">
           <ui-skeleton v-for="n in 4" :key="n" variant="rect" height="82px" />
         </div>
+      </template>
+
+      <template #error>
+        <p class="preview-error">Unable to load stats preview right now.</p>
       </template>
 
       <div class="preview-grid">
@@ -22,18 +24,19 @@
           </p>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hasRole } from '@/shared/lib/permissions'
 import { RouterLink } from 'vue-router'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import UiCard from '../ui/UiCard'
-import type { UserRole } from '@/api/backendAPINinja.schemas.ts'
+import type { UserRole } from '@/shared/types/user'
 
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
@@ -49,7 +52,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const isStaff = computed(() => !!props.user?.is_staff)
-const isTeamRole = computed(() => props.user?.role === 'team')
+const isTeamRole = computed(() => hasRole(props.user, 'team'))
 const isPlayerActive = computed(() => !!props.user && !isStaff.value)
 const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
 const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
@@ -64,18 +67,7 @@ const { data: adminStats } = adminQuery
 const { data: playerStats } = playerQuery
 const { data: teamStats } = teamQuery
 
-const isLoading = computed(
-  () =>
-    (isStaff.value && adminQuery.isPending.value) ||
-    (isPlayerActive.value && playerQuery.isPending.value) ||
-    (isTeamActive.value && teamQuery.isPending.value),
-)
-// Team stats are non-fatal: player stats stay visible if they fail.
-const isError = computed(
-  () =>
-    (isStaff.value && adminQuery.isError.value) ||
-    (isPlayerActive.value && playerQuery.isError.value),
-)
+const activeQuery = computed(() => (isStaff.value ? adminQuery : playerQuery))
 
 const cards = computed(() => {
   if (props.user?.is_staff) {
@@ -126,7 +118,7 @@ const cards = computed(() => {
     },
   ]
 
-  if (props.user?.role === 'team') {
+  if (hasRole(props.user, 'team')) {
     return [
       ...base,
       {

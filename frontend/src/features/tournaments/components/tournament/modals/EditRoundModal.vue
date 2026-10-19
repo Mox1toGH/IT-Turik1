@@ -161,12 +161,12 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
-import EditorModal from '../tabs/tournament-rounds/modals/EditorModal.vue'
-import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
+import EditorModal from '@/components/shared/EditorModal.vue'
+import type { Round } from '@/features/tournaments/types'
 
 interface Props {
   modelValue: boolean
-  round: RoundResponse
+  round: Round
 }
 
 // Don't destructure props: keep `props` so the template/render context stays valid

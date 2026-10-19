@@ -78,11 +78,11 @@ import UiBadge from '@/components/ui/UiBadge'
 import AddTeamIcon from '@/icons/AddTeamIcon.vue'
 import UiInput from '@/components/ui/UiInput'
 import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
-import type { TournamentResponse, TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Tournament, TournamentTeam } from '@/features/tournaments/types'
 
 interface Props {
-  tournament?: TournamentResponse
-  team: TournamentTeamResponse
+  tournament?: Tournament
+  team: TournamentTeam
   isAdmin: boolean
   isDisqualified?: boolean
 }
@@ -97,14 +97,14 @@ const confirmModalConfirmMessage = ref<string | undefined>()
 const confirmModalVariant = ref<'default' | 'danger'>('default')
 const disqualificationReason = ref('')
 const pendingAction = ref<{
-  team: TournamentTeamResponse
+  team: TournamentTeam
   action: 'activated' | 'disqualified'
 } | null>(null)
 
 const { showNotification } = useNotification()
 const { mutate: updateRegistration, isPending: isUpdating } = useDisqualifyTeamFromTournament()
 
-function openDisqualifyModal(team: TournamentTeamResponse) {
+function openDisqualifyModal(team: TournamentTeam) {
   pendingAction.value = { team, action: 'disqualified' }
   disqualificationReason.value = ''
   confirmModalTitle.value = `Disqualify ${truncateText(team.name, 10)}`
@@ -113,7 +113,7 @@ function openDisqualifyModal(team: TournamentTeamResponse) {
   showConfirmModal.value = true
 }
 
-function openReactivateModal(team: TournamentTeamResponse) {
+function openReactivateModal(team: TournamentTeam) {
   pendingAction.value = { team, action: 'activated' }
   confirmModalTitle.value = `Reactivate ${truncateText(team.name, 10)}`
   confirmModalConfirmText.value = 'Reactivate'

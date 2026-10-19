@@ -38,10 +38,10 @@
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
-  team?: TeamResponse
+  team?: Team
   loading: boolean
   isCaptain: boolean
   heroBannerStyle: Record<string, string>

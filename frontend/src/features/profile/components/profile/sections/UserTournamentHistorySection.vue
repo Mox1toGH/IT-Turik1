@@ -11,8 +11,8 @@
         <ui-button variant="secondary" @click="goBack">Back</ui-button>
       </div>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
+      <ui-query-state :query="historyQuery">
+<template #skeleton>
           <div class="history-list">
             <div v-for="i in 4" :key="`skeleton-${i}`" class="history-card history-card-skeleton">
               <ui-skeleton variant="rect" width="60%" height="24px" />
@@ -21,15 +21,9 @@
               <ui-skeleton variant="rect" width="100%" height="34px" />
             </div>
           </div>
-        </template>
-
-        <p v-if="isError" class="text-muted">
-          Failed to load tournament history ({{ historyError?.code ?? 'unknown' }}).
-        </p>
-
-        <p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p>
-
-        <div v-else class="history-list">
+        </template><p v-if="isError" class="text-muted">
+          Failed to load tournament history ({{ historyError?.message ?? 'unknown error' }}).
+        </p><p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p><div v-else class="history-list">
           <ui-card
             v-for="item in historyItems"
             :key="`${item.tournament_id}-${item.team.id}`"
@@ -66,7 +60,7 @@
             </template>
           </ui-card>
         </div>
-      </ui-skeleton-loader>
+</ui-query-state>
     </div>
   </section>
 </template>
@@ -78,7 +72,6 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import {
   useGetUser,
   useGetUserProfile,
@@ -98,16 +91,19 @@ const targetUserId = computed(() =>
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
 })
+const historyQuery = useListUserTournamentHistory(
+  targetUserId,
+  undefined,
+  { query: { enabled: computed(() => targetUserId.value > 0) } },
+)
 const {
   data: history,
   isLoading,
   isError,
   error: historyError,
-} = useListUserTournamentHistory(targetUserId, {
-  query: { enabled: computed(() => targetUserId.value > 0) },
-})
+} = historyQuery
 
-const historyItems = computed(() => history.value ?? [])
+const historyItems = computed(() => history.value?.items ?? [])
 const displayUserName = computed(
   () => viewedUser.value?.full_name || viewedUser.value?.username || 'User',
 )

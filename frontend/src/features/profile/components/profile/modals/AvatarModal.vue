@@ -61,11 +61,11 @@ import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import UiFileDrop from '@/components/ui/UiFileDrop'
 import { useAvatarUpload } from '../../../composables/useAvatarUpload'
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 
 const props = withDefaults(
   defineProps<{
-    user?: UserResponse
+    user?: Pick<UserSummary, 'id' | 'avatar'>
     disabled?: boolean
     showTrigger?: boolean
   }>(),

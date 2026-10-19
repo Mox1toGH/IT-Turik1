@@ -7,13 +7,17 @@ from django.db.models import Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from ninja import File, Router
 from ninja.files import UploadedFile
+from ninja.pagination import paginate
+from backend.pagination import APIPageNumberPagination
 
 from accounts.models import User
 from accounts.google_calendar import get_calendar_service
 from backend.auth import JWTAuth
+from backend.media import absolute_media_url
 from backend.permissions import Permission, require_permission, has_permission
 from backend.schemas import ErrorResponse
 from evaluation.leaderboard_service import get_tournament_leaderboard
+from evaluation.models import LeaderboardEntry
 from notifications.services import NotificationService
 from teams.models import Team, TeamMember
 
@@ -22,12 +26,12 @@ from backend.errors import raise_api_error
 from http import HTTPStatus
 from .schemas import (
     ActiveTournamentResponse, CurrentTaskResponse, EligibleTeamResponse,
-    CalendarEventResponse, CalendarRoundResponse, DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
+    DisqualificationRequest, DisqualificationResponse, ExportToGoogleCalendarRequest,
     ExportToGoogleCalendarResponse, MyCalendarResponse,
-    EventCreateRequest, EventListResponse, EventResponse, EventUpdateRequest, OwnSubmissionResponse,
+    EventCreateRequest, EventResponse, EventUpdateRequest, OwnSubmissionResponse,
     RoundCreateRequest, RoundResponse, RoundUpdateRequest,
     SubmissionCreateRequest,
-    SubmissionListResponse, SubmissionResponse, SubmissionUpdateRequest, TeamRegistrationRequest,
+    SubmissionResponse, SubmissionUpdateRequest, TeamRegistrationRequest,
     TeamRegistrationResponse, TournamentArchiveDetailResponse,
     TournamentArchiveListResponse, TournamentCreateRequest, TournamentListResponse,
     TournamentResponse, TournamentTeamResponse, TournamentUpdateRequest,
@@ -116,6 +120,14 @@ def _update_model(instance, values):
 
 
 def _get_registered_team(tournament, request):
+    if 'rounds' not in getattr(tournament, '_prefetched_objects_cache', {}):
+        tournament._prefetched_objects_cache = getattr(
+            tournament, '_prefetched_objects_cache', {}
+        )
+        tournament._prefetched_objects_cache['rounds'] = list(
+            Round.objects.filter(tournament_id=tournament.id).order_by('start_date')
+        )
+
     user = getattr(request, "auth", None)
 
     if not (user and getattr(user, "is_authenticated", False)):
@@ -135,13 +147,210 @@ def _get_registered_team(tournament, request):
     return registration.team if registration else None
 
 
-def _attach_registered_team(tournament, request):
-    # Whether the current user has a team registered is request-scoped (depends on
-    # request.auth), so it can't be computed inside a schema resolver. We compute it
-    # here and stash it on the instance; TournamentResponse.resolve_registered_team
-    # just reads it back off.
-    tournament._registered_team = _get_registered_team(tournament, request)
-    return tournament
+def _tournament_response_data(tournament, request):
+    registered_team = _get_registered_team(tournament, request)
+    rounds = tournament._prefetched_objects_cache.get('rounds', [])
+    return {
+        'id': tournament.id,
+        'name': tournament.name,
+        'description': tournament.description,
+        'start_date': tournament.start_date,
+        'end_date': tournament.end_date,
+        'max_teams': tournament.max_teams,
+        'min_team_members': tournament.min_team_members,
+        'banner': absolute_media_url(tournament.banner, {'request': request}),
+        'status': tournament.status,
+        'rounds': [
+            {
+                'id': round_obj.id,
+                'name': round_obj.name,
+                'start_date': round_obj.start_date,
+                'end_date': round_obj.end_date,
+                'status': round_obj.status,
+                'criteria': _criteria_data(round_obj.criteria),
+                'tournament': round_obj.tournament_id,
+            }
+            for round_obj in rounds
+        ],
+        'registered_team': (
+            {'id': registered_team.id, 'name': registered_team.name, 'is_public': registered_team.is_public}
+            if registered_team else None
+        ),
+    }
+
+
+def _registration_response_data(registration):
+    return {
+        'id': registration.id,
+        'tournament': registration.tournament_id,
+        'team': registration.team_id,
+        'team_name': registration.team.name,
+        'is_active': registration.is_active,
+        'is_disqualified': registration.is_disqualified,
+        'disqualification_reason': registration.disqualification_reason,
+        'created_at': registration.created_at,
+    }
+
+
+def _event_response_data(event):
+    return {
+        'id': event.id,
+        'tournament': event.tournament_id,
+        'type': event.type,
+        'title': event.title,
+        'description': event.description,
+        'link': event.link,
+        'start_datetime': event.start_datetime,
+        'icon': event.icon_id,
+        'created_at': event.created_at,
+        'updated_at': event.updated_at,
+    }
+
+
+def _round_response_data(round_obj):
+    return {
+        'id': round_obj.id,
+        'tournament': round_obj.tournament_id,
+        'name': round_obj.name,
+        'description': round_obj.description,
+        'tech_requirements': round_obj.tech_requirements,
+        'must_have_requirements': round_obj.must_have_requirements,
+        'criteria': _criteria_data(round_obj.criteria),
+        'start_date': round_obj.start_date,
+        'end_date': round_obj.end_date,
+        'passing_count': round_obj.passing_count,
+        'evaluation_criteria': round_obj.evaluation_criteria,
+        'materials': round_obj.materials,
+        'status': round_obj.status,
+    }
+
+
+def _round_short_response_data(round_obj):
+    return {
+        'id': round_obj.id,
+        'name': round_obj.name,
+        'start_date': round_obj.start_date,
+        'end_date': round_obj.end_date,
+        'status': round_obj.status,
+        'criteria': _criteria_data(round_obj.criteria),
+        'tournament': round_obj.tournament_id,
+    }
+
+
+def _team_summary_response_data(team):
+    return {'id': team.id, 'name': team.name, 'is_public': team.is_public}
+
+
+def _submission_response_data(submission, request):
+    assignments = submission._prefetched_objects_cache.get('jury_assignments', [])
+    return {
+        'id': submission.id,
+        'team': submission.team_id,
+        'round': submission.round_id,
+        'team_details': _team_summary_response_data(submission.team),
+        'round_details': _round_short_response_data(submission.round),
+        'github_url': submission.github_url,
+        'demo_video_url': submission.demo_video_url,
+        'demo_video_file': absolute_media_url(submission.demo_video_file, {'request': request}),
+        'live_demo_url': submission.live_demo_url,
+        'description': submission.description,
+        'assignments': [
+            {
+                'id': assignment.id,
+                'jury': {
+                    'id': assignment.jury_id,
+                    'username': assignment.jury.username,
+                    'full_name': assignment.jury.full_name,
+                    'role': assignment.jury.role,
+                },
+                'evaluation': (
+                    {
+                        'id': assignment.evaluation.id,
+                        'scores': assignment.evaluation.scores,
+                        'total_score': assignment.evaluation.total_score,
+                        'final_score': assignment.evaluation.final_score,
+                        'comment': assignment.evaluation.comment,
+                        'created_at': assignment.evaluation.created_at,
+                    }
+                    if getattr(assignment, 'evaluation', None) else None
+                ),
+                'created_at': assignment.created_at,
+            }
+            for assignment in assignments
+        ],
+        'created_at': submission.created_at,
+        'updated_at': submission.updated_at,
+    }
+
+
+def _own_submission_response_data(submission, request):
+    return {
+        'id': submission.id,
+        'team': _team_summary_response_data(submission.team),
+        'round': _round_short_response_data(submission.round),
+        'github_url': submission.github_url,
+        'demo_video_url': submission.demo_video_url,
+        'demo_video_file': absolute_media_url(submission.demo_video_file, {'request': request}),
+        'live_demo_url': submission.live_demo_url,
+        'description': submission.description,
+        'created_at': submission.created_at,
+        'updated_at': submission.updated_at,
+    }
+
+
+def _archive_standing_response_data(entry):
+    return {
+        'rank': entry.rank,
+        'team': _team_summary_response_data(entry.team),
+        'total_score': entry.total_score,
+        'average_score': entry.average_score,
+        'criteria_breakdown': entry.criteria_breakdown,
+        'jury_breakdown': entry.jury_breakdown,
+        'rounds_breakdown': entry.rounds_breakdown,
+        'snapshot_at': entry.snapshot_at,
+    }
+
+
+def _archive_base_response_data(tournament, request):
+    entries = tournament._prefetched_objects_cache.get('leaderboard_entries', [])
+    return {
+        'id': tournament.id,
+        'name': tournament.name,
+        'description': tournament.description,
+        'start_date': tournament.start_date,
+        'end_date': tournament.end_date,
+        'status': tournament.status,
+        'banner': absolute_media_url(tournament.banner, {'request': request}),
+        'standings': [_archive_standing_response_data(entry) for entry in entries],
+    }
+
+
+def _tournament_team_response_data(registration, request):
+    team = registration.team
+    members = list(team._prefetched_objects_cache.get('members', []))
+    if team.captain_id not in {member.id for member in members}:
+        members.append(team.captain)
+    return {
+        'id': team.id,
+        'registration_id': registration.id,
+        'name': team.name,
+        'members_count': len(members),
+        'members': [
+            {
+                'id': member.id,
+                'username': member.username,
+                'email': member.email,
+                'full_name': member.full_name,
+                'role': member.role,
+                'avatar': absolute_media_url(member.avatar, {'request': request}),
+            }
+            for member in members
+        ],
+        'is_public': team.is_public,
+        'is_active': registration.is_active,
+        'is_disqualified': registration.is_disqualified,
+        'disqualification_reason': registration.disqualification_reason,
+    }
 
 
 def _team_participants(team: Team) -> list[User]:
@@ -167,15 +376,7 @@ def update_tournament_banner(request, id: int, banner: UploadedFile = File(...))
         },
     )
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 
 @router.delete('/manage/{id}/banner', operation_id='deleteTournamentBanner', url_name='tournament_manage_banner', response={200: TournamentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -194,15 +395,7 @@ def delete_tournament_banner(request, id: int):
     else:
         logger.debug('Banner delete requested but none set', extra={'tournament_id': id})
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 
 @router.get('/{id}/registrations/{registration_pk}', operation_id='getTournamentTeamRegistration', url_name='tournament_registration_detail', response={200: TeamRegistrationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -217,7 +410,7 @@ def get_tournament_team_registration(request, id: int, registration_pk: int):
         pk=registration_pk,
         tournament_id=id,
     )
-    return TeamRegistrationResponse.from_orm(registration)
+    return _registration_response_data(registration)
 
 
 @router.patch('/{id}/registrations/{registration_pk}/disqualification', operation_id='disqualifyTeamFromTournament', url_name='tournament_registration_disqualification', response={200: DisqualificationResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -281,17 +474,18 @@ def disqualify_team_from_tournament(request, id: int, registration_pk: int, payl
             'reason': registration.disqualification_reason or 'No reason provided',
         },
     )
-    return DisqualificationResponse(
-        id=registration.id,
-        team_id=registration.team_id,
-        team_name=registration.team.name,
-        tournament_id=registration.tournament_id,
-        is_active=registration.is_active,
-        action=action,
-    )
+    return {
+        'id': registration.id,
+        'team_id': registration.team_id,
+        'team_name': registration.team.name,
+        'tournament_id': registration.tournament_id,
+        'is_active': registration.is_active,
+        'action': action,
+    }
 
 
-@router.get('/{id}/my-submissions', operation_id='listMyTeamSubmissions', url_name='tournament_my_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/{id}/my-submissions', operation_id='listMyTeamSubmissions', url_name='tournament_my_submissions', response={200: list[SubmissionResponse], 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_my_team_submissions(request, id: int):
     logger.debug(
         'Listing my team submissions',
@@ -311,20 +505,17 @@ def list_my_team_submissions(request, id: int):
         )
         raise_api_error(404, 'No team participation found for this tournament.')
 
-    queryset = _submissions().filter(round__tournament=tournament, team_id=registration.team_id)
+    queryset = _submissions().filter(
+        round__tournament=tournament,
+        team_id=registration.team_id,
+    ).order_by('-created_at', '-id')
 
-    return SubmissionListResponse.model_construct(
-        root=[
-            SubmissionResponse.model_validate(
-                submission,
-                from_attributes=True,
-            )
-            for submission in queryset
-        ]
-    )
+    submissions = list(queryset)
+    return [_submission_response_data(item, request) for item in submissions]
 
 
-@router.get('/rounds/{id}/submissions', operation_id='listRoundSubmissions', url_name='round_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.get('/rounds/{id}/submissions', operation_id='listRoundSubmissions', url_name='round_submissions', response={200: list[SubmissionResponse], 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_round_submissions(request, id: int):
     logger.debug(
         'Listing round submissions',
@@ -334,20 +525,14 @@ def list_round_submissions(request, id: int):
     queryset = (
         _submissions()
         .filter(round=round_obj)
+        .order_by('-created_at', '-id')
         .exclude(
             team__tournament_registrations__tournament=round_obj.tournament,
             team__tournament_registrations__is_disqualified=True,
         )
     )
-    return SubmissionListResponse.model_construct(
-        root=[
-            SubmissionResponse.model_validate(
-                submission,
-                from_attributes=True,
-            )
-            for submission in queryset
-        ]
-    )
+    submissions = list(queryset)
+    return [_submission_response_data(item, request) for item in submissions]
 
 
 @router.get('/my-calendar', operation_id='getMyCalendar', url_name="my_calendar", response={200: MyCalendarResponse, 401: ErrorResponse})
@@ -359,12 +544,31 @@ def get_my_calendar(request):
         tournament_ids = TournamentTeamRegistration.objects.filter(is_active=True).filter(
             Q(team__captain_id=request.auth.id) | Q(team__team_members__user_id=request.auth.id)
         ).values_list('tournament_id', flat=True)
-    events = Event.objects.select_related('icon', 'tournament').filter(tournament_id__in=tournament_ids).order_by('start_datetime')
-    rounds = Round.objects.select_related('tournament').filter(tournament_id__in=tournament_ids).order_by('start_date')
-    return MyCalendarResponse.model_construct(
-        events=[CalendarEventResponse.from_orm(event) for event in events],
-        rounds=[CalendarRoundResponse.from_orm(round_obj) for round_obj in rounds],
-    )
+    events = list(Event.objects.select_related('icon', 'tournament').filter(tournament_id__in=tournament_ids).order_by('start_datetime', 'id'))
+    rounds = list(Round.objects.select_related('tournament').filter(tournament_id__in=tournament_ids).order_by('start_date', 'id'))
+    return {
+        'events': [
+            {
+                'id': event.id, 'tournament': event.tournament_id, 'type': event.type,
+                'title': event.title, 'description': event.description, 'link': event.link,
+                'start_datetime': event.start_datetime, 'icon': event.icon_id,
+                'created_at': event.created_at, 'updated_at': event.updated_at,
+            }
+            for event in events
+        ],
+        'rounds': [
+            {
+                'id': round_obj.id, 'tournament': round_obj.tournament_id, 'name': round_obj.name,
+                'description': round_obj.description, 'tech_requirements': round_obj.tech_requirements,
+                'must_have_requirements': round_obj.must_have_requirements,
+                'criteria': _criteria_data(round_obj.criteria), 'start_date': round_obj.start_date,
+                'end_date': round_obj.end_date, 'passing_count': round_obj.passing_count,
+                'evaluation_criteria': round_obj.evaluation_criteria, 'materials': round_obj.materials,
+                'status': round_obj.status,
+            }
+            for round_obj in rounds
+        ],
+    }
 
 @router.post('/my-calendar/export-to-google', operation_id='exportToGoogleCalendar', url_name='export_to_google_calendar', response={200: ExportToGoogleCalendarResponse, 400: ErrorResponse, 401: ErrorResponse})
 def export_to_google_calendar(request, payload: ExportToGoogleCalendarRequest):
@@ -438,7 +642,7 @@ def export_to_google_calendar(request, payload: ExportToGoogleCalendarRequest):
             'error_count': len(errors),
         },
     )
-    return ExportToGoogleCalendarResponse(created=created, errors=errors)
+    return {'created': created, 'errors': errors}
 
 
 @router.get('', operation_id='listTournaments', url_name='tournaments', response={200: TournamentListResponse, 400: ErrorResponse})
@@ -466,23 +670,21 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     if searchQuery:
         queryset = queryset.filter(Q(name__icontains=searchQuery) | Q(description__icontains=searchQuery))
     if status:
-        queryset = queryset.filter(status__in=[item.strip() for item in status.split(',') if item.strip()])
+        requested_statuses = [item.strip() for item in status.split(',') if item.strip()]
+        allowed_statuses = {value for value, _label in Tournament.STATUS_CHOICES}
+        if not requested_statuses or not set(requested_statuses).issubset(allowed_statuses):
+            raise_api_error(HTTPStatus.BAD_REQUEST, 'Invalid tournament status filter.')
+        queryset = queryset.filter(status__in=requested_statuses)
 
     total = queryset.count()
     size = min(page_size, 100)
-    page_items = queryset[(page - 1) * size:page * size]
+    page_items = list(queryset[(page - 1) * size:page * size])
 
 
-    return TournamentListResponse.model_construct(
-        data=[
-            TournamentResponse.model_validate(
-                _attach_registered_team(tournament, request),
-                from_attributes=True,
-            )
-            for tournament in page_items
-        ],
-        total=total,
-    )
+    return {
+        'data': [_tournament_response_data(tournament, request) for tournament in page_items],
+        'total': total,
+    }
 
 
 @router.get(
@@ -491,9 +693,22 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     url_name='tournament_archive_list',
     response={200: list[TournamentArchiveListResponse], 401: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_tournament_archive(request):
     logger.debug('Listing tournament archive')
-    return Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+    tournaments = list(
+        Tournament.objects.filter(status=Tournament.STATUS_FINISHED)
+        .prefetch_related(
+            'rounds',
+            Prefetch(
+                'leaderboard_entries',
+                queryset=LeaderboardEntry.objects.filter(round__isnull=True)
+                .select_related('team').order_by('rank'),
+            ),
+        )
+        .order_by('id')
+    )
+    return [_archive_base_response_data(tournament, request) for tournament in tournaments]
 
 
 @router.get(
@@ -504,24 +719,40 @@ def list_tournament_archive(request):
 )
 def get_tournament_archive(request, id: int):
     logger.debug('Fetching tournament archive', extra={'tournament_id': id})
-    return get_object_or_404(Tournament, pk=id, status=Tournament.STATUS_FINISHED)
+    tournament = get_object_or_404(
+        Tournament.objects.prefetch_related(
+            'rounds',
+            Prefetch('leaderboard_entries', queryset=LeaderboardEntry.objects.filter(
+                round__isnull=True
+            ).select_related('team').order_by('rank')),
+            Prefetch('team_registrations', queryset=TournamentTeamRegistration.objects.filter(
+                is_active=True
+            ).select_related('team').order_by('team__name')),
+        ),
+        pk=id,
+        status=Tournament.STATUS_FINISHED,
+    )
+    response_data = _archive_base_response_data(tournament, request)
+    response_data['teams'] = [
+        _team_summary_response_data(registration.team)
+        for registration in tournament._prefetched_objects_cache.get('team_registrations', [])
+    ]
+    response_data['rounds'] = [
+        _round_short_response_data(round_obj)
+        for round_obj in tournament._prefetched_objects_cache.get('rounds', [])
+    ]
+    return response_data
 
 
-@router.get('/archive/{id}/submissions', operation_id='listTournamentArchiveSubmissions', url_name='tournament_archive_submissions', response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/archive/{id}/submissions', operation_id='listTournamentArchiveSubmissions', url_name='tournament_archive_submissions', response={200: list[SubmissionResponse], 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_tournament_archive_submissions(request, id: int):
     logger.debug('Listing archive submissions', extra={'tournament_id': id})
     get_object_or_404(Tournament, pk=id, status=Tournament.STATUS_FINISHED)
-    queryset = _submissions().filter(round__tournament_id=id)
+    queryset = _submissions().filter(round__tournament_id=id).order_by('-created_at', '-id')
 
-    return SubmissionListResponse.model_construct(
-        root=[
-            SubmissionResponse.model_validate(
-                submission,
-                from_attributes=True,
-            )
-            for submission in queryset
-        ]
-    )
+    submissions = list(queryset)
+    return [_submission_response_data(item, request) for item in submissions]
 
 
 @router.get('/{int:id}', operation_id='getTournament', url_name='tournament_detail', response={200: TournamentResponse, 404: ErrorResponse})
@@ -529,15 +760,7 @@ def get_tournament(request, id: int):
     logger.debug('Fetching tournament', extra={'tournament_id': id})
     tournament = get_object_or_404(_visible_tournaments(request), pk=id)
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 @router.post('/manage', operation_id='createTournament', url_name='tournament_manage_create', response={201: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 def create_tournament(request, payload: TournamentCreateRequest):
@@ -549,15 +772,7 @@ def create_tournament(request, payload: TournamentCreateRequest):
         extra={'tournament_id': tournament.id, 'user_id': request.auth.id},
     )
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return 201, TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return 201, _tournament_response_data(tournament, request)
 
 
 @router.get('/manage/{id}', operation_id='getTournamentForUpdate', url_name='tournament_manage_update', response={200: TournamentResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -569,15 +784,7 @@ def get_tournament_for_update(request, id: int):
     )
     tournament = get_object_or_404(Tournament, pk=id)
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 
 def _save_tournament(request, pk, payload):
@@ -602,15 +809,7 @@ def _save_tournament(request, pk, payload):
 def update_tournament(request, id: int, payload: TournamentUpdateRequest):
     tournament =_save_tournament(request, id, payload)
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 
 @router.delete('/manage/{id}', operation_id='deleteTournament', url_name='tournament_manage_update', response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -642,15 +841,7 @@ def start_tournament_registration(request, id: int):
         extra={'tournament_id': id, 'status': tournament.status},
     )
 
-    registered_team = _get_registered_team(tournament, request)
-
-    return TournamentResponse.model_validate(
-        tournament,
-        from_attributes=True,
-        context={
-            "registered_team": registered_team,
-        },
-    )
+    return _tournament_response_data(tournament, request)
 
 
 @router.post('/{id}/register-team', operation_id='registerTeamForTournament', url_name='tournament_register_team', response={201: TeamRegistrationResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -677,7 +868,8 @@ def register_team(request, id: int, payload: TeamRegistrationRequest):
     )
 
     NotificationService.notify(recipients=_participants(tournament), event_type='tournament_team_registered', context={'team_name': team.name, 'tournament_name': tournament.name})
-    return 201, TeamRegistrationResponse.model_validate(registration, from_attributes=True)
+    registration = TournamentTeamRegistration.objects.select_related('team').get(pk=registration.pk)
+    return 201, _registration_response_data(registration)
 
 
 @router.post('/{id}/leave-team', operation_id='unregisterTeamFromTournament', url_name='tournament_leave_team', response={200: TeamRegistrationResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -703,10 +895,12 @@ def leave_team(request, id: int, payload: TeamRegistrationRequest):
         },
     )
 
-    return TeamRegistrationResponse.model_validate(registration, from_attributes=True)
+    registration = TournamentTeamRegistration.objects.select_related('team').get(pk=registration.pk)
+    return _registration_response_data(registration)
 
 
 @router.get('/{id}/eligible-teams', operation_id='listEligibleTeamsForTournament', url_name='tournament_eligible_teams', response={200: list[EligibleTeamResponse], 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_eligible_teams(request, id: int):
     logger.debug(
         'Listing eligible teams',
@@ -714,7 +908,7 @@ def list_eligible_teams(request, id: int):
     )
     tournament = get_object_or_404(Tournament, pk=id)
     teams = list(
-        Team.objects.filter(captain_id=request.auth.id)
+        Team.objects.filter(captain_id=request.auth.id).order_by('id')
         .annotate(members_count=Count('team_members', distinct=True))
         .prefetch_related('team_members')
     )
@@ -779,33 +973,35 @@ def list_eligible_teams(request, id: int):
         elif participant_ids_by_team[team.id] & conflicting_member_ids:
             reason = 'One or more team members are already participating in another tournament.'
 
-        responses.append(
-            EligibleTeamResponse(
-                id=team.id,
-                name=team.name,
-                members_count=team.members_count,
-                reason=reason,
-            )
-        )
+        responses.append({
+            'id': team.id,
+            'name': team.name,
+            'members_count': team.members_count,
+            'reason': reason,
+        })
 
     return responses
 
 
-@router.get('/{id}/teams', operation_id='listTournamentTeams', url_name='tournament_teams', response={200: list[TournamentTeamResponse], 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/{id}/teams', operation_id='listTournamentTeams', url_name='tournament_teams', response={200: list[TournamentTeamResponse], 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_tournament_teams(request, id: int, status: str = 'active'):
     logger.debug(
         'Listing tournament teams',
         extra={'tournament_id': id, 'status': status},
     )
+    if status not in {'active', 'all', 'disqualified'}:
+        raise_api_error(HTTPStatus.BAD_REQUEST, 'Invalid team registration status filter.')
     get_object_or_404(Tournament, pk=id)
-    queryset = TournamentTeamRegistration.objects.filter(tournament_id=id).select_related('team', 'team__captain').prefetch_related('team__members')
+    queryset = TournamentTeamRegistration.objects.filter(tournament_id=id).select_related('team', 'team__captain').prefetch_related('team__members').order_by('id')
 
     if status == 'disqualified':
         queryset = queryset.filter(is_disqualified=True)
     elif status != 'all':
         queryset = queryset.filter(is_active=True)
 
-    return queryset
+    registrations = list(queryset)
+    return [_tournament_team_response_data(item, request) for item in registrations]
 
 
 @router.get('/active', operation_id='getTeamActiveTournament', url_name='team_active_tournament', response={200: ActiveTournamentResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -820,10 +1016,17 @@ def get_active_tournament(request, team_id: int):
         logger.info('No active tournament for team', extra={'team_id': team_id})
         raise_api_error(HTTPStatus.NOT_FOUND, 'Active tournament not found for this team.')
 
-    return ActiveTournamentResponse.model_validate(registration.tournament, from_attributes=True)
+    tournament = registration.tournament
+    return {
+        'id': tournament.id,
+        'name': tournament.name,
+        'status': tournament.status,
+        'start_date': tournament.start_date,
+    }
 
 
-@router.get('/{tournament_pk}/rounds', operation_id='listRounds', url_name='rounds', response={200: list[RoundResponse], 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/{tournament_pk}/rounds', operation_id='listRounds', url_name='rounds', response={200: list[RoundResponse], 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_rounds(request, tournament_pk: int, status: str | None = None):
     logger.debug(
         'Listing rounds',
@@ -835,9 +1038,14 @@ def list_rounds(request, tournament_pk: int, status: str | None = None):
     if not has_permission(request.auth, Permission.VIEW_TOURNAMENT):
         queryset = queryset.exclude(status=Round.STATUS_DRAFT)
     if status:
-        queryset = queryset.filter(status__in=[item.strip() for item in status.split(',') if item.strip()])
+        requested_statuses = [item.strip() for item in status.split(',') if item.strip()]
+        allowed_statuses = {value for value, _label in Round.STATUS_CHOICES}
+        if not requested_statuses or not set(requested_statuses).issubset(allowed_statuses):
+            raise_api_error(HTTPStatus.BAD_REQUEST, 'Invalid round status filter.')
+        queryset = queryset.filter(status__in=requested_statuses)
 
-    return queryset
+    rounds = list(queryset)
+    return [_round_response_data(item) for item in rounds]
 
 
 @router.post('/{tournament_pk}/rounds', operation_id='createRound', url_name='rounds', response={201: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -859,7 +1067,7 @@ def create_round(request, tournament_pk: int, payload: RoundCreateRequest):
         },
     )
 
-    return 201, round_obj
+    return 201, _round_response_data(round_obj)
 
 
 @router.get('/rounds/{id}', operation_id='getRound', url_name='round_detail', response={200: RoundResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -867,7 +1075,7 @@ def get_round(request, id: int):
     logger.debug('Fetching round', extra={'round_id': id})
     round_obj = get_object_or_404(_rounds(), pk=id)
 
-    return round_obj
+    return _round_response_data(round_obj)
 
 
 def _save_round(request, pk, payload):
@@ -893,7 +1101,7 @@ def _save_round(request, pk, payload):
 
 @router.patch('/rounds/{id}', operation_id='updateRound', url_name='round_detail', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_round(request, id: int, payload: RoundUpdateRequest):
-    return _save_round(request, id, payload)
+    return _round_response_data(_save_round(request, id, payload))
 
 
 @router.delete('/rounds/{id}', operation_id='deleteRound', url_name='round_detail', response={204: None, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -921,7 +1129,7 @@ def start_round_view(request, id: int):
         _validation_error(error)
     logger.info('Round started', extra={'round_id': id, 'status': round_obj.status})
 
-    return round_obj
+    return _round_response_data(round_obj)
 
 
 @router.post('/rounds/{id}/close-submissions', url_name='round_close_submissions', operation_id='closeRoundSubmissions', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -935,7 +1143,7 @@ def close_round_submissions(request, id: int):
         _validation_error(error)
     logger.info('Round submissions closed', extra={'round_id': id, 'status': round_obj.status})
 
-    return round_obj
+    return _round_response_data(round_obj)
 
 
 @router.post('/rounds/{id}/mark-evaluated', operation_id='markRoundEvaluated', url_name='round_mark_evaluated', response={200: RoundResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -949,17 +1157,19 @@ def mark_round_evaluated_view(request, id: int):
         _validation_error(error)
     logger.info('Round marked evaluated', extra={'round_id': id, 'status': round_obj.status})
 
-    return round_obj
+    return _round_response_data(round_obj)
 
 
 @router.get('/submissions', operation_id='listSubmissions', url_name='submissions', response={200: list[OwnSubmissionResponse], 401: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_submissions(request):
     logger.debug('Listing own submissions', extra={'user_id': request.auth.id})
     queryset = _submissions().filter(
         Q(team__captain_id=request.auth.id) | Q(team__team_members__user_id=request.auth.id)
-    ).distinct()
+    ).distinct().order_by('-created_at', '-id')
 
-    return queryset
+    submissions = list(queryset)
+    return [_own_submission_response_data(item, request) for item in submissions]
 
 
 @router.post('/submissions', operation_id='createSubmission', url_name="submissions", response={201: SubmissionResponse, 400: ErrorResponse, 401: ErrorResponse})
@@ -1007,7 +1217,8 @@ def create_submission(request, payload: SubmissionCreateRequest):
         },
     )
 
-    return 201, _submissions().get(pk=submission.pk)
+    submission = _submissions().get(pk=submission.pk)
+    return 201, _submission_response_data(submission, request)
 
 
 @router.get('/submissions/{id}', operation_id='getSubmission', url_name='submission_detail', response={200: SubmissionResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -1018,7 +1229,7 @@ def get_submission(request, id: int):
     )
     submission = get_object_or_404(_submissions().filter(team__captain_id=request.auth.id), pk=id)
 
-    return submission
+    return _submission_response_data(submission, request)
 
 
 def _save_submission(request, pk, payload):
@@ -1053,7 +1264,8 @@ def _save_submission(request, pk, payload):
         },
     )
 
-    return _submissions().get(pk=submission.pk)
+    submission = _submissions().get(pk=submission.pk)
+    return _submission_response_data(submission, request)
 
 @router.patch('/submissions/{id}', operation_id='updateSubmission', url_name='submission_detail', response={200: SubmissionResponse, 400: ErrorResponse, 401: ErrorResponse, 404: ErrorResponse})
 def update_submission(request, id: int, payload: SubmissionUpdateRequest):
@@ -1061,7 +1273,8 @@ def update_submission(request, id: int, payload: SubmissionUpdateRequest):
 
 
 @router.get('/{id}/submissions', operation_id='listTournamentSubmissions', url_name='tournament_submissions',
-            response={200: SubmissionListResponse, 401: ErrorResponse, 404: ErrorResponse})
+            response={200: list[SubmissionResponse], 401: ErrorResponse, 404: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_tournament_submissions(request, id: int):
     logger.debug('Listing tournament submissions', extra={'tournament_id': id})
     tournament = get_object_or_404(Tournament, pk=id)
@@ -1075,14 +1288,11 @@ def list_tournament_submissions(request, id: int):
         _submissions()
         .filter(round__tournament=tournament)
         .exclude(team_id__in=disqualified_teams)
+        .order_by('-created_at', '-id')
     )
 
-    return SubmissionListResponse.model_construct(
-        root=[
-            SubmissionResponse.model_validate(submission, from_attributes=True)
-            for submission in queryset
-        ]
-    )
+    submissions = list(queryset)
+    return [_submission_response_data(item, request) for item in submissions]
 
 
 @router.get('/current-task', operation_id='getCurrentTask', url_name='current_task', response={200: CurrentTaskResponse, 401: ErrorResponse, 404: ErrorResponse})
@@ -1099,7 +1309,16 @@ def get_current_task(request, tournament_id: int | None = None):
     if round_obj is None:
         logger.info('No active task found', extra={'tournament_id': tournament_id})
         raise_api_error(404, 'No active task found.')
-    return CurrentTaskResponse.model_validate(round_obj, from_attributes=True)
+    return {
+        'id': round_obj.id,
+        'tournament_id': round_obj.tournament_id,
+        'tournament_name': round_obj.tournament.name,
+        'name': round_obj.name,
+        'task': round_obj.description,
+        'deadline': round_obj.end_date,
+        'must_have_requirements': round_obj.must_have_requirements,
+        'tech_requirements': round_obj.tech_requirements,
+    }
 
 
 def _save_event(request, payload, instance=None):
@@ -1127,36 +1346,37 @@ def _save_event(request, payload, instance=None):
     return event
 
 
-@router.get('/events', operation_id='listEvents', url_name="event", response={200: EventListResponse, 401: ErrorResponse})
+@router.get('/events', operation_id='listEvents', url_name="event", response={200: list[EventResponse], 401: ErrorResponse})
+@paginate(APIPageNumberPagination)
 def list_events(request, tournament: int | None = None):
     logger.debug('Listing events', extra={'tournament_id': tournament})
     events = Event.objects.all()
     if tournament is not None:
         events = events.filter(tournament_id=tournament)
 
-    return EventListResponse.model_construct(root=[
-        EventResponse.model_validate(event, from_attributes=True)
-        for event in events
-    ])
+    events = list(events.order_by('id'))
+    return [_event_response_data(event) for event in events]
 
 
 @router.post('/events', operation_id='createEvent', url_name="event", response={201: EventResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 def create_event(request, payload: EventCreateRequest):
     require_permission(request, Permission.MANAGE_EVENTS)
-    return 201, EventResponse.model_validate(_save_event(request, payload), from_attributes=True)
+    event = _save_event(request, payload)
+    return 201, _event_response_data(event)
 
 
 @router.get('/events/{id}', operation_id='getEvent', url_name="event", response={200: EventResponse, 401: ErrorResponse, 404: ErrorResponse})
 def get_event(request, id: int):
     logger.debug('Fetching event', extra={'event_id': id})
     event = get_object_or_404(Event, pk=id)
-    return EventResponse.model_validate(event, from_attributes=True)
+    return _event_response_data(event)
 
 
 @router.patch('/events/{id}', operation_id='updateEvent', url_name="event", response={200: EventResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_event(request, id: int, payload: EventUpdateRequest):
     require_permission(request, Permission.MANAGE_EVENTS)
-    return EventResponse.model_validate(_save_event(request, payload, get_object_or_404(Event, pk=id)), from_attributes=True)
+    event = _save_event(request, payload, get_object_or_404(Event, pk=id))
+    return _event_response_data(event)
 
 
 @router.delete('/events/{id}', operation_id='deleteEvent', url_name="event", response={204: None, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})

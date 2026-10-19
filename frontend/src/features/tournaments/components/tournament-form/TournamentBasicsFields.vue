@@ -46,9 +46,10 @@ import UiInput from '@/components/ui/UiInput'
 import UiTextArea from '@/components/ui/UiTextArea'
 import type { TournamentFormController } from '../../composables/useTournamentForm'
 
-defineProps<{
+const props = defineProps<{
   form: TournamentFormController
 }>()
+const form = { ...props.form }
 </script>
 
 <style scoped>

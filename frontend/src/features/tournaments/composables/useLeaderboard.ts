@@ -8,7 +8,7 @@ import { customInstance } from '@/lib/apiClient'
 import { queryClient } from '@/lib/queryClient'
 import { subscribeTournamentLeaderboard } from '@/lib/leaderboardSocket'
 import { useNotification } from '@/composables/useNotification'
-import { getErrorCode } from '@/composables/useCardState'
+import { getErrorCode } from '@/composables/useQueryState'
 
 export interface LeaderboardRoundColumn {
   id: number
@@ -84,7 +84,7 @@ export function useLeaderboard(tournamentId: MaybeRefOrGetter<number>) {
   const id = computed<number>(() => toValue(tournamentId))
 
   const { data: roundsData } = useListRounds(id)
-  const rounds = computed(() => roundsData.value ?? [])
+  const rounds = computed(() => roundsData.value?.items ?? [])
 
   const {
     data: leaderboard,
@@ -301,6 +301,7 @@ export function useLeaderboard(tournamentId: MaybeRefOrGetter<number>) {
     isLoading,
     isError,
     isFetching,
+    error,
     errorCode,
     refetch,
     isLeaderboardNotReady,

@@ -1,4 +1,4 @@
-import type { UserRole } from '@/api/backendAPINinja.schemas'
+import type { UserRole } from '@/shared/types/user'
 import * as v from 'valibot'
 
 export const PasswordSchema = v.pipe(
@@ -12,6 +12,7 @@ export const PasswordSchema = v.pipe(
 
 export const LoginSchema = v.object({
   username: v.pipe(v.string(), v.minLength(1, 'Username cannot be empty')),
+  password: v.pipe(v.string(), v.minLength(1, 'Password cannot be empty')),
 })
 
 export const RegisterSchema = v.object({

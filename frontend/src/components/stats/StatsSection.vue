@@ -1,36 +1,51 @@
 <template>
-  <ui-section title="System Stats">
-    <div v-if="isLoading" class="stats-grid">
-      <div v-for="n in 6" :key="n" class="stats-card loading-card">
-        <UiSkeleton variant="rect" height="16px" width="50%" />
-        <UiSkeleton variant="rect" height="36px" width="70%" />
-        <UiSkeleton variant="rect" height="120px" />
-      </div>
-    </div>
-    <p v-else-if="isError" class="error-text">Unable to load stats right now. Please try again.</p>
+  <section class="stats-shell">
+    <h2 class="stats-title">System Stats</h2>
 
-    <template v-else>
+    <ui-query-state v-if="props.user" :query="activeQuery">
+      <template #skeleton>
+        <div class="stats-grid">
+          <div v-for="n in 6" :key="n" class="stats-card loading-card">
+            <UiSkeleton variant="rect" height="16px" width="50%" />
+            <UiSkeleton variant="rect" height="36px" width="70%" />
+            <UiSkeleton variant="rect" height="120px" />
+          </div>
+        </div>
+      </template>
+
+      <template #error>
+        <p class="error-text">Unable to load stats right now. Please try again.</p>
+      </template>
+
       <AdminStats v-if="isAdmin && adminStats" :stats="adminStats" />
       <div v-else style="display: grid; gap: 0.75rem">
         <PlayerStats v-if="playerStats" :stats="playerStats" :current-team-to="currentTeamTo" />
-        <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
+        <ui-query-state v-if="isTeamActive" :query="teamQuery">
+          <template #skeleton>
+            <UiSkeleton variant="rect" height="82px" />
+          </template>
+          <!-- Team stats are non-fatal: a failure must stay silent. -->
+          <template #error />
+          <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
+        </ui-query-state>
       </div>
-    </template>
-  </ui-section>
+    </ui-query-state>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiSection from '@/components/ui/UiSection/UiSection.vue'
+import { hasRole } from '@/shared/lib/permissions'
 import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiQueryState from '@/components/ui/UiQueryState'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
 import './styles/stats.css'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
-import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { UserSummary } from '@/shared/types/user'
 
-type ProfileLike = UserResponse
+type ProfileLike = UserSummary
 
 interface Props {
   user?: ProfileLike | null
@@ -39,7 +54,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const isAdmin = computed(() => Boolean(props.user?.is_staff))
-const isTeamRole = computed(() => props.user?.role === 'team')
+const isTeamRole = computed(() => hasRole(props.user, 'team'))
 const isPlayerActive = computed(() => !!props.user && !isAdmin.value)
 const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
 const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
@@ -54,18 +69,7 @@ const { data: adminStats } = adminQuery
 const { data: playerStats } = playerQuery
 const { data: teamStats } = teamQuery
 
-const isLoading = computed(
-  () =>
-    (isAdmin.value && adminQuery.isPending.value) ||
-    (isPlayerActive.value && playerQuery.isPending.value) ||
-    (isTeamActive.value && teamQuery.isPending.value),
-)
-// Team stats are non-fatal: player stats stay visible if they fail.
-const isError = computed(
-  () =>
-    (isAdmin.value && adminQuery.isError.value) ||
-    (isPlayerActive.value && playerQuery.isError.value),
-)
+const activeQuery = computed(() => (isAdmin.value ? adminQuery : playerQuery))
 
 const currentTeamTo = computed(() => {
   const teamName = playerStats.value?.current_team_name

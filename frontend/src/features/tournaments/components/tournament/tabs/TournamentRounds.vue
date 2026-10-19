@@ -6,7 +6,7 @@
 
   <section>
     <div v-if="status === 'loading'" class="rounds-list">
-      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card" status="loading">
+      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card">
         <template #header>
           <div class="round-header">
             <ui-skeleton variant="rect" width="180px" height="24px" />
@@ -14,20 +14,18 @@
           </div>
         </template>
 
-        <template #skeleton>
-          <div class="skeleton-lines">
-            <ui-skeleton variant="rect" width="220px" />
-            <ui-skeleton variant="rect" width="220px" />
-          </div>
+        <div class="skeleton-lines">
+          <ui-skeleton variant="rect" width="220px" />
+          <ui-skeleton variant="rect" width="220px" />
+        </div>
 
-          <div class="round-actions">
-            <ui-skeleton variant="rect" width="110px" height="36px" />
-          </div>
-        </template>
+        <div class="round-actions">
+          <ui-skeleton variant="rect" width="110px" height="36px" />
+        </div>
       </ui-card>
     </div>
 
-    <ui-card
+    <ui-query-state
       v-else-if="status !== 'data'"
       :query="roundsQuery"
       class="rounds-state"
@@ -36,7 +34,7 @@
       <template #empty-action>
         <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
       </template>
-    </ui-card>
+    </ui-query-state>
 
     <div v-else class="rounds-list">
       <ui-card v-for="round in rounds" :key="round.id" class="round-card">
@@ -116,6 +114,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
@@ -128,7 +127,7 @@ import CreateRoundModal from './tournament-rounds/modals/CreateRoundModal.vue'
 import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
 import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
@@ -142,12 +141,12 @@ const router = useRouter()
 const route = useRoute()
 
 const roundsQuery = useListRounds(props.tournamentId)
-const { status } = useCardState(roundsQuery)
+const { status } = useQueryState(roundsQuery)
 const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
-const rounds = computed(() => roundsQuery.data.value ?? [])
+const rounds = computed(() => roundsQuery.data.value?.items ?? [])
 const submittedRoundIds = computed(
-  () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
+  () => new Set((submissions.value?.items ?? []).map((submission) => submission.round_details.id)),
 )
 
 const isDetailsOpen = ref(false)

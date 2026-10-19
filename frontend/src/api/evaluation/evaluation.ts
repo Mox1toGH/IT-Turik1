@@ -30,18 +30,20 @@ import type {
 
 import type {
   AssignJuryResponse,
-  AvailableJuryResponse,
+  CreateJuryEvaluationResponse,
   ErrorResponse,
+  GetJuryEvaluationResponse,
   JuryAssignmentItemRequest,
   ListAvailableJuryParams,
   ListJuryAssignmentsParams,
+  PagedAvailableJuryResponse,
   PagedJuryAssignmentResponse,
   RoundLeaderboardResponse,
   RoundPassingStatusResponse,
   SubmissionEvaluationPatchRequest,
   SubmissionEvaluationRequest,
-  SubmissionEvaluationResponse,
-  TournamentLeaderboardResponse
+  TournamentLeaderboardResponse,
+  UpdateJuryEvaluationResponse
 } from '../backendAPINinja.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -130,7 +132,7 @@ export const createJuryEvaluation = (
 ) => {
       submissionEvaluationRequest = unref(submissionEvaluationRequest);
       
-      return customInstance<SubmissionEvaluationResponse>(
+      return customInstance<CreateJuryEvaluationResponse>(
       {url: `http://localhost:8000/api/evaluation/jury-evaluations`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: submissionEvaluationRequest, signal
@@ -194,7 +196,7 @@ export const getJuryEvaluation = (
 ) => {
       evaluationId = unref(evaluationId);
       
-      return customInstance<SubmissionEvaluationResponse>(
+      return customInstance<GetJuryEvaluationResponse>(
       {url: `http://localhost:8000/api/evaluation/jury-evaluations/${evaluationId}`, method: 'GET', signal
     },
       options);
@@ -263,7 +265,7 @@ export const updateJuryEvaluation = (
       evaluationId = unref(evaluationId);
 submissionEvaluationPatchRequest = unref(submissionEvaluationPatchRequest);
       
-      return customInstance<SubmissionEvaluationResponse>(
+      return customInstance<UpdateJuryEvaluationResponse>(
       {url: `http://localhost:8000/api/evaluation/jury-evaluations/${evaluationId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: submissionEvaluationPatchRequest
@@ -456,7 +458,7 @@ export const listAvailableJury = (
       roundId = unref(roundId);
 params = unref(params);
       
-      return customInstance<AvailableJuryResponse[]>(
+      return customInstance<PagedAvailableJuryResponse>(
       {url: `http://localhost:8000/api/evaluation/rounds/${roundId}/available-jury`, method: 'GET',
         params: unref(params), signal
     },

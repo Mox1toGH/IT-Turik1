@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 from ninja import Schema
 
-from backend.media import absolute_media_url
 from backend.schemas import StaffRole, UserRole
 from pydantic import Field, field_validator
 
@@ -13,24 +12,25 @@ from pydantic import Field, field_validator
 # Common
 # --------------------------------------------------------------------------
 
-class MessageResponse(Schema):
+class PasswordResetRequestedResponse(Schema):
     message: str
 
+class PasswordResetLinkValidationResponse(Schema):
+    message: str
+
+class PasswordResetCompletedResponse(Schema):
+    message: str
+
+class PasswordChangedResponse(Schema):
+    message: str
 
 class ActivationResponse(Schema):
     status: str
     message: str
 
-
 class AvatarSchema(Schema):
-    """Base schema: `avatar` is returned as an absolute URL (needs context={'request': request})."""
-
+    """Response shape for an avatar URL, mapped by the endpoint."""
     avatar: str = ''
-
-    @staticmethod
-    def resolve_avatar(obj, context):
-        return absolute_media_url(getattr(obj, 'avatar', None), context) or ''
-
 
 # --------------------------------------------------------------------------
 # Auth
@@ -65,43 +65,34 @@ class RegisterResponse(Schema):
     phone: Optional[str] = None
     city: Optional[str] = None
 
-
 class LoginRequest(Schema):
     username: str
     password: str
-
 
 class LoginResponse(Schema):
     access: str
     refresh: str
 
-
 class TokenRefreshRequest(Schema):
     refresh: str
-
 
 class TokenRefreshResponse(Schema):
     access: str
 
-
 class GoogleAuthRequest(Schema):
     id_token: str
 
-
 class PasswordResetRequest(Schema):
     email: str
-
 
 class PasswordResetConfirmRequest(Schema):
     new_password: str
     confirm_password: str
 
-
 class ChangePasswordRequest(Schema):
     current_password: str
     new_password: str
     confirm_password: str
-
 
 # --------------------------------------------------------------------------
 # Users
@@ -113,11 +104,9 @@ class UserTeamResponse(Schema):
     contact_telegram: str
     contact_discord: str
 
-
 class UserActiveTournamentTeamResponse(Schema):
     id: int
     name: str
-
 
 class UserActiveTournamentRoundResponse(Schema):
     id: int
@@ -125,7 +114,6 @@ class UserActiveTournamentRoundResponse(Schema):
     start_date: datetime
     end_date: datetime
     status: str
-
 
 class UserActiveTournamentResponse(Schema):
     id: int
@@ -136,7 +124,6 @@ class UserActiveTournamentResponse(Schema):
     team: UserActiveTournamentTeamResponse
     team_registration_status: str
     current_round: UserActiveTournamentRoundResponse | None
-
 
 class UserResponse(AvatarSchema):
     id: int
@@ -152,31 +139,54 @@ class UserResponse(AvatarSchema):
     teams: list[UserTeamResponse]
     active_tournament: UserActiveTournamentResponse | None
 
-    @staticmethod
-    def resolve_created_at(obj):
-        return obj.date_joined
+class GetUserProfileResponse(Schema):
+    id: int
+    username: str
+    email: str
+    role: UserRole
+    full_name: str
+    phone: str
+    city: str
+    is_staff: bool
+    created_at: datetime
+    needs_onboarding: bool
+    teams: list[UserTeamResponse]
+    active_tournament: UserActiveTournamentResponse | None
+    avatar: str = ''
 
-    @staticmethod
-    def resolve_teams(obj):
-        return [
-            {
-                'id': team.id,
-                'name': team.name,
-                'contact_telegram': team.contact_telegram or '',
-                'contact_discord': team.contact_discord or '',
-            }
-            for team in obj.teams.all()
-        ]
+class UpdateUserProfileResponse(Schema):
+    id: int
+    username: str
+    email: str
+    role: UserRole
+    full_name: str
+    phone: str
+    city: str
+    is_staff: bool
+    created_at: datetime
+    needs_onboarding: bool
+    teams: list[UserTeamResponse]
+    active_tournament: UserActiveTournamentResponse | None
+    avatar: str = ''
 
-    @staticmethod
-    def resolve_active_tournament(obj):
-        return None
-
+class GetUserResponse(Schema):
+    id: int
+    username: str
+    email: str
+    role: UserRole
+    full_name: str
+    phone: str
+    city: str
+    is_staff: bool
+    created_at: datetime
+    needs_onboarding: bool
+    teams: list[UserTeamResponse]
+    active_tournament: UserActiveTournamentResponse | None
+    avatar: str = ''
 
 class UserShortResponse(Schema):
     id: int
     username: str
-
 
 class TeamUserListResponse(AvatarSchema):
     id: int
@@ -185,21 +195,17 @@ class TeamUserListResponse(AvatarSchema):
     full_name: Optional[str] = None
     city: Optional[str] = None
 
-
 class UserUpdateRequest(Schema):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     city: Optional[str] = None
     password: str | None = None
 
-
 class UserAvatarResponse(AvatarSchema):
     pass
 
-
 class UserListFilters(Schema):
     search: Optional[str] = Field(None, description='Filter by username, email, or full name')
-
 
 class GoogleAuthResponse(Schema):
     access: str
@@ -207,18 +213,14 @@ class GoogleAuthResponse(Schema):
     user: UserResponse
     onboarding_required: bool
 
-
 class GoogleCalendarStatusResponse(Schema):
     connected: bool
-
 
 class GoogleCalendarConnectResponse(Schema):
     auth_url: str
 
-
 class GoogleCalendarCallbackRequest(Schema):
     code: str
-
 
 # --------------------------------------------------------------------------
 # Tournament history
@@ -227,7 +229,6 @@ class GoogleCalendarCallbackRequest(Schema):
 class TeamRefResponse(Schema):
     id: int
     name: str
-
 
 class UserTournamentHistoryItemResponse(Schema):
     tournament_id: int
@@ -239,42 +240,6 @@ class UserTournamentHistoryItemResponse(Schema):
     team_registration_status: str
     final_rank: Optional[int] = None
     final_score: Optional[float] = None
-
-    @staticmethod
-    def resolve_tournament_name(obj):
-        return obj.tournament.name
-
-    @staticmethod
-    def resolve_tournament_status(obj):
-        return obj.tournament.status
-
-    @staticmethod
-    def resolve_start_date(obj):
-        return obj.tournament.start_date
-
-    @staticmethod
-    def resolve_end_date(obj):
-        return obj.tournament.end_date
-
-    @staticmethod
-    def resolve_team_registration_status(obj):
-        if obj.is_disqualified:
-            return 'disqualified'
-        if obj.is_active:
-            return 'active'
-        return 'inactive'
-
-    # context['standings'] = {(tournament_id, team_id): {'rank': .., 'total_score': ..}}
-    @staticmethod
-    def resolve_final_rank(obj, context):
-        standing = (context or {}).get('standings', {}).get((obj.tournament_id, obj.team_id))
-        return standing['rank'] if standing else None
-
-    @staticmethod
-    def resolve_final_score(obj, context):
-        standing = (context or {}).get('standings', {}).get((obj.tournament_id, obj.team_id))
-        return standing['total_score'] if standing else None
-
 
 # --------------------------------------------------------------------------
 # Role activation codes
@@ -292,28 +257,16 @@ class RoleActivationCodeResponse(Schema):
     used_by_username: str | None
     used_at: datetime | None
 
-    @staticmethod
-    def resolve_created_by_username(obj):
-        return obj.created_by.username if obj.created_by else None
-
-    @staticmethod
-    def resolve_used_by_username(obj):
-        return obj.used_by.username if obj.used_by else None
-
-
 class RoleActivationCodeListFilters(Schema):
     role: Optional[str] = Field(None, description='Filter by role: jury, organizer, admin')
-
 
 class RoleActivationCodeGenerateRequest(Schema):
     role: StaffRole
     count: int = Field(1, ge=1, le=100)
 
-
 class RoleActivationCodeListResponse(Schema):
     codes: list[RoleActivationCodeResponse]
     active_counts: dict[str, int]
-
 
 class RoleActivationCodeGenerateResponse(Schema):
     created: list[RoleActivationCodeResponse]

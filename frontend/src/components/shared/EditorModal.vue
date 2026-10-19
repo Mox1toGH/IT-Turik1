@@ -159,7 +159,7 @@ import { computed } from 'vue'
 import { tiptapJsonToText } from '@/lib/utils'
 import UnderlineIcon from '@/icons/typography/UnderlineIcon.vue'
 import HighlightIcon from '@/icons/typography/HighlightIcon.vue'
-import { useRoundEditor } from '../../../../../composables/useRoundEditor'
+import { useRoundEditor } from '@/composables/useRichTextEditor'
 
 interface Props {
   title: string

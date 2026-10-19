@@ -25,7 +25,7 @@
       </ul>
 
       <p v-else class="team-empty">
-        {{ teams?.length ? 'No teams match your search.' : 'No eligible teams found.' }}
+        {{ teams?.items.length ? 'No teams match your search.' : 'No eligible teams found.' }}
       </p>
     </template>
   </ui-modal>
@@ -56,7 +56,7 @@ const { mutate: register, isPending } = useRegisterTeamForTournament()
 
 const filteredTeams = computed(() => {
   const query = search.value.trim().toLowerCase()
-  const all = teams.value ?? []
+  const all = teams.value?.items ?? []
   if (!query) return all
   return all.filter((team) => team.name.toLowerCase().includes(query))
 })
