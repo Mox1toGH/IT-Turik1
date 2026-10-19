@@ -78,7 +78,7 @@ import { keepPreviousData } from '@tanstack/vue-query'
 import UiCardError from '@/components/ui/UiCardError'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useConnection } from '@/composables/useConnection'
 import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'
 import TournamentFilters from '../components/tournament-list/TournamentFilters.vue'
@@ -119,7 +119,7 @@ const tournamentsQuery = useListTournaments(params, {
 })
 
 const { data: tournaments, isFetching, refetch } = tournamentsQuery
-const { status, errorCode, isStale } = useCardState(tournamentsQuery)
+const { status, errorCode, isStale } = useQueryState(tournamentsQuery)
 
 const onSearch = (query: string) => {
   currentPage.value = 1

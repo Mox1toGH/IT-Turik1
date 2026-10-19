@@ -9,7 +9,10 @@
     <div class="news-rule" aria-hidden="true"></div>
 
     <news-list
-      :query="newsQuery"
+      :status="status"
+      :error-code="errorCode"
+      :is-fetching="isFetching"
+      :is-stale="isStale"
       :items="newsItems"
       :total-news="totalNews"
       :total-pages="totalPages"
@@ -40,6 +43,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
+import { useQueryState } from '@/composables/useQueryState'
 import { useDeleteNews, useListNews } from '@/api/news/news'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import NewsHero from '../components/NewsHero.vue'
@@ -67,6 +71,9 @@ const newsQuery = useListNews(computed(() => ({ page: currentPage.value, pageSiz
 const { data: news } = newsQuery
 
 const newsItems = computed<NewsArticle[]>(() => news.value?.items ?? [])
+const { status, errorCode, isFetching, isStale } = useQueryState(newsQuery, () => ({
+  isEmpty: newsItems.value.length === 0,
+}))
 const totalNews = computed(() => news.value?.count ?? 0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSize)))
 

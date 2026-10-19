@@ -70,9 +70,10 @@ import UiDatePicker from '@/components/ui/UiDatePicker'
 import UiTimePicker from '@/components/ui/UiTimePicker'
 import type { TournamentFormController } from '../../composables/useTournamentForm'
 
-defineProps<{
+const props = defineProps<{
   form: TournamentFormController
 }>()
+const form = { ...props.form }
 </script>
 
 <style scoped>

@@ -1,14 +1,5 @@
 <template>
-  <ui-card
-    :status="cardStatus"
-    :error-code="errorCode"
-    :is-fetching="isFetching"
-    empty-text="No submissions yet"
-    @retry="refetch"
-  >
-    <template #empty-action>
-      <p class="text-sm text-muted">Submissions you send for a round appear here.</p>
-    </template>
+  <ui-card>
     <template #header>
       <div class="submissions-header">
         <h2>My submissions</h2>
@@ -26,7 +17,12 @@
       </div>
     </template>
 
-    <template #skeleton>
+    <ui-query-state :query="displayQuery" :is-empty="submissions.length === 0" empty-text="No submissions yet">
+      <template #empty-action>
+        <p class="text-sm text-muted">Submissions you send for a round appear here.</p>
+      </template>
+
+      <template #skeleton>
       <div class="submissions-list">
         <div v-for="i in 3" :key="i" class="submission-row">
           <div class="submission-header">
@@ -68,7 +64,7 @@
           </div>
         </div>
       </div>
-    </template>
+      </template>
 
     <div class="submissions-list">
       <p v-if="filteredSubmissions.length === 0" class="text-muted submissions-empty">
@@ -209,6 +205,7 @@
         </div>
       </div>
     </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -218,6 +215,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiProgressBar from '@/components/ui/UiProgressBar'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import FileCheckIcon from '@/icons/FileCheckIcon.vue'
@@ -225,7 +223,7 @@ import { formatDate } from '@/lib/date'
 import { computed, ref } from 'vue'
 import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
-import { getErrorCode, type CardStatus } from '@/composables/useCardState'
+import { getErrorCode } from '@/composables/useQueryState'
 import type { RoundStatus } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
@@ -236,21 +234,19 @@ const props = defineProps<Props>()
 const isEditOpen = ref(false)
 
 const submissionsQuery = useListMyTeamSubmissions(props.tournamentId)
-const submissions = computed(() => submissionsQuery.data.value ?? [])
+const submissions = computed(() => submissionsQuery.data.value?.items ?? [])
 const errorCode = computed(() => getErrorCode(submissionsQuery.error.value))
-const isFetching = computed(() => submissionsQuery.isFetching.value)
-
-const refetch = () => submissionsQuery.refetch()
+const displayQuery = computed(() => ({
+  isPending: submissionsQuery.isPending.value,
+  isError: submissionsQuery.isError.value && errorCode.value !== 404,
+  data: submissions.value,
+  error: submissionsQuery.error.value,
+  isFetching: submissionsQuery.isFetching.value,
+  refetch: submissionsQuery.refetch,
+}))
 
 // The endpoint answers 404 when the current team has no submissions in this
 // tournament; that is an empty list, not a failure.
-const cardStatus = computed<CardStatus>(() => {
-  if (submissionsQuery.isPending.value) return 'loading'
-  if (submissionsQuery.isError.value && errorCode.value !== 404) return 'error'
-  if (submissions.value.length === 0) return 'empty'
-  return 'data'
-})
-
 const {
   data: rounds,
   isLoading: isLoadingRounds,
@@ -259,7 +255,7 @@ const {
 } = useListRounds(props.tournamentId)
 
 const filterOptions = computed(() =>
-  rounds.value?.map((round) => ({
+  rounds.value?.items.map((round) => ({
     value: round.name ?? '',
     label: round.name ?? '',
   })),
@@ -300,13 +296,13 @@ const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number
 }
 
 const roundMaxScore = (roundId: number) => {
-  const round = rounds.value?.find((item) => item.id === roundId)
+  const round = rounds.value?.items.find((item) => item.id === roundId)
   if (!round?.criteria) return 0
   return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
 }
 
 const criterionMaxScore = (roundId: number, criterionId: string) => {
-  const round = rounds.value?.find((item) => item.id === roundId)
+  const round = rounds.value?.items.find((item) => item.id === roundId)
   const criterion = round?.criteria?.find((item) => item.id === criterionId)
   return Number(criterion?.max_score || 0)
 }

@@ -3,38 +3,22 @@
     <div class="team-label">
       <p class="section-label">{{ sectionTitle }}</p>
 
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
-          <ui-skeleton variant="rect" width="60px" />
-        </template>
-
-        <p class="text-muted">{{ teamCountLabel }}</p>
-      </ui-skeleton-loader>
+      <p class="text-muted">{{ teamCountLabel }}</p>
     </div>
 
     <div class="teams-list">
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
-          <div style="display: flex; flex-direction: column; gap: 0.4rem">
-            <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
-          </div>
-        </template>
-
-        <template v-if="filteredTeams.length">
+      <template v-if="filteredTeams.length">
           <template v-for="team in filteredTeams" :key="team.id">
             <div class="team-row">
               <slot :team="team" />
             </div>
           </template>
-        </template>
-
-        <div v-else class="no-results">
+        </template><div v-else class="no-results">
           <p class="no-results-text">No teams match your search</p>
           <button type="button" class="clear-search-btn" @click="$emit('clear-search')">
             Clear search
           </button>
         </div>
-      </ui-skeleton-loader>
     </div>
   </div>
 </template>
@@ -42,7 +26,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
 
 type Team = TournamentTeamResponse

@@ -39,11 +39,11 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
 import { useInviteMemberToTeam } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
-import type { TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { Team } from '@/features/teams/types'
 import UiSelectSearch from '@/components/ui/UiSelectSearch/UiSelectSearch.vue'
 
 interface Props {
-  team: TeamResponse
+  team: Team
 }
 
 const props = defineProps<Props>()
@@ -55,7 +55,7 @@ const addMemberSelection = ref<number | null>(null)
 
 const availableUsers = computed(() => {
   const currentIds = new Set(props.team?.members.map((member) => member.id))
-  return users.value?.filter((user) => !currentIds.has(user.id))
+  return users.value?.items.filter((user) => !currentIds.has(user.id))
 })
 
 const userOptions = computed(() => [

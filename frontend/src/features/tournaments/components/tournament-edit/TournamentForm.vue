@@ -5,8 +5,8 @@
     </ui-card>
   </div>
 
-  <ui-skeleton-loader v-else :loading="isLoading || isFetching">
-    <template #skeleton>
+  <ui-query-state :query="tournamentQuery">
+<template #skeleton>
       <div class="create-layout">
         <div class="tournament-form">
           <ui-skeleton variant="rect" height="220px" />
@@ -15,9 +15,7 @@
         </div>
         <ui-skeleton variant="rect" height="320px" />
       </div>
-    </template>
-
-    <div class="create-layout">
+    </template><div class="create-layout">
       <form class="tournament-form" @submit.prevent="handleSubmit">
         <tournament-basics-fields :form="form" />
         <tournament-capacity-fields :form="form" />
@@ -43,13 +41,12 @@
         truncate-description
       />
     </div>
-  </ui-skeleton-loader>
+</ui-query-state>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
@@ -82,7 +79,8 @@ const { showNotification } = useNotification()
 
 const form = useForm<TournamentFormFields>(EditTournamentSchema, createTournamentFormDefaults())
 
-const { data: tournament, isLoading, isFetching, isError } = useGetTournament(props.tournamentId)
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { data: tournament, isLoading, isFetching, isError } = tournamentQuery
 
 const { mutate: editTournament, isPending } = useUpdateTournament()
 

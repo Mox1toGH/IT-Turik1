@@ -1,6 +1,6 @@
 import { computed, reactive, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
 import {
   useAssignJuryToRound,
@@ -27,6 +27,7 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
 
   const submissionsQuery = useListRoundSubmissions(
     computed(() => closedRound.value?.id ?? 0),
+    undefined,
     {
       query: { enabled: computed(() => !!closedRound.value) },
     },
@@ -50,6 +51,9 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     },
   )
 
+  const submissionItems = computed(() => submissions.value?.items ?? [])
+  const juryItems = computed(() => availableJury.value?.items ?? [])
+
   const noClosedRound = computed<boolean>(() => !!tournament.value && !closedRound.value)
   const isLoadingRound = computed<boolean>(() => tournamentLoading.value)
   const isLoading = computed<boolean>(() => tournamentLoading.value || submissionsLoading.value)
@@ -67,12 +71,12 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     isPending:
       tournamentQuery.isPending.value || (!!closedRound.value && submissionsQuery.isPending.value),
     isError: tournamentQuery.isError.value || submissionsQuery.isError.value,
-    data: noClosedRound.value ? [] : submissions.value,
+    data: noClosedRound.value ? [] : submissionItems.value,
     error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
     isFetching: isFetching.value,
     refetch: refetchAll,
   }))
-  const { status, errorCode, isStale } = useCardState(cardQuery)
+  const { status, errorCode, isStale } = useQueryState(cardQuery)
   const error = computed(() => {
     if (noClosedRound.value) {
       return { message: 'No finished round available' }
@@ -85,7 +89,7 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
 
   const juryOptions = computed<SelectOption[]>(
     () =>
-      availableJury.value?.map((jury) => ({
+      juryItems.value.map((jury) => ({
         value: jury.id,
         label: jury.username,
       })) ?? [],
@@ -94,9 +98,9 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
   const assignJuryForAll = ref<number[]>([])
   const assignedJury = reactive<Record<number, number[]>>({})
   watch(
-    submissions,
+    submissionItems,
     (value) => {
-      if (!value) return
+      if (!value.length) return
       value.forEach((submission) => {
         const nextAssigned = (submission.assignments ?? [])
           .map((assignment) => assignment.jury?.id)
@@ -111,16 +115,16 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
   const { mutate: assign, isPending } = useAssignJuryToRound()
 
   const applyJuryToAllSubmissions = (): void => {
-    if (!submissions.value?.length) return
+    if (!submissionItems.value.length) return
     const nextAssigned = Array.from(new Set(assignJuryForAll.value))
-    submissions.value.forEach((submission) => {
+    submissionItems.value.forEach((submission) => {
       assignedJury[submission.id] = [...nextAssigned]
     })
   }
 
   const handleAssignJury = (): void => {
     if (!closedRound.value) return
-    const payload = submissions.value?.map((submission) => {
+    const payload = submissionItems.value.map((submission) => {
       return {
         submission: submission.id,
         jury: assignedJury[submission.id],
@@ -156,7 +160,7 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
 
   return {
     closedRound,
-    submissions,
+    submissions: submissionItems,
     noClosedRound,
     isLoadingRound,
     isLoading,

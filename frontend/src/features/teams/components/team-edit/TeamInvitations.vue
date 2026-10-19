@@ -11,8 +11,8 @@
       </p>
     </div>
 
-    <ui-skeleton-loader :loading="props.loading">
-      <template #skeleton>
+    <ui-query-state :query="props.query">
+<template #skeleton>
         <div class="invitation-grid">
           <div v-for="i in 2" :key="`invitation-skeleton-${i}`" class="invitation-card-skeleton">
             <div class="invitation-card-skeleton-top">
@@ -24,9 +24,7 @@
             </div>
           </div>
         </div>
-      </template>
-
-      <div v-if="props.invitations.length" class="invitation-grid">
+      </template><div v-if="props.invitations.length" class="invitation-grid">
         <ui-card
           v-for="invitation in props.invitations"
           :key="`inv-${invitation.id}`"
@@ -54,10 +52,8 @@
             Invited {{ formatDate(invitation.created_at, { showHours: true }) }}
           </p>
         </ui-card>
-      </div>
-
-      <p v-else class="text-muted invitations-note">No invitations yet.</p>
-    </ui-skeleton-loader>
+      </div><p v-else class="text-muted invitations-note">No invitations yet.</p>
+</ui-query-state>
   </div>
 </template>
 
@@ -65,15 +61,16 @@
 import UiBadge, { type Variants } from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
 import { formatDate } from '@/lib/date'
-import type { TeamInvitationResponse } from '@/api/backendAPINinja.schemas'
+import type { TeamInvitation } from '@/features/teams/types'
+import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
-  invitations: TeamInvitationResponse[]
+  invitations: TeamInvitation[]
   loading: boolean
+  query: QueryLike
 }
 
 const props = defineProps<Props>()

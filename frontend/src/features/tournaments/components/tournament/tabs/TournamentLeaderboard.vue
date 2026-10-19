@@ -1,12 +1,5 @@
 <template>
-  <ui-card
-    class="leaderboard-card"
-    :status="cardStatus"
-    :error-code="errorCode"
-    :is-fetching="isFetching"
-    empty-text="No leaderboard data yet."
-    @retry="refetch"
-  >
+  <ui-card class="leaderboard-card">
     <template #header>
       <div class="leaderboard-header">
         <div>
@@ -63,40 +56,42 @@
       </div>
     </template>
 
-    <template #skeleton>
-      <leaderboard-skeleton />
-    </template>
+    <ui-query-state :query="leaderboardQuery" :is-empty="rankings.length === 0 || isLeaderboardNotReady" empty-text="No leaderboard data yet.">
+      <template #skeleton>
+        <leaderboard-skeleton />
+      </template>
 
-    <template #empty-action>
-      <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
-    </template>
+      <template #empty-action>
+        <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
+      </template>
 
-    <leaderboard-table
-      :rankings="rankings"
-      :round-columns="roundColumns"
-      :has-round-overflow="hasRoundOverflow"
-      :table-vars="tableVars"
-      :table-wrap-ref="tableWrapRef"
-      :get-round-score="getRoundScore"
-      :has-round-participation="hasRoundParticipation"
-      :get-round-max-score="getRoundMaxScore"
-      :get-entry-max-score="getEntryMaxScore"
-      :format-score="formatScore"
-      :on-table-wheel="onTableWheel"
-      @update:table-wrap-ref="tableWrapRef = $event"
-    />
+      <leaderboard-table
+        :rankings="rankings"
+        :round-columns="roundColumns"
+        :has-round-overflow="hasRoundOverflow"
+        :table-vars="tableVars"
+        :table-wrap-ref="tableWrapRef"
+        :get-round-score="getRoundScore"
+        :has-round-participation="hasRoundParticipation"
+        :get-round-max-score="getRoundMaxScore"
+        :get-entry-max-score="getEntryMaxScore"
+        :format-score="formatScore"
+        :on-table-wheel="onTableWheel"
+        @update:table-wrap-ref="tableWrapRef = $event"
+      />
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiPopover from '@/components/ui/UiPopover'
 import LeaderboardSkeleton from './tournament-leaderboard/LeaderboardSkeleton.vue'
 import LeaderboardTable from './tournament-leaderboard/LeaderboardTable.vue'
 import { computed } from 'vue'
 import { useLeaderboard } from '../../../composables/useLeaderboard'
-import type { CardStatus } from '@/composables/useCardState'
 
 interface Props {
   tournamentId: number
@@ -114,7 +109,7 @@ const {
   isLoading,
   isError,
   isFetching,
-  errorCode,
+  error,
   refetch,
   isLeaderboardNotReady,
   isExportDisabled,
@@ -128,14 +123,14 @@ const {
   handleOpenInGoogleSheets,
 } = useLeaderboard(() => props.tournamentId)
 
-// Mirrors the card's own state machine, with the leaderboard's extra
-// "not published yet" case (403/404) shown as an empty state.
-const cardStatus = computed<CardStatus>(() => {
-  if (isLoading.value) return 'loading'
-  if (isError.value && !isLeaderboardNotReady.value) return 'error'
-  if (rankings.value.length === 0 || isLeaderboardNotReady.value) return 'empty'
-  return 'data'
-})
+const leaderboardQuery = computed(() => ({
+  isPending: isLoading.value,
+  isError: isError.value && !isLeaderboardNotReady.value,
+  data: rankings.value,
+  error: error.value,
+  isFetching: isFetching.value,
+  refetch,
+}))
 </script>
 
 <style scoped>

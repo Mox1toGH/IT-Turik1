@@ -7,8 +7,8 @@
       :disabled="props.loading"
     />
 
-    <ui-skeleton-loader :loading="props.loading">
-      <template #skeleton>
+    <ui-query-state :query="props.query">
+<template #skeleton>
         <div class="member-grid">
           <div v-for="i in 4" :key="`member-skeleton-${i}`" class="member-card-skeleton">
             <div class="member-card-skeleton-top">
@@ -20,9 +20,7 @@
             </div>
           </div>
         </div>
-      </template>
-
-      <div class="member-grid">
+      </template><div class="member-grid">
         <ui-card
           v-for="member in filteredMembers"
           :key="`member-${member.id}`"
@@ -62,12 +60,10 @@
             </ui-button>
           </template>
         </ui-card>
-      </div>
-
-      <p v-if="filteredMembers?.length === 0" class="text-muted members-note">
+      </div><p v-if="filteredMembers?.length === 0" class="text-muted members-note">
         No members match your search.
       </p>
-    </ui-skeleton-loader>
+</ui-query-state>
   </div>
 </template>
 
@@ -77,18 +73,20 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRemoveMemberFromTeam } from '@/api/teams/teams'
-import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
+import type { TeamMember } from '@/features/teams/types'
+import type { Team } from '@/features/teams/types'
+import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
-  team: TeamResponse
+  team: Team
   loading: boolean
+  query: QueryLike
 }
 
 const props = defineProps<Props>()
@@ -108,12 +106,12 @@ const filteredMembers = computed(() => {
   )
 })
 
-const canRemove = (member: TeamMemberResponse) =>
+const canRemove = (member: TeamMember) =>
   member.id !== props.team.captain_id && !props.team.is_in_active_tournament
 
 const { mutate: removeMemberMutate } = useRemoveMemberFromTeam()
 
-const removeMember = (member: TeamMemberResponse) => {
+const removeMember = (member: TeamMember) => {
   if (!props.team) return
   if (member.id === props.team.captain_id) return
   kickLoadingIds.value.add(member.id)

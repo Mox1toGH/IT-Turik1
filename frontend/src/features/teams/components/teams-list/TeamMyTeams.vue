@@ -16,8 +16,8 @@
       </div>
 
       <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
+        <ui-query-state :query="teamsQuery">
+<template #skeleton>
             <div class="team-grid">
               <div class="team-item-skeleton" v-for="i in 2" :key="i">
                 <div class="team-skeleton-body">
@@ -36,13 +36,9 @@
                 </div>
               </div>
             </div>
-          </template>
-
-          <p v-if="myTeams?.length === 0" class="empty-text text-muted">
+          </template><p v-if="myTeams?.length === 0" class="empty-text text-muted">
             No joined teams yet. Create a team or request to join an available workspace.
-          </p>
-
-          <div v-else class="team-grid">
+          </p><div v-else class="team-grid">
             <ui-card v-for="team in myTeamsPageItems" :key="`my-${team.id}`" class="team-item">
               <div class="team-body">
                 <div class="team-header">
@@ -69,7 +65,7 @@
               </template>
             </ui-card>
           </div>
-        </ui-skeleton-loader>
+</ui-query-state>
 
         <ui-pagination
           v-if="myPages > 1"
@@ -90,22 +86,23 @@ import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
 
-type Team = ListTeamsQueryResult[number]
+type Team = ListTeamsQueryResult['items'][number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
 const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, isStale } = useCardState(teamsQuery)
+const { status, isStale } = useQueryState(teamsQuery)
 
-const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
+const myTeams = computed(() =>
+  (teams.value?.items ?? []).filter((team) => isAcceptedMember(team)),
+)
 const myTeamsPageItems = computed(() => {
   const from = (myPage.value - 1) * TEAMS_PER_PAGE
   return myTeams.value?.slice(from, from + TEAMS_PER_PAGE)

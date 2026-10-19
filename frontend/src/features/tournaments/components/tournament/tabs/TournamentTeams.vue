@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="teams-card" :query="activeTeamsQuery" empty-text="No teams registered yet">
+  <ui-card class="teams-card">
     <template #header>
       <div class="teams-header">
         <div class="teams-header-text">
@@ -7,29 +7,35 @@
           <h2 class="text-2xl">Teams info</h2>
           <p class="section-subtitle text-base">Registered and disqualified teams.</p>
         </div>
-        <span class="count-pill">{{ activeTeams?.length ?? 0 }} active</span>
+        <span class="count-pill">{{ activeTeams.length }} active</span>
       </div>
     </template>
 
-    <template #skeleton>
-      <div class="skeleton-stack">
-        <ui-skeleton variant="rect" height="40px" width="100%" />
-        <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
-      </div>
-    </template>
+    <ui-query-state
+      :query="activeTeamsQuery"
+      :is-empty="!isDisqualifiedTeamsLoading && activeTeams.length === 0 && disqualifiedTeams.length === 0"
+      empty-text="No teams registered yet."
+    >
+      <template #skeleton>
+        <div class="skeleton-stack">
+          <ui-skeleton variant="rect" height="40px" width="100%" />
+          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
+        </div>
+      </template>
 
-    <div class="teams-body">
+      <div class="teams-body">
       <div class="teams-search-wrap">
         <SearchIcon class="search-icon" />
         <ui-input
           v-model="search"
           placeholder="Search teams..."
           class="team-search"
-          :disabled="isActiveTeamsLoading"
+        :disabled="isActiveTeamsLoading"
         />
       </div>
 
       <TournamentTeamSection
+        v-if="activeTeams.length"
         sectionType="active"
         :teams="activeTeams"
         :loading="isActiveTeamsLoading"
@@ -53,13 +59,15 @@
           <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
         </template>
       </TournamentTeamSection>
-    </div>
+      </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { SearchIcon } from 'lucide-vue-next'
@@ -83,10 +91,13 @@ const activeTeamsQuery = useListTournamentTeams(props.tournamentId, { status: 'a
 const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
   status: 'disqualified',
 })
-const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
-const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
+const { data: activeTeamsData, isLoading: isActiveTeamsLoading } = activeTeamsQuery
+const { data: disqualifiedTeamsData, isLoading: isDisqualifiedTeamsLoading } =
+  disqualifiedTeamsQuery
+const activeTeams = computed(() => activeTeamsData.value?.items ?? [])
+const disqualifiedTeams = computed(() => disqualifiedTeamsData.value?.items ?? [])
 
-const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
+const hasDisqualifiedTeams = computed(() => disqualifiedTeams.value.length > 0)
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
 </script>

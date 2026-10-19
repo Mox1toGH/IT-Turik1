@@ -11,14 +11,11 @@
 
       <template #header>
         <div class="submissions-header">
-          <ui-skeleton-loader :loading="isLoadingRound">
-            <template #skeleton>
+          <ui-query-state :query="cardQuery">
+<template #skeleton>
               <ui-skeleton variant="rect" width="150px" />
-            </template>
-
-            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
-            <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
-          </ui-skeleton-loader>
+            </template><h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2><h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
+</ui-query-state>
           <div class="header-actions">
             <ui-select
               multiple
@@ -104,9 +101,9 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSection from '@/components/ui/UiSection'
 import UiSelect from '@/components/ui/UiSelect'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import JuryAssignRow from './JuryAssignRow.vue'

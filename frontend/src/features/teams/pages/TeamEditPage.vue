@@ -7,13 +7,11 @@
       </router-link>
 
       <div class="edit-header-copy">
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
-          <template #skeleton>
+        <ui-query-state :query="teamQuery">
+<template #skeleton>
             <ui-skeleton variant="rect" height="34px" width="280px" />
-          </template>
-
-          <h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 40) }}</h1>
-        </ui-skeleton-loader>
+          </template><h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 40) }}</h1>
+</ui-query-state>
 
         <p class="section-subtitle">Update the team profile and manage who belongs to it.</p>
       </div>
@@ -24,15 +22,24 @@
 
       <ui-tabs :items="tabItems" query-key="tab" sticky>
         <template #profile>
-          <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
+          <team-edit-form
+            :status="status"
+            :loading="isLoadingTeamInfo"
+            :team="team"
+            :query="teamQuery"
+          />
         </template>
 
         <template #members>
-          <team-manage-members :loading="isLoadingTeamInfo" :team="team" />
+          <team-manage-members :loading="isLoadingTeamInfo" :team="team" :query="teamQuery" />
         </template>
 
         <template #invitations>
-          <team-invitations :loading="isLoadingTeamInvitations" :invitations="invitationList" />
+          <team-invitations
+            :loading="isLoadingTeamInvitations"
+            :invitations="invitationList"
+            :query="invitationsQuery"
+          />
         </template>
 
         <template v-if="!team.is_in_active_tournament" #invite>
@@ -52,12 +59,12 @@ import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
 import TeamInvitations from '../components/team-edit/TeamInvitations.vue'
 import TeamInvite from '../components/team-edit/TeamInvite.vue'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useGetTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
+import { isTeamCaptain } from '../lib/team-permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,13 +74,13 @@ const { data: user } = useGetUserProfile()
 const teamId = computed(() => Number(route.params.id))
 const teamQuery = useGetTeam(teamId.value)
 const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
-const { status } = useCardState(teamQuery)
+const { status } = useQueryState(teamQuery)
 
 // Invitations query lives at page level (same cache key as any nested use, so
 // no extra fetch): the pending count is needed here for the tab badge.
-const { data: invitationsData, isLoading: isLoadingTeamInvitations } =
-  useListTeamInvitationsByTeam(teamId)
-const invitationList = computed(() => invitationsData.value ?? [])
+const invitationsQuery = useListTeamInvitationsByTeam(teamId)
+const { data: invitationsData, isLoading: isLoadingTeamInvitations } = invitationsQuery
+const invitationList = computed(() => invitationsData.value?.items ?? [])
 const pendingInvitationCount = computed(
   () => invitationList.value.filter((invitation) => invitation.status === 'invited').length,
 )

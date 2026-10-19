@@ -77,7 +77,8 @@ interface Props {
   form: ReturnType<typeof useForm<TeamCreateFormFields>>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+const form = { ...props.form }
 </script>
 
 <style scoped>

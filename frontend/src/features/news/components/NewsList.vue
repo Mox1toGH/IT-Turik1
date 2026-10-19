@@ -56,24 +56,24 @@ import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
 import NewsItemCard from './NewsItemCard.vue'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
-import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
+import type { QueryErrorCode, QueryStatus } from '@/composables/useQueryState'
+import type { NewsArticle } from '../types'
 
 defineProps<{
-  status: CardStatus
-  errorCode: CardErrorCode
+  status: QueryStatus
+  errorCode: QueryErrorCode
   isFetching: boolean
   isStale: boolean
-  items: NewsArticleResponse[]
+  items: NewsArticle[]
   totalNews: number
   totalPages: number
   pageSize: number
-  canModify: (item: NewsArticleResponse) => boolean
+  canModify: (item: NewsArticle) => boolean
 }>()
 
 const emit = defineEmits<{
-  edit: [item: NewsArticleResponse]
-  delete: [item: NewsArticleResponse]
+  edit: [item: NewsArticle]
+  delete: [item: NewsArticle]
   retry: []
 }>()
 

@@ -72,7 +72,7 @@
 
       <div class="profile-content">
         <div id="overview" class="profile-group">
-          <ProfileOverviewSection :user="user" :is-loading="isLoading" />
+          <ProfileOverviewSection :user="user" :is-loading="isLoading" :query="userQuery" />
         </div>
 
         <div id="statistics" class="profile-group">
@@ -130,7 +130,8 @@ const profileSections: ProfileSection[] = [
 ]
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError } = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user, isLoading, isLoadingError } = userQuery
 const router = useRouter()
 const isDeleting = ref(false)
 const isDeleteModalOpen = ref(false)

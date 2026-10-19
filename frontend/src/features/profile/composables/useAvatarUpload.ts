@@ -7,7 +7,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
-import type { UserResponse } from '@/api/backendAPINinja.schemas'
+import type { UserSummary } from '@/shared/types/user'
 
 export interface UseAvatarUploadReturn {
   isOpen: Ref<boolean>
@@ -24,7 +24,7 @@ export interface UseAvatarUploadReturn {
 }
 
 export function useAvatarUpload(
-  user: Ref<UserResponse | undefined>,
+  user: Ref<Pick<UserSummary, 'id' | 'avatar'> | undefined>,
   disabled: Ref<boolean>,
 ): UseAvatarUploadReturn {
   const isOpen = ref(false)

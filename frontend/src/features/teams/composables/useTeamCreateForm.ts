@@ -44,7 +44,7 @@ export function useTeamCreateForm(): UseTeamCreateFormReturn {
   const { data: users, isLoading: isLoadingUsers, isLoadingError } = useListUsers()
 
   const createCandidateUsers = computed(() => {
-    return users.value?.filter((u) => {
+    return users.value?.items.filter((u) => {
       if (u.id === user.value?.id) return false
       return [u.username, u.email, u.full_name || ''].join(' ').toLowerCase()
     })

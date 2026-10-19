@@ -1,7 +1,7 @@
 <template>
   <section class="page-shell">
-    <ui-skeleton-loader :loading="isLoading">
-      <template #skeleton>
+    <ui-query-state :query="archiveQuery">
+<template #skeleton>
         <div class="skeleton-stack">
           <ui-skeleton variant="rect" height="260px" />
           <div class="skeleton-stats">
@@ -10,10 +10,7 @@
           <ui-skeleton variant="rect" height="220px" />
           <ui-skeleton variant="rect" height="220px" />
         </div>
-      </template>
-
-      <template #default>
-        <div v-if="archive" class="content-stack">
+      </template><div v-if="archive" class="content-stack">
           <archive-hero
             :tournament-id="id"
             :name="archive.name"
@@ -52,15 +49,13 @@
             </template>
           </ui-tabs>
         </div>
-      </template>
-    </ui-skeleton-loader>
+</ui-query-state>
   </section>
 </template>
 
 <script setup lang="ts">
 import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'
 import ArchiveSummary from '../components/tournament-archive-detail/ArchiveSummary.vue'
@@ -77,10 +72,11 @@ import {
 
 const route = useRoute()
 const id = Number(route.params.id)
-const { data: archive, isLoading } = useGetTournamentArchive(id)
+const archiveQuery = useGetTournamentArchive(id)
+const { data: archive } = archiveQuery
 const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 
-const submissions = computed(() => submissionsData.value ?? [])
+const submissions = computed(() => submissionsData.value?.items ?? [])
 
 const winnerName = computed(() => {
   const winner = archive.value?.standings?.find((item) => item.rank === 1)

@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="app-shell">
-    <VueQueryDevtools hidden />
+    <VueQueryDevtools />
 
     <app-navbar />
 

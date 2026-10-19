@@ -58,7 +58,7 @@ const activeTab = ref('my')
 // extra fetch): the pending count is needed outside the tab for the tab badge.
 const { data: inboxInvitations } = useListTeamInvitations()
 const pendingCount = computed(
-  () => inboxInvitations.value?.filter((invitation) => invitation.status === 'invited').length ?? 0,
+  () => inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited').length ?? 0,
 )
 
 const tabItems = computed<TabItem[]>(() => [
