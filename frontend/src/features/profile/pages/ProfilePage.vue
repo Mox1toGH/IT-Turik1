@@ -1,138 +1,163 @@
 <template>
-  <section class="page-shell">
+  <section class="page-shell profile-page">
+    <header class="profile-hero">
+      <div class="profile-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Profile</span>
+        </div>
+
+        <h1 class="text-4xl">My profile</h1>
+        <p class="section-subtitle text-base">Manage your account details and preferences.</p>
+      </div>
+
+      <div class="profile-hero-actions">
+        <ui-card class="joined-card">
+          <strong class="text-base">{{
+            user?.created_at ? formatDate(user.created_at) : 'N/A'
+          }}</strong>
+          <span class="text-sm">Joined</span>
+        </ui-card>
+      </div>
+    </header>
+
+    <div class="profile-rule" aria-hidden="true"></div>
+
     <div v-if="isLoadingError" class="error-state">
       <p>Error while fetching profile info</p>
     </div>
 
-    <template v-else>
-      <header class="profile-header">
-        <div class="profile-header-copy">
-          <div class="breadcrumb-label">
-            <span>Workspace</span>
-            <span aria-hidden="true">/</span>
-            <span>Profile</span>
-          </div>
-
-          <h1 class="text-6xl">My profile</h1>
-          <p class="profile-subtitle text-xl">Manage your account details and preferences.</p>
-        </div>
-
-        <div class="profile-actions">
-          <ui-card class="joined-card">
-            <strong class="text-base">{{
-              user?.created_at ? formatDate(user.created_at) : 'N/A'
-            }}</strong>
-            <span class="text-sm">Joined</span>
-          </ui-card>
-        </div>
-      </header>
-
-      <div class="profile-rule" aria-hidden="true"></div>
-
-      <div class="profile-layout">
-        <main class="profile-main">
-          <Transition name="profile-section" mode="out-in">
-            <ProfileOverviewSection
-              v-if="activeSection === 'overview'"
-              :user="user"
-              :query="userQuery"
-            />
-
-            <div v-else class="profile-content-view">
-              <ui-button
-                variant="ghost"
-                size="sm"
-                class="back-to-profile"
-                @click="activeSection = 'overview'"
+    <div v-else class="profile-layout">
+      <aside class="profile-sidebar">
+        <div class="sidebar-sticky">
+          <ui-card class="sidebar-card">
+            <template #header>
+              <div class="sidebar-card-header">
+                <p class="section-eyebrow">Sections</p>
+              </div>
+            </template>
+            <nav class="anchor-nav" aria-label="Profile sections">
+              <a
+                v-for="section in profileSections"
+                :key="section.key"
+                :href="`#${section.key}`"
+                class="anchor-chip"
+                @click.prevent="scrollToSection(section.key)"
               >
-                <ArrowRight class="back-icon" />
-                Back to profile
-              </ui-button>
-              <component :is="activeComponent" />
-            </div>
-          </Transition>
-        </main>
-
-        <aside class="profile-rail">
-          <ui-card
-            class="rail-card"
-            role="navigation"
-            aria-label="Profile shortcuts"
-          >
-            <p class="rail-eyebrow">Activity</p>
-            <button
-              :class="['rail-link', { active: activeSection === 'statistics' }]"
-              type="button"
-              @click="activeSection = 'statistics'"
-            >
-              <span class="rail-link-copy"><EditIcon />My statistics</span>
-              <ArrowRight />
-            </button>
+                {{ section.label }}
+              </a>
+            </nav>
           </ui-card>
 
-          <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
-            Log out
-          </ui-button>
-        </aside>
-      </div>
-
-      <ui-card v-if="activeSection === 'overview'" class="danger-zone">
-        <div>
-          <p class="danger-title">Danger zone</p>
-          <p class="danger-text">Permanently delete your account and all associated data.</p>
+          <ui-card class="sidebar-card">
+            <template #header>
+              <div class="sidebar-card-header">
+                <p class="section-eyebrow">Quick actions</p>
+              </div>
+            </template>
+            <div class="quick-actions">
+              <ui-button
+                variant="danger"
+                size="sm"
+                :disabled="isLoading || isDeleting"
+                @click="logout"
+              >
+                Log out
+              </ui-button>
+            </div>
+          </ui-card>
         </div>
-        <delete-profile-modal />
-      </ui-card>
-    </template>
+      </aside>
+
+      <div class="profile-content">
+        <div id="overview" class="profile-group">
+          <ProfileOverviewSection :user="user" :is-loading="isLoading" />
+        </div>
+
+        <div id="statistics" class="profile-group">
+          <UserStats />
+        </div>
+
+        <div id="account" class="profile-group">
+          <ui-card class="danger-zone">
+            <div>
+              <div>
+                <p class="danger-title">Danger zone</p>
+                <p class="danger-text">Permanently delete your account and all associated data.</p>
+              </div>
+
+              <ui-button
+                class="danger-action"
+                type="button"
+                variant="danger"
+                :disabled="isLoading"
+                @click="isDeleteModalOpen = true"
+              >
+                Delete account
+              </ui-button>
+            </div>
+
+            <delete-profile-modal v-model="isDeleteModalOpen" />
+          </ui-card>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import ArrowRight from '@/icons/ArrowRight.vue'
-import EditIcon from '@/icons/EditIcon.vue'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
+import UserStats from '../components/profile/sections/UserStats.vue'
 import { useUserStore } from '@/stores/user'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { formatDate } from '@/lib/date'
-import UserStats from '../components/profile/sections/UserStats.vue'
 
-type ProfileSection = 'overview' | 'statistics'
+interface ProfileSection {
+  key: string
+  label: string
+}
+
+const profileSections: ProfileSection[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'statistics', label: 'Statistics' },
+  { key: 'account', label: 'Danger zone' },
+]
 
 const store = useUserStore()
-const userQuery = useGetUserProfile()
-const { data: user, isLoading, isLoadingError } = userQuery
+const { data: user, isLoading, isLoadingError } = useGetUserProfile()
 const router = useRouter()
 const isDeleting = ref(false)
-const activeSection = ref<ProfileSection>('overview')
-
-const viewComponents = {
-  statistics: UserStats,
-} as const
-
-const activeComponent = computed(
-  () => viewComponents[activeSection.value as Exclude<ProfileSection, 'overview'>],
-)
+const isDeleteModalOpen = ref(false)
 
 const logout = () => {
   store.logout()
   router.push('/login')
 }
+
+function scrollToSection(key: string) {
+  document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 </script>
 
 <style scoped>
-.profile-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.25rem;
+.profile-page {
+  gap: 1.4rem;
 }
 
-.profile-header-copy {
+.profile-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.profile-hero-copy {
   min-width: 0;
 }
 
@@ -141,7 +166,7 @@ const logout = () => {
   align-items: center;
   gap: 0.7rem;
   margin-bottom: 0.75rem;
-  color: var(--accent-strong);
+  color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
   font-weight: 800;
@@ -149,7 +174,7 @@ const logout = () => {
   text-transform: uppercase;
 }
 
-.profile-header h1 {
+.profile-hero h1 {
   margin: 0;
   max-width: 760px;
   color: var(--foreground);
@@ -159,12 +184,20 @@ const logout = () => {
   font-weight: 800;
 }
 
-.profile-subtitle {
+.profile-hero .section-subtitle {
   margin: 0.45rem 0 0;
   max-width: 780px;
-  color: var(--muted-foreground);
   font-size: var(--text-base);
   line-height: var(--text-base--line-height);
+}
+
+.profile-hero-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .joined-card {
@@ -175,7 +208,7 @@ const logout = () => {
   gap: 0.7rem;
   padding: 0.5rem 1.1rem;
   min-height: 30px;
-  border-color: var(--line-soft);
+  border-color: var(--border);
 }
 
 .joined-card strong {
@@ -191,145 +224,111 @@ const logout = () => {
   white-space: nowrap;
 }
 
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 .profile-rule {
   height: 1px;
-  margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
+  background: var(--border);
 }
 
 .profile-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 1.6rem;
+  grid-template-columns: 240px 1fr;
+  gap: 1.5rem;
   align-items: start;
 }
 
-.profile-main,
-.profile-rail {
-  display: grid;
-  gap: 1rem;
-  min-width: 0;
+.profile-sidebar {
+  align-self: stretch;
 }
 
-.profile-section-enter-active,
-.profile-section-leave-active {
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
+.sidebar-sticky {
+  position: sticky;
+  top: calc(var(--nav-offset, 76px) + 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: calc(100vh - var(--nav-offset, 76px) - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.profile-section-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
+.sidebar-card {
+  flex-shrink: 0;
 }
 
-.profile-section-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
+.sidebar-card-header {
+  display: flex;
+  align-items: center;
 }
 
-.rail-card {
-  display: grid;
-  gap: 0;
-  padding: 1.25rem;
-}
-
-.rail-eyebrow {
-  margin: 0 0 0.7rem;
-  color: var(--muted-foreground);
+.section-eyebrow {
+  margin: 0;
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
-  letter-spacing: 0.16em;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
 }
 
-.rail-link {
+.anchor-nav {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0.7rem 0.5rem;
-  color: var(--foreground);
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.anchor-chip {
+  display: block;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
+  font-weight: 500;
+  color: var(--muted-foreground);
   text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.rail-link {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+.anchor-chip:hover {
+  background: var(--subtle);
+  color: var(--foreground);
 }
 
-.rail-link + .rail-link {
-  border-top: 1px solid var(--line-soft);
-}
-
-.rail-link:hover {
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
-}
-
-.rail-link.active {
-  background: color-mix(in srgb, var(--primary) 5%, transparent);
-  color: var(--primary);
-}
-
-.rail-link-copy {
+.quick-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
   min-width: 0;
-  gap: 0.6rem;
-  font-weight: 600;
 }
 
-.rail-link-copy :deep(svg) {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
-  color: var(--muted-foreground);
+.profile-group {
+  scroll-margin-top: calc(var(--nav-offset, 76px) + 1rem);
+  min-width: 0;
 }
 
-.rail-link > :deep(svg) {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
-  color: var(--muted-foreground);
+/* Clear separation between the stacked sections in the content column. */
+.profile-group + .profile-group {
+  border-top: 1px solid var(--border);
+  padding-top: 2.25rem;
 }
 
-.profile-content-view {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.back-to-profile {
-  justify-self: end;
-}
-
-.back-icon {
-  transform: rotate(180deg);
-}
-
-.danger-zone {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+.danger-zone.card {
+  flex-direction: column;
+  align-items: flex-start;
   padding: 1.35rem;
-  border-color: var(--destructive);
-  border-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
-  background: color-mix(in srgb, var(--destructive) 8%, var(--card));
+  border-color: var(--destructive-ring);
+  background: var(--destructive-soft);
+}
+
+.danger-action {
+  margin-top: 1rem;
+  width: max-content;
 }
 
 .danger-title,
@@ -346,7 +345,7 @@ const logout = () => {
 
 .danger-text {
   margin-top: 0.35rem;
-  color: color-mix(in srgb, var(--destructive) 72%, var(--foreground));
+  color: var(--muted-foreground);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
 }
@@ -355,10 +354,34 @@ const logout = () => {
   display: grid;
   min-height: 360px;
   place-items: center;
-  border: 1px solid var(--destructive);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+  border: 1px solid var(--destructive-ring);
+  border-radius: var(--radius);
+  background: var(--destructive-soft);
   color: var(--destructive);
+}
+
+@media (max-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-sticky {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .anchor-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .anchor-chip {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
 }
 
 @media (max-width: 800px) {
@@ -366,48 +389,30 @@ const logout = () => {
     padding: 1rem 1rem 2rem;
   }
 
-  .profile-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .profile-header {
+  .profile-hero {
     align-items: flex-start;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .profile-header h1 {
+  .profile-hero h1 {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
   }
 
-  .profile-subtitle {
+  .profile-hero .section-subtitle {
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
   }
 
-  .profile-actions {
+  .profile-hero-actions {
     justify-content: flex-start;
   }
 }
 
 @media (max-width: 560px) {
-  .profile-rail {
-    grid-template-columns: 1fr;
-  }
-
-  .danger-zone {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .edit-details-link,
-  .danger-zone :deep(button) {
-    align-self: stretch;
+  .danger-action {
+    width: 100%;
   }
 }
 </style>

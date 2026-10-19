@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="app-shell">
-    <VueQueryDevtools />
+    <VueQueryDevtools hidden />
 
     <app-navbar />
 
@@ -77,14 +77,14 @@ useThemeStore()
   --nav-offset: 76px;
   position: relative;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   padding-top: var(--nav-offset);
 }
 
 .page-content {
-  width: min(1100px, 100% - 2rem);
-  margin: 2rem auto 0;
-  padding: 0 2rem 2rem;
+  width: 100%;
+  margin: 2rem 0 0;
+  padding: 0 clamp(1rem, 3vw, 2.5rem) 2rem;
   position: relative;
   z-index: 9;
 }
@@ -100,7 +100,7 @@ useThemeStore()
   justify-content: space-between;
   gap: 0.7rem;
   z-index: 2000;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+  box-shadow: var(--shadow-overlay);
   backdrop-filter: blur(20px);
 }
 
@@ -110,15 +110,15 @@ useThemeStore()
 }
 
 .type-info {
-  color: #0f3a58;
-  background: #ecfeff;
-  border-color: #7dd3fc;
+  color: var(--foreground);
+  background: var(--card);
+  border-color: var(--border);
 }
 
 .type-warning {
-  color: #92400e;
-  background: #fffbeb;
-  border-color: #fcd34d;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--warning) 10%, var(--card));
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
 }
 
 .global-notice-enter-active,

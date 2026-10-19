@@ -1,124 +1,124 @@
 <template>
-  <ui-card>
-    <template #header>
-      <div class="section-head">
-        <div>
-          <p class="section-eyebrow">Incoming</p>
-          <h2 class="text-3xl">Invitations</h2>
-          <p class="section-subtitle text-base">Team invitations waiting for your response.</p>
-        </div>
+  <div class="teams-widget">
+    <div
+      v-if="status === 'error'"
+      style="display: flex; height: 136px; justify-content: center; align-items: center"
+    >
+      <p>Error while fetching invitations</p>
+    </div>
 
-        <div class="section-meta">
-          <ui-skeleton v-if="inboxLoading" variant="rect" width="90px" height="38px" />
-          <span v-else class="count-pill text-base"
-            >{{ pendingInboxInvitations?.length ?? 0 }} pending</span
-          >
-        </div>
-      </div>
-    </template>
-
-    <ui-query-state :query="invitationsQuery">
-      <template #error>
-        <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-          <p>Error while fetching invitations</p>
-        </div>
-      </template>
-
-      <template #skeleton>
-        <div class="team-grid">
-          <ui-card class="team-item" v-for="i in 2" :key="i">
-            <template #header>
-              <div class="team-meta">
-                <ui-skeleton variant="rect" width="100%" />
-                <ui-skeleton variant="rect" width="80px" />
-              </div>
-            </template>
-
-            <ui-skeleton variant="rect" width="120px" />
-
-            <template #footer>
-              <div style="display: flex; gap: 10px">
-                <ui-skeleton variant="rect" height="1.8rem" width="80px" />
-                <ui-skeleton variant="rect" height="1.8rem" width="80px" />
-              </div>
-            </template>
-          </ui-card>
-        </div>
-      </template>
-
-      <div v-if="pendingInboxInvitations?.length === 0" class="empty-row">
-        <div class="empty-icon" aria-hidden="true">+</div>
-        <div class="empty-copy">
-          <h3 class="text-lg">No pending invitations</h3>
-          <p class="text-base">When someone invites you, it will appear here.</p>
-        </div>
-        <a class="empty-link text-sm" href="#other-teams">Browse available teams <span>-></span></a>
+    <div v-else class="teams-body">
+      <div v-if="isStale" class="stale-banner" role="status">
+        <span>Update failed</span>
+        <button type="button" :disabled="isFetching" @click="() => refetch()">
+          {{ isFetching ? 'Retrying…' : 'Retry' }}
+        </button>
       </div>
 
-      <div v-else class="team-grid">
-        <ui-card
-          v-for="invitation in pendingInboxInvitations"
-          :key="`invite-${invitation.id}`"
-          class="team-item"
-        >
-          <template #header>
-            <div class="team-meta">
-              <h3>{{ invitation.team.name }}</h3>
+      <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
+        <ui-skeleton-loader :loading="inboxLoading">
+          <template #skeleton>
+            <div class="team-grid">
+              <div class="team-item-skeleton" v-for="i in 2" :key="i">
+                <div class="team-skeleton-body">
+                  <div class="team-meta">
+                    <ui-skeleton variant="rect" width="100%" />
+                    <ui-skeleton variant="rect" width="80px" />
+                  </div>
 
-              <ui-badge class="text-muted">
-                Invited by: {{ invitation.invited_by?.username || 'Unknown user' }}
-              </ui-badge>
+                  <ui-skeleton variant="rect" width="120px" />
+
+                  <div style="display: flex; gap: 10px">
+                    <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                    <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                  </div>
+                </div>
+              </div>
             </div>
           </template>
 
-          <template #footer>
-            <div class="row-actions">
-              <ui-button
-                size="sm"
-                :disabled="loadingIds.has(invitation.id)"
-                @click="respondToInvitation(invitation.id, 'accept')"
-              >
-                <loading-icon v-if="loadingIds.has(invitation.id)" />
-                Accept
-              </ui-button>
-              <ui-button
-                size="sm"
-                variant="secondary"
-                :disabled="loadingIds.has(invitation.id)"
-                @click="respondToInvitation(invitation.id, 'decline')"
-              >
-                Decline
-              </ui-button>
-            </div>
-          </template>
-        </ui-card>
+          <div v-if="pendingInboxInvitations?.length === 0" class="empty-text text-muted">
+            <p>No invitations. When someone invites you, it will appear here.</p>
+            <button type="button" class="empty-link text-sm" @click="emit('browse-teams')">
+              Browse available teams <span aria-hidden="true">-&gt;</span>
+            </button>
+          </div>
+
+          <div v-else class="team-grid">
+            <ui-card
+              v-for="invitation in pendingInboxInvitations"
+              :key="`invite-${invitation.id}`"
+              class="team-item"
+            >
+              <div class="team-body">
+                <div class="team-meta">
+                  <ui-truncate :text="invitation.team.name" class="team-title" />
+
+                  <ui-badge class="text-muted">
+                    Invited by: {{ invitation.invited_by?.username || 'Unknown user' }}
+                  </ui-badge>
+                </div>
+
+              </div>
+
+              <template #footer>
+                <div class="row-actions">
+                  <ui-button
+                    size="sm"
+                    :disabled="loadingIds.has(invitation.id)"
+                    @click="respondToInvitation(invitation.id, 'accept')"
+                  >
+                    <loading-icon v-if="loadingIds.has(invitation.id)" />
+                    Accept
+                  </ui-button>
+                  <ui-button
+                    size="sm"
+                    variant="secondary"
+                    :disabled="loadingIds.has(invitation.id)"
+                    @click="respondToInvitation(invitation.id, 'decline')"
+                  >
+                    Decline
+                  </ui-button>
+                </div>
+              </template>
+            </ui-card>
+          </div>
+        </ui-skeleton-loader>
       </div>
-    </ui-query-state>
-  </ui-card>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiQueryState from '@/components/ui/UiQueryState'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
+import { useCardState } from '@/composables/useCardState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
   useListTeamInvitations,
 } from '@/api/teams/teams'
 
+const emit = defineEmits<{
+  'browse-teams': []
+}>()
+
 const { showNotification } = useNotification()
 
 const invitationsQuery = useListTeamInvitations()
-const { data: inboxInvitations, isLoading: inboxLoading } = invitationsQuery
+const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
+const { status, isStale } = useCardState(invitationsQuery)
 
 const pendingInboxInvitations = computed(() =>
-  (inboxInvitations.value?.items ?? []).filter((invitation) => invitation.status === 'invited'),
+  inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
 )
 
 const { mutate: accept } = useAcceptTeamInvitation()
@@ -147,102 +147,82 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 </script>
 
 <style scoped>
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+.teams-widget {
+  display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
-.section-head h2 {
-  margin: 0.5rem 0 0.45rem;
-  font-family: var(--font-display);
-  font-weight: 800;
+.empty-text {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  margin: 0;
+  padding: 2rem 0;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
-.section-head .section-subtitle {
+.empty-text p {
   margin: 0;
 }
 
-.section-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+.teams-body {
+  display: grid;
   gap: 1rem;
-}
-
-.count-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
 }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
 .team-item {
-  padding: 0.95rem;
-  background: var(--muted);
-  color: var(--muted-foreground);
-}
-
-.empty-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-height: 96px;
-  padding: 1.35rem;
-  border: 1px dashed var(--line-soft);
-  border-radius: 16px;
-  background: var(--background);
-}
-
-.empty-icon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--primary) 22%, transparent);
-  color: var(--primary);
-  font-size: var(--text-2xl);
-  font-weight: 800;
-}
-
-.empty-copy {
+  height: 100%;
   min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.team-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
 }
 
-.empty-copy h3,
-.empty-copy p {
-  margin: 0;
+.team-item-skeleton {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
 }
 
-.empty-copy h3 {
-  color: var(--foreground);
-  font-weight: 800;
-}
-
-.empty-copy p {
-  margin-top: 0.25rem;
-  color: var(--muted-foreground);
+.team-skeleton-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
 }
 
 .empty-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--primary);
+  font: inherit;
   font-weight: 800;
-  text-decoration: none;
-  white-space: nowrap;
+  cursor: pointer;
+}
+
+.empty-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .team-meta {
@@ -252,8 +232,13 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   gap: 0.5rem;
 }
 
-.team-meta h3 {
+.team-meta h3,
+.team-title {
   font-family: var(--font-display);
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  min-width: 0;
 }
 
 .row-actions {
@@ -262,20 +247,45 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   flex-wrap: wrap;
 }
 
-@media (max-width: 700px) {
-  .section-head,
-  .empty-row {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+.team-item :deep(.card-footer) {
+  padding: 0 1.25rem 1.25rem;
+}
 
-  .section-meta {
-    min-height: 0;
-    align-items: flex-start;
-  }
+.dimmed > * {
+  opacity: 0.6;
+}
 
-  .empty-link {
-    white-space: normal;
-  }
+.stale-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.stale-banner button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.stale-banner button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.stale-banner button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 </style>

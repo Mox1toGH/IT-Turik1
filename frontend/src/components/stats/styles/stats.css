@@ -1,39 +1,36 @@
 :root,
 :root[data-theme='light'] {
-  --stats-bg: color-mix(in srgb, var(--card) 94%, var(--secondary));
+  --stats-bg: var(--background);
   --stats-card: var(--card);
-  --stats-border: var(--line-soft);
-  --stats-accent: #4caf50;
-  --stats-accent-soft: rgba(76, 175, 80, 0.2);
-  --stats-secondary: var(--secondary);
+  --stats-border: var(--border);
+  --stats-accent: var(--success);
+  --stats-accent-soft: var(--success-soft);
+  --stats-secondary: var(--subtle);
   --stats-title: var(--foreground);
-  --stats-text: var(--card-foreground);
+  --stats-text: var(--foreground);
   --stats-muted: var(--muted-foreground);
-  --stats-axis: color-mix(in srgb, var(--muted-foreground) 88%, var(--foreground));
-  --stats-grid-line: color-mix(in srgb, var(--line-soft) 85%, transparent);
-  --stats-track: color-mix(in srgb, var(--muted-foreground) 20%, transparent);
+  --stats-axis: var(--muted-foreground);
+  --stats-grid-line: color-mix(in srgb, var(--border) 85%, transparent);
+  --stats-track: var(--track);
   --stats-marker-stroke: var(--card);
 }
 
 :root[data-theme='dark'] {
-  --stats-bg: color-mix(in srgb, var(--card) 88%, #000);
-  --stats-card: color-mix(in srgb, var(--card) 92%, #000);
-  --stats-border: var(--line-soft);
-  --stats-secondary: var(--secondary);
+  --stats-bg: var(--background);
+  --stats-card: var(--card);
+  --stats-border: var(--border);
+  --stats-secondary: var(--subtle);
   --stats-title: var(--foreground);
-  --stats-text: var(--card-foreground);
+  --stats-text: var(--foreground);
   --stats-muted: var(--muted-foreground);
-  --stats-axis: color-mix(in srgb, var(--muted-foreground) 86%, white);
-  --stats-grid-line: color-mix(in srgb, var(--line-soft) 80%, transparent);
-  --stats-track: color-mix(in srgb, white 14%, transparent);
-  --stats-marker-stroke: color-mix(in srgb, var(--card) 80%, white);
+  --stats-axis: var(--muted-foreground);
+  --stats-grid-line: color-mix(in srgb, var(--border) 80%, transparent);
+  --stats-track: var(--track);
+  --stats-marker-stroke: var(--card);
 }
 
 .stats-shell {
-  background: var(--stats-bg);
-  border: 1px solid var(--stats-border);
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
+  min-width: 0;
 }
 
 .stats-title {
@@ -46,7 +43,7 @@
 .stats-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .stats-card {
@@ -84,7 +81,7 @@
 .kpi-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .loading-text,

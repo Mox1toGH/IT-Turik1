@@ -1,39 +1,35 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">Tournaments</p>
-            <h1 class="section-title">
-              {{ isOwnView ? 'My tournament history' : `${displayUserName} tournament history` }}
-            </h1>
-          </div>
-          <ui-button variant="secondary" @click="goBack">Back</ui-button>
+    <div class="history-page">
+      <div class="head">
+        <div>
+          <p class="section-eyebrow">Tournaments</p>
+          <h1 class="section-title">
+            {{ isOwnView ? 'My tournament history' : `${displayUserName} tournament history` }}
+          </h1>
         </div>
-      </template>
+        <ui-button variant="secondary" @click="goBack">Back</ui-button>
+      </div>
 
-      <ui-query-state :query="historyQuery">
+      <ui-skeleton-loader :loading="isLoading">
         <template #skeleton>
           <div class="history-list">
-            <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="history-card">
+            <div v-for="i in 4" :key="`skeleton-${i}`" class="history-card history-card-skeleton">
               <ui-skeleton variant="rect" width="60%" height="24px" />
               <ui-skeleton variant="rect" width="100%" height="18px" />
               <ui-skeleton variant="rect" width="45%" height="18px" />
               <ui-skeleton variant="rect" width="100%" height="34px" />
-            </ui-card>
+            </div>
           </div>
         </template>
 
-        <template #error>
-          <p class="text-muted">Failed to load tournament history.</p>
-        </template>
+        <p v-if="isError" class="text-muted">
+          Failed to load tournament history ({{ historyError?.code ?? 'unknown' }}).
+        </p>
 
-        <template #empty>
-          <p class="text-muted">No tournament history yet.</p>
-        </template>
+        <p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p>
 
-        <div class="history-list">
+        <div v-else class="history-list">
           <ui-card
             v-for="item in historyItems"
             :key="`${item.tournament_id}-${item.team.id}`"
@@ -70,8 +66,8 @@
             </template>
           </ui-card>
         </div>
-      </ui-query-state>
-    </ui-card>
+      </ui-skeleton-loader>
+    </div>
   </section>
 </template>
 
@@ -81,8 +77,8 @@ import { useRoute, useRouter } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import {
   useGetUser,
   useGetUserProfile,
@@ -102,12 +98,16 @@ const targetUserId = computed(() =>
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
 })
-const historyQuery = useListUserTournamentHistory(targetUserId, undefined, {
+const {
+  data: history,
+  isLoading,
+  isError,
+  error: historyError,
+} = useListUserTournamentHistory(targetUserId, {
   query: { enabled: computed(() => targetUserId.value > 0) },
 })
-const history = historyQuery.data
 
-const historyItems = computed(() => history.value?.items ?? [])
+const historyItems = computed(() => history.value ?? [])
 const displayUserName = computed(
   () => viewedUser.value?.full_name || viewedUser.value?.username || 'User',
 )
@@ -155,14 +155,24 @@ const statusVariant = (status?: string) => {
   gap: 12px;
 }
 
+.history-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .history-list {
   display: grid;
   gap: 10px;
 }
 
-.history-card {
-  background: var(--muted);
-  color: var(--muted-foreground);
+.history-card-skeleton {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
 }
 
 .history-head {

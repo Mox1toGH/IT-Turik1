@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell">
-    <ui-query-state :query="archiveQuery">
+    <ui-skeleton-loader :loading="isLoading">
       <template #skeleton>
         <div class="skeleton-stack">
           <ui-skeleton variant="rect" height="260px" />
@@ -22,36 +22,46 @@
             :end-date="archive.end_date"
           />
 
-          <ui-card class="section-block">
-            <template #header>
-              <div class="section-head">
-                <h2>Description</h2>
-                <p class="section-note">Tournament summary</p>
-              </div>
-            </template>
+          <ui-section title="Description" description="Tournament summary">
             <p class="description-text">{{ archive.description || 'No description provided.' }}</p>
-          </ui-card>
+          </ui-section>
 
-          <archive-summary
-            :rounds-count="archive.rounds?.length ?? 0"
-            :submissions-count="submissions.length"
-            :winner-name="winnerName"
-          />
+          <ui-tabs :items="tabItems" query-key="tab">
+            <template #overview>
+              <archive-summary
+                :rounds-count="archive.rounds?.length ?? 0"
+                :submissions-count="submissions.length"
+                :winner-name="winnerName"
+              />
+            </template>
 
-          <archive-standings :standings="archive.standings ?? []" />
-          <archive-rounds :rounds="archive.rounds ?? []" />
-          <archive-submissions :submissions="submissions" />
-          <archive-teams :teams="archive.teams ?? []" />
+            <template #standings>
+              <archive-standings :standings="archive.standings ?? []" />
+            </template>
+
+            <template #rounds>
+              <archive-rounds :rounds="archive.rounds ?? []" />
+            </template>
+
+            <template #submissions>
+              <archive-submissions :submissions="submissions" />
+            </template>
+
+            <template #teams>
+              <archive-teams :teams="archive.teams ?? []" />
+            </template>
+          </ui-tabs>
         </div>
       </template>
-    </ui-query-state>
+    </ui-skeleton-loader>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'
 import ArchiveSummary from '../components/tournament-archive-detail/ArchiveSummary.vue'
 import ArchiveStandings from '../components/tournament-archive-detail/ArchiveStandings.vue'
@@ -67,16 +77,23 @@ import {
 
 const route = useRoute()
 const id = Number(route.params.id)
-const archiveQuery = useGetTournamentArchive(id)
-const { data: archive } = archiveQuery
+const { data: archive, isLoading } = useGetTournamentArchive(id)
 const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 
-const submissions = computed(() => submissionsData.value?.items ?? [])
+const submissions = computed(() => submissionsData.value ?? [])
 
 const winnerName = computed(() => {
   const winner = archive.value?.standings?.find((item) => item.rank === 1)
   return winner?.team?.name ?? 'TBD'
 })
+
+const tabItems: TabItem[] = [
+  { value: 'overview', label: 'Overview' },
+  { value: 'standings', label: 'Standings' },
+  { value: 'rounds', label: 'Rounds' },
+  { value: 'submissions', label: 'Submissions' },
+  { value: 'teams', label: 'Teams' },
+]
 </script>
 
 <style scoped>
@@ -100,30 +117,7 @@ const winnerName = computed(() => {
 
 .content-stack {
   display: grid;
-  gap: 1.2rem;
-}
-
-.section-block {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.section-block h2 {
-  margin: 0;
-}
-
-.section-note {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
+  gap: 2rem;
 }
 
 .description-text {
@@ -136,12 +130,6 @@ const winnerName = computed(() => {
 @media (max-width: 980px) {
   .skeleton-stats {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .section-note {
-    width: 100%;
   }
 }
 </style>

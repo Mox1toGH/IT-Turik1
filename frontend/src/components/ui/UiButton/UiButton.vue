@@ -118,7 +118,7 @@ const sizeClass = computed(() => sizes[props.size])
 }
 
 .secondary-btn:hover {
-  background: color-mix(in oklab, var(--secondary) 70%, transparent);
+  background: var(--hover);
 }
 
 .ghost-btn {
@@ -134,23 +134,23 @@ const sizeClass = computed(() => sizes[props.size])
 
 .danger-btn {
   border: 1px solid;
-  background: color-mix(in oklab, var(--destructive) 10%, transparent);
+  background: var(--destructive-soft);
   color: var(--destructive);
   border-radius: 8px;
 }
 
 .danger-btn:focus {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 20%, transparent);
+  box-shadow: 0 0 0 3px var(--destructive-ring);
 }
 
 .danger-btn:hover {
-  background: color-mix(in oklab, var(--destructive) 20%, transparent);
+  background: var(--destructive-ring);
 }
 
 .warning-btn {
-  border: 1px solid;
-  background: color-mix(in oklab, var(--warning) 10%, transparent);
-  color: var(--warning);
+  border: 1px solid var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--foreground);
 }
 
 .warning-btn:focus {
@@ -158,7 +158,7 @@ const sizeClass = computed(() => sizes[props.size])
 }
 
 .warning-btn:hover {
-  background: color-mix(in oklab, var(--warning) 20%, transparent);
+  background: color-mix(in srgb, var(--warning) 20%, transparent);
 }
 
 /* Text-only link. Drops the chrome so it reads as inline body text. */

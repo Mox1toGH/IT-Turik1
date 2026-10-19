@@ -24,9 +24,9 @@
         </li>
       </ul>
 
-      <ui-card v-else class="team-empty">
-        <p>{{ allTeams.length ? 'No teams match your search.' : 'No eligible teams found.' }}</p>
-      </ui-card>
+      <p v-else class="team-empty">
+        {{ teams?.length ? 'No teams match your search.' : 'No eligible teams found.' }}
+      </p>
     </template>
   </ui-modal>
 </template>
@@ -36,7 +36,6 @@ import { ref, computed, watch } from 'vue'
 import UiModal from '@/components/ui/UiModal'
 import UiBadge from '@/components/ui/UiBadge'
 import UiInput from '@/components/ui/UiInput'
-import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import {
@@ -53,12 +52,11 @@ const search = ref('')
 const { data: teams, isLoading: isLoadingTeams } = useListEligibleTeamsForTournament(
   props.tournamentId,
 )
-const allTeams = computed(() => teams.value?.items ?? [])
 const { mutate: register, isPending } = useRegisterTeamForTournament()
 
 const filteredTeams = computed(() => {
   const query = search.value.trim().toLowerCase()
-  const all = allTeams.value
+  const all = teams.value ?? []
   if (!query) return all
   return all.filter((team) => team.name.toLowerCase().includes(query))
 })
@@ -88,7 +86,7 @@ function handleJoin(teamId: number) {
 
 .team-list {
   list-style: none;
-  background: var(--muted);
+  background: var(--subtle);
   padding: 0;
   border-radius: var(--radius);
   max-height: 400px;
@@ -107,7 +105,7 @@ function handleJoin(teamId: number) {
 }
 
 .team-item:hover:not(.disabled) {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  background: var(--hover);
 }
 
 .team-item.disabled {
@@ -120,12 +118,10 @@ function handleJoin(teamId: number) {
 }
 
 .team-empty {
-  background: var(--muted);
-  border: 1px dashed var(--border);
   margin: 0;
   padding: 0.75rem;
   font-size: 0.875rem;
   text-align: center;
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+  color: var(--muted-foreground);
 }
 </style>

@@ -33,7 +33,7 @@ const modelValue = defineModel<boolean>()
 }
 
 .visibility-switch:focus-visible {
-  outline: 2px solid var(--brand-500);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -45,8 +45,8 @@ const modelValue = defineModel<boolean>()
   width: 1.2rem;
   height: 1.2rem;
   border-radius: 999px;
-  border: 1px solid white;
-  background: white;
+  border: 1px solid var(--card);
+  background: var(--card);
   transform: translateX(0);
   transition: transform 180ms ease;
 }

@@ -1,84 +1,41 @@
 <template>
-  <ui-card class="section-block">
-    <template #header>
-      <div class="section-head">
-        <h2>Participating Teams</h2>
-        <p class="section-note">Teams registered in this archive</p>
-      </div>
-    </template>
+  <ui-section title="Participating Teams" description="Teams registered in this archive">
     <div v-if="teams.length" class="team-grid">
-      <ui-card v-for="team in teams" :key="team.id" class="team-chip">{{ team.name }}</ui-card>
+      <span v-for="team in teams" :key="team.id" class="team-chip">{{ team.name }}</span>
     </div>
-    <ui-card v-else>
-      <p class="empty-state">No participating teams found.</p>
-    </ui-card>
-  </ui-card>
+    <p v-else class="empty-state">No participating teams found.</p>
+  </ui-section>
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard'
-import type { TournamentArchive } from '@/features/tournaments/types'
+import UiSection from '@/components/ui/UiSection'
+import type { TournamentArchiveDetailResponse } from '@/api/backendAPINinja.schemas'
 
 defineProps<{
-  teams: NonNullable<TournamentArchive['teams']>
+  teams: NonNullable<TournamentArchiveDetailResponse['teams']>
 }>()
 </script>
 
 <style scoped>
-.section-block {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.section-block h2 {
-  margin: 0;
-}
-
-.section-note {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.88rem;
-}
-
 .team-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .team-chip {
-  text-align: center;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: var(--subtle);
+  color: var(--foreground);
   font-weight: 600;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--muted) 78%, transparent),
-    color-mix(in srgb, var(--background) 88%, transparent)
-  ) !important;
-  border: 1px solid color-mix(in srgb, var(--line-soft) 70%, transparent);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  overflow-wrap: anywhere;
 }
 
 .empty-state {
   margin: 0;
   color: var(--muted-foreground);
-}
-
-@media (max-width: 980px) {
-  .team-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .section-note {
-    width: 100%;
-  }
 }
 </style>

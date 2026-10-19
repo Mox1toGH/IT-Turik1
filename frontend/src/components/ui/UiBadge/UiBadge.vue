@@ -23,32 +23,32 @@ const props = withDefaults(defineProps<Props>(), { variant: 'gray' })
 }
 
 .badge--green {
-  border-color: #0d9412;
-  background: #41940d1f;
-  color: #22940d;
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .badge--primary {
-  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border-color: var(--primary);
+  background: var(--primary-soft);
   color: var(--primary);
 }
 
 .badge--gray {
-  border-color: color-mix(in srgb, var(--border) 40%, transparent);
-  background: var(--secondary);
+  border-color: var(--border-soft);
+  background: var(--subtle);
   color: var(--muted-foreground);
 }
 
 .badge--red {
-  border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border-color: var(--destructive);
+  background: var(--destructive-soft);
   color: var(--destructive);
 }
 
 .badge--orange {
-  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+  border-color: var(--warning);
   background: color-mix(in srgb, var(--warning) 10%, transparent);
-  color: var(--warning);
+  color: var(--foreground);
 }
 </style>

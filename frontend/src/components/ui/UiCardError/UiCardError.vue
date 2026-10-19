@@ -1,6 +1,11 @@
 <template>
   <div class="card-error" role="alert">
-    <component :is="IconComponent" class="card-error__icon" aria-hidden="true" />
+    <component
+      :is="IconComponent"
+      class="card-error__icon"
+      :class="`card-error__icon--${iconTone}`"
+      aria-hidden="true"
+    />
     <p class="card-error__title">{{ title }}</p>
     <p class="card-error__hint text-muted">{{ hint }}</p>
     <ui-button
@@ -41,6 +46,15 @@ const code = computed(() => props.errorCode)
 
 const IconComponent = computed(() => (code.value === 'network' ? CloudOff : TriangleAlert))
 
+/** Offline is a warning, a broken server is an error, missing data is neither. */
+type IconTone = 'warning' | 'danger' | 'muted'
+
+const iconTone = computed<IconTone>(() => {
+  if (code.value === 'network') return 'warning'
+  if (typeof code.value === 'number' && code.value >= 500) return 'danger'
+  return 'muted'
+})
+
 const showRetry = computed(() => code.value !== 403 && code.value !== 404)
 
 const title = computed(() => {
@@ -76,6 +90,18 @@ const hint = computed(() => {
 .card-error__icon {
   width: 22px;
   height: 22px;
+  color: var(--muted-foreground);
+}
+
+.card-error__icon--warning {
+  color: var(--warning);
+}
+
+.card-error__icon--danger {
+  color: var(--destructive);
+}
+
+.card-error__icon--muted {
   color: var(--muted-foreground);
 }
 

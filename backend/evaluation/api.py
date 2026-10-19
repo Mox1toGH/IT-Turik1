@@ -620,7 +620,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
         'Jury assignments replaced',
         extra={
             'round_id': round_id,
-            'created': created_count,
+            'created_count': created_count,
             'user_id': request.auth.id
         }
     )

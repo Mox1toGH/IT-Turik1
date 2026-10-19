@@ -19,60 +19,80 @@
 
       <div>
       <div class="info-grid">
-        <ui-card title="Name" class="info-item">
-          <template #header>
-            <span class="card-label">Name</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Name</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong class="text-muted" :title="props.team?.name">{{
-            truncateText(props.team?.name ?? '', 35)
-          }}</strong>
-        </ui-card>
+            <strong class="text-muted info-value">
+              <ui-truncate :text="props.team?.name ?? ''" />
+            </strong>
+          </ui-skeleton-loader>
+        </div>
 
-        <ui-card title="Email" class="info-item">
-          <template #header>
-            <span class="card-label">Email</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Email</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong class="text-muted">{{ props.team?.email }}</strong>
-        </ui-card>
+            <strong class="text-muted info-value">{{ props.team?.email }}</strong>
+          </ui-skeleton-loader>
+        </div>
 
-        <ui-card title="Organization" class="info-item">
-          <template #header>
-            <span class="card-label">Organization</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Organization</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong class="text-muted">{{ props.team?.organization || '-' }}</strong>
-        </ui-card>
+            <strong class="text-muted info-value">{{ props.team?.organization || '-' }}</strong>
+          </ui-skeleton-loader>
+        </div>
 
-        <ui-card title="Captain" class="info-item">
-          <template #header>
-            <span class="card-label">Captain</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Captain</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong v-if="props.team?.captain_id">
-            <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
-              {{ captainName }}
-            </RouterLink>
-          </strong>
-          <strong v-else class="text-muted">{{ captainName }}</strong>
-        </ui-card>
+            <strong v-if="props.team?.captain_id" class="info-value">
+              <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
+                {{ captainName }}
+              </RouterLink>
+            </strong>
+            <strong v-else class="text-muted info-value">{{ captainName }}</strong>
+          </ui-skeleton-loader>
+        </div>
 
-        <ui-card title="Members count" class="info-item">
-          <template #header>
-            <span class="card-label">Members count</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Members count</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong class="text-muted">{{ props.team?.members.length }}</strong>
-        </ui-card>
+            <strong class="text-muted info-value">{{ props.team?.members.length }}</strong>
+          </ui-skeleton-loader>
+        </div>
 
-        <ui-card title="Visibility" class="info-item">
-          <template #header>
-            <span class="card-label">Visibility</span>
-          </template>
+        <div class="info-row">
+          <span class="card-label">Visibility</span>
+          <ui-skeleton-loader :loading="props.loading">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+            </template>
 
-          <strong class="text-muted">{{ props.team?.is_public ? 'Public' : 'Private' }}</strong>
-        </ui-card>
+            <strong class="text-muted info-value">{{
+              props.team?.is_public ? 'Public' : 'Private'
+            }}</strong>
+          </ui-skeleton-loader>
+        </div>
       </div>
       </div>
     </ui-query-state>
@@ -106,12 +126,13 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiTruncate from '@/components/ui/UiTruncate'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import UiQueryState from '@/components/ui/UiQueryState'
-import type { QueryLike } from '@/composables/useQueryState'
-import { truncateText } from '@/lib/utils'
+import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { hasRole } from '@/shared/lib/permissions'
@@ -211,8 +232,8 @@ const leaveTeam = () => {
   height: 2.15rem;
   padding: 0 0.55rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: var(--brand-700);
+  background: var(--primary-soft);
+  color: var(--primary);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
   font-weight: 900;
@@ -221,24 +242,35 @@ const leaveTeam = () => {
 
 .info-grid {
   display: grid;
-  gap: 0.65rem;
+  gap: 0;
+  border-top: 1px solid var(--border);
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
 }
 
-.info-item span {
-  display: block;
-  font-size: 0.8rem;
+.info-row + .info-row {
+  border-top: 1px solid var(--border);
+}
+
+.info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .captain-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
+}
+
+.captain-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .info-actions {
@@ -249,56 +281,5 @@ const leaveTeam = () => {
 
 .info-actions .leave-team {
   width: 100%;
-}
-
-.modal-text {
-  margin: 0 0 0.75rem;
-  font-size: 0.9rem;
-  color: var(--color-gray-700);
-  line-height: 1.55;
-}
-
-.modal-text code {
-  background: #f1f5f9;
-  border: 1px solid var(--line-soft);
-  border-radius: 6px;
-  padding: 0.1rem 0.35rem;
-  font-family: 'SF Mono', ui-monospace, monospace;
-  font-size: 0.85em;
-}
-
-.modal-error {
-  margin: 0.5rem 0 0;
-  font-size: 0.8rem;
-}
-
-@media (max-width: 1020px) {
-  .hero-top {
-    flex-direction: column;
-  }
-
-  .hero-contacts {
-    justify-items: start;
-  }
-
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .member-row,
-  .manage-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .member-side {
-    align-items: flex-start;
-  }
-
-  .status-tags {
-    justify-content: flex-start;
-  }
 }
 </style>

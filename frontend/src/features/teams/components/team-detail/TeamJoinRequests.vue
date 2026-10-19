@@ -15,19 +15,17 @@
           </header>
 
           <div class="join-requests-list">
-            <ui-card v-for="i in 2" :key="i" class="card-item">
-              <div style="display: flex; flex-direction: column; gap: 5px">
+            <div v-for="i in 2" :key="i" class="join-request-row">
+              <div style="display: flex; flex-direction: column; gap: 5px; flex: 1">
                 <ui-skeleton variant="rect" width="200px" />
                 <ui-skeleton variant="rect" width="200px" />
               </div>
 
-              <template #footer>
-                <div class="row-actions">
-                  <ui-skeleton variant="rect" height="30px" width="80px" />
-                  <ui-skeleton variant="rect" height="30px" width="80px" />
-                </div>
-              </template>
-            </ui-card>
+              <div class="row-actions">
+                <ui-skeleton variant="rect" height="30px" width="80px" />
+                <ui-skeleton variant="rect" height="30px" width="80px" />
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -38,8 +36,8 @@
           <span class="text-muted">{{ filteredPendingJoinRequests?.length }} pending</span>
         </header>
 
-        <ui-card
-          class="card-item"
+        <div
+          class="join-request-row"
           v-for="joinRequest in filteredPendingJoinRequests"
           :key="`join-request-${joinRequest.id}`"
         >
@@ -50,35 +48,31 @@
               :full-name="joinRequest.user.full_name"
               :size="40"
             />
-            <div>
+            <div class="join-request-main">
               <p class="join-request-name">{{ joinRequest.user.username }}</p>
               <p class="text-muted join-request-email">{{ joinRequest.user.email }}</p>
             </div>
           </div>
 
-          <template #footer>
-            <div>
-              <div class="row-actions">
-                <ui-button
-                  size="sm"
-                  :disabled="loadingJoinRequestIds.has(joinRequest.id)"
-                  @click="reviewJoinRequest(joinRequest.id, 'accept')"
-                >
-                  <loading-icon v-if="loadingJoinRequestIds.has(joinRequest.id)" />
-                  Accept
-                </ui-button>
-                <ui-button
-                  variant="secondary"
-                  size="sm"
-                  :disabled="loadingJoinRequestIds.has(joinRequest.id)"
-                  @click="reviewJoinRequest(joinRequest.id, 'decline')"
-                >
-                  Decline
-                </ui-button>
-              </div>
-            </div>
-          </template>
-        </ui-card>
+          <div class="row-actions">
+            <ui-button
+              size="sm"
+              :disabled="loadingJoinRequestIds.has(joinRequest.id)"
+              @click="reviewJoinRequest(joinRequest.id, 'accept')"
+            >
+              <loading-icon v-if="loadingJoinRequestIds.has(joinRequest.id)" />
+              Accept
+            </ui-button>
+            <ui-button
+              variant="secondary"
+              size="sm"
+              :disabled="loadingJoinRequestIds.has(joinRequest.id)"
+              @click="reviewJoinRequest(joinRequest.id, 'decline')"
+            >
+              Decline
+            </ui-button>
+          </div>
+        </div>
 
         <p v-if="filteredPendingJoinRequests?.length === 0" class="text-muted">
           No pending join requests.
@@ -100,6 +94,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
+import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
 
 interface Props {
@@ -174,12 +169,18 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   overflow-y: auto;
   max-height: 300px;
   display: grid;
-  gap: 0.55rem;
+  gap: 0;
   grid-template-rows: auto;
 }
 
-.card-item {
-  background-color: var(--muted);
+.join-request-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.7rem 0;
+}
+
+.join-requests-list .join-request-row + .join-request-row {
+  border-top: 1px solid var(--border);
 }
 
 .join-request-name,
@@ -191,14 +192,21 @@ const reviewJoinRequest = (id: number, action: 'accept' | 'decline') => {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  min-width: 0;
+}
+
+.join-request-main {
+  min-width: 0;
 }
 
 .join-request-name {
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .join-request-email {
   font-size: 0.84rem;
+  overflow-wrap: anywhere;
 }
 
 .row-actions {

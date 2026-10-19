@@ -44,7 +44,6 @@ export const renderGoogleButton = async ({
   container,
   clientId,
   callback,
-  width = 340,
 }: RenderGoogleButtonOptions) => {
   if (!container) {
     throw new Error('Google button container is missing')
@@ -75,7 +74,6 @@ export const renderGoogleButton = async ({
     size: 'large',
     shape: 'pill',
     text: 'continue_with',
-    width,
     logo_alignment: 'left',
   })
 }

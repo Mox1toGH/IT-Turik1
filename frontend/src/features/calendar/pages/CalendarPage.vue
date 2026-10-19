@@ -174,15 +174,9 @@ async function exportRound(roundId: number) {
 }
 
 .calendar-hero {
-  padding: 1.4rem;
-  background:
-    linear-gradient(130deg, rgba(15, 118, 110, 0.95), rgba(20, 184, 166, 0.88)),
-    linear-gradient(45deg, rgba(249, 115, 22, 0.2), transparent);
-  color: white;
-  border: none;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -214,7 +208,8 @@ async function exportRound(roundId: number) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.75rem;
-  opacity: 0.85;
+  font-weight: 700;
+  color: var(--muted-foreground);
 }
 
 h1 {
@@ -225,7 +220,7 @@ h1 {
 
 .sub {
   margin: 0.5rem 0 0;
-  opacity: 0.92;
+  color: var(--muted-foreground);
 }
 
 .calendar-skeleton {

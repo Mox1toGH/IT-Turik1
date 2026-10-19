@@ -49,10 +49,8 @@ watch(
 
 <style scoped>
 .news-content {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  padding: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .news-content :deep(.ProseMirror) {
@@ -76,13 +74,13 @@ watch(
 }
 
 .news-content :deep(.ProseMirror a) {
-  color: #1c7ed6;
+  color: var(--pm-link);
   text-decoration: underline;
   text-underline-offset: 2px;
   font-weight: 600;
 }
 
 .news-content :deep(.ProseMirror a:hover) {
-  color: #1864ab;
+  color: var(--pm-link);
 }
 </style>

@@ -246,7 +246,8 @@ const formatDateTime = (value: string | number | Date) => {
 
 .statistic-card,
 .code-card {
-  background: var(--muted);
+  height: 100%;
+  background: var(--card);
 }
 
 .code-card-content {
@@ -262,7 +263,7 @@ const formatDateTime = (value: string | number | Date) => {
 
 .codes-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.75rem;
 }
 

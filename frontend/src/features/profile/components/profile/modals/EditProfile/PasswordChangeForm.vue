@@ -1,6 +1,6 @@
 <template>
   <form class="password-form" @submit.prevent="handleSubmit">
-    <ui-card class="form-panel">
+    <div class="form-panel">
       <div class="panel-header">
         <span class="step-marker">01</span>
         <div>
@@ -51,14 +51,14 @@
         </small>
       </label>
 
-      <ui-card class="reset-hint">
+      <div class="reset-hint">
         <span>Forgot your current password?</span>
         <ui-button type="button" size="sm" :disabled="isSendingReset" @click="sendResetEmail">
           <LoadingIcon v-if="isSendingReset" />
           Send reset email
         </ui-button>
-      </ui-card>
-    </ui-card>
+      </div>
+    </div>
 
     <div class="footer-actions">
       <ui-button v-if="showBack" type="button" variant="secondary" @click="emit('back')">
@@ -74,7 +74,6 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import UiPasswordField from '@/components/ui/UiPasswordField'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
@@ -161,7 +160,7 @@ defineExpose({ reset: form.reset, isSubmitting: isChangingPassword })
   gap: 14px;
 }
 
-.form-panel.card {
+.form-panel {
   display: grid;
   gap: 14px;
 }
@@ -200,6 +199,16 @@ defineExpose({ reset: form.reset, isSubmitting: isChangingPassword })
   font-size: 0.8rem;
 }
 
+.reset-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+}
+
 .reset-hint span {
   color: var(--muted-foreground);
   font-size: var(--text-sm);
@@ -220,7 +229,7 @@ defineExpose({ reset: form.reset, isSubmitting: isChangingPassword })
 }
 
 @media (max-width: 480px) {
-  .reset-hint.card {
+  .reset-hint {
     justify-content: center;
     text-align: center;
   }

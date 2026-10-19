@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="assignment-card">
+  <ui-card class="assignment-card card-actions-divided">
     <template #header>
       <div class="card-header">
         <div>
@@ -119,7 +119,8 @@ const handleSuccess = () => {
 
 <style scoped>
 .assignment-card {
-  background: var(--muted);
+  height: 100%;
+  background: var(--card);
   border-color: var(--border);
 }
 

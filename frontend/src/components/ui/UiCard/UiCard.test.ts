@@ -95,6 +95,19 @@ describe('UiCard', () => {
     expect(fixed.container.querySelector('.card.scrollable')).toBeNull()
   })
 
+  it('renders the empty state with an optional helper line', async () => {
+    const screen = render(UiCard, {
+      props: { status: 'empty', emptyText: 'No rounds added yet' },
+      slots: { 'empty-action': '<p>Create the first round to get started.</p>' },
+    })
+
+    expect(screen.getByText('No rounds added yet')).toBeInTheDocument()
+    const hint = screen.getByText('Create the first round to get started.')
+    expect(hint).toBeInTheDocument()
+    // The card owns the helper styling so every empty state looks the same.
+    expect(getComputedStyle(hint.element() as HTMLElement).marginTop).toBe('0px')
+  })
+
   it('keeps base card styling (background, border, radius)', async () => {
     render(UiCard, {
       slots: { default: 'Body' },

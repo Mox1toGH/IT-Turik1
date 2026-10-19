@@ -18,9 +18,8 @@ interface Props {
   buttonWidth?: number
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   dividerLabel: 'or continue with',
-  buttonWidth: 340,
 })
 
 const emit = defineEmits(['success'])
@@ -60,7 +59,6 @@ onMounted(async () => {
       container: googleButtonRef.value,
       clientId: googleClientId,
       callback: handleGoogleCredential,
-      width: props.buttonWidth,
     })
   } catch (error) {
     errorMessage.value =

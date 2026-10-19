@@ -1,104 +1,96 @@
 <template>
-  <div class="actions" v-if="hasRole(user, 'admin')">
+  <div class="actions" v-if="user?.role === 'admin'">
     <ui-button @click="openCreate">Create round</ui-button>
     <CreateRoundModal v-model="isCreateOpen" :tournament-id="props.tournamentId" />
   </div>
 
   <section>
-    <ui-query-state :query="roundsQuery">
-      <template #skeleton>
-        <div class="rounds-list">
-          <ui-card v-for="i in 3" :key="i" class="round-card">
-            <template #header>
-              <div class="round-header">
-                <ui-skeleton variant="rect" width="180px" height="24px" />
-                <ui-skeleton variant="rect" width="80px" height="24px" />
-              </div>
-            </template>
-
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <ui-skeleton variant="rect" width="220px" />
-              <ui-skeleton variant="rect" width="220px" />
-            </div>
-
-            <div class="round-actions">
-              <ui-skeleton variant="rect" width="110px" height="36px" />
-            </div>
-          </ui-card>
-        </div>
-      </template>
-
-      <template #error>
-        <ui-card>
-          <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-            <p>Error while fetching rounds</p>
+    <div v-if="status === 'loading'" class="rounds-list">
+      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card" status="loading">
+        <template #header>
+          <div class="round-header">
+            <ui-skeleton variant="rect" width="180px" height="24px" />
+            <ui-skeleton variant="rect" width="80px" height="24px" />
           </div>
-        </ui-card>
-      </template>
+        </template>
 
-      <template #empty>
-        <ui-card
-          class="empty-card"
-          style="display: flex; align-items: center; justify-content: center; height: 300px"
-        >
-          <p class="empty-error">No rounds found</p>
-        </ui-card>
-      </template>
-
-      <div class="rounds-list">
-        <ui-card v-for="round in rounds" :key="round.id" class="round-card">
-          <template #header>
-            <div class="round-header">
-              <h4>{{ truncateText(round.name ?? '-', 40) }}</h4>
-
-              <div class="header-right">
-                <ui-badge :variant="badgeVariant(getEffectiveRoundStatus(round))">{{
-                  badgeStatus(getEffectiveRoundStatus(round))
-                }}</ui-badge>
-                <round-actions-popover
-                  v-if="hasRole(user, 'admin')"
-                  :roundId="round.id"
-                  :tournamentId="props.tournamentId"
-                  :status="round.status"
-                />
-              </div>
-            </div>
-          </template>
-
-          <div class="round-dates">
-            <p class="text-muted">Start: {{ formatDate(round.start_date, { showHours: true }) }}</p>
-            <p class="text-muted">End: {{ formatDate(round.end_date, { showHours: true }) }}</p>
+        <template #skeleton>
+          <div class="skeleton-lines">
+            <ui-skeleton variant="rect" width="220px" />
+            <ui-skeleton variant="rect" width="220px" />
           </div>
 
           <div class="round-actions">
-            <ui-button size="sm" variant="secondary" @click="openDetails(round)">
-              View details
-            </ui-button>
+            <ui-skeleton variant="rect" width="110px" height="36px" />
+          </div>
+        </template>
+      </ui-card>
+    </div>
 
+    <ui-card
+      v-else-if="status !== 'data'"
+      :query="roundsQuery"
+      class="rounds-state"
+      empty-text="No rounds added yet"
+    >
+      <template #empty-action>
+        <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
+      </template>
+    </ui-card>
+
+    <div v-else class="rounds-list">
+      <ui-card v-for="round in rounds" :key="round.id" class="round-card">
+        <template #header>
+          <div class="round-header">
+            <h4>{{ truncateText(round.name ?? '-', 40) }}</h4>
+
+            <div class="header-right">
+              <ui-badge :variant="badgeVariant(getEffectiveRoundStatus(round))">{{
+                badgeStatus(getEffectiveRoundStatus(round))
+              }}</ui-badge>
+              <round-actions-popover
+                v-if="user?.role === 'admin'"
+                :roundId="round.id"
+                :tournamentId="props.tournamentId"
+                :status="round.status"
+              />
+            </div>
+          </div>
+        </template>
+
+        <div class="round-dates">
+          <p class="text-muted">Start: {{ formatDate(round.start_date, { showHours: true }) }}</p>
+          <p class="text-muted">End: {{ formatDate(round.end_date, { showHours: true }) }}</p>
+        </div>
+
+        <div class="round-actions">
+          <ui-button size="sm" variant="secondary" @click="openDetails(round)">
+            View details
+          </ui-button>
+
+          <ui-button
+            v-if="user?.role === 'admin' && round.status === 'draft'"
+            size="sm"
+            variant="secondary"
+            @click="openEdit(round)"
+          >
+            Edit
+          </ui-button>
+
+          <template v-if="getEffectiveRoundStatus(round) === 'active' && user?.role === 'team'">
             <ui-button
-              v-if="hasRole(user, 'admin') && round.status === 'draft'"
+              v-if="submittedRoundIds.has(round.id)"
               size="sm"
               variant="secondary"
-              @click="openEdit(round)"
+              @click="openSubmissionsSection"
             >
-              Edit
+              View submission
             </ui-button>
-
-            <template v-if="getEffectiveRoundStatus(round) === 'active' && hasRole(user, 'team')">
-              <ui-button
-                v-if="submittedRoundIds.has(round.id)"
-                size="sm"
-                variant="secondary"
-                @click="openSubmissionsSection"
-              >
-                View submission
-              </ui-button>
-              <ui-button v-else size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
-            </template>
-          </div>
-        </ui-card>
-      </div>
-    </ui-query-state>
+            <ui-button v-else size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
+          </template>
+        </div>
+      </ui-card>
+    </div>
 
     <submit-modal
       v-if="selectedSubmitRoundId !== null"
@@ -125,7 +117,6 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
@@ -137,9 +128,9 @@ import CreateRoundModal from './tournament-rounds/modals/CreateRoundModal.vue'
 import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { hasRole } from '@/shared/lib/permissions'
+import { useCardState } from '@/composables/useCardState'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
-import type { Round } from '@/features/tournaments/types'
+import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {
   tournamentId: number
@@ -151,29 +142,29 @@ const router = useRouter()
 const route = useRoute()
 
 const roundsQuery = useListRounds(props.tournamentId)
-const { data } = roundsQuery
+const { status } = useCardState(roundsQuery)
 const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
-const rounds = computed(() => data.value?.items ?? [])
+const rounds = computed(() => roundsQuery.data.value ?? [])
 const submittedRoundIds = computed(
-  () => new Set((submissions.value?.items ?? []).map((submission) => submission.round_details.id)),
+  () => new Set((submissions.value ?? []).map((submission) => submission.round_details.id)),
 )
 
 const isDetailsOpen = ref(false)
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
 const isSubmitOpen = ref(false)
-const selectedRound = ref<Round | null>(null)
+const selectedRound = ref<RoundResponse | null>(null)
 const selectedSubmitRoundId = ref<number | null>(null)
 
-function getEffectiveRoundStatus(round: Round): Round['status'] {
+function getEffectiveRoundStatus(round: RoundResponse): RoundResponse['status'] {
   if (round.status !== 'active') return round.status
   const endTimestamp = new Date(round.end_date).getTime()
   if (!Number.isFinite(endTimestamp)) return round.status
   return Date.now() >= endTimestamp ? 'submission_closed' : 'active'
 }
 
-function openDetails(round: Round) {
+function openDetails(round: RoundResponse) {
   selectedRound.value = round
   isDetailsOpen.value = true
 }
@@ -182,7 +173,7 @@ function openCreate() {
   isCreateOpen.value = true
 }
 
-function openEdit(round: Round) {
+function openEdit(round: RoundResponse) {
   selectedRound.value = round
   isEditOpen.value = true
 }
@@ -207,14 +198,14 @@ watch(isSubmitOpen, (isOpen) => {
   }
 })
 
-function badgeVariant(status: Round['status']): Variants {
+function badgeVariant(status: RoundResponse['status']): Variants {
   if (status === 'active') return 'primary'
   if (status === 'evaluated') return 'green'
   if (status === 'submission_closed') return 'red'
   return 'gray'
 }
 
-function badgeStatus(status: Round['status']) {
+function badgeStatus(status: RoundResponse['status']) {
   if (status === 'draft') return 'Draft'
   if (status === 'active') return 'Active'
   if (status === 'evaluated') return 'Evaluated'
@@ -236,6 +227,26 @@ function badgeStatus(status: Round['status']) {
   gap: 0.8rem;
 }
 
+/* The state card only carries the placeholder panel: it draws no frame of its own. */
+.rounds-state {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.rounds-state :deep(.card-empty),
+.rounds-state :deep(.card-state-error) {
+  flex: 1 1 auto;
+  min-height: 220px;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.skeleton-lines {
+  display: grid;
+  gap: 0.3rem;
+}
+
 .round-header {
   display: flex;
   justify-content: space-between;
@@ -254,6 +265,7 @@ function badgeStatus(status: Round['status']) {
   justify-content: end;
   align-items: center;
   gap: 8px;
+  margin-top: 1rem;
 }
 
 .round-dates {

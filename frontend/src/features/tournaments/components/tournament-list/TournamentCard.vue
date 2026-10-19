@@ -1,22 +1,17 @@
 <template>
   <ui-card class="tournament-card">
-    <div class="tournament-top">
-      <img
-        v-if="tournament.banner"
-        class="tournament-banner"
-        :src="tournament.banner"
-        :alt="`${tournament.name} banner`"
-      />
-      <h3 class="tournament-title" :title="tournament.name">
-        {{ truncateText(tournament.name, 80) }}
-      </h3>
+    <img
+      v-if="tournament.banner"
+      class="tournament-media"
+      :src="tournament.banner"
+      :alt="`${tournament.name} banner`"
+    />
 
-      <p class="tournaments-description" :title="tournament.description">
-        {{ truncateText(tournament.description, 200) }}
-      </p>
-    </div>
+    <div class="tournament-body">
+      <ui-truncate :text="tournament.name" class="tournament-title" />
 
-    <div class="tournament-info">
+      <p class="tournaments-description">{{ tournament.description }}</p>
+
       <div class="tournaments-meta">
         <div class="tournaments-date">
           <p>Start date:</p>
@@ -30,7 +25,13 @@
     </div>
 
     <template #footer>
-      <ui-button size="sm" asLink :to="`/tournaments/${tournament.id}`" variant="default">
+      <ui-button
+        size="sm"
+        asLink
+        :to="`/tournaments/${tournament.id}`"
+        variant="default"
+        class="tournament-action"
+      >
         View details
       </ui-button>
     </template>
@@ -41,7 +42,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import { truncateText } from '@/lib/utils'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { formatDate } from '@/lib/date'
 import type { Tournament, TournamentStatus } from '@/features/tournaments/types'
 
@@ -59,56 +60,57 @@ const statusBadgeVariant = (status?: TournamentStatus) => {
 
 <style scoped>
 .tournament-card {
-  padding: 0.95rem;
-  background: var(--muted);
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.tournament-top {
+.tournament-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
+  object-fit: cover;
+}
+
+.tournament-body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  margin-bottom: 0.5rem;
-}
-
-.tournament-banner {
-  width: 100%;
-  aspect-ratio: 16 / 8;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid var(--line-soft);
-  background: var(--background);
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
 }
 
 .tournament-title {
   margin: 0;
   color: var(--foreground);
   font-family: var(--font-display);
-  font-weight: 800;
-  word-break: break-word;
   font-size: var(--text-xl);
   line-height: var(--text-xl--line-height);
+  font-weight: 800;
 }
 
 .tournaments-description {
-  flex: 1;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   margin: 0;
+  min-width: 0;
   color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
-  word-break: break-word;
-}
-
-.tournament-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .tournaments-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   color: var(--muted-foreground);
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
@@ -118,6 +120,7 @@ const statusBadgeVariant = (status?: TournamentStatus) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .tournaments-date p {
@@ -127,5 +130,13 @@ const statusBadgeVariant = (status?: TournamentStatus) => {
 .tournaments-date p:first-child {
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
+}
+
+.tournament-action {
+  width: 100%;
+}
+
+.tournament-card :deep(.card-footer) {
+  padding: 0 1.25rem 1.25rem;
 }
 </style>

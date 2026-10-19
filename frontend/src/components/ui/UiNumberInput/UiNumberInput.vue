@@ -144,7 +144,7 @@ function handleKeydown(event: KeyboardEvent) {
 
 .number-wrapper.invalid {
   border-color: var(--destructive);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 12%, transparent);
+  box-shadow: 0 0 0 3px var(--destructive-soft);
 }
 
 .number-input {
@@ -184,7 +184,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 .stepper-btn:disabled {
-  background: color-mix(in srgb, var(--foreground) 0.1%, transparent);
+  background: transparent;
   cursor: not-allowed;
 }
 

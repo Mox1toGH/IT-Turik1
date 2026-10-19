@@ -30,6 +30,11 @@ export const profileRoutes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/profile/notifications/settings',
+    component: () => import('./pages/NotificationSettingsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/profile/tournaments-history',
     component: () => import('./components/profile/sections/UserTournamentHistorySection.vue'),
     meta: { requiresAuth: true },

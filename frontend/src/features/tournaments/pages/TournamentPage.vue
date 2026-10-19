@@ -4,113 +4,57 @@
 
     <div class="tournament-rule" aria-hidden="true"></div>
 
-    <nav class="sections-card" aria-label="Tournament sections">
-      <ui-horizontal-scroll role="tablist" content-class="sections">
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="currentSection === 'information'"
-          :class="['sections-btn', { active: currentSection === 'information' }]"
-          @click="setActiveSection('information')"
-        >
-          Information
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="currentSection === 'rounds'"
-          :class="['sections-btn', { active: currentSection === 'rounds' }]"
-          @click="setActiveSection('rounds')"
-        >
-          Rounds
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="currentSection === 'submissions'"
-          :aria-disabled="!hasRole(user, 'admin') && !hasRole(user, 'team')"
-          :disabled="!hasRole(user, 'admin') && !hasRole(user, 'team')"
-          :class="['sections-btn', { active: currentSection === 'submissions' }]"
-          @click="setActiveSection('submissions')"
-        >
-          Submissions
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="currentSection === 'schedule'"
-          :class="['sections-btn', { active: currentSection === 'schedule' }]"
-          @click="setActiveSection('schedule')"
-        >
-          Schedule
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="currentSection === 'leaderboard'"
-          :class="['sections-btn', { active: currentSection === 'leaderboard' }]"
-          @click="setActiveSection('leaderboard')"
-        >
-          Leaderboard
-        </button>
-      </ui-horizontal-scroll>
-    </nav>
-
-    <transition name="fade" mode="out-in">
-      <div :key="currentSection">
-        <div class="tournament-grid" v-if="currentSection === 'information'">
+    <ui-tabs :items="tabItems" query-key="section">
+      <template #information>
+        <div class="tournament-grid">
           <TournamentInfo :tournament-id="id" />
           <TournamentTeams :tournament-id="id" />
         </div>
 
-        <TournamentRounds :tournament-id="id" v-if="currentSection === 'rounds'" />
+        <ManageZoneCard
+          v-if="user?.role === 'admin'"
+          :tournament-id="id"
+          class="manage-zone"
+        />
+      </template>
+
+      <template #rounds>
+        <TournamentRounds :tournament-id="id" />
+      </template>
+
+      <template #submissions>
+        <TournamentSubmissions v-if="user?.role === 'team'" :tournament-id="id" />
+        <JuryAssign
+          v-else-if="user?.role === 'admin'"
+          :tournament-id="id"
+          :tournament-status="tournament?.status ?? 'draft'"
+        />
+        <ui-card v-else>
+          <p>Submissions are available for team members and admins.</p>
+        </ui-card>
+      </template>
+
+      <template #schedule>
         <TournamentSchedule
           :tournament-id="id"
           :tournament-status="tournament?.status ?? 'draft'"
-          v-if="currentSection === 'schedule'"
         />
-        <TournamentLeaderboard :tournament-id="id" v-if="currentSection === 'leaderboard'" />
+      </template>
 
-        <template
-          v-if="
-            currentSection === 'submissions' && (hasRole(user, 'admin') || hasRole(user, 'team'))
-          "
-        >
-          <TournamentSubmissions :tournament-id="id" v-if="hasRole(user, 'team')" />
-          <JuryAssign
-            :tournament-id="id"
-            :tournament-status="tournament?.status ?? 'draft'"
-            v-if="hasRole(user, 'admin')"
-          />
-        </template>
-
-        <ui-card
-          v-if="
-            currentSection === 'submissions' &&
-            user &&
-            !hasRole(user, 'team') &&
-            !hasRole(user, 'admin')
-          "
-        >
-          <p>Submissions are available for team members and admins.</p>
-        </ui-card>
-
-        <ManageZoneCard
-          v-if="hasRole(user, 'admin') && currentSection === 'information'"
-          :tournament-id="id"
-        />
-      </div>
-    </transition>
+      <template #leaderboard>
+        <TournamentLeaderboard :tournament-id="id" />
+      </template>
+    </ui-tabs>
   </section>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiHorizontalScroll from '@/components/ui/UiHorizontalScroll'
-import { useRoute, useRouter } from 'vue-router'
+import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
+import { useRoute } from 'vue-router'
 import TournamentInfo from '../components/tournament/tabs/TournamentInfo.vue'
 import TournamentTeams from '../components/tournament/tabs/TournamentTeams.vue'
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
 import TournamentSchedule from '../components/tournament/tabs/TournamentSchedule.vue'
 import TournamentRounds from '../components/tournament/tabs/TournamentRounds.vue'
 import JuryAssign from '../components/tournament/tabs/tournament-submissions/JuryAssign.vue'
@@ -118,86 +62,29 @@ import TournamentSubmissions from '../components/tournament/tabs/TournamentSubmi
 import TournamentLeaderboard from '../components/tournament/tabs/TournamentLeaderboard.vue'
 
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { hasRole } from '@/shared/lib/permissions'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import ManageZoneCard from '../components/tournament/ManageZoneCard.vue'
 import TournamentHeroCard from '../components/tournament/TournamentHeroCard.vue'
 
-type Sections = 'information' | 'schedule' | 'rounds' | 'submissions' | 'leaderboard'
-
 const route = useRoute()
-const router = useRouter()
 
 const id = Number(route.params.id)
 
 const { data: user } = useGetUserProfile()
 const { data: tournament } = useGetTournament(id)
 
-const currentSection = ref<Sections>('information')
+const canViewSubmissions = computed(() => user.value?.role === 'admin' || user.value?.role === 'team')
 
-const sectionQueryKey = 'section'
-const allSections: Sections[] = ['information', 'schedule', 'rounds', 'submissions', 'leaderboard']
-
-watch(
-  () => route.query[sectionQueryKey],
-  (value) => {
-    const section = parseSectionFromQuery(value)
-    if (section && section !== currentSection.value) currentSection.value = section
-  },
-)
-
-watch(
-  () => currentSection.value,
-  (section) => {
-    const currentQuerySection = parseSectionFromQuery(route.query[sectionQueryKey])
-    if (currentQuerySection === section) return
-
-    void router.replace({
-      query: {
-        ...route.query,
-        [sectionQueryKey]: section,
-      },
-    })
-  },
-)
-
-function parseSectionFromQuery(value: unknown): Sections | null {
-  const raw = Array.isArray(value) ? value[0] : value
-  if (typeof raw !== 'string') return null
-  return allSections.includes(raw as Sections) ? (raw as Sections) : null
-}
-
-const initialSection = parseSectionFromQuery(route.query[sectionQueryKey])
-if (initialSection) currentSection.value = initialSection
-
-const setActiveSection = (section: Sections) => {
-  currentSection.value = section
-}
+const tabItems = computed<TabItem[]>(() => [
+  { value: 'information', label: 'Information' },
+  { value: 'rounds', label: 'Rounds' },
+  { value: 'submissions', label: 'Submissions', disabled: !canViewSubmissions.value },
+  { value: 'schedule', label: 'Schedule' },
+  { value: 'leaderboard', label: 'Leaderboard' },
+])
 </script>
 
 <style scoped>
-.fade-enter-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-.fade-leave-active {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
 .tournament-detail-page {
   gap: 1.4rem;
 }
@@ -205,60 +92,7 @@ const setActiveSection = (section: Sections) => {
 .tournament-rule {
   height: 1px;
   margin: 0.7rem 0 0.9rem;
-  background: var(--line-soft);
-}
-
-.sections-card {
-  overflow: hidden;
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  background: var(--card);
-}
-
-.sections-btn {
-  position: relative;
-  flex: 0 0 auto;
-  min-height: 42px;
-  padding: 0.55rem 0.85rem;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 800;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.sections-btn:hover {
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-  color: var(--foreground);
-}
-
-.sections-btn:focus-visible {
-  box-shadow: 0 0 0 2px var(--ring);
-}
-
-.sections-btn.active {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 22%, transparent);
-}
-
-.sections-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-.sections-btn:disabled:hover {
-  background: transparent;
-  color: var(--muted-foreground);
+  background: var(--border);
 }
 
 .tournament-grid {
@@ -268,24 +102,13 @@ const setActiveSection = (section: Sections) => {
   align-items: start;
 }
 
+.manage-zone {
+  margin-top: 1rem;
+}
+
 @media (max-width: 810px) {
   .tournament-detail-page {
     padding: 1rem 1rem 2rem;
-  }
-
-  .sections-card {
-    margin-inline: -1rem;
-    border-inline: 0;
-    border-radius: 0;
-  }
-
-  .sections-card :deep(.sections) {
-    padding-inline: 1rem;
-  }
-
-  .sections-btn {
-    min-height: 40px;
-    padding-inline: 0.75rem;
   }
 
   .tournament-grid {

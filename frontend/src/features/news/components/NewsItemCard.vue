@@ -1,9 +1,9 @@
 <template>
   <ui-card :id="`news-${item.id}`" class="news-item">
-    <template #header>
+    <div class="news-body">
       <div class="news-item-head">
-        <div>
-          <h3>{{ item.title }}</h3>
+        <div class="news-head-copy">
+          <ui-truncate :text="item.title" class="news-title" />
           <p class="meta">{{ item.created_by_name || 'Unknown author' }} · {{ formattedDate }}</p>
         </div>
         <div v-if="canModify" class="news-actions">
@@ -15,17 +15,25 @@
           </ui-button>
         </div>
       </div>
-    </template>
 
-    <div
-      class="news-content-wrap"
-      :class="{ collapsible: isExpandable, expanded: isExpandable && isExpanded }"
-    >
-      <news-content-viewer :content="item.content" />
+      <div
+        :id="`news-content-${item.id}`"
+        class="news-content-wrap"
+        :class="{ collapsible: isExpandable, expanded: isExpandable && isExpanded }"
+      >
+        <news-content-viewer :content="item.content" />
+      </div>
+      <ui-button
+        v-if="isExpandable"
+        size="sm"
+        variant="secondary"
+        :aria-expanded="isExpanded"
+        :aria-controls="`news-content-${item.id}`"
+        @click="isExpanded = !isExpanded"
+      >
+        {{ isExpanded ? 'Show less' : 'Show more' }}
+      </ui-button>
     </div>
-    <ui-button v-if="isExpandable" size="sm" variant="secondary" @click="isExpanded = !isExpanded">
-      {{ isExpanded ? 'Show less' : 'Show more' }}
-    </ui-button>
   </ui-card>
 </template>
 
@@ -33,6 +41,7 @@
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
+import UiTruncate from '@/components/ui/UiTruncate'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
 import type { NewsArticle } from '../types'
 
@@ -72,28 +81,40 @@ const formattedDate = computed(() => {
 
 <style scoped>
 .news-item {
-  display: grid;
-  gap: 0.8rem;
-  padding: 0.95rem;
-  background: var(--muted);
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
 }
+
+.news-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
+}
+
 .news-item-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.8rem;
-}
-
-.news-item-head > div:first-child {
   min-width: 0;
 }
 
-.news-item-head h3 {
+.news-head-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.news-title {
   margin: 0;
   color: var(--foreground);
   font-family: var(--font-display);
   font-weight: 800;
-  word-break: break-word;
+  font-size: 1.1rem;
 }
 
 .news-actions {
@@ -101,6 +122,7 @@ const formattedDate = computed(() => {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.45rem;
+  flex: 0 0 auto;
 }
 
 .news-action-btn {
@@ -110,6 +132,7 @@ const formattedDate = computed(() => {
 
 .news-content-wrap {
   position: relative;
+  min-width: 0;
 }
 .news-content-wrap.collapsible {
   max-height: 180px;
@@ -127,7 +150,7 @@ const formattedDate = computed(() => {
   right: 0;
   bottom: 0;
   height: 48px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--muted));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--card));
   pointer-events: none;
 }
 .news-content-wrap.collapsible.expanded {
@@ -138,7 +161,7 @@ const formattedDate = computed(() => {
   margin: 0.35rem 0 0;
   color: var(--muted-foreground);
   font-size: 0.92rem;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 700px) {
