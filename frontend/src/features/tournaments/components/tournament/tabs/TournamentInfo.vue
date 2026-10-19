@@ -152,6 +152,7 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
 import { useNotification } from '@/composables/useNotification'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import UiSelect from '@/components/ui/UiSelect'
 import {
   useGetCurrentTask,
@@ -206,7 +207,7 @@ const canJoinSelectedTeam = computed(
 )
 
 const canManageRegistration = computed(
-  () => user.value?.role === 'team' && (eligibleTeamItems.value.length > 0 || !!registeredTeamId.value),
+  () => hasRole(user.value, 'team') && (eligibleTeamItems.value.length > 0 || !!registeredTeamId.value),
 )
 
 const isDescriptionLarge = computed(() => (tournament.value?.description.length ?? 0) > 190)

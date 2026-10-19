@@ -70,7 +70,7 @@
           <template #footer>
             <div class="actions">
               <ui-button
-                v-if="team.can_request_to_join && user?.role === 'team'"
+                v-if="team.can_request_to_join && hasRole(user, 'team')"
                 size="sm"
                 variant="secondary"
                 style="width: 100%"
@@ -110,6 +110,7 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import {
   useCreateTeamJoinRequest,
   useListTeams,

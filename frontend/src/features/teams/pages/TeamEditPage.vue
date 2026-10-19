@@ -56,6 +56,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeam } from '@/api/teams/teams'
+import { isTeamCaptain } from '../lib/team-permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -68,7 +69,7 @@ const { data: team } = teamQuery
 
 watchEffect(() => {
   if (user.value && team.value) {
-    if (team.value.captain_id !== user.value.id) {
+    if (!isTeamCaptain(user.value, team.value)) {
       router.push('/')
     }
   }

@@ -28,8 +28,8 @@
           type="button"
           role="tab"
           :aria-selected="currentSection === 'submissions'"
-          :aria-disabled="user?.role !== 'admin' && user?.role !== 'team'"
-          :disabled="user?.role !== 'admin' && user?.role !== 'team'"
+          :aria-disabled="!hasRole(user, 'admin') && !hasRole(user, 'team')"
+          :disabled="!hasRole(user, 'admin') && !hasRole(user, 'team')"
           :class="['sections-btn', { active: currentSection === 'submissions' }]"
           @click="setActiveSection('submissions')"
         >
@@ -73,14 +73,14 @@
 
         <template
           v-if="
-            currentSection === 'submissions' && (user?.role === 'admin' || user?.role === 'team')
+            currentSection === 'submissions' && (hasRole(user, 'admin') || hasRole(user, 'team'))
           "
         >
-          <TournamentSubmissions :tournament-id="id" v-if="user?.role === 'team'" />
+          <TournamentSubmissions :tournament-id="id" v-if="hasRole(user, 'team')" />
           <JuryAssign
             :tournament-id="id"
             :tournament-status="tournament?.status ?? 'draft'"
-            v-if="user?.role === 'admin'"
+            v-if="hasRole(user, 'admin')"
           />
         </template>
 
@@ -88,15 +88,15 @@
           v-if="
             currentSection === 'submissions' &&
             user &&
-            user.role !== 'team' &&
-            user.role !== 'admin'
+            !hasRole(user, 'team') &&
+            !hasRole(user, 'admin')
           "
         >
           <p>Submissions are available for team members and admins.</p>
         </ui-card>
 
         <ManageZoneCard
-          v-if="user?.role === 'admin' && currentSection === 'information'"
+          v-if="hasRole(user, 'admin') && currentSection === 'information'"
           :tournament-id="id"
         />
       </div>
@@ -118,6 +118,7 @@ import TournamentSubmissions from '../components/tournament/tabs/TournamentSubmi
 import TournamentLeaderboard from '../components/tournament/tabs/TournamentLeaderboard.vue'
 
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import ManageZoneCard from '../components/tournament/ManageZoneCard.vue'
 import TournamentHeroCard from '../components/tournament/TournamentHeroCard.vue'

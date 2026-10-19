@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hasRole } from '@/shared/lib/permissions'
 import UiCard from '@/components/ui/UiCard'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -55,7 +56,7 @@ const playerQuery = useGetPlayerStats()
 // Secondary query: own loading state, never affects the card's status.
 const teamQuery = useGetTeamStats(firstTeamId, {
   query: {
-    enabled: computed(() => props.user?.role === 'team' && firstTeamId.value > 0),
+    enabled: computed(() => hasRole(props.user, 'team') && firstTeamId.value > 0),
     retry: false,
   },
 })
@@ -85,7 +86,7 @@ const statsCards = computed(() => {
     { label: 'Current team', value: playerStats.value?.current_team_name || 'No team' },
   ]
 
-  if (props.user?.role === 'team') {
+  if (hasRole(props.user, 'team')) {
     cards.push(
       { label: 'Team win rate', value: formatPercent(teamStats.value?.win_rate) },
       { label: 'Active team members', value: String(teamStats.value?.active_members_count ?? 0) },

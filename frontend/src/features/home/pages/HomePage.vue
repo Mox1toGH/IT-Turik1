@@ -56,6 +56,7 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import AccountDetailsCard from '../components/AccountDetailsCard.vue'
 import QuickStatusCard from '../components/QuickStatusCard.vue'
 import QuickAccessCard from '../components/QuickAccessCard.vue'
@@ -65,7 +66,7 @@ const { data: user } = userQuery
 
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 
-const isTeamRole = computed(() => user.value?.role === 'team')
+const isTeamRole = computed(() => hasRole(user.value, 'team'))
 
 const heroStats = computed(() => [
   { label: 'Role', value: user.value?.role ?? '-' },

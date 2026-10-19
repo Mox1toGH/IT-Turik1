@@ -254,6 +254,7 @@ import { useQueryState } from '@/composables/useQueryState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 import UiFileDrop from '@/components/ui/UiFileDrop'
+import { isTeamCaptain } from '../lib/team-permissions'
 
 const router = useRouter()
 const route = useRoute()
@@ -272,7 +273,7 @@ const { data: activeTournament } = useGetTeamActiveTournament(
   },
 )
 
-const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
+const isCaptain = computed(() => isTeamCaptain(user.value, team.value))
 const isBannerModalOpen = ref(false)
 const selectedBanner = ref<File[]>([])
 const selectedBannerUrl = ref('')

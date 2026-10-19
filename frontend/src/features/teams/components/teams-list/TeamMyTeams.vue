@@ -102,6 +102,7 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { isTeamCaptain } from '../../lib/team-permissions'
 import { useListTeams } from '@/api/teams/teams'
 import type { Team } from '@/features/teams/types'
 
@@ -124,7 +125,7 @@ const myPages = computed(() =>
   Math.max(1, Math.ceil((myTeams.value?.length ?? 0) / TEAMS_PER_PAGE)),
 )
 
-const isCaptain = (team: Team) => team.captain_id === user.value?.id
+const isCaptain = (team: Team) => isTeamCaptain(user.value, team)
 const captainName = (team: Team) => {
   const captain = team.members.find((member) => member.id === team.captain_id)
   return captain?.username || `User #${team.captain_id}`

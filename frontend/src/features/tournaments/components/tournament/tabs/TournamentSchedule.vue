@@ -1,5 +1,5 @@
 <template>
-  <div class="top-actions" v-if="user?.role === 'admin' && props.tournamentStatus !== 'finished'">
+  <div class="top-actions" v-if="hasRole(user, 'admin') && props.tournamentStatus !== 'finished'">
     <ui-button @click="isAddOpen = true">Add event</ui-button>
     <AddEventModal v-model="isAddOpen" :tournament-id="props.tournamentId" />
   </div>
@@ -68,7 +68,7 @@
             </div>
           </div>
 
-          <div class="event-actions" v-if="user?.role === 'admin'">
+          <div class="event-actions" v-if="hasRole(user, 'admin')">
             <ui-button size="sm" @click="isEditOpen = true">Edit</ui-button>
             <EditEventModal
               v-model="isEditOpen"
@@ -109,6 +109,7 @@ import UiButton from '@/components/ui/UiButton'
 import LargeTextModal from '@/components/shared/LargeTextModal.vue'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/features/tournaments/types'
 

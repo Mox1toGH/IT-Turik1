@@ -86,6 +86,7 @@ import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'
 import TournamentFilters from '../components/tournament-list/TournamentFilters.vue'
 import TournamentCard from '../components/tournament-list/TournamentCard.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useListTournaments } from '@/api/tournaments/tournaments'
 import type { TournamentListFilters, TournamentStatus } from '@/features/tournaments/types'
 
@@ -95,7 +96,7 @@ const searchQuery = ref('')
 const statusFilter = ref<TournamentStatus[]>([])
 
 const { data: user } = useGetUserProfile()
-const isAdmin = computed(() => user.value?.role === 'admin')
+const isAdmin = computed(() => hasRole(user.value, 'admin'))
 
 const statusOptions = computed(() => {
   const base = [

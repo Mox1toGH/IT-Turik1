@@ -61,6 +61,7 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasAnyRole } from '@/shared/lib/permissions'
 import TeamCard from '../TeamCard.vue'
 
 interface Props {
@@ -85,7 +86,7 @@ const disqualifiedTeamItems = computed(() => disqualifiedTeams.value?.items ?? [
 
 const hasDisqualifiedTeams = computed(() => disqualifiedTeamItems.value.length > 0)
 const { data: user } = useGetUserProfile()
-const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'organizer')
+const isAdmin = computed(() => hasAnyRole(user.value, ['admin', 'organizer']))
 </script>
 
 <style scoped>

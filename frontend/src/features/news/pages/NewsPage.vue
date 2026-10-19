@@ -47,12 +47,13 @@ import NewsList from '../components/NewsList.vue'
 import EditNewsModal from '../components/EditNewsModal.vue'
 import CreateNewsModal from '../components/CreateNewsModal.vue'
 import type { NewsArticle } from '../types'
+import { hasRole, hasAnyRole } from '@/shared/lib/permissions'
 
 const { showNotification } = useNotification()
 const route = useRoute()
 const { data: user } = useGetUserProfile()
 
-const canManageNews = computed(() => ['admin', 'organizer'].includes(user.value?.role ?? ''))
+const canManageNews = computed(() => hasAnyRole(user.value, ['admin', 'organizer']))
 
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
@@ -72,8 +73,8 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalNews.value / pageSi
 const { mutate: deleteNews, isPending: isDeleting } = useDeleteNews()
 
 function canModifyNews(item: NewsArticle) {
-  if (user.value?.role === 'admin') return true
-  if (user.value?.role === 'organizer') return item.created_by === user.value.id
+  if (hasRole(user.value, 'admin')) return true
+  if (hasRole(user.value, 'organizer')) return item.created_by === user.value?.id
   return false
 }
 

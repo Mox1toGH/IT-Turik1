@@ -34,12 +34,12 @@ export const tournamentsRoutes = [
   {
     path: '/tournaments/create',
     component: () => import('./pages/TournamentCreatePage.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true, roles: ['admin'] },
   },
   {
     path: '/tournaments/:id/edit',
     component: () => import('./pages/TournamentEditPage.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true, roles: ['admin'] },
     beforeEnter: (to: { params: { id: number } }) => ensureTournamentExists(to.params.id),
   },
   {

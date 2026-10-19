@@ -15,7 +15,7 @@
       </div>
 
       <div class="hero-actions">
-        <ui-button v-if="user?.role === 'team'" asLink to="/teams/create" size="lg">
+        <ui-button v-if="hasRole(user, 'team')" asLink to="/teams/create" size="lg">
           <span class="create-plus text-2xl" aria-hidden="true">+</span>
           Create team
         </ui-button>
@@ -38,6 +38,7 @@ import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts.ts'
+import { hasRole } from '@/shared/lib/permissions'
 
 const { data: user } = useGetUserProfile()
 </script>

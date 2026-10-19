@@ -11,6 +11,16 @@ import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
 import { getUserProfile } from '@/api/accounts/accounts'
+import { hasAnyRole } from '@/shared/lib/permissions'
+import type { UserRole } from '@/shared/types/user'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    requiresGuest?: boolean
+    roles?: UserRole[]
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,10 +67,10 @@ router.beforeEach(async (to) => {
     return '/'
   }
 
-  if (to.meta.requiresAdmin) {
+  if (to.meta.roles?.length) {
     try {
       const profile = await getUserProfile()
-      if (profile.role !== 'admin') {
+      if (!hasAnyRole(profile, to.meta.roles)) {
         return '/'
       }
     } catch {

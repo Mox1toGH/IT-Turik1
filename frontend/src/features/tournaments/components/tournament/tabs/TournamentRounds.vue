@@ -1,5 +1,5 @@
 <template>
-  <div class="actions" v-if="user?.role === 'admin'">
+  <div class="actions" v-if="hasRole(user, 'admin')">
     <ui-button @click="openCreate">Create round</ui-button>
     <CreateRoundModal v-model="isCreateOpen" :tournament-id="props.tournamentId" />
   </div>
@@ -56,7 +56,7 @@
                   badgeStatus(getEffectiveRoundStatus(round))
                 }}</ui-badge>
                 <round-actions-popover
-                  v-if="user?.role === 'admin'"
+                  v-if="hasRole(user, 'admin')"
                   :roundId="round.id"
                   :tournamentId="props.tournamentId"
                   :status="round.status"
@@ -76,7 +76,7 @@
             </ui-button>
 
             <ui-button
-              v-if="user?.role === 'admin' && round.status === 'draft'"
+              v-if="hasRole(user, 'admin') && round.status === 'draft'"
               size="sm"
               variant="secondary"
               @click="openEdit(round)"
@@ -84,7 +84,7 @@
               Edit
             </ui-button>
 
-            <template v-if="getEffectiveRoundStatus(round) === 'active' && user?.role === 'team'">
+            <template v-if="getEffectiveRoundStatus(round) === 'active' && hasRole(user, 'team')">
               <ui-button
                 v-if="submittedRoundIds.has(round.id)"
                 size="sm"
@@ -137,6 +137,7 @@ import CreateRoundModal from './tournament-rounds/modals/CreateRoundModal.vue'
 import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
 import type { Round } from '@/features/tournaments/types'
 

@@ -4,7 +4,7 @@
     :class="{ 'tournament-hero--with-banner': Boolean(tournament?.banner) }"
   >
     <button
-      v-if="user?.role === 'admin'"
+      v-if="hasRole(user, 'admin')"
       class="banner-edit-btn"
       type="button"
       aria-label="Edit tournament banner"
@@ -42,6 +42,7 @@ import { computed, ref } from 'vue'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import UpdateBannerModal from './modals/UpdateBannerModal.vue'
 import { useBannerPosition } from '../../composables/useBannerPosition.ts'

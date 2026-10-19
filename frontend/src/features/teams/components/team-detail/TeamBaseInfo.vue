@@ -80,7 +80,7 @@
     <template #footer>
       <div class="info-actions">
         <ui-button
-          v-if="props.team?.can_request_to_join && user?.role === 'team'"
+          v-if="props.team?.can_request_to_join && hasRole(user, 'team')"
           size="md"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
@@ -114,6 +114,7 @@ import type { QueryLike } from '@/composables/useQueryState'
 import { truncateText } from '@/lib/utils'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import type { Team } from '@/features/teams/types'
 
 interface Props {

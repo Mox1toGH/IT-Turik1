@@ -177,6 +177,7 @@ import NotificationDropdown from '@/components/shared/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
 import { useGetUnreadNotificationCount } from '@/api/notifications/notifications'
 
 const route = useRoute()
@@ -185,8 +186,8 @@ const mobileMenuOpen = ref(false)
 const { data: user } = useGetUserProfile()
 const { data: unreadCount } = useGetUnreadNotificationCount()
 
-const isAdmin = computed(() => user.value?.role === 'admin')
-const isJury = computed(() => user.value?.role === 'jury')
+const isAdmin = computed(() => hasRole(user.value, 'admin'))
+const isJury = computed(() => hasRole(user.value, 'jury'))
 
 type Section =
   | 'home'

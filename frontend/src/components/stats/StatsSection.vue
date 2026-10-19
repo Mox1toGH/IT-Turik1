@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { hasRole } from '@/shared/lib/permissions'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import PlayerStats from './PlayerStats.vue'
@@ -53,7 +54,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const isAdmin = computed(() => Boolean(props.user?.is_staff))
-const isTeamRole = computed(() => props.user?.role === 'team')
+const isTeamRole = computed(() => hasRole(props.user, 'team'))
 const isPlayerActive = computed(() => !!props.user && !isAdmin.value)
 const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
 const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
