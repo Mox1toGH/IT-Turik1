@@ -33,37 +33,45 @@ import type {
   CurrentTaskResponse,
   DisqualificationRequest,
   DisqualificationResponse,
-  EligibleTeamResponse,
   ErrorResponse,
   EventCreateRequest,
-  EventListResponse,
   EventResponse,
   EventUpdateRequest,
   ExportToGoogleCalendarRequest,
   ExportToGoogleCalendarResponse,
   GetCurrentTaskParams,
   GetTeamActiveTournamentParams,
+  ListEligibleTeamsForTournamentParams,
   ListEventsParams,
+  ListMyTeamSubmissionsParams,
+  ListRoundSubmissionsParams,
   ListRoundsParams,
+  ListSubmissionsParams,
+  ListTournamentArchiveParams,
+  ListTournamentArchiveSubmissionsParams,
+  ListTournamentSubmissionsParams,
   ListTournamentTeamsParams,
   ListTournamentsParams,
   MyCalendarResponse,
-  OwnSubmissionResponse,
+  PagedEligibleTeamResponse,
+  PagedEventResponse,
+  PagedOwnSubmissionResponse,
+  PagedRoundResponse,
+  PagedSubmissionResponse,
+  PagedTournamentArchiveListResponse,
+  PagedTournamentTeamResponse,
   RoundCreateRequest,
   RoundResponse,
   RoundUpdateRequest,
   SubmissionCreateRequest,
-  SubmissionListResponse,
   SubmissionResponse,
   SubmissionUpdateRequest,
   TeamRegistrationRequest,
   TeamRegistrationResponse,
   TournamentArchiveDetailResponse,
-  TournamentArchiveListResponse,
   TournamentCreateRequest,
   TournamentListResponse,
   TournamentResponse,
-  TournamentTeamResponse,
   TournamentUpdateRequest,
   UpdateTournamentBannerBody
 } from '../backendAPINinja.schemas';
@@ -349,12 +357,15 @@ export const useDisqualifyTeamFromTournament = <TError = ErrorType<ErrorResponse
  */
 export const listMyTeamSubmissions = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListMyTeamSubmissionsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
-      return customInstance<SubmissionListResponse>(
-      {url: `http://localhost:8000/api/tournaments/${id}/my-submissions`, method: 'GET', signal
+      return customInstance<PagedSubmissionResponse>(
+      {url: `http://localhost:8000/api/tournaments/${id}/my-submissions`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -362,23 +373,25 @@ export const listMyTeamSubmissions = (
 
 
 
-export const getListMyTeamSubmissionsQueryKey = (id?: MaybeRef<number>,) => {
+export const getListMyTeamSubmissionsQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListMyTeamSubmissionsParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments',id,'my-submissions'
+    'http:','localhost:8000','api','tournaments',id,'my-submissions', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListMyTeamSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListMyTeamSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListMyTeamSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListMyTeamSubmissionsQueryKey(id);
+  const queryKey =  getListMyTeamSubmissionsQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyTeamSubmissions>>> = ({ signal }) => listMyTeamSubmissions(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyTeamSubmissions>>> = ({ signal }) => listMyTeamSubmissions(id,params, requestOptions, signal);
 
       
 
@@ -396,11 +409,12 @@ export type ListMyTeamSubmissionsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListMyTeamSubmissions<TData = Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError = ErrorType<ErrorResponse>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListMyTeamSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyTeamSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListMyTeamSubmissionsQueryOptions(id,options)
+  const queryOptions = getListMyTeamSubmissionsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -417,12 +431,15 @@ export function useListMyTeamSubmissions<TData = Awaited<ReturnType<typeof listM
  */
 export const listRoundSubmissions = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListRoundSubmissionsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
-      return customInstance<SubmissionListResponse>(
-      {url: `http://localhost:8000/api/tournaments/rounds/${id}/submissions`, method: 'GET', signal
+      return customInstance<PagedSubmissionResponse>(
+      {url: `http://localhost:8000/api/tournaments/rounds/${id}/submissions`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -430,23 +447,25 @@ export const listRoundSubmissions = (
 
 
 
-export const getListRoundSubmissionsQueryKey = (id?: MaybeRef<number>,) => {
+export const getListRoundSubmissionsQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListRoundSubmissionsParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments','rounds',id,'submissions'
+    'http:','localhost:8000','api','tournaments','rounds',id,'submissions', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListRoundSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listRoundSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoundSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListRoundSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listRoundSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListRoundSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoundSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListRoundSubmissionsQueryKey(id);
+  const queryKey =  getListRoundSubmissionsQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoundSubmissions>>> = ({ signal }) => listRoundSubmissions(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoundSubmissions>>> = ({ signal }) => listRoundSubmissions(id,params, requestOptions, signal);
 
       
 
@@ -464,11 +483,12 @@ export type ListRoundSubmissionsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListRoundSubmissions<TData = Awaited<ReturnType<typeof listRoundSubmissions>>, TError = ErrorType<ErrorResponse>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoundSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListRoundSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoundSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListRoundSubmissionsQueryOptions(id,options)
+  const queryOptions = getListRoundSubmissionsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -685,13 +705,14 @@ export function useListTournaments<TData = Awaited<ReturnType<typeof listTournam
  * @summary List Tournament Archive
  */
 export const listTournamentArchive = (
-    
+    params?: MaybeRef<ListTournamentArchiveParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
+      params = unref(params);
       
-      
-      return customInstance<TournamentArchiveListResponse[]>(
-      {url: `http://localhost:8000/api/tournaments/archive`, method: 'GET', signal
+      return customInstance<PagedTournamentArchiveListResponse>(
+      {url: `http://localhost:8000/api/tournaments/archive`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -699,23 +720,23 @@ export const listTournamentArchive = (
 
 
 
-export const getListTournamentArchiveQueryKey = () => {
+export const getListTournamentArchiveQueryKey = (params?: MaybeRef<ListTournamentArchiveParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments','archive'
+    'http:','localhost:8000','api','tournaments','archive', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTournamentArchiveQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchive>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTournamentArchiveQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchive>>, TError = ErrorType<ErrorResponse>>(params?: MaybeRef<ListTournamentArchiveParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTournamentArchiveQueryKey();
+  const queryKey =  getListTournamentArchiveQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchive>>> = ({ signal }) => listTournamentArchive(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchive>>> = ({ signal }) => listTournamentArchive(params, requestOptions, signal);
 
       
 
@@ -733,11 +754,11 @@ export type ListTournamentArchiveQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTournamentArchive<TData = Awaited<ReturnType<typeof listTournamentArchive>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: MaybeRef<ListTournamentArchiveParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchive>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTournamentArchiveQueryOptions(options)
+  const queryOptions = getListTournamentArchiveQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -822,12 +843,15 @@ export function useGetTournamentArchive<TData = Awaited<ReturnType<typeof getTou
  */
 export const listTournamentArchiveSubmissions = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentArchiveSubmissionsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
-      return customInstance<SubmissionListResponse>(
-      {url: `http://localhost:8000/api/tournaments/archive/${id}/submissions`, method: 'GET', signal
+      return customInstance<PagedSubmissionResponse>(
+      {url: `http://localhost:8000/api/tournaments/archive/${id}/submissions`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -835,23 +859,25 @@ export const listTournamentArchiveSubmissions = (
 
 
 
-export const getListTournamentArchiveSubmissionsQueryKey = (id?: MaybeRef<number>,) => {
+export const getListTournamentArchiveSubmissionsQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentArchiveSubmissionsParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments','archive',id,'submissions'
+    'http:','localhost:8000','api','tournaments','archive',id,'submissions', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTournamentArchiveSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTournamentArchiveSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentArchiveSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTournamentArchiveSubmissionsQueryKey(id);
+  const queryKey =  getListTournamentArchiveSubmissionsQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>> = ({ signal }) => listTournamentArchiveSubmissions(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>> = ({ signal }) => listTournamentArchiveSubmissions(id,params, requestOptions, signal);
 
       
 
@@ -869,11 +895,12 @@ export type ListTournamentArchiveSubmissionsQueryError = ErrorType<ErrorResponse
  */
 
 export function useListTournamentArchiveSubmissions<TData = Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError = ErrorType<ErrorResponse>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentArchiveSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentArchiveSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTournamentArchiveSubmissionsQueryOptions(id,options)
+  const queryOptions = getListTournamentArchiveSubmissionsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1410,12 +1437,15 @@ export const useUnregisterTeamFromTournament = <TError = ErrorType<ErrorResponse
  */
 export const listEligibleTeamsForTournament = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListEligibleTeamsForTournamentParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
-      return customInstance<EligibleTeamResponse[]>(
-      {url: `http://localhost:8000/api/tournaments/${id}/eligible-teams`, method: 'GET', signal
+      return customInstance<PagedEligibleTeamResponse>(
+      {url: `http://localhost:8000/api/tournaments/${id}/eligible-teams`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -1423,23 +1453,25 @@ export const listEligibleTeamsForTournament = (
 
 
 
-export const getListEligibleTeamsForTournamentQueryKey = (id?: MaybeRef<number>,) => {
+export const getListEligibleTeamsForTournamentQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListEligibleTeamsForTournamentParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments',id,'eligible-teams'
+    'http:','localhost:8000','api','tournaments',id,'eligible-teams', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListEligibleTeamsForTournamentQueryOptions = <TData = Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListEligibleTeamsForTournamentQueryOptions = <TData = Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListEligibleTeamsForTournamentParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListEligibleTeamsForTournamentQueryKey(id);
+  const queryKey =  getListEligibleTeamsForTournamentQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>> = ({ signal }) => listEligibleTeamsForTournament(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>> = ({ signal }) => listEligibleTeamsForTournament(id,params, requestOptions, signal);
 
       
 
@@ -1457,11 +1489,12 @@ export type ListEligibleTeamsForTournamentQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListEligibleTeamsForTournament<TData = Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError = ErrorType<ErrorResponse>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListEligibleTeamsForTournamentParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEligibleTeamsForTournament>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListEligibleTeamsForTournamentQueryOptions(id,options)
+  const queryOptions = getListEligibleTeamsForTournamentQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1484,7 +1517,7 @@ export const listTournamentTeams = (
       id = unref(id);
 params = unref(params);
       
-      return customInstance<TournamentTeamResponse[]>(
+      return customInstance<PagedTournamentTeamResponse>(
       {url: `http://localhost:8000/api/tournaments/${id}/teams`, method: 'GET',
         params: unref(params), signal
     },
@@ -1627,7 +1660,7 @@ export const listRounds = (
       tournamentPk = unref(tournamentPk);
 params = unref(params);
       
-      return customInstance<RoundResponse[]>(
+      return customInstance<PagedRoundResponse>(
       {url: `http://localhost:8000/api/tournaments/${tournamentPk}/rounds`, method: 'GET',
         params: unref(params), signal
     },
@@ -2140,13 +2173,14 @@ export const useMarkRoundEvaluated = <TError = ErrorType<ErrorResponse>,
  * @summary List Submissions
  */
 export const listSubmissions = (
-    
+    params?: MaybeRef<ListSubmissionsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
+      params = unref(params);
       
-      
-      return customInstance<OwnSubmissionResponse[]>(
-      {url: `http://localhost:8000/api/tournaments/submissions`, method: 'GET', signal
+      return customInstance<PagedOwnSubmissionResponse>(
+      {url: `http://localhost:8000/api/tournaments/submissions`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -2154,23 +2188,23 @@ export const listSubmissions = (
 
 
 
-export const getListSubmissionsQueryKey = () => {
+export const getListSubmissionsQueryKey = (params?: MaybeRef<ListSubmissionsParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments','submissions'
+    'http:','localhost:8000','api','tournaments','submissions', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listSubmissions>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listSubmissions>>, TError = ErrorType<ErrorResponse>>(params?: MaybeRef<ListSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListSubmissionsQueryKey();
+  const queryKey =  getListSubmissionsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSubmissions>>> = ({ signal }) => listSubmissions(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSubmissions>>> = ({ signal }) => listSubmissions(params, requestOptions, signal);
 
       
 
@@ -2188,11 +2222,11 @@ export type ListSubmissionsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListSubmissions<TData = Awaited<ReturnType<typeof listSubmissions>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: MaybeRef<ListSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListSubmissionsQueryOptions(options)
+  const queryOptions = getListSubmissionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2406,12 +2440,15 @@ export const useUpdateSubmission = <TError = ErrorType<ErrorResponse>,
  */
 export const listTournamentSubmissions = (
     id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentSubmissionsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       id = unref(id);
+params = unref(params);
       
-      return customInstance<SubmissionListResponse>(
-      {url: `http://localhost:8000/api/tournaments/${id}/submissions`, method: 'GET', signal
+      return customInstance<PagedSubmissionResponse>(
+      {url: `http://localhost:8000/api/tournaments/${id}/submissions`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -2419,23 +2456,25 @@ export const listTournamentSubmissions = (
 
 
 
-export const getListTournamentSubmissionsQueryKey = (id?: MaybeRef<number>,) => {
+export const getListTournamentSubmissionsQueryKey = (id?: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentSubmissionsParams>,) => {
     return [
-    'http:','localhost:8000','api','tournaments',id,'submissions'
+    'http:','localhost:8000','api','tournaments',id,'submissions', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTournamentSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTournamentSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof listTournamentSubmissions>>, TError = ErrorType<ErrorResponse>>(id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTournamentSubmissionsQueryKey(id);
+  const queryKey =  getListTournamentSubmissionsQueryKey(id,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentSubmissions>>> = ({ signal }) => listTournamentSubmissions(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTournamentSubmissions>>> = ({ signal }) => listTournamentSubmissions(id,params, requestOptions, signal);
 
       
 
@@ -2453,11 +2492,12 @@ export type ListTournamentSubmissionsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTournamentSubmissions<TData = Awaited<ReturnType<typeof listTournamentSubmissions>>, TError = ErrorType<ErrorResponse>>(
- id: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: MaybeRef<number>,
+    params?: MaybeRef<ListTournamentSubmissionsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTournamentSubmissions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTournamentSubmissionsQueryOptions(id,options)
+  const queryOptions = getListTournamentSubmissionsQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -2547,7 +2587,7 @@ export const listEvents = (
 ) => {
       params = unref(params);
       
-      return customInstance<EventListResponse>(
+      return customInstance<PagedEventResponse>(
       {url: `http://localhost:8000/api/tournaments/events`, method: 'GET',
         params: unref(params), signal
     },

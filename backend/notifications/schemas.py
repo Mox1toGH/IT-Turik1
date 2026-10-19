@@ -2,7 +2,15 @@ from datetime import datetime
 
 from ninja import Schema
 
-class DetailResponse(Schema):
+class MarkNotificationReadResponse(Schema):
+    detail: str
+
+
+class UpdateNotificationConfigResponse(Schema):
+    detail: str
+
+
+class UpdateGlobalNotificationConfigResponse(Schema):
     detail: str
 
 

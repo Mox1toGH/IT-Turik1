@@ -18,13 +18,11 @@ class JuryAssignmentFilters(Schema):
         'all', description='all | evaluated | not_evaluated'
     )
 
-
 class ScoreItemRequest(Schema):
     # criterion_name is derived from the round's criteria on the server,
     # so it is not part of the request (extra keys sent by old clients are ignored).
     criterion_id: str
     score: int
-
 
 class SubmissionEvaluationRequest(Schema):
     """POST (create) and PUT (full replace)."""
@@ -33,14 +31,12 @@ class SubmissionEvaluationRequest(Schema):
     scores: list[ScoreItemRequest]
     comment: str = ''
 
-
 class SubmissionEvaluationPatchRequest(Schema):
     """PATCH - every field optional."""
     tournament_id: int | None = None
     assignment: int | None = None
     scores: list[ScoreItemRequest] | None = None
     comment: str | None = None
-
 
 class JuryAssignmentItemRequest(Schema):
     submission: int
@@ -53,7 +49,6 @@ class JuryAssignmentItemRequest(Schema):
             raise ValueError('Duplicate jury user ids are not allowed for a submission.')
         return value
 
-
 # =============================================================================
 # Evaluations / assignments
 # =============================================================================
@@ -62,7 +57,6 @@ class ScoreItemResponse(Schema):
     criterion_id: str
     criterion_name: str | None = None
     score: int
-
 
 class SubmissionEvaluationResponse(Schema):
     id: int
@@ -73,10 +67,32 @@ class SubmissionEvaluationResponse(Schema):
     comment: str | None = None
     created_at: datetime
 
-    @staticmethod
-    def resolve_assignment(obj):
-        return obj.assignment_id
+class CreateJuryEvaluationResponse(Schema):
+    id: int
+    assignment: int
+    scores: list[ScoreItemResponse]
+    total_score: float | None = None
+    final_score: float | None = None
+    comment: str | None = None
+    created_at: datetime
 
+class GetJuryEvaluationResponse(Schema):
+    id: int
+    assignment: int
+    scores: list[ScoreItemResponse]
+    total_score: float | None = None
+    final_score: float | None = None
+    comment: str | None = None
+    created_at: datetime
+
+class UpdateJuryEvaluationResponse(Schema):
+    id: int
+    assignment: int
+    scores: list[ScoreItemResponse]
+    total_score: float | None = None
+    final_score: float | None = None
+    comment: str | None = None
+    created_at: datetime
 
 class RoundShortResponse(Schema):
     id: int
@@ -87,11 +103,6 @@ class RoundShortResponse(Schema):
     criteria: list[CriterionResponse]
     tournament: int
 
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-
 class JuryAssignmentResponse(Schema):
     id: int
     submission: int
@@ -101,39 +112,15 @@ class JuryAssignmentResponse(Schema):
     is_evaluated: bool
     created_at: datetime
 
-    @staticmethod
-    def resolve_submission(obj):
-        return obj.submission_id
-
-    @staticmethod
-    def resolve_submission_details(obj):
-        return obj.submission
-
-    @staticmethod
-    def resolve_round_details(obj):
-        return obj.submission.round
-
-    @staticmethod
-    def resolve_evaluation(obj):
-        # reverse one-to-one: raises if missing, getattr default swallows it
-        return getattr(obj, 'evaluation', None)
-
-    @staticmethod
-    def resolve_is_evaluated(obj):
-        return hasattr(obj, 'evaluation')
-
-
 class AvailableJuryResponse(Schema):
     id: int
     username: str
     email: str | None = None
     full_name: str | None = None
 
-
 class AssignJuryResponse(Schema):
     status: str
     created_assignments: int
-
 
 # =============================================================================
 # Leaderboards
@@ -146,12 +133,10 @@ class RankingItemResponse(Schema):
     average_score: float
     rank: int
 
-
 class RoundLeaderboardResponse(Schema):
     round_id: int
     is_snapshot: bool
     rankings: list[RankingItemResponse]
-
 
 class RoundSummaryResponse(Schema):
     round_id: int
@@ -160,7 +145,6 @@ class RoundSummaryResponse(Schema):
     average_score: float
     jury_breakdown: dict[str, float] | None = None
 
-
 class TournamentRankingItemResponse(Schema):
     team_id: int
     team_name: str
@@ -168,12 +152,10 @@ class TournamentRankingItemResponse(Schema):
     rank: int
     rounds: list[RoundSummaryResponse]
 
-
 class TournamentLeaderboardResponse(Schema):
     tournament_id: int
     is_snapshot: bool
     rankings: list[TournamentRankingItemResponse]
-
 
 # =============================================================================
 # Passing status
@@ -189,7 +171,6 @@ class PassingStatusItemResponse(Schema):
     is_active: bool | None = None
     disqualification_reason: str | None = None
     registration_id: int | None = None
-
 
 class RoundPassingStatusResponse(Schema):
     round_id: int

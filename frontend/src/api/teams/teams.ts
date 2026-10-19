@@ -29,17 +29,31 @@ import type {
 } from 'vue';
 
 import type {
-  DetailResponse,
+  AcceptTeamInvitationResponse,
+  AcceptTeamJoinRequestResponse,
+  CreateTeamJoinRequestResponse,
+  CreateTeamResponse,
+  DeclineTeamInvitationResponse,
+  DeclineTeamJoinRequestResponse,
+  DeleteTeamBannerResponse,
   ErrorResponse,
+  GetTeamResponse,
   InviteMemberRequest,
+  InviteMemberResponse,
+  LeaveTeamResponse,
+  ListTeamInvitationsByTeamParams,
+  ListTeamInvitationsParams,
+  ListTeamJoinRequestsByTeamParams,
+  ListTeamsParams,
+  PagedListTeamsItemResponse,
+  PagedTeamInvitationInboxResponse,
+  PagedTeamInvitationResponse,
+  PagedTeamJoinRequestResponse,
   TeamBannerResponse,
   TeamBannerUpdateBody,
   TeamCreateRequest,
-  TeamInvitationInboxResponse,
-  TeamInvitationResponse,
-  TeamJoinRequestResponse,
-  TeamResponse,
-  TeamUpdateRequest
+  TeamUpdateRequest,
+  UpdateTeamResponse
 } from '../backendAPINinja.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -54,13 +68,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary List Teams
  */
 export const listTeams = (
-    
+    params?: MaybeRef<ListTeamsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
+      params = unref(params);
       
-      
-      return customInstance<TeamResponse[]>(
-      {url: `http://localhost:8000/api/teams/`, method: 'GET', signal
+      return customInstance<PagedListTeamsItemResponse>(
+      {url: `http://localhost:8000/api/teams/`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -68,23 +83,23 @@ export const listTeams = (
 
 
 
-export const getListTeamsQueryKey = () => {
+export const getListTeamsQueryKey = (params?: MaybeRef<ListTeamsParams>,) => {
     return [
-    'http:','localhost:8000','api','teams'
+    'http:','localhost:8000','api','teams', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTeamsQueryOptions = <TData = Awaited<ReturnType<typeof listTeams>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTeamsQueryOptions = <TData = Awaited<ReturnType<typeof listTeams>>, TError = ErrorType<ErrorResponse>>(params?: MaybeRef<ListTeamsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTeamsQueryKey();
+  const queryKey =  getListTeamsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeams>>> = ({ signal }) => listTeams(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeams>>> = ({ signal }) => listTeams(params, requestOptions, signal);
 
       
 
@@ -102,11 +117,11 @@ export type ListTeamsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTeams<TData = Awaited<ReturnType<typeof listTeams>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: MaybeRef<ListTeamsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTeamsQueryOptions(options)
+  const queryOptions = getListTeamsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -127,7 +142,7 @@ export const createTeam = (
 ) => {
       teamCreateRequest = unref(teamCreateRequest);
       
-      return customInstance<TeamResponse>(
+      return customInstance<CreateTeamResponse>(
       {url: `http://localhost:8000/api/teams/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: teamCreateRequest, signal
@@ -191,7 +206,7 @@ export const getTeam = (
 ) => {
       pk = unref(pk);
       
-      return customInstance<TeamResponse>(
+      return customInstance<GetTeamResponse>(
       {url: `http://localhost:8000/api/teams/${pk}`, method: 'GET', signal
     },
       options);
@@ -260,7 +275,7 @@ export const updateTeam = (
       pk = unref(pk);
 teamUpdateRequest = unref(teamUpdateRequest);
       
-      return customInstance<TeamResponse>(
+      return customInstance<UpdateTeamResponse>(
       {url: `http://localhost:8000/api/teams/${pk}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: teamUpdateRequest
@@ -451,7 +466,7 @@ export const deleteTeamBanner = (
  options?: SecondParameter<typeof customInstance>,) => {
       pk = unref(pk);
       
-      return customInstance<TeamResponse>(
+      return customInstance<DeleteTeamBannerResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/banner`, method: 'DELETE'
     },
       options);
@@ -515,7 +530,7 @@ export const inviteMemberToTeam = (
       pk = unref(pk);
 inviteMemberRequest = unref(inviteMemberRequest);
       
-      return customInstance<TeamResponse>(
+      return customInstance<InviteMemberResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/members/invite`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: inviteMemberRequest, signal
@@ -642,7 +657,7 @@ export const leaveTeam = (
 ) => {
       pk = unref(pk);
       
-      return customInstance<DetailResponse>(
+      return customInstance<LeaveTeamResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/leave`, method: 'POST', signal
     },
       options);
@@ -699,13 +714,14 @@ export const useLeaveTeam = <TError = ErrorType<ErrorResponse>,
  * @summary List Team Invitations
  */
 export const listTeamInvitations = (
-    
+    params?: MaybeRef<ListTeamInvitationsParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
+      params = unref(params);
       
-      
-      return customInstance<TeamInvitationInboxResponse[]>(
-      {url: `http://localhost:8000/api/teams/invitations`, method: 'GET', signal
+      return customInstance<PagedTeamInvitationInboxResponse>(
+      {url: `http://localhost:8000/api/teams/invitations`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -713,23 +729,23 @@ export const listTeamInvitations = (
 
 
 
-export const getListTeamInvitationsQueryKey = () => {
+export const getListTeamInvitationsQueryKey = (params?: MaybeRef<ListTeamInvitationsParams>,) => {
     return [
-    'http:','localhost:8000','api','teams','invitations'
+    'http:','localhost:8000','api','teams','invitations', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTeamInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listTeamInvitations>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTeamInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof listTeamInvitations>>, TError = ErrorType<ErrorResponse>>(params?: MaybeRef<ListTeamInvitationsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTeamInvitationsQueryKey();
+  const queryKey =  getListTeamInvitationsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamInvitations>>> = ({ signal }) => listTeamInvitations(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamInvitations>>> = ({ signal }) => listTeamInvitations(params, requestOptions, signal);
 
       
 
@@ -747,11 +763,11 @@ export type ListTeamInvitationsQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTeamInvitations<TData = Awaited<ReturnType<typeof listTeamInvitations>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: MaybeRef<ListTeamInvitationsParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTeamInvitationsQueryOptions(options)
+  const queryOptions = getListTeamInvitationsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -772,7 +788,7 @@ export const acceptTeamInvitation = (
 ) => {
       invitationId = unref(invitationId);
       
-      return customInstance<TeamResponse>(
+      return customInstance<AcceptTeamInvitationResponse>(
       {url: `http://localhost:8000/api/teams/invitations/${invitationId}/accept`, method: 'POST', signal
     },
       options);
@@ -834,7 +850,7 @@ export const declineTeamInvitation = (
 ) => {
       invitationId = unref(invitationId);
       
-      return customInstance<TeamResponse>(
+      return customInstance<DeclineTeamInvitationResponse>(
       {url: `http://localhost:8000/api/teams/invitations/${invitationId}/decline`, method: 'POST', signal
     },
       options);
@@ -896,7 +912,7 @@ export const createTeamJoinRequest = (
 ) => {
       pk = unref(pk);
       
-      return customInstance<DetailResponse>(
+      return customInstance<CreateTeamJoinRequestResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/join-requests`, method: 'POST', signal
     },
       options);
@@ -954,12 +970,15 @@ export const useCreateTeamJoinRequest = <TError = ErrorType<ErrorResponse>,
  */
 export const listTeamJoinRequestsByTeam = (
     pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamJoinRequestsByTeamParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       pk = unref(pk);
+params = unref(params);
       
-      return customInstance<TeamJoinRequestResponse[]>(
-      {url: `http://localhost:8000/api/teams/${pk}/join-requests`, method: 'GET', signal
+      return customInstance<PagedTeamJoinRequestResponse>(
+      {url: `http://localhost:8000/api/teams/${pk}/join-requests`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -967,23 +986,25 @@ export const listTeamJoinRequestsByTeam = (
 
 
 
-export const getListTeamJoinRequestsByTeamQueryKey = (pk?: MaybeRef<number>,) => {
+export const getListTeamJoinRequestsByTeamQueryKey = (pk?: MaybeRef<number>,
+    params?: MaybeRef<ListTeamJoinRequestsByTeamParams>,) => {
     return [
-    'http:','localhost:8000','api','teams',pk,'join-requests'
+    'http:','localhost:8000','api','teams',pk,'join-requests', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTeamJoinRequestsByTeamQueryOptions = <TData = Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTeamJoinRequestsByTeamQueryOptions = <TData = Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamJoinRequestsByTeamParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTeamJoinRequestsByTeamQueryKey(pk);
+  const queryKey =  getListTeamJoinRequestsByTeamQueryKey(pk,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>> = ({ signal }) => listTeamJoinRequestsByTeam(pk, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>> = ({ signal }) => listTeamJoinRequestsByTeam(pk,params, requestOptions, signal);
 
       
 
@@ -1001,11 +1022,12 @@ export type ListTeamJoinRequestsByTeamQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTeamJoinRequestsByTeam<TData = Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError = ErrorType<ErrorResponse>>(
- pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamJoinRequestsByTeamParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamJoinRequestsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTeamJoinRequestsByTeamQueryOptions(pk,options)
+  const queryOptions = getListTeamJoinRequestsByTeamQueryOptions(pk,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1028,7 +1050,7 @@ export const acceptTeamJoinRequest = (
       pk = unref(pk);
 requestId = unref(requestId);
       
-      return customInstance<TeamResponse>(
+      return customInstance<AcceptTeamJoinRequestResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/join-requests/${requestId}/accept`, method: 'POST', signal
     },
       options);
@@ -1092,7 +1114,7 @@ export const declineTeamJoinRequest = (
       pk = unref(pk);
 requestId = unref(requestId);
       
-      return customInstance<TeamResponse>(
+      return customInstance<DeclineTeamJoinRequestResponse>(
       {url: `http://localhost:8000/api/teams/${pk}/join-requests/${requestId}/decline`, method: 'POST', signal
     },
       options);
@@ -1150,12 +1172,15 @@ export const useDeclineTeamJoinRequest = <TError = ErrorType<ErrorResponse>,
  */
 export const listTeamInvitationsByTeam = (
     pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamInvitationsByTeamParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       pk = unref(pk);
+params = unref(params);
       
-      return customInstance<TeamInvitationResponse[]>(
-      {url: `http://localhost:8000/api/teams/${pk}/invitations`, method: 'GET', signal
+      return customInstance<PagedTeamInvitationResponse>(
+      {url: `http://localhost:8000/api/teams/${pk}/invitations`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -1163,23 +1188,25 @@ export const listTeamInvitationsByTeam = (
 
 
 
-export const getListTeamInvitationsByTeamQueryKey = (pk?: MaybeRef<number>,) => {
+export const getListTeamInvitationsByTeamQueryKey = (pk?: MaybeRef<number>,
+    params?: MaybeRef<ListTeamInvitationsByTeamParams>,) => {
     return [
-    'http:','localhost:8000','api','teams',pk,'invitations'
+    'http:','localhost:8000','api','teams',pk,'invitations', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListTeamInvitationsByTeamQueryOptions = <TData = Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListTeamInvitationsByTeamQueryOptions = <TData = Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamInvitationsByTeamParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListTeamInvitationsByTeamQueryKey(pk);
+  const queryKey =  getListTeamInvitationsByTeamQueryKey(pk,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>> = ({ signal }) => listTeamInvitationsByTeam(pk, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>> = ({ signal }) => listTeamInvitationsByTeam(pk,params, requestOptions, signal);
 
       
 
@@ -1197,11 +1224,12 @@ export type ListTeamInvitationsByTeamQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListTeamInvitationsByTeam<TData = Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError = ErrorType<ErrorResponse>>(
- pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ pk: MaybeRef<number>,
+    params?: MaybeRef<ListTeamInvitationsByTeamParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamInvitationsByTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTeamInvitationsByTeamQueryOptions(pk,options)
+  const queryOptions = getListTeamInvitationsByTeamQueryOptions(pk,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -78,7 +78,7 @@ class TeamApiTests(APITestCase):
         team = self._create_team({'name': 'P', 'email': 'p@e.com', 'is_public': False})
         authenticate(self.client, self.admin_user)
         response = self.client.get(self.teams_url)
-        data = response.json()
+        data = response.json()['items']
         self.assertIn(team['id'], [t['id'] for t in data])
 
     def test_public_team_join_request(self):
@@ -118,7 +118,7 @@ class TeamApiTests(APITestCase):
     def test_list_users_returns_current_users(self):
         authenticate(self.client, self.captain)
         response = self.client.get(self.users_url)
-        data = response.json()
+        data = response.json()['items']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(data), 3)
 

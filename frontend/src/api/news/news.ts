@@ -29,12 +29,14 @@ import type {
 } from 'vue';
 
 import type {
+  CreateNewsResponse,
   ErrorResponse,
+  GetNewsResponse,
   ListNewsParams,
   NewsArticlePatchRequest,
   NewsArticleRequest,
-  NewsArticleResponse,
-  NewsListResponse
+  NewsListResponse,
+  UpdateNewsResponse
 } from '../backendAPINinja.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -123,7 +125,7 @@ export const createNews = (
 ) => {
       newsArticleRequest = unref(newsArticleRequest);
       
-      return customInstance<NewsArticleResponse>(
+      return customInstance<CreateNewsResponse>(
       {url: `http://localhost:8000/api/news`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: newsArticleRequest, signal
@@ -187,7 +189,7 @@ export const getNews = (
 ) => {
       articleId = unref(articleId);
       
-      return customInstance<NewsArticleResponse>(
+      return customInstance<GetNewsResponse>(
       {url: `http://localhost:8000/api/news/${articleId}`, method: 'GET', signal
     },
       options);
@@ -256,7 +258,7 @@ export const updateNews = (
       articleId = unref(articleId);
 newsArticlePatchRequest = unref(newsArticlePatchRequest);
       
-      return customInstance<NewsArticleResponse>(
+      return customInstance<UpdateNewsResponse>(
       {url: `http://localhost:8000/api/news/${articleId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: newsArticlePatchRequest

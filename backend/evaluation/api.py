@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404
 
 from ninja import Query, Router, Schema
 from ninja.pagination import PaginationBase, paginate
+from backend.pagination import APIPageNumberPagination
+from backend.media import absolute_media_url
 
 from backend.auth import JWTAuth
 
@@ -28,12 +30,107 @@ from .schemas import (
     ScoreItemRequest,
     SubmissionEvaluationPatchRequest,
     SubmissionEvaluationRequest,
-    SubmissionEvaluationResponse,
+    CreateJuryEvaluationResponse,
+    GetJuryEvaluationResponse,
+    UpdateJuryEvaluationResponse,
     TournamentLeaderboardResponse,
 )
 from .services import get_available_jury, replace_round_jury_assignments, try_auto_evaluate_round
 
 logger = logging.getLogger(__name__)
+
+
+def _evaluation_response_data(evaluation):
+    return {
+        'id': evaluation.id,
+        'assignment': evaluation.assignment_id,
+        'scores': evaluation.scores,
+        'total_score': evaluation.total_score,
+        'final_score': evaluation.final_score,
+        'comment': evaluation.comment,
+        'created_at': evaluation.created_at,
+    }
+
+
+def _round_short_response_data(round_obj):
+    return {
+        'id': round_obj.id,
+        'name': round_obj.name,
+        'start_date': round_obj.start_date,
+        'end_date': round_obj.end_date,
+        'status': round_obj.status,
+        'criteria': [
+            {
+                'id': criterion.get('id', ''),
+                'name': criterion.get('name', ''),
+                'description': criterion.get('description', ''),
+                'max_score': criterion.get('max_score', 0),
+            }
+            for criterion in round_obj.criteria
+        ],
+        'tournament': round_obj.tournament_id,
+    }
+
+
+def _submission_response_data(submission, request):
+    assignments = list(
+        submission._prefetched_objects_cache.get('jury_assignments', [])
+    )
+    return {
+        'id': submission.id,
+        'team': submission.team_id,
+        'round': submission.round_id,
+        'team_details': {
+            'id': submission.team_id,
+            'name': submission.team.name,
+            'is_public': submission.team.is_public,
+        },
+        'round_details': _round_short_response_data(submission.round),
+        'github_url': submission.github_url,
+        'demo_video_url': submission.demo_video_url,
+        'demo_video_file': absolute_media_url(submission.demo_video_file, {'request': request}),
+        'live_demo_url': submission.live_demo_url,
+        'description': submission.description,
+        'assignments': [
+            {
+                'id': assignment.id,
+                'jury': {
+                    'id': assignment.jury_id,
+                    'username': assignment.jury.username,
+                    'full_name': assignment.jury.full_name,
+                    'role': assignment.jury.role,
+                },
+                'evaluation': (
+                    {
+                        'id': assignment.evaluation.id,
+                        'scores': assignment.evaluation.scores,
+                        'total_score': assignment.evaluation.total_score,
+                        'final_score': assignment.evaluation.final_score,
+                        'comment': assignment.evaluation.comment,
+                        'created_at': assignment.evaluation.created_at,
+                    }
+                    if getattr(assignment, 'evaluation', None) else None
+                ),
+                'created_at': assignment.created_at,
+            }
+            for assignment in assignments
+        ],
+        'created_at': submission.created_at,
+        'updated_at': submission.updated_at,
+    }
+
+
+def _jury_assignment_response_data(assignment, request):
+    evaluation = getattr(assignment, 'evaluation', None)
+    return {
+        'id': assignment.id,
+        'submission': assignment.submission_id,
+        'submission_details': _submission_response_data(assignment.submission, request),
+        'round_details': _round_short_response_data(assignment.submission.round),
+        'evaluation': _evaluation_response_data(evaluation) if evaluation else None,
+        'is_evaluated': evaluation is not None,
+        'created_at': assignment.created_at,
+    }
 
 router = Router(tags=['evaluation'], auth=JWTAuth())
 
@@ -52,10 +149,11 @@ class JuryAssignmentPagination(PaginationBase):
         page = max(pagination.page, 1)
         page_size = min(max(pagination.page_size, 1), 100)
         offset = (page - 1) * page_size
+        items = queryset[offset:offset + page_size]
         return {
-            'items': queryset[offset:offset + page_size],
-            'count': self._items_count(queryset),
-            'evaluated_count': queryset.filter(evaluation__isnull=False).count(),
+            'items': items,
+            'count': len(queryset),
+            'evaluated_count': sum(item['evaluation'] is not None for item in queryset),
         }
 
 
@@ -73,7 +171,10 @@ def _own_assignments(user):
         'submission__round',
         'submission__round__tournament',
         'evaluation',
-    )
+    ).prefetch_related(
+        'submission__jury_assignments__jury',
+        'submission__jury_assignments__evaluation',
+    ).order_by('-created_at', '-id')
 
 
 def _parse_ids_list(value: str | None, field_name: str) -> list[int]:
@@ -118,7 +219,9 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
 
     qs = _own_assignments(request.auth).order_by('-created_at', '-id')
 
-    if filters.round_id:
+    if filters.round_id is not None:
+        if filters.round_id <= 0:
+            raise_api_error(HTTPStatus.BAD_REQUEST, 'round_id must be a positive ID.')
         qs = qs.filter(submission__round_id=filters.round_id)
 
     round_ids = _parse_ids_list(filters.round_ids, 'round_ids')
@@ -134,7 +237,8 @@ def list_jury_assignments(request, filters: JuryAssignmentFilters = Query(...)):
     elif filters.evaluation_status == 'not_evaluated':
         qs = qs.filter(evaluation__isnull=True)
 
-    return qs
+    assignments = list(qs)
+    return [_jury_assignment_response_data(assignment, request) for assignment in assignments]
 
 
 # =============================================================================
@@ -289,7 +393,7 @@ def _after_evaluation_saved(evaluation, reason: str):
     '/jury-evaluations',
     operation_id='createJuryEvaluation',
     url_name='jury_evaluate_create',
-    response={201: SubmissionEvaluationResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
+    response={201: CreateJuryEvaluationResponse, HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
@@ -329,18 +433,14 @@ def create_jury_evaluation(request, payload: SubmissionEvaluationRequest):
     )
     _after_evaluation_saved(evaluation, 'evaluation_created')
 
-    return 201, SubmissionEvaluationResponse.model_validate(
-        evaluation,
-        from_attributes=True,
-        context={"request": request},
-    )
+    return 201, _evaluation_response_data(evaluation)
 
 
 @router.get(
     '/jury-evaluations/{evaluation_id}',
     operation_id='getJuryEvaluation',
     url_name='jury_evaluate',
-    response={200: SubmissionEvaluationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
+    response={200: GetJuryEvaluationResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse},
 )
 def get_jury_evaluation(request, evaluation_id: int):
     require_permission(request, Permission.MANAGE_EVALUATIONS)
@@ -354,11 +454,7 @@ def get_jury_evaluation(request, evaluation_id: int):
         pk=evaluation_id,
     )
 
-    return SubmissionEvaluationResponse.model_validate(
-        evaluation,
-        from_attributes=True,
-        context={"request": request},
-    )
+    return _evaluation_response_data(evaluation)
 
 
 @router.patch(
@@ -366,7 +462,7 @@ def get_jury_evaluation(request, evaluation_id: int):
     operation_id='updateJuryEvaluation',
     url_name='jury_evaluate',
     response={
-        200: SubmissionEvaluationResponse,
+        200: UpdateJuryEvaluationResponse,
         HTTPStatus.BAD_REQUEST: ErrorResponse,
         401: ErrorResponse,
         403: ErrorResponse,
@@ -434,11 +530,7 @@ def update_jury_evaluation(
         'evaluation_updated',
     )
 
-    return SubmissionEvaluationResponse.model_validate(
-        evaluation,
-        from_attributes=True,
-        context={"request": request},
-    )
+    return _evaluation_response_data(evaluation)
 
 
 @router.delete(
@@ -533,10 +625,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
         }
     )
 
-    return 201, AssignJuryResponse.model_validate({
-        'status': 'Assignments replaced.',
-        'created_assignments': created_count,
-    })
+    return 201, {'status': 'Assignments replaced.', 'created_assignments': created_count}
 
 
 @router.get(
@@ -546,6 +635,7 @@ def assign_jury_to_round(request, round_id: int, payload: list[JuryAssignmentIte
     response={200: list[AvailableJuryResponse], HTTPStatus.BAD_REQUEST: ErrorResponse, 401: ErrorResponse,
               403: ErrorResponse, 404: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_available_jury(request, round_id: int, include_assigned: bool = True):
     require_permission(request, Permission.MANAGE_ASSIGNMENTS)
     logger.debug(
@@ -558,16 +648,17 @@ def list_available_jury(request, round_id: int, include_assigned: bool = True):
     )
     round_obj = get_object_or_404(Round, pk=round_id)
 
+    jury_users = list(
+        get_available_jury(round_obj=round_obj, include_assigned=include_assigned)
+    )
     return [
-        AvailableJuryResponse.model_validate(
-            item,
-            from_attributes=True,
-            context={"request": request},
-        )
-        for item in get_available_jury(
-            round_obj=round_obj,
-            include_assigned=include_assigned,
-        )
+        {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.full_name,
+        }
+        for user in jury_users
     ]
 
 

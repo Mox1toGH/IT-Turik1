@@ -32,30 +32,36 @@ import type {
   ActivationResponse,
   ChangePasswordRequest,
   ErrorResponse,
+  GetUserProfileResponse,
+  GetUserResponse,
   GoogleAuthRequest,
   GoogleAuthResponse,
   GoogleCalendarCallbackRequest,
   GoogleCalendarConnectResponse,
   GoogleCalendarStatusResponse,
   ListRoleActivationCodesParams,
+  ListUserTournamentHistoryParams,
   ListUsersParams,
   LoginRequest,
   LoginResponse,
-  MessageResponse,
+  PagedTeamUserListResponse,
+  PagedUserTournamentHistoryItemResponse,
+  PasswordChangedResponse,
+  PasswordResetCompletedResponse,
   PasswordResetConfirmRequest,
+  PasswordResetLinkValidationResponse,
   PasswordResetRequest,
+  PasswordResetRequestedResponse,
   RegisterRequest,
   RegisterResponse,
   RoleActivationCodeGenerateRequest,
   RoleActivationCodeGenerateResponse,
   RoleActivationCodeListResponse,
-  TeamUserListResponse,
   TokenRefreshRequest,
   TokenRefreshResponse,
   UpdateUserAvatarBody,
+  UpdateUserProfileResponse,
   UserAvatarResponse,
-  UserResponse,
-  UserTournamentHistoryItemResponse,
   UserUpdateRequest
 } from '../backendAPINinja.schemas';
 
@@ -395,7 +401,7 @@ export const getUserProfile = (
 ) => {
       
       
-      return customInstance<UserResponse>(
+      return customInstance<GetUserProfileResponse>(
       {url: `http://localhost:8000/api/accounts/profile`, method: 'GET', signal
     },
       options);
@@ -462,7 +468,7 @@ export const updateUserProfile = (
  options?: SecondParameter<typeof customInstance>,) => {
       userUpdateRequest = unref(userUpdateRequest);
       
-      return customInstance<UserResponse>(
+      return customInstance<UpdateUserProfileResponse>(
       {url: `http://localhost:8000/api/accounts/profile`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: userUpdateRequest
@@ -969,7 +975,7 @@ export const listUsers = (
 ) => {
       params = unref(params);
       
-      return customInstance<TeamUserListResponse[]>(
+      return customInstance<PagedTeamUserListResponse>(
       {url: `http://localhost:8000/api/accounts/users`, method: 'GET',
         params: unref(params), signal
     },
@@ -1038,7 +1044,7 @@ export const getUser = (
 ) => {
       pk = unref(pk);
       
-      return customInstance<UserResponse>(
+      return customInstance<GetUserResponse>(
       {url: `http://localhost:8000/api/accounts/users/${pk}`, method: 'GET', signal
     },
       options);
@@ -1102,12 +1108,15 @@ export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError =
  */
 export const listUserTournamentHistory = (
     pk: MaybeRef<number>,
+    params?: MaybeRef<ListUserTournamentHistoryParams>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       pk = unref(pk);
+params = unref(params);
       
-      return customInstance<UserTournamentHistoryItemResponse[]>(
-      {url: `http://localhost:8000/api/accounts/users/${pk}/tournaments-history`, method: 'GET', signal
+      return customInstance<PagedUserTournamentHistoryItemResponse>(
+      {url: `http://localhost:8000/api/accounts/users/${pk}/tournaments-history`, method: 'GET',
+        params: unref(params), signal
     },
       options);
     }
@@ -1115,23 +1124,25 @@ export const listUserTournamentHistory = (
 
 
 
-export const getListUserTournamentHistoryQueryKey = (pk?: MaybeRef<number>,) => {
+export const getListUserTournamentHistoryQueryKey = (pk?: MaybeRef<number>,
+    params?: MaybeRef<ListUserTournamentHistoryParams>,) => {
     return [
-    'http:','localhost:8000','api','accounts','users',pk,'tournaments-history'
+    'http:','localhost:8000','api','accounts','users',pk,'tournaments-history', ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListUserTournamentHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listUserTournamentHistory>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListUserTournamentHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listUserTournamentHistory>>, TError = ErrorType<ErrorResponse>>(pk: MaybeRef<number>,
+    params?: MaybeRef<ListUserTournamentHistoryParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  getListUserTournamentHistoryQueryKey(pk);
+  const queryKey =  getListUserTournamentHistoryQueryKey(pk,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserTournamentHistory>>> = ({ signal }) => listUserTournamentHistory(pk, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listUserTournamentHistory>>> = ({ signal }) => listUserTournamentHistory(pk,params, requestOptions, signal);
 
       
 
@@ -1149,11 +1160,12 @@ export type ListUserTournamentHistoryQueryError = ErrorType<ErrorResponse>
  */
 
 export function useListUserTournamentHistory<TData = Awaited<ReturnType<typeof listUserTournamentHistory>>, TError = ErrorType<ErrorResponse>>(
- pk: MaybeRef<number>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ pk: MaybeRef<number>,
+    params?: MaybeRef<ListUserTournamentHistoryParams>, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listUserTournamentHistory>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListUserTournamentHistoryQueryOptions(pk,options)
+  const queryOptions = getListUserTournamentHistoryQueryOptions(pk,params,options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1174,7 +1186,7 @@ export const requestPasswordReset = (
 ) => {
       passwordResetRequest = unref(passwordResetRequest);
       
-      return customInstance<MessageResponse>(
+      return customInstance<PasswordResetRequestedResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: passwordResetRequest, signal
@@ -1240,7 +1252,7 @@ export const validatePasswordResetLink = (
       uidb64 = unref(uidb64);
 token = unref(token);
       
-      return customInstance<MessageResponse>(
+      return customInstance<PasswordResetLinkValidationResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset/${uidb64}/${token}`, method: 'GET', signal
     },
       options);
@@ -1315,7 +1327,7 @@ export const confirmPasswordReset = (
 token = unref(token);
 passwordResetConfirmRequest = unref(passwordResetConfirmRequest);
       
-      return customInstance<MessageResponse>(
+      return customInstance<PasswordResetCompletedResponse>(
       {url: `http://localhost:8000/api/accounts/password-reset/${uidb64}/${token}`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: passwordResetConfirmRequest, signal
@@ -1379,7 +1391,7 @@ export const changePassword = (
 ) => {
       changePasswordRequest = unref(changePasswordRequest);
       
-      return customInstance<MessageResponse>(
+      return customInstance<PasswordChangedResponse>(
       {url: `http://localhost:8000/api/accounts/change-password`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: changePasswordRequest, signal

@@ -1,7 +1,6 @@
 from ninja import NinjaAPI
 from ninja.errors import HttpError, ValidationError as NinjaValidationError
 
-from .schemas import ErrorResponse
 from evaluation.api import router as evaluation_router
 from accounts.api import router as accounts_router
 from teams.api import router as teams_router
@@ -35,10 +34,10 @@ def validation_error_handler(request, exc):
 
     return api.create_response(
         request,
-        ErrorResponse(
-            message="Validation failed.",
-            details=details or None,
-        ).model_dump(),
+        {
+            "message": "Validation failed.",
+            "details": details or None,
+        },
         status=400,
     )
 

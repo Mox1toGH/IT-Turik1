@@ -17,9 +17,12 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 
 from ninja import File, Query, Router
+from ninja.pagination import paginate
+from backend.pagination import APIPageNumberPagination
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from backend.auth import JWTAuth
+from backend.media import absolute_media_url
 from backend.permissions import Permission, require_permission
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -49,10 +52,15 @@ from .schemas import (
     GoogleCalendarCallbackRequest,
     GoogleCalendarConnectResponse,
     GoogleCalendarStatusResponse,
+    GetUserProfileResponse,
+    GetUserResponse,
     LoginRequest,
     LoginResponse,
-    MessageResponse,
     PasswordResetConfirmRequest,
+    PasswordChangedResponse,
+    PasswordResetCompletedResponse,
+    PasswordResetLinkValidationResponse,
+    PasswordResetRequestedResponse,
     PasswordResetRequest,
     RegisterRequest,
     RegisterResponse,
@@ -60,13 +68,12 @@ from .schemas import (
     RoleActivationCodeGenerateResponse,
     RoleActivationCodeListFilters,
     RoleActivationCodeListResponse,
-    RoleActivationCodeResponse,
     TeamUserListResponse,
     TokenRefreshRequest,
     TokenRefreshResponse,
     UserAvatarResponse,
     UserListFilters,
-    UserResponse,
+    UpdateUserProfileResponse,
     UserTournamentHistoryItemResponse,
     UserUpdateRequest,
 )
@@ -78,6 +85,45 @@ router = Router(tags=['accounts'])
 # --------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
+
+
+def _user_response_data(user, request):
+    teams = user._prefetched_objects_cache.get('teams', [])
+    avatar = absolute_media_url(user.avatar, {'request': request}) if user.avatar else None
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'role': user.role,
+        'full_name': user.full_name or '',
+        'phone': user.phone or '',
+        'city': user.city or '',
+        'is_staff': user.is_staff,
+        'created_at': user.date_joined,
+        'needs_onboarding': user.needs_onboarding,
+        'teams': [
+            {
+                'id': team.id,
+                'name': team.name,
+                'contact_telegram': team.contact_telegram or '',
+                'contact_discord': team.contact_discord or '',
+            }
+            for team in teams
+        ],
+        'active_tournament': None,
+        'avatar': avatar or '',
+    }
+
+
+def _team_user_list_data(user, request):
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'city': user.city,
+        'avatar': absolute_media_url(user.avatar, {'request': request}) if user.avatar else '',
+    }
 
 def _get_user_by_uid(uidb64: str):
     try:
@@ -232,7 +278,14 @@ def register_user(request, payload: RegisterRequest):
         extra={'user_id': request.user.id, 'role': user.role}
     )
 
-    return 201, RegisterResponse.model_validate(user, from_attributes=True)
+    return 201, {
+        'username': user.username,
+        'email': user.email,
+        'role': user.role,
+        'full_name': user.full_name,
+        'phone': user.phone,
+        'city': user.city,
+    }
 
 
 @router.patch(
@@ -255,7 +308,7 @@ def activate_account(request, uidb64: str, token: str):
 
     logger.info('User account activated', extra={'user_id': user.id})
     
-    return ActivationResponse(status='success', message='Account activated!')
+    return {'status': 'success', 'message': 'Account activated!'}
 
 
 @router.post(
@@ -276,7 +329,7 @@ def login(request, payload: LoginRequest):
 
     logger.info('User logged in', extra={'user_id': user.id})
 
-    return LoginResponse(access=str(refresh.access_token), refresh=str(refresh))
+    return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
 
 @router.post(
@@ -289,7 +342,7 @@ def login(request, payload: LoginRequest):
 def refresh_token(request, payload: TokenRefreshRequest):
     try:
         refresh = RefreshToken(payload.refresh)
-        return TokenRefreshResponse(access=str(refresh.access_token))
+        return {'access': str(refresh.access_token)}
     except TokenError:
         raise_api_error(
             HTTPStatus.UNAUTHORIZED,
@@ -354,13 +407,14 @@ def google_auth(request, payload: GoogleAuthRequest):
             'new_user': is_new_user
         }
     )
-        
-    return GoogleAuthResponse(
-        access=str(refresh.access_token),
-        refresh=str(refresh),
-        user=user,
-        onboarding_required=user.needs_onboarding,
-    )
+    user = User.objects.prefetch_related('teams').get(pk=user.pk)
+
+    return {
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user': _user_response_data(user, request),
+        'onboarding_required': user.needs_onboarding,
+    }
 
 
 # --------------------------------------------------------------------------
@@ -372,17 +426,18 @@ def google_auth(request, payload: GoogleAuthRequest):
     auth=JWTAuth(),
     operation_id='getUserProfile',
     url_name="profile",
-    response={200: UserResponse, 401: ErrorResponse},
+    response={200: GetUserProfileResponse, 401: ErrorResponse},
 )
 def get_user_profile(request):
-    return UserResponse.model_validate(request.user, from_attributes=True, context={'request': request})
+    user = User.objects.prefetch_related('teams').get(pk=request.user.pk)
+    return _user_response_data(user, request)
 
 @router.patch(
     '/profile',
     auth=JWTAuth(),
     operation_id='updateUserProfile',
     url_name="profile",
-    response={200: UserResponse, 400: ErrorResponse, 401: ErrorResponse},
+    response={200: UpdateUserProfileResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def update_user_profile(request, payload: UserUpdateRequest):
     user = request.user
@@ -457,11 +512,8 @@ def update_user_profile(request, payload: UserUpdateRequest):
             }
         )
 
-    return UserResponse.model_validate(
-        user,
-        from_attributes=True,
-        context={"request": request},
-    )
+    response_user = User.objects.prefetch_related('teams').get(pk=user.pk)
+    return _user_response_data(response_user, request)
 
 
 @router.delete(
@@ -500,7 +552,7 @@ def update_user_avatar(request, avatar: UploadedFile = File(...)):
         'user_id': user.id
     })
 
-    return UserAvatarResponse.model_validate(user, from_attributes=True, context={'request': request})
+    return {'avatar': absolute_media_url(user.avatar, {'request': request}) or ''}
 
 
 @router.delete(
@@ -536,7 +588,7 @@ def delete_user_avatar(request):
     response={200: GoogleCalendarStatusResponse, 401: ErrorResponse},
 )
 def get_google_calendar_status(request):
-    return GoogleCalendarStatusResponse(connected=request.user.google_calendar_connected)
+    return {'connected': request.user.google_calendar_connected}
 
 
 @router.post(
@@ -567,7 +619,7 @@ def connect_google_calendar(request):
  
     logger.info('Google Calendar authorization started', extra={'user_id': request.user.id})
  
-    return GoogleCalendarConnectResponse(auth_url=f'{GOOGLE_AUTH_URI}?{urlencode(params)}')
+    return {'auth_url': f'{GOOGLE_AUTH_URI}?{urlencode(params)}'}
 
 
 @router.post(
@@ -613,7 +665,7 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
                 "Failed to connect Google Calendar. Please try again.",
             )
 
-        return GoogleCalendarStatusResponse(connected=True)
+        return {'connected': True}
     except HttpError:
         raise
     except Exception as exc:
@@ -636,7 +688,7 @@ def disconnect_google_calendar(request):
 
     logger.info('Google Calendar disconnected', extra={'user_id': user.id})
 
-    return GoogleCalendarStatusResponse(connected=False)
+    return {'connected': False}
 
 
 # --------------------------------------------------------------------------
@@ -650,6 +702,7 @@ def disconnect_google_calendar(request):
     url_name="users",
     response={200: list[TeamUserListResponse], 401: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_users(request, filters: UserListFilters = Query(...)):
     queryset = User.objects.filter(role='team', is_superuser=False).order_by('id')
     search = (filters.search or '').strip()
@@ -659,10 +712,8 @@ def list_users(request, filters: UserListFilters = Query(...)):
             | Q(email__icontains=search)
             | Q(full_name__icontains=search)
         )
-    return [
-        TeamUserListResponse.model_validate(user, from_attributes=True, context={'request': request})
-        for user in queryset
-    ]
+    users = list(queryset)
+    return [_team_user_list_data(user, request) for user in users]
 
 
 @router.get(
@@ -670,11 +721,14 @@ def list_users(request, filters: UserListFilters = Query(...)):
     auth=JWTAuth(),
     operation_id='getUser',
     url_name="user_detail",
-    response={200: UserResponse, 401: ErrorResponse, 404: ErrorResponse},
+    response={200: GetUserResponse, 401: ErrorResponse, 404: ErrorResponse},
 )
 def get_user(request, pk: int):
-    user = get_object_or_404(User.objects.filter(is_active=True, is_superuser=False), pk=pk)
-    return UserResponse.model_validate(user, from_attributes=True, context={'request': request})
+    user = get_object_or_404(
+        User.objects.filter(is_active=True, is_superuser=False).prefetch_related('teams'),
+        pk=pk,
+    )
+    return _user_response_data(user, request)
 
 
 @router.get(
@@ -684,6 +738,7 @@ def get_user(request, pk: int):
     url_name="user_tournaments_history",
     response={200: list[UserTournamentHistoryItemResponse], 401: ErrorResponse, 404: ErrorResponse},
 )
+@paginate(APIPageNumberPagination)
 def list_user_tournament_history(request, pk: int):
     user = get_object_or_404(User.objects.filter(is_active=True, is_superuser=False), pk=pk)
 
@@ -703,6 +758,7 @@ def list_user_tournament_history(request, pk: int):
     )
 
     by_tournament: dict[int, TournamentTeamRegistration] = {}
+    registrations = list(registrations)
     for registration in registrations:
         by_tournament.setdefault(registration.tournament_id, registration)
 
@@ -721,9 +777,20 @@ def list_user_tournament_history(request, pk: int):
         key=lambda reg: (reg.tournament.end_date, reg.tournament.created_at),
         reverse=True,
     )
-    context = {'request': request, 'standings': standings_map}
     return [
-        UserTournamentHistoryItemResponse.model_validate(reg, from_attributes=True, context=context)
+        {
+            'tournament_id': reg.tournament_id,
+            'tournament_name': reg.tournament.name,
+            'tournament_status': reg.tournament.status,
+            'start_date': reg.tournament.start_date,
+            'end_date': reg.tournament.end_date,
+            'team': {'id': reg.team_id, 'name': reg.team.name},
+            'team_registration_status': (
+                'disqualified' if reg.is_disqualified else 'active' if reg.is_active else 'inactive'
+            ),
+            'final_rank': standings_map.get((reg.tournament_id, reg.team_id), {}).get('rank'),
+            'final_score': standings_map.get((reg.tournament_id, reg.team_id), {}).get('total_score'),
+        }
         for reg in ordered
     ]
 
@@ -737,7 +804,7 @@ def list_user_tournament_history(request, pk: int):
     auth=None,
     operation_id="requestPasswordReset",
     url_name="password_reset_request",
-    response={200: MessageResponse, 400: ErrorResponse},
+    response={200: PasswordResetRequestedResponse, 400: ErrorResponse},
 )
 def request_password_reset(request, payload: PasswordResetRequest):
     user = User.objects.filter(
@@ -756,9 +823,7 @@ def request_password_reset(request, payload: PasswordResetRequest):
 
         logger.info('Password reset requested', extra={'user_id': user.id})
 
-    return MessageResponse(
-        message="Password reset email sent successfully."
-    )
+    return {'message': 'Password reset email sent successfully.'}
 
 
 @router.get(
@@ -766,13 +831,13 @@ def request_password_reset(request, payload: PasswordResetRequest):
     auth=None,
     operation_id='validatePasswordResetLink',
     url_name="password_reset_confirm",
-    response={200: MessageResponse, 400: ErrorResponse},
+    response={200: PasswordResetLinkValidationResponse, 400: ErrorResponse},
 )
 def validate_password_reset_link(request, uidb64: str, token: str):
     user = _get_user_by_uid(uidb64)
     if user is None or not default_token_generator.check_token(user, token):
         raise_api_error(HTTPStatus.BAD_REQUEST, 'Password reset link is invalid or expired.')
-    return MessageResponse(message='Password reset link is valid.')
+    return {'message': 'Password reset link is valid.'}
 
 
 @router.post(
@@ -780,7 +845,7 @@ def validate_password_reset_link(request, uidb64: str, token: str):
     auth=None,
     operation_id='confirmPasswordReset',
     url_name="password_reset_confirm",
-    response={200: MessageResponse, 400: ErrorResponse},
+    response={200: PasswordResetCompletedResponse, 400: ErrorResponse},
 )
 def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordResetConfirmRequest):
     user = _get_user_by_uid(uidb64)
@@ -796,7 +861,7 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
 
     logger.info('Password reset completed', extra={'user_id': request.user.id})
     
-    return MessageResponse(message='Password has been reset successfully.')
+    return {'message': 'Password has been reset successfully.'}
 
 
 @router.post(
@@ -804,7 +869,7 @@ def confirm_password_reset(request, uidb64: str, token: str, payload: PasswordRe
     auth=JWTAuth(),
     operation_id='changePassword',
     url_name="change_password",
-    response={200: MessageResponse, 400: ErrorResponse, 401: ErrorResponse},
+    response={200: PasswordChangedResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def change_password(request, payload: ChangePasswordRequest):
     user = request.user
@@ -824,7 +889,7 @@ def change_password(request, payload: ChangePasswordRequest):
 
     logger.info('Password changed', extra={'user_id': user.id})
 
-    return MessageResponse(message='Password changed successfully.')
+    return {'message': 'Password changed successfully.'}
 
 
 # --------------------------------------------------------------------------
@@ -836,7 +901,7 @@ def change_password(request, payload: ChangePasswordRequest):
     auth=JWTAuth(),
     operation_id='listRoleActivationCodes',
     url_name="role_codes_admin",
-    response={200: RoleActivationCodeListResponse, 401: ErrorResponse, 403: ErrorResponse},
+    response={200: RoleActivationCodeListResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse},
 )
 def list_role_activation_codes(request, filters: RoleActivationCodeListFilters = Query(...)):
     require_permission(request, Permission.MANAGE_ROLE_CODES)
@@ -844,12 +909,30 @@ def list_role_activation_codes(request, filters: RoleActivationCodeListFilters =
     queryset = RoleActivationCode.objects.select_related('created_by', 'used_by').order_by('-created_at')
     role = (filters.role or '').strip()
     if role:
+        allowed_roles = {'jury', 'organizer', 'admin'}
+        if role not in allowed_roles:
+            raise_api_error(HTTPStatus.BAD_REQUEST, 'Invalid role filter.')
         queryset = queryset.filter(role=role)
 
-    return RoleActivationCodeListResponse(
-        codes=[RoleActivationCodeResponse.model_validate(c, from_attributes=True) for c in queryset],
-        active_counts=_active_counts(),
-    )
+    codes = list(queryset)
+    return {
+        'codes': [
+            {
+                'id': code.id,
+                'code': code.code,
+                'role': code.role,
+                'is_used': code.is_used,
+                'created_at': code.created_at,
+                'created_by': {'id': code.created_by_id, 'username': code.created_by.username} if code.created_by_id else None,
+                'used_by': {'id': code.used_by_id, 'username': code.used_by.username} if code.used_by_id else None,
+                'created_by_username': code.created_by.username if code.created_by_id else None,
+                'used_by_username': code.used_by.username if code.used_by_id else None,
+                'used_at': code.used_at,
+            }
+            for code in codes
+        ],
+        'active_counts': _active_counts(),
+    }
 
 
 @router.post(
@@ -881,7 +964,21 @@ def generate_role_activation_codes(request, payload: RoleActivationCodeGenerateR
         }
     )
 
-    return 201, RoleActivationCodeGenerateResponse(
-        created=[RoleActivationCodeResponse.model_validate(c, from_attributes=True) for c in codes],
-        active_counts=_active_counts(),
-    )
+    return 201, {
+        'created': [
+            {
+                'id': code.id,
+                'code': code.code,
+                'role': code.role,
+                'is_used': code.is_used,
+                'created_at': code.created_at,
+                'created_by': {'id': code.created_by_id, 'username': code.created_by.username} if code.created_by_id else None,
+                'used_by': None,
+                'created_by_username': code.created_by.username if code.created_by_id else None,
+                'used_by_username': None,
+                'used_at': code.used_at,
+            }
+            for code in codes
+        ],
+        'active_counts': _active_counts(),
+    }

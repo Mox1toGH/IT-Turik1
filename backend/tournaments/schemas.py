@@ -1,34 +1,9 @@
 from datetime import datetime
 
 from ninja import Schema
-from pydantic import JsonValue, RootModel
+from pydantic import JsonValue
 
-from backend.media import absolute_media_url
 from backend.schemas import CalendarEventType, RoundStatus, TournamentStatus, UserRole
-
-
-def _file_url(file_field, context=None):
-    return absolute_media_url(file_field, context)
-
-
-def _parse_criteria(raw):
-    return [
-        {
-            'id': item.get('id', ''),
-            'name': item.get('name', ''),
-            'description': item.get('description', ''),
-            'max_score': item.get('max_score', 0),
-        }
-        for item in raw
-    ]
-
-
-def _team_members(team):
-    members = list(team.members.all())
-    if team.captain_id not in {member.id for member in members}:
-        members.append(team.captain)
-    return members
-
 
 class CriterionResponse(Schema):
     id: str
@@ -36,12 +11,10 @@ class CriterionResponse(Schema):
     description: str
     max_score: float
 
-
 class TeamSummaryResponse(Schema):
     id: int
     name: str
     is_public: bool
-
 
 class TeamMemberResponse(Schema):
     id: int
@@ -51,11 +24,6 @@ class TeamMemberResponse(Schema):
     role: UserRole
     avatar: str | None = None
 
-    @staticmethod
-    def resolve_avatar(obj, context):
-        return _file_url(obj.avatar, context)
-
-
 class RoundShortResponse(Schema):
     id: int
     name: str
@@ -64,15 +32,6 @@ class RoundShortResponse(Schema):
     status: RoundStatus
     criteria: list[CriterionResponse]
     tournament: int
-
-    @staticmethod
-    def resolve_criteria(obj):
-        return _parse_criteria(obj.criteria)
-
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
 
 class TournamentResponse(Schema):
     id: int
@@ -87,38 +46,15 @@ class TournamentResponse(Schema):
     rounds: list[RoundShortResponse]
     registered_team: TeamSummaryResponse | None = None
 
-    @staticmethod
-    def resolve_banner(obj, context):
-        return _file_url(obj.banner, context)
-
-    @staticmethod
-    def resolve_rounds(obj):
-        return obj.rounds.all()
-
-    @staticmethod
-    def resolve_registered_team(obj, context):
-        team = context.get("registered_team")
-        return (
-            TeamSummaryResponse.model_validate(
-                team,
-                from_attributes=True,
-            )
-            if team
-            else None
-        )
-
-
 class TournamentListResponse(Schema):
     data: list[TournamentResponse]
     total: int
-
 
 class ActiveTournamentResponse(Schema):
     id: int
     name: str
     status: TournamentStatus
     start_date: datetime
-
 
 class RoundBreakdownResponse(Schema):
     round_id: int
@@ -127,7 +63,6 @@ class RoundBreakdownResponse(Schema):
     average_score: float
     criteria_breakdown: dict[str, float]
     jury_breakdown: dict[str, float] | None = None
-
 
 class ArchiveStandingResponse(Schema):
     rank: int
@@ -139,7 +74,7 @@ class ArchiveStandingResponse(Schema):
     rounds_breakdown: list[RoundBreakdownResponse] | None = None
     snapshot_at: datetime
 
-class TournamentArchiveBase(Schema):
+class TournamentArchiveListResponse(Schema):
     id: int
     name: str
     description: str
@@ -149,44 +84,17 @@ class TournamentArchiveBase(Schema):
     banner: str | None = None
     standings: list[ArchiveStandingResponse]
 
-    @staticmethod
-    def resolve_banner(obj, context):
-        return _file_url(obj.banner, context)
-
-    @staticmethod
-    def resolve_standings(obj):
-        return obj.leaderboard_entries.filter(round__isnull=True).select_related('team').order_by('rank')
-
-
-class TournamentArchiveListResponse(TournamentArchiveBase):
-    pass
-
-
-class TournamentArchiveDetailResponse(TournamentArchiveBase):
+class TournamentArchiveDetailResponse(Schema):
+    id: int
+    name: str
+    description: str
+    start_date: datetime
+    end_date: datetime
+    status: TournamentStatus
+    banner: str | None = None
     teams: list[TeamSummaryResponse]
     standings: list[ArchiveStandingResponse]
-
-    @staticmethod
-    def resolve_teams(obj):
-        return [
-            registration.team
-            for registration in obj.team_registrations.filter(is_active=True)
-            .select_related('team')
-            .order_by('team__name')
-        ]
-
-    @staticmethod
-    def resolve_standings(obj):
-        return obj.leaderboard_entries.filter(round__isnull=True).select_related('team').order_by('rank')
-
-
-class TournamentArchiveDetailResponse(TournamentArchiveListResponse):
     rounds: list[RoundShortResponse]
-
-    @staticmethod
-    def resolve_rounds(obj):
-        return obj.rounds.all()
-
 
 class TournamentCreateRequest(Schema):
     name: str
@@ -196,7 +104,6 @@ class TournamentCreateRequest(Schema):
     max_teams: int | None = None
     min_team_members: int | None = None
 
-
 class TournamentUpdateRequest(Schema):
     name: str | None = None
     description: str | None = None
@@ -204,7 +111,6 @@ class TournamentUpdateRequest(Schema):
     end_date: datetime | None = None
     max_teams: int | None = None
     min_team_members: int | None = None
-
 
 class RoundResponse(Schema):
     id: int
@@ -221,15 +127,6 @@ class RoundResponse(Schema):
     materials: list[JsonValue]
     status: RoundStatus
 
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-    @staticmethod
-    def resolve_criteria(obj):
-        return _parse_criteria(obj.criteria)
-
-
 class RoundCreateRequest(Schema):
     name: str = ''
     description: dict[str, JsonValue] = {}
@@ -241,7 +138,6 @@ class RoundCreateRequest(Schema):
     passing_count: int | None = None
     evaluation_criteria: str = 'score'
     materials: list[JsonValue] = []
-
 
 class RoundUpdateRequest(Schema):
     name: str | None = None
@@ -255,10 +151,8 @@ class RoundUpdateRequest(Schema):
     evaluation_criteria: str | None = None
     materials: list[JsonValue] | None = None
 
-
 class TeamRegistrationRequest(Schema):
     team_id: int
-
 
 class TeamRegistrationResponse(Schema):
     id: int
@@ -270,25 +164,11 @@ class TeamRegistrationResponse(Schema):
     disqualification_reason: str | None = None
     created_at: datetime
 
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-    @staticmethod
-    def resolve_team(obj):
-        return obj.team_id
-
-    @staticmethod
-    def resolve_team_name(obj):
-        return obj.team.name
-
-
 class EligibleTeamResponse(Schema):
     id: int
     name: str
     members_count: int
     reason: str | None = None
-
 
 class TournamentTeamResponse(Schema):
     id: int
@@ -301,43 +181,16 @@ class TournamentTeamResponse(Schema):
     is_disqualified: bool
     disqualification_reason: str | None = None
 
-    @staticmethod
-    def resolve_id(obj):
-        return obj.team_id
-
-    @staticmethod
-    def resolve_registration_id(obj):
-        return obj.id
-
-    @staticmethod
-    def resolve_name(obj):
-        return obj.team.name
-
-    @staticmethod
-    def resolve_is_public(obj):
-        return obj.team.is_public
-
-    @staticmethod
-    def resolve_members(obj):
-        return _team_members(obj.team)
-
-    @staticmethod
-    def resolve_members_count(obj):
-        return len(_team_members(obj.team))
-
-
 class JuryResponse(Schema):
     id: int
     username: str
     full_name: str
     role: UserRole
 
-
 class ScoreResponse(Schema):
     criterion_id: str
     criterion_name: str
     score: int
-
 
 class SubmissionEvaluationResponse(Schema):
     id: int
@@ -347,19 +200,11 @@ class SubmissionEvaluationResponse(Schema):
     comment: str
     created_at: datetime
 
-
 class SubmissionAssignmentResponse(Schema):
     id: int
     jury: JuryResponse
     evaluation: SubmissionEvaluationResponse | None = None
     created_at: datetime
-
-    @staticmethod
-    def resolve_evaluation(obj):
-        # Reverse one-to-one descriptors raise DoesNotExist (which subclasses
-        # AttributeError), so getattr(..., default) safely yields None.
-        return getattr(obj, 'evaluation', None)
-
 
 class SubmissionResponse(Schema):
     id: int
@@ -376,35 +221,6 @@ class SubmissionResponse(Schema):
     created_at: datetime
     updated_at: datetime
 
-    @staticmethod
-    def resolve_team(obj):
-        return obj.team_id
-
-    @staticmethod
-    def resolve_round(obj):
-        return obj.round_id
-
-    @staticmethod
-    def resolve_team_details(obj):
-        return obj.team
-
-    @staticmethod
-    def resolve_round_details(obj):
-        return obj.round
-
-    @staticmethod
-    def resolve_demo_video_file(obj, context):
-        return _file_url(obj.demo_video_file, context)
-
-    @staticmethod
-    def resolve_assignments(obj):
-        return obj.jury_assignments.all()
-
-
-class SubmissionListResponse(RootModel[list[SubmissionResponse]]):
-    pass
-
-
 class OwnSubmissionResponse(Schema):
     id: int
     team: TeamSummaryResponse
@@ -417,11 +233,6 @@ class OwnSubmissionResponse(Schema):
     created_at: datetime
     updated_at: datetime
 
-    @staticmethod
-    def resolve_demo_video_file(obj, context):
-        return _file_url(obj.demo_video_file, context)
-
-
 class SubmissionCreateRequest(Schema):
     round: int
     github_url: str
@@ -429,13 +240,11 @@ class SubmissionCreateRequest(Schema):
     live_demo_url: str = ''
     description: str = ''
 
-
 class SubmissionUpdateRequest(Schema):
     github_url: str | None = None
     demo_video_url: str | None = None
     live_demo_url: str | None = None
     description: str | None = None
-
 
 class CurrentTaskResponse(Schema):
     id: int
@@ -446,19 +255,6 @@ class CurrentTaskResponse(Schema):
     deadline: datetime
     must_have_requirements: dict[str, JsonValue]
     tech_requirements: dict[str, JsonValue]
-
-    @staticmethod
-    def resolve_tournament_name(obj):
-        return obj.tournament.name
-
-    @staticmethod
-    def resolve_task(obj):
-        return obj.description
-
-    @staticmethod
-    def resolve_deadline(obj):
-        return obj.end_date
-
 
 class EventResponse(Schema):
     id: int
@@ -472,19 +268,6 @@ class EventResponse(Schema):
     created_at: datetime
     updated_at: datetime
 
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-    @staticmethod
-    def resolve_icon(obj):
-        return obj.icon_id
-
-
-class EventListResponse(RootModel[list[EventResponse]]):
-    pass
-
-
 class EventCreateRequest(Schema):
     tournament: int
     type: CalendarEventType
@@ -493,7 +276,6 @@ class EventCreateRequest(Schema):
     link: str = ''
     start_datetime: datetime
     icon: int | None = None
-
 
 class EventUpdateRequest(Schema):
     tournament: int | None = None
@@ -504,11 +286,9 @@ class EventUpdateRequest(Schema):
     start_datetime: datetime | None = None
     icon: int | None = None
 
-
 class DisqualificationRequest(Schema):
     action: str
     disqualification_reason: str = ''
-
 
 class DisqualificationResponse(Schema):
     id: int
@@ -517,7 +297,6 @@ class DisqualificationResponse(Schema):
     tournament_id: int
     is_active: bool
     action: str
-
 
 class CalendarEventResponse(Schema):
     id: int
@@ -530,15 +309,6 @@ class CalendarEventResponse(Schema):
     icon: int | None = None
     created_at: datetime
     updated_at: datetime
-
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-    @staticmethod
-    def resolve_icon(obj):
-        return obj.icon_id
-
 
 class CalendarRoundResponse(Schema):
     id: int
@@ -555,24 +325,13 @@ class CalendarRoundResponse(Schema):
     materials: list[JsonValue]
     status: RoundStatus
 
-    @staticmethod
-    def resolve_tournament(obj):
-        return obj.tournament_id
-
-    @staticmethod
-    def resolve_criteria(obj):
-        return _parse_criteria(obj.criteria)
-
-
 class MyCalendarResponse(Schema):
     events: list[CalendarEventResponse]
     rounds: list[CalendarRoundResponse]
 
-
 class ExportToGoogleCalendarRequest(Schema):
     event_ids: list[int] = []
     round_ids: list[int] = []
-
 
 class ExportedCalendarItemResponse(Schema):
     type: str
@@ -581,12 +340,10 @@ class ExportedCalendarItemResponse(Schema):
     google_event_ids: list[str] | None = None
     html_link: str | None = None
 
-
 class CalendarExportErrorResponse(Schema):
     type: str
     id: int
     error: str
-
 
 class ExportToGoogleCalendarResponse(Schema):
     created: list[ExportedCalendarItemResponse]

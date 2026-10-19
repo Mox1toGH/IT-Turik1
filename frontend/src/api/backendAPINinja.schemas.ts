@@ -61,16 +61,23 @@ export interface CriterionResponse {
   max_score: number;
 }
 
-export type JuryAssignmentResponseEvaluation = SubmissionEvaluationResponse | null;
+export type JuryAssignmentResponseEvaluation = EvaluationSchemasSubmissionEvaluationResponse | null;
 
 export interface JuryAssignmentResponse {
   id: number;
   submission: number;
-  submission_details: unknown;
-  round_details: RoundShortResponse;
+  submission_details: SubmissionResponse;
+  round_details: EvaluationSchemasRoundShortResponse;
   evaluation?: JuryAssignmentResponseEvaluation;
   is_evaluated: boolean;
   created_at: string;
+}
+
+export interface JuryResponse {
+  id: number;
+  username: string;
+  full_name: string;
+  role: UserRole;
 }
 
 export interface PagedJuryAssignmentResponse {
@@ -79,15 +86,16 @@ export interface PagedJuryAssignmentResponse {
   evaluated_count: number;
 }
 
-export interface RoundShortResponse {
-  id: number;
-  name: string;
-  start_date: string;
-  end_date: string;
-  status: RoundStatus;
-  criteria: CriterionResponse[];
-  tournament: number;
-}
+export type RoundStatus = typeof RoundStatus[keyof typeof RoundStatus];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const RoundStatus = {
+  draft: 'draft',
+  active: 'active',
+  submission_closed: 'submission_closed',
+  evaluated: 'evaluated',
+} as const;
 
 export type ScoreItemResponseCriterionName = string | null;
 
@@ -97,7 +105,97 @@ export interface ScoreItemResponse {
   score: number;
 }
 
-export interface SubmissionEvaluationResponse {
+export interface ScoreResponse {
+  criterion_id: string;
+  criterion_name: string;
+  score: number;
+}
+
+export type SubmissionAssignmentResponseEvaluation = SubmissionEvaluationResponse | null;
+
+export interface SubmissionAssignmentResponse {
+  id: number;
+  jury: JuryResponse;
+  evaluation?: SubmissionAssignmentResponseEvaluation;
+  created_at: string;
+}
+
+export type SubmissionResponseDemoVideoFile = string | null;
+
+export interface SubmissionResponse {
+  id: number;
+  team: number;
+  round: number;
+  team_details: TeamSummaryResponse;
+  round_details: RoundShortResponse;
+  github_url: string;
+  demo_video_url: string;
+  demo_video_file?: SubmissionResponseDemoVideoFile;
+  live_demo_url: string;
+  description: string;
+  assignments: SubmissionAssignmentResponse[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamSummaryResponse {
+  id: number;
+  name: string;
+  is_public: boolean;
+}
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const UserRole = {
+  admin: 'admin',
+  team: 'team',
+  jury: 'jury',
+  organizer: 'organizer',
+} as const;
+
+export type EvaluationSchemasRoundShortResponseStartDate = string | null;
+
+export type EvaluationSchemasRoundShortResponseEndDate = string | null;
+
+export interface EvaluationSchemasRoundShortResponse {
+  id: number;
+  name: string;
+  start_date?: EvaluationSchemasRoundShortResponseStartDate;
+  end_date?: EvaluationSchemasRoundShortResponseEndDate;
+  status: string;
+  criteria: CriterionResponse[];
+  tournament: number;
+}
+
+export type EvaluationSchemasSubmissionEvaluationResponseTotalScore = number | null;
+
+export type EvaluationSchemasSubmissionEvaluationResponseFinalScore = number | null;
+
+export type EvaluationSchemasSubmissionEvaluationResponseComment = string | null;
+
+export interface EvaluationSchemasSubmissionEvaluationResponse {
+  id: number;
+  assignment: number;
+  scores: ScoreItemResponse[];
+  total_score?: EvaluationSchemasSubmissionEvaluationResponseTotalScore;
+  final_score?: EvaluationSchemasSubmissionEvaluationResponseFinalScore;
+  comment?: EvaluationSchemasSubmissionEvaluationResponseComment;
+  created_at: string;
+}
+
+export interface TournamentsSchemasRoundShortResponse {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: RoundStatus;
+  criteria: CriterionResponse[];
+  tournament: number;
+}
+
+export interface TournamentsSchemasSubmissionEvaluationResponse {
   id: number;
   scores: ScoreResponse[];
   total_score: number;
@@ -115,6 +213,22 @@ export interface ErrorResponse {
   details?: ErrorResponseDetails;
 }
 
+export type CreateJuryEvaluationResponseTotalScore = number | null;
+
+export type CreateJuryEvaluationResponseFinalScore = number | null;
+
+export type CreateJuryEvaluationResponseComment = string | null;
+
+export interface CreateJuryEvaluationResponse {
+  id: number;
+  assignment: number;
+  scores: ScoreItemResponse[];
+  total_score?: CreateJuryEvaluationResponseTotalScore;
+  final_score?: CreateJuryEvaluationResponseFinalScore;
+  comment?: CreateJuryEvaluationResponseComment;
+  created_at: string;
+}
+
 export interface ScoreItemRequest {
   criterion_id: string;
   score: number;
@@ -128,6 +242,38 @@ export interface SubmissionEvaluationRequest {
   assignment: number;
   scores: ScoreItemRequest[];
   comment?: string;
+}
+
+export type GetJuryEvaluationResponseTotalScore = number | null;
+
+export type GetJuryEvaluationResponseFinalScore = number | null;
+
+export type GetJuryEvaluationResponseComment = string | null;
+
+export interface GetJuryEvaluationResponse {
+  id: number;
+  assignment: number;
+  scores: ScoreItemResponse[];
+  total_score?: GetJuryEvaluationResponseTotalScore;
+  final_score?: GetJuryEvaluationResponseFinalScore;
+  comment?: GetJuryEvaluationResponseComment;
+  created_at: string;
+}
+
+export type UpdateJuryEvaluationResponseTotalScore = number | null;
+
+export type UpdateJuryEvaluationResponseFinalScore = number | null;
+
+export type UpdateJuryEvaluationResponseComment = string | null;
+
+export interface UpdateJuryEvaluationResponse {
+  id: number;
+  assignment: number;
+  scores: ScoreItemResponse[];
+  total_score?: UpdateJuryEvaluationResponseTotalScore;
+  final_score?: UpdateJuryEvaluationResponseFinalScore;
+  comment?: UpdateJuryEvaluationResponseComment;
+  created_at: string;
 }
 
 export type SubmissionEvaluationPatchRequestTournamentId = number | null;
@@ -170,6 +316,11 @@ export interface AvailableJuryResponse {
   full_name?: AvailableJuryResponseFullName;
 }
 
+export interface PagedAvailableJuryResponse {
+  items: AvailableJuryResponse[];
+  count: number;
+}
+
 export interface RankingItemResponse {
   team_id: number;
   team_name: string;
@@ -184,7 +335,9 @@ export interface RoundLeaderboardResponse {
   rankings: RankingItemResponse[];
 }
 
-export type RoundSummaryResponseJuryBreakdown = unknown | null;
+export type RoundSummaryResponseJuryBreakdownAnyOf = {[key: string]: number};
+
+export type RoundSummaryResponseJuryBreakdown = RoundSummaryResponseJuryBreakdownAnyOf | null;
 
 export interface RoundSummaryResponse {
   round_id: number;
@@ -267,17 +420,6 @@ export interface RegisterRequest {
   city?: string;
   activation_code?: RegisterRequestActivationCode;
 }
-
-export type UserRole = typeof UserRole[keyof typeof UserRole];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const UserRole = {
-  admin: 'admin',
-  team: 'team',
-  jury: 'jury',
-  organizer: 'organizer',
-} as const;
 
 export interface ActivationResponse {
   status: string;
@@ -364,6 +506,42 @@ export interface GoogleAuthRequest {
   id_token: string;
 }
 
+export type GetUserProfileResponseActiveTournament = UserActiveTournamentResponse | null;
+
+export interface GetUserProfileResponse {
+  id: number;
+  username: string;
+  email: string;
+  role: UserRole;
+  full_name: string;
+  phone: string;
+  city: string;
+  is_staff: boolean;
+  created_at: string;
+  needs_onboarding: boolean;
+  teams: UserTeamResponse[];
+  active_tournament: GetUserProfileResponseActiveTournament;
+  avatar?: string;
+}
+
+export type UpdateUserProfileResponseActiveTournament = UserActiveTournamentResponse | null;
+
+export interface UpdateUserProfileResponse {
+  id: number;
+  username: string;
+  email: string;
+  role: UserRole;
+  full_name: string;
+  phone: string;
+  city: string;
+  is_staff: boolean;
+  created_at: string;
+  needs_onboarding: boolean;
+  teams: UserTeamResponse[];
+  active_tournament: UpdateUserProfileResponseActiveTournament;
+  avatar?: string;
+}
+
 export type UserUpdateRequestFullName = string | null;
 
 export type UserUpdateRequestPhone = string | null;
@@ -405,6 +583,11 @@ export interface UserListFilters {
   search?: UserListFiltersSearch;
 }
 
+export interface PagedTeamUserListResponse {
+  items: TeamUserListResponse[];
+  count: number;
+}
+
 export type TeamUserListResponseFullName = string | null;
 
 export type TeamUserListResponseCity = string | null;
@@ -416,6 +599,29 @@ export interface TeamUserListResponse {
   email: string;
   full_name?: TeamUserListResponseFullName;
   city?: TeamUserListResponseCity;
+}
+
+export type GetUserResponseActiveTournament = UserActiveTournamentResponse | null;
+
+export interface GetUserResponse {
+  id: number;
+  username: string;
+  email: string;
+  role: UserRole;
+  full_name: string;
+  phone: string;
+  city: string;
+  is_staff: boolean;
+  created_at: string;
+  needs_onboarding: boolean;
+  teams: UserTeamResponse[];
+  active_tournament: GetUserResponseActiveTournament;
+  avatar?: string;
+}
+
+export interface PagedUserTournamentHistoryItemResponse {
+  items: UserTournamentHistoryItemResponse[];
+  count: number;
 }
 
 export interface TeamRefResponse {
@@ -439,7 +645,7 @@ export interface UserTournamentHistoryItemResponse {
   final_score?: UserTournamentHistoryItemResponseFinalScore;
 }
 
-export interface MessageResponse {
+export interface PasswordResetRequestedResponse {
   message: string;
 }
 
@@ -447,9 +653,21 @@ export interface PasswordResetRequest {
   email: string;
 }
 
+export interface PasswordResetLinkValidationResponse {
+  message: string;
+}
+
+export interface PasswordResetCompletedResponse {
+  message: string;
+}
+
 export interface PasswordResetConfirmRequest {
   new_password: string;
   confirm_password: string;
+}
+
+export interface PasswordChangedResponse {
+  message: string;
 }
 
 export interface ChangePasswordRequest {
@@ -529,23 +747,9 @@ export const StaffRole = {
   admin: 'admin',
 } as const;
 
-export type TeamMemberResponseAvatar = string | null;
+export type ListTeamsItemResponseBanner = string | null;
 
-export type TeamMemberResponseAvatarFrameUrl = string | null;
-
-export interface TeamMemberResponse {
-  id: number;
-  username: string;
-  email: string;
-  full_name: string;
-  role: UserRole;
-  avatar?: TeamMemberResponseAvatar;
-  avatar_frame_url?: TeamMemberResponseAvatarFrameUrl;
-}
-
-export type TeamResponseBanner = string | null;
-
-export interface TeamResponse {
+export interface ListTeamsItemResponse {
   id: number;
   name: string;
   email: string;
@@ -554,7 +758,41 @@ export interface TeamResponse {
   organization?: string;
   contact_telegram?: string;
   contact_discord?: string;
-  banner?: TeamResponseBanner;
+  banner?: ListTeamsItemResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export interface PagedListTeamsItemResponse {
+  items: ListTeamsItemResponse[];
+  count: number;
+}
+
+export type TeamMemberResponseAvatar = string | null;
+
+export interface TeamMemberResponse {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  avatar?: TeamMemberResponseAvatar;
+}
+
+export type CreateTeamResponseBanner = string | null;
+
+export interface CreateTeamResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: CreateTeamResponseBanner;
   members: TeamMemberResponse[];
   is_member: boolean;
   can_request_to_join: boolean;
@@ -569,6 +807,42 @@ export interface TeamCreateRequest {
   contact_telegram?: string;
   contact_discord?: string;
   member_ids?: number[];
+}
+
+export type GetTeamResponseBanner = string | null;
+
+export interface GetTeamResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: GetTeamResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export type UpdateTeamResponseBanner = string | null;
+
+export interface UpdateTeamResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: UpdateTeamResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
 }
 
 export type TeamUpdateRequestName = string | null;
@@ -601,14 +875,55 @@ export interface TeamBannerResponse {
   banner?: TeamBannerResponseBanner;
 }
 
+export type DeleteTeamBannerResponseBanner = string | null;
+
+export interface DeleteTeamBannerResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: DeleteTeamBannerResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export type InviteMemberResponseBanner = string | null;
+
+export interface InviteMemberResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: InviteMemberResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
 export type InviteMemberRequestUserId = number | null;
 
 export interface InviteMemberRequest {
   user_id?: InviteMemberRequestUserId;
 }
 
-export interface DetailResponse {
+export interface LeaveTeamResponse {
   detail: string;
+}
+
+export interface PagedTeamInvitationInboxResponse {
+  items: TeamInvitationInboxResponse[];
+  count: number;
 }
 
 export type TeamInvitationInboxResponseRespondedAt = string | null;
@@ -624,10 +939,49 @@ export interface TeamInvitationInboxResponse {
   invited_by?: TeamInvitationInboxResponseInvitedBy;
 }
 
-export interface TeamSummaryResponse {
+export type AcceptTeamInvitationResponseBanner = string | null;
+
+export interface AcceptTeamInvitationResponse {
   id: number;
   name: string;
+  email: string;
+  captain_id: number;
   is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: AcceptTeamInvitationResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export type DeclineTeamInvitationResponseBanner = string | null;
+
+export interface DeclineTeamInvitationResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: DeclineTeamInvitationResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export interface CreateTeamJoinRequestResponse {
+  detail: string;
+}
+
+export interface PagedTeamJoinRequestResponse {
+  items: TeamJoinRequestResponse[];
+  count: number;
 }
 
 export type TeamJoinRequestResponseReviewedAt = string | null;
@@ -641,6 +995,47 @@ export interface TeamJoinRequestResponse {
   created_at: string;
   reviewed_at?: TeamJoinRequestResponseReviewedAt;
   reviewed_by_id?: TeamJoinRequestResponseReviewedById;
+}
+
+export type AcceptTeamJoinRequestResponseBanner = string | null;
+
+export interface AcceptTeamJoinRequestResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: AcceptTeamJoinRequestResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export type DeclineTeamJoinRequestResponseBanner = string | null;
+
+export interface DeclineTeamJoinRequestResponse {
+  id: number;
+  name: string;
+  email: string;
+  captain_id: number;
+  is_public: boolean;
+  organization?: string;
+  contact_telegram?: string;
+  contact_discord?: string;
+  banner?: DeclineTeamJoinRequestResponseBanner;
+  members: TeamMemberResponse[];
+  is_member: boolean;
+  can_request_to_join: boolean;
+  is_in_active_tournament: boolean;
+}
+
+export interface PagedTeamInvitationResponse {
+  items: TeamInvitationResponse[];
+  count: number;
 }
 
 export type TeamInvitationResponseRespondedAt = string | null;
@@ -677,12 +1072,54 @@ export interface NewsListResponse {
   count: number;
 }
 
+export type CreateNewsResponseContent = {[key: string]: JsonValue};
+
+export type CreateNewsResponseCreatedBy = number | null;
+
+export interface CreateNewsResponse {
+  id: number;
+  title: string;
+  content: CreateNewsResponseContent;
+  created_by: CreateNewsResponseCreatedBy;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type NewsArticleRequestContent = {[key: string]: JsonValue};
 
 export interface NewsArticleRequest {
   title: string;
   content: NewsArticleRequestContent;
   send_notification?: boolean;
+}
+
+export type GetNewsResponseContent = {[key: string]: JsonValue};
+
+export type GetNewsResponseCreatedBy = number | null;
+
+export interface GetNewsResponse {
+  id: number;
+  title: string;
+  content: GetNewsResponseContent;
+  created_by: GetNewsResponseCreatedBy;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type UpdateNewsResponseContent = {[key: string]: JsonValue};
+
+export type UpdateNewsResponseCreatedBy = number | null;
+
+export interface UpdateNewsResponse {
+  id: number;
+  title: string;
+  content: UpdateNewsResponseContent;
+  created_by: UpdateNewsResponseCreatedBy;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type NewsArticlePatchRequestTitle = string | null;
@@ -706,6 +1143,10 @@ export interface NotificationResponse {
 export interface PagedNotificationResponse {
   items: NotificationResponse[];
   count: number;
+}
+
+export interface MarkNotificationReadResponse {
+  detail: string;
 }
 
 export interface MarkedCountResponse {
@@ -741,6 +1182,10 @@ export interface NotificationSettingsResponse {
   global_config: GlobalConfigResponse;
 }
 
+export interface UpdateNotificationConfigResponse {
+  detail: string;
+}
+
 export type NotificationConfigUpdateRequestIsSystemEnabled = boolean | null;
 
 export type NotificationConfigUpdateRequestIsEmailEnabled = boolean | null;
@@ -749,6 +1194,10 @@ export interface NotificationConfigUpdateRequest {
   event_type: string;
   is_system_enabled?: NotificationConfigUpdateRequestIsSystemEnabled;
   is_email_enabled?: NotificationConfigUpdateRequestIsEmailEnabled;
+}
+
+export interface UpdateGlobalNotificationConfigResponse {
+  detail: string;
 }
 
 export interface GlobalConfigUpdateRequest {
@@ -823,16 +1272,15 @@ export interface RoleBreakdownResponse {
   count: number;
 }
 
-export type RoundStatus = typeof RoundStatus[keyof typeof RoundStatus];
-
-
-// eslint-disable-next-line @typescript-eslint/no-redeclare
-export const RoundStatus = {
-  draft: 'draft',
-  active: 'active',
-  submission_closed: 'submission_closed',
-  evaluated: 'evaluated',
-} as const;
+export interface RoundShortResponse {
+  id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: RoundStatus;
+  criteria: CriterionResponse[];
+  tournament: number;
+}
 
 export type TournamentResponseMaxTeams = number | null;
 
@@ -894,46 +1342,18 @@ export interface DisqualificationRequest {
   disqualification_reason?: string;
 }
 
-export interface JuryResponse {
-  id: number;
-  username: string;
-  full_name: string;
-  role: UserRole;
+export interface PagedSubmissionResponse {
+  items: SubmissionResponse[];
+  count: number;
 }
 
-export interface ScoreResponse {
-  criterion_id: string;
-  criterion_name: string;
-  score: number;
-}
-
-export type SubmissionAssignmentResponseEvaluation = SubmissionEvaluationResponse | null;
-
-export interface SubmissionAssignmentResponse {
+export interface SubmissionEvaluationResponse {
   id: number;
-  jury: JuryResponse;
-  evaluation?: SubmissionAssignmentResponseEvaluation;
+  scores: ScoreResponse[];
+  total_score: number;
+  final_score: number;
+  comment: string;
   created_at: string;
-}
-
-export type SubmissionListResponse = SubmissionResponse[];
-
-export type SubmissionResponseDemoVideoFile = string | null;
-
-export interface SubmissionResponse {
-  id: number;
-  team: number;
-  round: number;
-  team_details: TeamSummaryResponse;
-  round_details: RoundShortResponse;
-  github_url: string;
-  demo_video_url: string;
-  demo_video_file?: SubmissionResponseDemoVideoFile;
-  live_demo_url: string;
-  description: string;
-  assignments: SubmissionAssignmentResponse[];
-  created_at: string;
-  updated_at: string;
 }
 
 export type CalendarEventResponseIcon = number | null;
@@ -1043,6 +1463,11 @@ export interface ArchiveStandingResponse {
   snapshot_at: string;
 }
 
+export interface PagedTournamentArchiveListResponse {
+  items: TournamentArchiveListResponse[];
+  count: number;
+}
+
 export type RoundBreakdownResponseCriteriaBreakdown = {[key: string]: number};
 
 export type RoundBreakdownResponseJuryBreakdownAnyOf = {[key: string]: number};
@@ -1081,6 +1506,7 @@ export interface TournamentArchiveDetailResponse {
   end_date: string;
   status: TournamentStatus;
   banner?: TournamentArchiveDetailResponseBanner;
+  teams: TeamSummaryResponse[];
   standings: ArchiveStandingResponse[];
   rounds: RoundShortResponse[];
 }
@@ -1123,11 +1549,23 @@ export interface TeamRegistrationRequest {
   team_id: number;
 }
 
+export type EligibleTeamResponseReason = string | null;
+
 export interface EligibleTeamResponse {
   id: number;
   name: string;
   members_count: number;
-  reason?: string | null;
+  reason?: EligibleTeamResponseReason;
+}
+
+export interface PagedEligibleTeamResponse {
+  items: EligibleTeamResponse[];
+  count: number;
+}
+
+export interface PagedTournamentTeamResponse {
+  items: TournamentTeamResponse[];
+  count: number;
 }
 
 export type TournamentTeamResponseDisqualificationReason = string | null;
@@ -1149,6 +1587,11 @@ export interface ActiveTournamentResponse {
   name: string;
   status: TournamentStatus;
   start_date: string;
+}
+
+export interface PagedRoundResponse {
+  items: RoundResponse[];
+  count: number;
 }
 
 export type RoundResponseDescription = {[key: string]: JsonValue};
@@ -1250,6 +1693,11 @@ export interface OwnSubmissionResponse {
   updated_at: string;
 }
 
+export interface PagedOwnSubmissionResponse {
+  items: OwnSubmissionResponse[];
+  count: number;
+}
+
 export interface SubmissionCreateRequest {
   round: number;
   github_url: string;
@@ -1290,8 +1738,6 @@ export interface CurrentTaskResponse {
   tech_requirements: CurrentTaskResponseTechRequirements;
 }
 
-export type EventListResponse = EventResponse[];
-
 export type EventResponseIcon = number | null;
 
 export interface EventResponse {
@@ -1305,6 +1751,11 @@ export interface EventResponse {
   icon?: EventResponseIcon;
   created_at: string;
   updated_at: string;
+}
+
+export interface PagedEventResponse {
+  items: EventResponse[];
+  count: number;
 }
 
 export type EventCreateRequestIcon = number | null;
@@ -1376,6 +1827,11 @@ export const ListJuryAssignmentsEvaluationStatus = {
 
 export type ListAvailableJuryParams = {
 include_assigned?: boolean;
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
 
 export type UpdateUserAvatarBody = {
@@ -1387,6 +1843,19 @@ export type ListUsersParams = {
  * Filter by username, email, or full name
  */
 search?: string | null;
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListUserTournamentHistoryParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
 
 export type ListRoleActivationCodesParams = {
@@ -1396,8 +1865,40 @@ export type ListRoleActivationCodesParams = {
 role?: string | null;
 };
 
+export type ListTeamsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
 export type TeamBannerUpdateBody = {
   banner: Blob;
+};
+
+export type ListTeamInvitationsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListTeamJoinRequestsByTeamParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListTeamInvitationsByTeamParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
 
 export type ListNewsParams = {
@@ -1417,6 +1918,22 @@ export type UpdateTournamentBannerBody = {
   banner: Blob;
 };
 
+export type ListMyTeamSubmissionsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListRoundSubmissionsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
 export type ListTournamentsParams = {
 page?: number;
 page_size?: number;
@@ -1424,8 +1941,37 @@ searchQuery?: string | null;
 status?: string | null;
 };
 
+export type ListTournamentArchiveParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListTournamentArchiveSubmissionsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListEligibleTeamsForTournamentParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
 export type ListTournamentTeamsParams = {
 status?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
 
 export type GetTeamActiveTournamentParams = {
@@ -1434,6 +1980,27 @@ team_id: number;
 
 export type ListRoundsParams = {
 status?: string | null;
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListSubmissionsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
+};
+
+export type ListTournamentSubmissionsParams = {
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
 
 export type GetCurrentTaskParams = {
@@ -1442,4 +2009,10 @@ tournament_id?: number | null;
 
 export type ListEventsParams = {
 tournament?: number | null;
+/**
+ * @minimum 1
+ */
+page?: number;
+page_size?: number | null;
 };
+

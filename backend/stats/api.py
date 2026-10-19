@@ -58,16 +58,14 @@ def get_player_stats(request):
             'user_id': request.auth.id
         })
 
-    return PlayerStatsResponse.model_validate(
-        {
+    return {
             'total_tournaments': total,
             'wins': wins,
             'losses': max(total - wins, 0),
             'win_rate': _win_rate(wins, total),
             'average_evaluation_score': _round2(average),
             'current_team_name': team.name if team else None,
-        }
-    )
+    }
 
 
 @router.get('/team/{team_id}', operation_id='getTeamStats', url_name='stats-team', response={200: TeamStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -102,8 +100,7 @@ def get_team_stats(request, team_id: int):
 
     average = SubmissionEvaluation.objects.filter(assignment__submission__team=team).aggregate(value=Avg('final_score'))['value']
 
-    return TeamStatsResponse.model_validate(
-        {
+    return {
             'team_id': team.id,
             'team_name': team.name,
             'total_tournaments': total,
@@ -113,8 +110,7 @@ def get_team_stats(request, team_id: int):
             'average_member_evaluation_score': _round2(average),
             'active_members_count': len(members),
             'top_player': top_player,
-        }
-    )
+    }
 
 
 @router.get('/tournament/{tournament_id}', operation_id='getTournamentStats', url_name='stats-tournament', response={200: TournamentStatsResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
@@ -144,8 +140,7 @@ def get_tournament_stats(request, tournament_id: int):
             'tournament_id': tournament_id,
         })
 
-    return TournamentStatsResponse.model_validate(
-        {
+    return {
             'tournament_id': tournament.id,
             'tournament_name': tournament.name,
             'total_registered_teams': total,
@@ -167,8 +162,7 @@ def get_tournament_stats(request, tournament_id: int):
                 }
                 for entry in top
             ],
-        }
-    )
+    }
 
 @router.get('/admin', operation_id='getAdminStats', url_name='stats-admin', response={200: AdminStatsResponse, 401: ErrorResponse, 403: ErrorResponse})
 def get_admin_stats(request):
@@ -183,8 +177,7 @@ def get_admin_stats(request):
     })
     now = timezone.now()
 
-    return AdminStatsResponse.model_validate(
-        {
+    return {
             'total_users': User.objects.count(),
             'total_teams': Team.objects.count(),
             'total_tournaments': Tournament.objects.count(),
@@ -206,5 +199,4 @@ def get_admin_stats(request):
                 .order_by('role')
             ),
             'total_evaluation_records': SubmissionEvaluation.objects.count(),
-        }
-    )
+    }

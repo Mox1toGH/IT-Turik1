@@ -16,7 +16,14 @@ from .models import NewsArticle
 from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
 from http import HTTPStatus
-from .schemas import NewsArticleRequest, NewsArticlePatchRequest, NewsArticleResponse, NewsListResponse
+from .schemas import (
+    CreateNewsResponse,
+    GetNewsResponse,
+    NewsArticlePatchRequest,
+    NewsArticleRequest,
+    NewsListResponse,
+    UpdateNewsResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +32,15 @@ router = Router(tags=['news'], auth=JWTAuth())
 
 def _serialize_article(article):
     author = article.created_by
-    return NewsArticleResponse(
-        id=article.id,
-        title=article.title,
-        content=article.content,
-        created_by=article.created_by_id,
-        created_by_name=(author.full_name or author.username) if author else '',
-        created_at=article.created_at,
-        updated_at=article.updated_at,
-    )
+    return {
+        'id': article.id,
+        'title': article.title,
+        'content': article.content,
+        'created_by': article.created_by_id,
+        'created_by_name': (author.full_name or author.username) if author else '',
+        'created_at': article.created_at,
+        'updated_at': article.updated_at,
+    }
 
 
 def _notify_news_published(request, article):
@@ -57,19 +64,20 @@ def list_news(request, page: int = 1, page_size: int = 10):
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     logger.debug('Listing news: page=%s page_size=%s user_id=%s', page, page_size, request.auth.id)
-    queryset = NewsArticle.objects.select_related('created_by').all()
+    queryset = NewsArticle.objects.select_related('created_by').order_by('-created_at', '-id')
     offset = (page - 1) * page_size
+    articles = list(queryset[offset:offset + page_size])
 
-    return NewsListResponse(
-        items=[
+    return {
+        'items': [
             _serialize_article(article)
-            for article in queryset[offset:offset + page_size]
+            for article in articles
         ],
-        count=queryset.count(),
-    )
+        'count': queryset.count(),
+    }
 
 
-@router.post('', operation_id='createNews', url_name="news_list_create", response={201: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
+@router.post('', operation_id='createNews', url_name="news_list_create", response={201: CreateNewsResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse})
 @transaction.atomic
 def create_news(request, payload: NewsArticleRequest):
     require_permission(request, Permission.CREATE_NEWS)
@@ -100,7 +108,7 @@ def create_news(request, payload: NewsArticleRequest):
 
 
 
-@router.get('/{article_id}', operation_id='getNews', url_name="news_detail", response={200: NewsArticleResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/{article_id}', operation_id='getNews', url_name="news_detail", response={200: GetNewsResponse, 401: ErrorResponse, 404: ErrorResponse})
 def get_news(request, article_id: int):
     logger.debug('Fetching news article: news_id=%s', article_id)
     return _serialize_article(
@@ -111,7 +119,7 @@ def get_news(request, article_id: int):
     )
 
 
-@router.patch('/{article_id}', operation_id='updateNews', url_name="news_detail", response={200: NewsArticleResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+@router.patch('/{article_id}', operation_id='updateNews', url_name="news_detail", response={200: UpdateNewsResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 @transaction.atomic
 def update_news(request, article_id: int, payload: NewsArticlePatchRequest):
     require_permission(request, Permission.EDIT_NEWS)

@@ -29,15 +29,17 @@ import type {
 
 import type {
   DeletedCountResponse,
-  DetailResponse,
   ErrorResponse,
   GlobalConfigUpdateRequest,
   ListNotificationsParams,
+  MarkNotificationReadResponse,
   MarkedCountResponse,
   NotificationConfigUpdateRequest,
   NotificationSettingsResponse,
   PagedNotificationResponse,
-  UnreadCountResponse
+  UnreadCountResponse,
+  UpdateGlobalNotificationConfigResponse,
+  UpdateNotificationConfigResponse
 } from '../backendAPINinja.schemas';
 
 import { customInstance } from '../../lib/apiClient';
@@ -126,7 +128,7 @@ export const markNotificationRead = (
 ) => {
       notificationId = unref(notificationId);
       
-      return customInstance<DetailResponse>(
+      return customInstance<MarkNotificationReadResponse>(
       {url: `http://localhost:8000/api/notifications/${notificationId}/read`, method: 'POST', signal
     },
       options);
@@ -439,67 +441,6 @@ export function useGetNotificationSettings<TData = Awaited<ReturnType<typeof get
 
 
 /**
- * @summary Update Notification Settings
- */
-export const updateNotificationSettings = (
-    
- options?: SecondParameter<typeof customInstance>,) => {
-      
-      
-      return customInstance<NotificationSettingsResponse>(
-      {url: `http://localhost:8000/api/notifications/settings`, method: 'PUT'
-    },
-      options);
-    }
-  
-
-
-export const getUpdateNotificationSettingsMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationSettings>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateNotificationSettings>>, TError,void, TContext> => {
-
-const mutationKey = ['updateNotificationSettings'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateNotificationSettings>>, void> = () => {
-          
-
-          return  updateNotificationSettings(requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateNotificationSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateNotificationSettings>>>
-    
-    export type UpdateNotificationSettingsMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Update Notification Settings
- */
-export const useUpdateNotificationSettings = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateNotificationSettings>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationReturnType<
-        Awaited<ReturnType<typeof updateNotificationSettings>>,
-        TError,
-        void,
-        TContext
-      > => {
-
-      const mutationOptions = getUpdateNotificationSettingsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Update Notification Config
  */
 export const updateNotificationConfig = (
@@ -508,7 +449,7 @@ export const updateNotificationConfig = (
 ) => {
       notificationConfigUpdateRequest = unref(notificationConfigUpdateRequest);
       
-      return customInstance<DetailResponse>(
+      return customInstance<UpdateNotificationConfigResponse>(
       {url: `http://localhost:8000/api/notifications/settings/config/update`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: notificationConfigUpdateRequest, signal
@@ -572,7 +513,7 @@ export const updateGlobalNotificationConfig = (
 ) => {
       globalConfigUpdateRequest = unref(globalConfigUpdateRequest);
       
-      return customInstance<DetailResponse>(
+      return customInstance<UpdateGlobalNotificationConfigResponse>(
       {url: `http://localhost:8000/api/notifications/settings/global/update`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: globalConfigUpdateRequest, signal
