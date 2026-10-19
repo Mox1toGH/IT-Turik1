@@ -13,11 +13,7 @@
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="180px" height="64px" />
-          </template>
-        </ui-skeleton-loader>
+        <ui-skeleton v-if="isLoading" variant="rect" width="180px" height="64px" />
       </div>
     </header>
 
@@ -70,7 +66,7 @@
         </div>
       </header>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-query-state :query="assignmentsQuery">
         <template #skeleton>
           <div class="assignments-grid">
             <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="assignment-skeleton">
@@ -80,6 +76,12 @@
               <ui-skeleton variant="rect" width="80%" height="14px" />
             </ui-card>
           </div>
+        </template>
+
+        <template #empty>
+          <ui-card class="empty-card">
+            <p class="empty-text">No assignments found for selected filters</p>
+          </ui-card>
         </template>
 
         <template #default>
@@ -103,7 +105,7 @@
             :page-size="pageSize"
           />
         </template>
-      </ui-skeleton-loader>
+      </ui-query-state>
     </section>
   </section>
 </template>
@@ -116,7 +118,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
 
 const selectedRounds = ref<string[]>([])
@@ -125,7 +127,13 @@ const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
 const currentPage = ref(1)
 const pageSize = 10
 
-const { data: assignmentsResponse, isLoading, isError, refetch } = useListJuryAssignments()
+const assignmentsQuery = useListJuryAssignments()
+const {
+  data: assignmentsResponse,
+  isLoading,
+  isError,
+  refetch,
+} = assignmentsQuery
 
 const {
   data: tournamentsResponse,

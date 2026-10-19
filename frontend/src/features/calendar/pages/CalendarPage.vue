@@ -37,11 +37,7 @@
     </section>
 
     <section class="calendar-content">
-      <div v-if="isError" class="calendar-error">
-        <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
-      </div>
-
-      <ui-skeleton-loader v-else :loading="isLoading">
+      <ui-query-state :query="calendarQuery">
         <template #skeleton>
           <div class="calendar-skeleton">
             <div class="skeleton-nav">
@@ -52,6 +48,12 @@
             <div class="skeleton-grid">
               <ui-skeleton v-for="i in 42" :key="i" variant="rect" height="90px" />
             </div>
+          </div>
+        </template>
+
+        <template #error="{ errorCode }">
+          <div class="calendar-error">
+            <p>Failed to load calendar data (code: {{ errorCode }})</p>
           </div>
         </template>
 
@@ -69,7 +71,7 @@
           @export-event="exportEvent"
           @export-round="exportRound"
         />
-      </ui-skeleton-loader>
+      </ui-query-state>
     </section>
   </section>
 </template>
@@ -77,7 +79,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import CalendarIcon from '@/icons/CalendarIcon.vue'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -91,7 +93,8 @@ import {
 import { exportToGoogleCalendar, useGetMyCalendar } from '@/api/tournaments/tournaments'
 import type { EventResponse, RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
-const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
+const calendarQuery = useGetMyCalendar()
+const { data } = calendarQuery
 
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])

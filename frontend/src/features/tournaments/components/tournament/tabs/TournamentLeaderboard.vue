@@ -58,7 +58,7 @@
         </div>
       </template>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-query-state :query="leaderboardQuery">
         <template #skeleton>
           <div class="table-skeleton">
             <ui-skeleton variant="rect" height="40px" />
@@ -66,11 +66,16 @@
           </div>
         </template>
 
-        <ui-card v-if="isError && !isLeaderboardNotReady" class="empty">
-          <p>{{ errorMessage }}</p>
-        </ui-card>
+        <template #error>
+          <ui-card v-if="isLeaderboardNotReady" class="empty">
+            <p>No leaderboard data yet.</p>
+          </ui-card>
+          <ui-card v-else class="empty">
+            <p>{{ errorMessage }}</p>
+          </ui-card>
+        </template>
 
-        <ui-card v-else-if="rankings.length === 0 || isLeaderboardNotReady" class="empty">
+        <ui-card v-if="rankings.length === 0 || isLeaderboardNotReady" class="empty">
           <p>No leaderboard data yet.</p>
         </ui-card>
 
@@ -125,7 +130,7 @@
             Scroll horizontally to view all rounds.
           </p>
         </template>
-      </ui-skeleton-loader>
+      </ui-query-state>
     </ui-card>
   </section>
 </template>
@@ -137,7 +142,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiPopover from '@/components/ui/UiPopover'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import {
   useGetTournamentLeaderboard,
   type GetTournamentLeaderboardQueryResult,
@@ -184,12 +189,7 @@ const { showNotification } = useNotification()
 const { data: roundsData } = useListRounds(props.tournamentId)
 const rounds = computed(() => roundsData.value ?? [])
 
-const {
-  data: leaderboard,
-  isLoading,
-  isError,
-  error,
-} = useGetTournamentLeaderboard(props.tournamentId, {
+const leaderboardQuery = useGetTournamentLeaderboard(props.tournamentId, {
   query: {
     retry: (failureCount, queryError) => {
       const status = getHttpStatus(queryError)
@@ -198,6 +198,7 @@ const {
     },
   },
 })
+const { data: leaderboard, isLoading, isError, error } = leaderboardQuery
 const rankings = computed<TournamentEntry[]>(() => leaderboard.value?.rankings ?? [])
 
 const leaderboardRoundIds = computed(() => {
@@ -401,7 +402,7 @@ async function handleOpenInGoogleSheets() {
   isCreatingGoogleSheet.value = true
   try {
     const response = await customInstance<{ spreadsheet_url: string }>({
-      url: `http://localhost:8000/api/evaluation/tournaments/${props.tournamentId}/leaderboard/export-google-sheet/`,
+      url: `/api/evaluation/tournaments/${props.tournamentId}/leaderboard/export-google-sheet/`,
       method: 'POST',
     })
     showNotification('Google Sheet has been created successfully.')

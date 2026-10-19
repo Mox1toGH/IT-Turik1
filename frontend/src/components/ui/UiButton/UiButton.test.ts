@@ -31,6 +31,20 @@ describe('UiButton', () => {
     expect(button).toBeDisabled()
   })
 
+  it('renders the link variant as underlined text with no button chrome', () => {
+    const screen = render(UiButton, {
+      props: { variant: 'link' },
+      slots: { default: 'Retry' },
+    })
+
+    const button = screen.getByRole('button', { name: 'Retry' })
+    expect(button).toHaveClass('link-btn')
+
+    const style = getComputedStyle(button.element())
+    expect(style.textDecorationLine).toContain('underline')
+    expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)')
+  })
+
   it('renders as a link when asLink is true', async () => {
     const router = createTestRouter()
 

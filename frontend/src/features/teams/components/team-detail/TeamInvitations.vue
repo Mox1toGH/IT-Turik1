@@ -1,56 +1,23 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch invitations</p>
-      </div>
-    </template>
+  <ui-card>
+    <ui-query-state :query="invitationsQuery">
+      <template #error>
+        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
+          <p>Failed to fetch invitations</p>
+        </div>
+      </template>
 
-    <section class="team-invitations-section">
+      <section class="team-invitations-section">
       <header class="team-invitations-subhead">
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="90px" />
-          </template>
+        <h3>Invitations</h3>
 
-          <h3>Invitations</h3>
-        </ui-skeleton-loader>
-
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="130px" />
-          </template>
-
-          <span class="text-muted">
-            {{ filteredPendingInvitations.length }} awaiting response
-            <span v-if="filteredDeclinedInvitations.length">
-              , {{ filteredDeclinedInvitations.length }} declined
-            </span>
+        <span class="text-muted">
+          {{ filteredPendingInvitations.length }} awaiting response
+          <span v-if="filteredDeclinedInvitations.length">
+            , {{ filteredDeclinedInvitations.length }} declined
           </span>
-        </ui-skeleton-loader>
+        </span>
       </header>
-
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="team-invitations-list">
-            <ui-card v-for="i in 2" :key="i" class="card-item">
-              <div style="display: flex; flex-direction: column; gap: 4px">
-                <div style="display: flex; justify-content: space-between; gap: 10px">
-                  <ui-skeleton variant="rect" width="100%" />
-                  <ui-skeleton variant="rect" width="70px" />
-                </div>
-
-                <ui-skeleton variant="rect" width="200px" />
-              </div>
-            </ui-card>
-          </div>
-        </template>
 
         <p
           v-if="filteredPendingInvitations.length === 0 && filteredDeclinedInvitations.length === 0"
@@ -126,8 +93,8 @@
             </template>
           </ui-card>
         </div>
-      </ui-skeleton-loader>
     </section>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -135,10 +102,8 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
@@ -159,8 +124,7 @@ const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
 const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
-const { data: invitations, isLoading, isFetching, refetch } = invitationsQuery
-const { status, errorCode, isStale } = useCardState(invitationsQuery)
+const { data: invitations } = invitationsQuery
 
 const uniqueInvitations = computed(() => {
   const byUserId = new Map<number, TeamInvitationResponse>()

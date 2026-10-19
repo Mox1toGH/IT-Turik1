@@ -9,18 +9,24 @@
         <h1 id="profile-details-title" class="text-3xl">Your information</h1>
       </div>
 
-      <div class="details-grid">
-        <ui-card v-for="field in profileFields" :key="field.label" class="field-card">
-          <span class="field-label">{{ field.label }}</span>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
+      <ui-query-state :query="query">
+        <template #skeleton>
+          <div class="details-grid">
+            <ui-card v-for="field in profileFields" :key="field.label" class="field-card">
+              <span class="field-label">{{ field.label }}</span>
               <ui-skeleton variant="rect" width="80%" />
-            </template>
+            </ui-card>
+          </div>
+        </template>
+
+        <div class="details-grid">
+          <ui-card v-for="field in profileFields" :key="field.label" class="field-card">
+            <span class="field-label">{{ field.label }}</span>
             <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
             <strong v-else class="field-value">{{ field.value }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-      </div>
+          </ui-card>
+        </div>
+      </ui-query-state>
     </ui-card>
 
     <ui-card v-if="user?.teams?.length" class="supporting-section">
@@ -70,18 +76,22 @@ import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import ArrowRight from '@/icons/ArrowRight.vue'
 import TeamIcon from '@/icons/TeamIcon.vue'
 import { formatDate } from '@/lib/date'
 import ProfileMiniCard from '../ProfileMiniCard.vue'
 import EditProfileModal from '../modals/EditProfile/EditProfileModal.vue'
 import type { UserResponse } from '@/api/backendAPINinja.schemas.ts'
+import { useQueryState, type QueryLike } from '@/composables/useQueryState'
 
 const props = defineProps<{
   user?: UserResponse
-  isLoading?: boolean
+  query: QueryLike
 }>()
+
+const { status } = useQueryState(computed(() => props.query))
+const isLoading = computed(() => status.value === 'loading')
 
 const editProfileModal = ref<InstanceType<typeof EditProfileModal> | null>(null)
 

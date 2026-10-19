@@ -9,7 +9,7 @@ const meta: Meta<typeof UiButton> = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'secondary', 'ghost', 'danger', 'warning'],
+      options: ['default', 'secondary', 'ghost', 'danger', 'warning', 'link'],
     },
     size: {
       control: 'select',
@@ -116,18 +116,40 @@ export const Large: Story = {
   }),
 }
 
-/** Link-style button (styled as link, not functional router link in Storybook). */
-export const Link: Story = {
-  args: { asLink: false, variant: 'ghost' },
+/** Link variant: underlined text, no button chrome. */
+export const LinkVariant: Story = {
+  args: { variant: 'link', asLink: false },
   render: (args) => ({
     components: { UiButton },
     setup() {
       return { args }
     },
+    template: `<ui-button v-bind="args">Link Button</ui-button>`,
+  }),
+}
+
+/** Link variant combined with asLink, rendering a real router link. */
+export const LinkAsRouterLink: Story = {
+  args: { variant: 'link', asLink: true, to: '/' },
+  render: (args) => ({
+    components: { UiButton },
+    setup() {
+      return { args }
+    },
+    template: `<ui-button v-bind="args">Navigate home</ui-button>`,
+  }),
+}
+
+/** Link variant inherits surrounding text styling but keeps the underline. */
+export const LinkInSentence: Story = {
+  render: () => ({
+    components: { UiButton },
     template: `
-      <ui-button v-bind="args" style="text-decoration: underline; background: transparent; border: none; color: var(--primary);">
-        Link Button
-      </ui-button>
+      <p style="max-width: 420px; color: var(--muted-foreground); font-size: 0.9rem;">
+        The update failed.
+        <ui-button variant="link" style="color: inherit;">Retry</ui-button>
+        to load the latest data.
+      </p>
     `,
   }),
 }
@@ -168,12 +190,12 @@ export const Variants: Story = {
   render: () => ({
     components: { UiButton },
     setup() {
-      const variants = ['default', 'secondary', 'ghost', 'danger', 'warning'] as const
+      const variants = ['default', 'secondary', 'ghost', 'danger', 'warning', 'link'] as const
       const sizes = ['xs', 'sm', 'md', 'lg']
       return { variants, sizes }
     },
     template: `
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+      <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem;">
         <ui-button v-for="variant in variants" :key="variant" :variant="variant">
           {{ variant }}
         </ui-button>

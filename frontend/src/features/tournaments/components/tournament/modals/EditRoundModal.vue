@@ -161,7 +161,7 @@ import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
-import EditorModal from '../tabs/tournament-rounds/modals/EditorModal.vue'
+import EditorModal from '@/components/shared/EditorModal.vue'
 import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
 interface Props {

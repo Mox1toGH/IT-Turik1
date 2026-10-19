@@ -7,62 +7,69 @@ Somehow neeed to figure out it in different way cuz we don't have undefined at a
       <h3>Notification Settings</h3>
     </template>
 
-    <div v-if="isLoading" class="loading-state">
-      <p>Loading settings...</p>
-    </div>
-    <div v-else-if="error" class="error-state">
-      <p>Error loading settings.</p>
-    </div>
-    <div v-else class="settings-content">
-      <div class="global-setting">
-        <label class="setting-row">
-          <div class="setting-info">
-            <span class="setting-title">Disable All Email Notifications</span>
-            <span class="setting-desc"
-              >You will not receive any emails from the system if checked.</span
-            >
-          </div>
-          <ui-switch
-            :modelValue="settings?.global_config.emails_disabled_globally"
-            @update:modelValue="handleGlobalToggle"
-            :disabled="isUpdatingGlobal"
-          />
-        </label>
-      </div>
+    <ui-query-state :query="settingsQuery">
+      <template #skeleton>
+        <div class="loading-state">
+          <p>Loading settings...</p>
+        </div>
+      </template>
+      <template #error>
+        <div class="error-state">
+          <p>Error loading settings.</p>
+        </div>
+      </template>
 
-      <div class="events-settings">
-        <h4>Event Preferences</h4>
-        <div class="event-list">
-          <div v-for="config in settings?.configs" :key="config.event_type" class="event-item">
-            <div class="event-info">
-              <span class="event-title">{{ getEventTitle(config.event_type) }}</span>
+      <div class="settings-content">
+        <div class="global-setting">
+          <label class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">Disable All Email Notifications</span>
+              <span class="setting-desc"
+                >You will not receive any emails from the system if checked.</span
+              >
             </div>
-            <div class="event-toggles">
-              <label class="toggle-label">
-                <span class="toggle-text">System</span>
-                <ui-switch
-                  :modelValue="config.is_system_enabled"
-                  @update:modelValue="
-                    (val) => handleEventToggle(config.event_type, 'system', Boolean(val))
-                  "
-                  :disabled="isUpdatingEvent"
-                />
-              </label>
-              <label class="toggle-label">
-                <span class="toggle-text">Email</span>
-                <ui-switch
-                  :modelValue="config.is_email_enabled"
-                  @update:modelValue="
-                    (val) => handleEventToggle(config.event_type, 'email', Boolean(val))
-                  "
-                  :disabled="isUpdatingEvent"
-                />
-              </label>
+            <ui-switch
+              :modelValue="settings?.global_config.emails_disabled_globally"
+              @update:modelValue="handleGlobalToggle"
+              :disabled="isUpdatingGlobal"
+            />
+          </label>
+        </div>
+
+        <div class="events-settings">
+          <h4>Event Preferences</h4>
+          <div class="event-list">
+            <div v-for="config in settings?.configs" :key="config.event_type" class="event-item">
+              <div class="event-info">
+                <span class="event-title">{{ getEventTitle(config.event_type) }}</span>
+              </div>
+              <div class="event-toggles">
+                <label class="toggle-label">
+                  <span class="toggle-text">System</span>
+                  <ui-switch
+                    :modelValue="config.is_system_enabled"
+                    @update:modelValue="
+                      (val) => handleEventToggle(config.event_type, 'system', Boolean(val))
+                    "
+                    :disabled="isUpdatingEvent"
+                  />
+                </label>
+                <label class="toggle-label">
+                  <span class="toggle-text">Email</span>
+                  <ui-switch
+                    :modelValue="config.is_email_enabled"
+                    @update:modelValue="
+                      (val) => handleEventToggle(config.event_type, 'email', Boolean(val))
+                    "
+                    :disabled="isUpdatingEvent"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ui-query-state>
 
     <template #footer>
       <ui-button size="sm" variant="secondary" @click="$emit('update:isOpen', false)">
@@ -74,6 +81,7 @@ Somehow neeed to figure out it in different way cuz we don't have undefined at a
 
 <script setup lang="ts">
 import UiModal from '@/components/ui/UiModal'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSwitch from '@/components/ui/UiSwitch'
 import UiButton from '@/components/ui/UiButton'
 import { useNotification } from '@/composables/useNotification'
@@ -87,7 +95,8 @@ defineProps<{
   isOpen: boolean
 }>()
 
-const { data: settings, isLoading, error } = useGetNotificationSettings()
+const settingsQuery = useGetNotificationSettings()
+const settings = settingsQuery.data
 const { mutate: updateEvent, isPending: isUpdatingEvent } = useUpdateNotificationConfig()
 const { mutate: updateGlobal, isPending: isUpdatingGlobal } = useUpdateGlobalNotificationConfig()
 

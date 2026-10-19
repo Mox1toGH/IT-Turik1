@@ -17,7 +17,7 @@
       </div>
     </template>
 
-    <ui-skeleton-loader :loading="isLoadingSubmissions">
+    <ui-query-state :query="submissionsQuery">
       <template #skeleton>
         <div class="submissions-list">
           <ui-card v-for="i in 3" :key="i" class="submission-card">
@@ -231,7 +231,7 @@
           </ui-card>
         </div>
       </template>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -243,7 +243,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiProgressBar from '@/components/ui/UiProgressBar'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import FileCheckIcon from '@/icons/FileCheckIcon.vue'
 import { formatDate } from '@/lib/date'
 import { truncateText } from '@/lib/utils'
@@ -259,9 +259,8 @@ interface Props {
 const props = defineProps<Props>()
 const isEditOpen = ref(false)
 
-const { data: submissions, isLoading: isLoadingSubmissions } = useListMyTeamSubmissions(
-  props.tournamentId,
-)
+const submissionsQuery = useListMyTeamSubmissions(props.tournamentId)
+const { data: submissions } = submissionsQuery
 
 const {
   data: rounds,

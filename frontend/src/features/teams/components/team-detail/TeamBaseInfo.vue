@@ -1,11 +1,5 @@
 <template>
-  <ui-card :status="props.status" :error-code="props.errorCode">
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 502px">
-        <p>Failed to fetch team info</p>
-      </div>
-    </template>
-
+  <ui-card>
     <template #header>
       <div class="panel-header">
         <span class="step-marker">01</span>
@@ -16,22 +10,23 @@
       </div>
     </template>
 
-    <div>
+    <ui-query-state :query="props.query">
+      <template #error>
+        <div style="display: flex; justify-content: center; align-items: center; height: 502px">
+          <p>Failed to fetch team info</p>
+        </div>
+      </template>
+
+      <div>
       <div class="info-grid">
         <ui-card title="Name" class="info-item">
           <template #header>
             <span class="card-label">Name</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong class="text-muted" :title="props.team?.name">{{
-              truncateText(props.team?.name ?? '', 35)
-            }}</strong>
-          </ui-skeleton-loader>
+          <strong class="text-muted" :title="props.team?.name">{{
+            truncateText(props.team?.name ?? '', 35)
+          }}</strong>
         </ui-card>
 
         <ui-card title="Email" class="info-item">
@@ -39,13 +34,7 @@
             <span class="card-label">Email</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong class="text-muted">{{ props.team?.email }}</strong>
-          </ui-skeleton-loader>
+          <strong class="text-muted">{{ props.team?.email }}</strong>
         </ui-card>
 
         <ui-card title="Organization" class="info-item">
@@ -53,13 +42,7 @@
             <span class="card-label">Organization</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong class="text-muted">{{ props.team?.organization || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="text-muted">{{ props.team?.organization || '-' }}</strong>
         </ui-card>
 
         <ui-card title="Captain" class="info-item">
@@ -67,18 +50,12 @@
             <span class="card-label">Captain</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong v-if="props.team?.captain_id">
-              <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
-                {{ captainName }}
-              </RouterLink>
-            </strong>
-            <strong v-else class="text-muted">{{ captainName }}</strong>
-          </ui-skeleton-loader>
+          <strong v-if="props.team?.captain_id">
+            <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
+              {{ captainName }}
+            </RouterLink>
+          </strong>
+          <strong v-else class="text-muted">{{ captainName }}</strong>
         </ui-card>
 
         <ui-card title="Members count" class="info-item">
@@ -86,13 +63,7 @@
             <span class="card-label">Members count</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong class="text-muted">{{ props.team?.members.length }}</strong>
-          </ui-skeleton-loader>
+          <strong class="text-muted">{{ props.team?.members.length }}</strong>
         </ui-card>
 
         <ui-card title="Visibility" class="info-item">
@@ -100,16 +71,11 @@
             <span class="card-label">Visibility</span>
           </template>
 
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
-            </template>
-
-            <strong class="text-muted">{{ props.team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="text-muted">{{ props.team?.is_public ? 'Public' : 'Private' }}</strong>
         </ui-card>
       </div>
-    </div>
+      </div>
+    </ui-query-state>
 
     <template #footer>
       <div class="info-actions">
@@ -143,9 +109,8 @@ import UiCard from '@/components/ui/UiCard'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import UiQueryState from '@/components/ui/UiQueryState'
+import type { QueryLike } from '@/composables/useQueryState'
 import { truncateText } from '@/lib/utils'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -153,9 +118,7 @@ import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team?: TeamResponse
-  loading: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
+  query: QueryLike
   isCaptain: boolean
 }
 

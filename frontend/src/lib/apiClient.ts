@@ -1,4 +1,4 @@
-﻿import Axios, { AxiosError, type AxiosRequestConfig, isAxiosError } from 'axios'
+import Axios, { AxiosError, type AxiosRequestConfig, isAxiosError } from 'axios'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 

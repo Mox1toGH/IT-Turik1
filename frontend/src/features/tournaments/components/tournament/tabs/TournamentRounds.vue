@@ -5,7 +5,7 @@
   </div>
 
   <section>
-    <ui-skeleton-loader :loading="isLoading">
+    <ui-query-state :query="roundsQuery">
       <template #skeleton>
         <div class="rounds-list">
           <ui-card v-for="i in 3" :key="i" class="round-card">
@@ -28,21 +28,24 @@
         </div>
       </template>
 
-      <ui-card v-if="isError">
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Error while fetching rounds</p>
-        </div>
-      </ui-card>
+      <template #error>
+        <ui-card>
+          <div style="display: flex; height: 300px; justify-content: center; align-items: center">
+            <p>Error while fetching rounds</p>
+          </div>
+        </ui-card>
+      </template>
 
-      <ui-card
-        v-else-if="rounds.length === 0"
-        class="empty-card"
-        style="display: flex; align-items: center; justify-content: center; height: 300px"
-      >
-        <p class="empty-error">No rounds found</p>
-      </ui-card>
+      <template #empty>
+        <ui-card
+          class="empty-card"
+          style="display: flex; align-items: center; justify-content: center; height: 300px"
+        >
+          <p class="empty-error">No rounds found</p>
+        </ui-card>
+      </template>
 
-      <div v-else class="rounds-list">
+      <div class="rounds-list">
         <ui-card v-for="round in rounds" :key="round.id" class="round-card">
           <template #header>
             <div class="round-header">
@@ -95,7 +98,7 @@
           </div>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
 
     <submit-modal
       v-if="selectedSubmitRoundId !== null"
@@ -122,7 +125,7 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
@@ -146,7 +149,8 @@ const { data: user } = useGetUserProfile()
 const router = useRouter()
 const route = useRoute()
 
-const { data, isLoading, isError } = useListRounds(props.tournamentId)
+const roundsQuery = useListRounds(props.tournamentId)
+const { data } = roundsQuery
 const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
 
 const rounds = computed(() => data.value ?? [])

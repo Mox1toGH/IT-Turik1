@@ -1,17 +1,5 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; height: 200px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations</p>
-      </div>
-    </template>
-
+  <ui-card>
     <template #header>
       <div class="section-head">
         <div>
@@ -21,18 +9,19 @@
         </div>
 
         <div class="section-meta">
-          <ui-skeleton-loader :loading="isLoadingTeams">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" height="38px" />
-            </template>
-
-            <span class="count-pill text-base">{{ otherTeams?.length ?? 0 }} available</span>
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="isLoadingTeams" variant="rect" width="100px" height="38px" />
+          <span v-else class="count-pill text-base">{{ otherTeams?.length ?? 0 }} available</span>
         </div>
       </div>
     </template>
 
-    <ui-skeleton-loader :loading="isLoadingTeams">
+    <ui-query-state :query="teamsQuery">
+      <template #error>
+        <div style="display: flex; height: 200px; justify-content: center; align-items: center">
+          <p>Error while fetching invitations</p>
+        </div>
+      </template>
+
       <template #skeleton>
         <div class="team-grid">
           <ui-card class="team-item" v-for="i in 2" :key="i">
@@ -98,7 +87,7 @@
           </template>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
 
     <ui-pagination
       v-if="otherPages > 1"
@@ -117,11 +106,10 @@ import UiPagination from '@/components/ui/UiPagination'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import {
   useCreateTeamJoinRequest,
   useListTeams,
@@ -134,8 +122,7 @@ type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
-const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, errorCode, isStale } = useCardState(teamsQuery)
+const { data: teams, isLoading: isLoadingTeams } = teamsQuery
 
 const { showNotification } = useNotification()
 

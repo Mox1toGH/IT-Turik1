@@ -14,7 +14,7 @@
         </div>
       </header>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-query-state :query="archiveQuery">
         <template #skeleton>
           <div class="archive-grid">
             <ui-card v-for="i in 6" :key="i" class="archive-card">
@@ -45,7 +45,7 @@
         <ui-card v-else class="empty-card">
           <p class="empty-error">No finished tournaments yet.</p>
         </ui-card>
-      </ui-skeleton-loader>
+      </ui-query-state>
     </section>
   </section>
 </template>
@@ -54,11 +54,12 @@
 import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 import TournamentArchiveCard from '../components/tournament-archive/TournamentArchiveCard.vue'
 
-const { data: tournaments, isLoading } = useListTournamentArchive()
+const archiveQuery = useListTournamentArchive()
+const { data: tournaments } = archiveQuery
 </script>
 
 <style scoped>

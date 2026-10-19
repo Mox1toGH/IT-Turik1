@@ -5,15 +5,7 @@
     <div class="tournaments-rule" aria-hidden="true"></div>
 
     <section class="tournaments-section">
-      <ui-card
-        class="tournaments-panel"
-        :status="status"
-        :is-fetching="isFetching"
-        :is-stale="isStale"
-        :error-code="errorCode"
-        empty-text="No tournaments found"
-        @retry="refetch"
-      >
+      <ui-card class="tournaments-panel">
         <template #header>
           <div class="section-head">
             <div>
@@ -32,40 +24,42 @@
           />
         </template>
 
-        <template #skeleton>
-          <div class="tournaments-grid">
-            <ui-card v-for="i in pageSize" :key="i" class="tournament-card">
-              <template #header>
-                <ui-skeleton variant="rect" width="70%" height="24px" />
-              </template>
+        <UiQueryState :query="tournamentsQuery" empty-text="No tournaments found">
+          <template #skeleton>
+            <div class="tournaments-grid">
+              <ui-card v-for="i in pageSize" :key="i" class="tournament-card">
+                <template #header>
+                  <ui-skeleton variant="rect" width="70%" height="24px" />
+                </template>
 
-              <ui-skeleton variant="rect" class="tournaments-description" height="48px" />
+                <ui-skeleton variant="rect" class="tournaments-description" height="48px" />
 
-              <div class="tournaments-meta">
-                <div class="tournaments-date">
-                  <ui-skeleton variant="rect" width="60px" />
-                  <ui-skeleton variant="rect" width="130px" />
+                <div class="tournaments-meta">
+                  <div class="tournaments-date">
+                    <ui-skeleton variant="rect" width="60px" />
+                    <ui-skeleton variant="rect" width="130px" />
+                  </div>
+
+                  <ui-skeleton variant="rect" width="120px" height="28px" />
                 </div>
 
-                <ui-skeleton variant="rect" width="120px" height="28px" />
-              </div>
+                <ui-skeleton variant="rect" width="100%" height="36px" />
+              </ui-card>
+            </div>
+          </template>
 
-              <ui-skeleton variant="rect" width="100%" height="36px" />
-            </ui-card>
+          <template #empty-action>
+            <p class="text-base text-muted">Try changing the search text or status filters.</p>
+          </template>
+
+          <div v-if="tournaments?.total" class="tournaments-grid">
+            <tournament-card
+              v-for="tournament in tournaments.data"
+              :key="tournament.id"
+              :tournament="tournament"
+            />
           </div>
-        </template>
-
-        <template #empty-action>
-          <p class="text-base text-muted">Try changing the search text or status filters.</p>
-        </template>
-
-        <div v-if="tournaments?.total" class="tournaments-grid">
-          <tournament-card
-            v-for="tournament in tournaments.data"
-            :key="tournament.id"
-            :tournament="tournament"
-          />
-        </div>
+        </UiQueryState>
 
         <template #footer>
           <ui-pagination
@@ -84,9 +78,10 @@
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'
 import TournamentFilters from '../components/tournament-list/TournamentFilters.vue'
 import TournamentCard from '../components/tournament-list/TournamentCard.vue'
@@ -124,8 +119,8 @@ const tournamentsQuery = useListTournaments(params, {
   query: { staleTime: 1000 * 60 * 5, placeholderData: keepPreviousData },
 })
 
-const { data: tournaments, isLoading, isFetching, refetch } = tournamentsQuery
-const { status, errorCode, isStale } = useCardState(tournamentsQuery)
+const { data: tournaments, isLoading } = tournamentsQuery
+const { status } = useQueryState(tournamentsQuery)
 
 const onSearch = (query: string) => {
   currentPage.value = 1

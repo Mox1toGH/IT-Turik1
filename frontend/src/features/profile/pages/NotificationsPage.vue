@@ -39,80 +39,92 @@
       <div class="notifications-rule" aria-hidden="true"></div>
 
       <ui-card class="form-panel notifications-panel">
-        <div v-if="isLoading" class="loading-state">
-          <p class="text-muted">Loading notifications...</p>
-        </div>
-        <div v-else-if="error" class="error-state">
-          <p>Error loading notifications.</p>
-        </div>
-        <div v-else-if="notificationsData?.items?.length === 0" class="empty-state">
-          <p class="text-muted">You have no notifications.</p>
-        </div>
-        <div v-else class="notifications-list">
-          <div
-            v-for="notification in notificationsData?.items"
-            :key="notification.id"
-            :class="['notification-item', { 'is-unread': !notification.is_read }]"
-            @click="!notification.is_read && handleMarkRead(notification.id)"
-          >
-            <div class="notification-header">
-              <div class="notification-title-group">
-                <span v-if="!notification.is_read" class="unread-dot"></span>
-                <ui-badge variant="gray">{{ notification.event_type }}</ui-badge>
-                <h4 class="notification-title">{{ notification.title }}</h4>
-              </div>
-              <div class="notification-actions">
-                <span class="notification-date">{{ formatDate(notification.created_at) }}</span>
-                <button
-                  v-if="getRedirectUrl(notification)"
-                  class="icon-btn"
-                  @click.stop="handleNotificationClick(notification)"
-                  title="Go to page"
-                >
-                  <external-link-icon class="icon" />
-                </button>
-                <button
-                  class="icon-btn danger"
-                  @click.stop="handleDelete(notification.id)"
-                  title="Delete notification"
-                >
-                  <trash-icon class="icon" />
-                </button>
-              </div>
+        <ui-query-state :query="notificationsQuery">
+          <template #skeleton>
+            <div class="loading-state">
+              <p class="text-muted">Loading notifications...</p>
             </div>
-            <div class="notification-body">
-              <p class="notification-message">
-                <template v-for="(part, index) in parseMessage(notification.message)" :key="index">
-                  <a
-                    v-if="part.type === 'user'"
-                    :href="`/users/${part.id}`"
-                    class="user-link"
-                    @click.stop
+          </template>
+          <template #error>
+            <div class="error-state">
+              <p>Error loading notifications.</p>
+            </div>
+          </template>
+          <template #empty>
+            <div class="empty-state">
+              <p class="text-muted">You have no notifications.</p>
+            </div>
+          </template>
+
+          <div class="notifications-list">
+            <div
+              v-for="notification in notificationsData?.items"
+              :key="notification.id"
+              :class="['notification-item', { 'is-unread': !notification.is_read }]"
+              @click="!notification.is_read && handleMarkRead(notification.id)"
+            >
+              <div class="notification-header">
+                <div class="notification-title-group">
+                  <span v-if="!notification.is_read" class="unread-dot"></span>
+                  <ui-badge variant="gray">{{ notification.event_type }}</ui-badge>
+                  <h4 class="notification-title">{{ notification.title }}</h4>
+                </div>
+                <div class="notification-actions">
+                  <span class="notification-date">{{ formatDate(notification.created_at) }}</span>
+                  <button
+                    v-if="getRedirectUrl(notification)"
+                    class="icon-btn"
+                    @click.stop="handleNotificationClick(notification)"
+                    title="Go to page"
                   >
-                    {{ part.text }}
-                  </a>
-                  <router-link
-                    v-else-if="part.type === 'team'"
-                    :to="`/teams/${part.id}`"
-                    class="user-link"
-                    @click.stop
+                    <external-link-icon class="icon" />
+                  </button>
+                  <button
+                    class="icon-btn danger"
+                    @click.stop="handleDelete(notification.id)"
+                    title="Delete notification"
                   >
-                    {{ part.text }}
-                  </router-link>
-                  <router-link
-                    v-else-if="part.type === 'news'"
-                    :to="`/news#news-${part.id}`"
-                    class="user-link"
-                    @click.stop
+                    <trash-icon class="icon" />
+                  </button>
+                </div>
+              </div>
+              <div class="notification-body">
+                <p class="notification-message">
+                  <template
+                    v-for="(part, index) in parseMessage(notification.message)"
+                    :key="index"
                   >
-                    {{ part.text }}
-                  </router-link>
-                  <span v-else>{{ part.text }}</span>
-                </template>
-              </p>
+                    <a
+                      v-if="part.type === 'user'"
+                      :href="`/users/${part.id}`"
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </a>
+                    <router-link
+                      v-else-if="part.type === 'team'"
+                      :to="`/teams/${part.id}`"
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </router-link>
+                    <router-link
+                      v-else-if="part.type === 'news'"
+                      :to="`/news#news-${part.id}`"
+                      class="user-link"
+                      @click.stop
+                    >
+                      {{ part.text }}
+                    </router-link>
+                    <span v-else>{{ part.text }}</span>
+                  </template>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </ui-query-state>
 
         <div v-if="totalPages > 1" class="pagination-controls">
           <ui-button size="sm" variant="secondary" :disabled="page === 1" @click="prevPage">
@@ -161,6 +173,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiBadge from '@/components/ui/UiBadge'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
@@ -181,11 +194,8 @@ const isSettingsModalOpen = ref(false)
 const page = ref(1)
 const router = useRouter()
 
-const {
-  data: notificationsData,
-  isLoading,
-  error,
-} = useListNotifications(computed(() => ({ page: page.value })))
+const notificationsQuery = useListNotifications(computed(() => ({ page: page.value })))
+const notificationsData = notificationsQuery.data
 const { mutate: markAsRead } = useMarkNotificationRead()
 const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
@@ -201,7 +211,9 @@ const confirmModalConfig = ref({
   confirmVariant: 'danger' as const,
 })
 
-const hasUnread = computed(() => (notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0) > 0)
+const hasUnread = computed(
+  () => (notificationsData.value?.items.filter((n) => !n.is_read).length ?? 0) > 0,
+)
 
 const hasNotifications = computed(() => {
   return (notificationsData.value?.items.length ?? 0) > 0

@@ -10,13 +10,13 @@
           <span>Edit</span>
         </div>
 
-        <ui-skeleton-loader :loading="isLoadingTeamInfo">
+        <ui-query-state :query="teamQuery">
           <template #skeleton>
             <ui-skeleton variant="rect" height="48px" width="320px" />
           </template>
 
           <h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 45) }}</h1>
-        </ui-skeleton-loader>
+        </ui-query-state>
 
         <p class="section-subtitle">
           Update team identity, contact channels, and member access from one workspace.
@@ -38,30 +38,23 @@
     <div class="teams-rule" aria-hidden="true"></div>
 
     <div class="workspace-grid" v-if="team">
-      <team-edit-form :status="status" :loading="isLoadingTeamInfo" :team="team" />
+      <team-edit-form :query="teamQuery" :team="team" />
 
-      <team-manage-members
-        :status="status"
-        :error-code="errorCode"
-        :loading="isLoadingTeamInfo"
-        :team="team"
-      />
+      <team-manage-members :query="teamQuery" :team="team" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import { useGetTeam } from '@/api/teams/teams'
 
 const route = useRoute()
@@ -71,8 +64,7 @@ const { data: user } = useGetUserProfile()
 
 const teamId = computed(() => Number(route.params.id))
 const teamQuery = useGetTeam(teamId.value)
-const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
-const { status, errorCode } = useCardState(teamQuery)
+const { data: team } = teamQuery
 
 watchEffect(() => {
   if (user.value && team.value) {

@@ -13,7 +13,7 @@
         </div>
       </template>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-query-state :query="historyQuery">
         <template #skeleton>
           <div class="history-list">
             <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="history-card">
@@ -25,13 +25,15 @@
           </div>
         </template>
 
-        <p v-if="isError" class="text-muted">
-          Failed to load tournament history ({{ historyError?.code ?? 'unknown' }}).
-        </p>
+        <template #error>
+          <p class="text-muted">Failed to load tournament history.</p>
+        </template>
 
-        <p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p>
+        <template #empty>
+          <p class="text-muted">No tournament history yet.</p>
+        </template>
 
-        <div v-else class="history-list">
+        <div class="history-list">
           <ui-card
             v-for="item in historyItems"
             :key="`${item.tournament_id}-${item.team.id}`"
@@ -68,7 +70,7 @@
             </template>
           </ui-card>
         </div>
-      </ui-skeleton-loader>
+      </ui-query-state>
     </ui-card>
   </section>
 </template>
@@ -79,8 +81,8 @@ import { useRoute, useRouter } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import {
   useGetUser,
   useGetUserProfile,
@@ -100,14 +102,10 @@ const targetUserId = computed(() =>
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
 })
-const {
-  data: history,
-  isLoading,
-  isError,
-  error: historyError,
-} = useListUserTournamentHistory(targetUserId, {
+const historyQuery = useListUserTournamentHistory(targetUserId, {
   query: { enabled: computed(() => targetUserId.value > 0) },
 })
+const history = historyQuery.data
 
 const historyItems = computed(() => history.value ?? [])
 const displayUserName = computed(

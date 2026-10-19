@@ -1,12 +1,5 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    empty-text="No news yet"
-    @retry="emit('retry')"
-  >
+  <ui-card>
     <template #header>
       <div class="section-head">
         <div>
@@ -17,32 +10,34 @@
       </div>
     </template>
 
-    <template #skeleton>
+    <ui-query-state :query="query" empty-text="No news yet">
+      <template #skeleton>
+        <div class="news-grid">
+          <ui-card class="news-item" v-for="i in 2" :key="i">
+            <template #header>
+              <ui-skeleton variant="rect" width="65%" />
+              <ui-skeleton variant="rect" width="45%" />
+            </template>
+            <ui-skeleton variant="rect" height="90px" width="100%" />
+          </ui-card>
+        </div>
+      </template>
+
+      <template #empty-action>
+        <p class="text-base">Announcements will appear here when they are published.</p>
+      </template>
+
       <div class="news-grid">
-        <ui-card class="news-item" v-for="i in 2" :key="i">
-          <template #header>
-            <ui-skeleton variant="rect" width="65%" />
-            <ui-skeleton variant="rect" width="45%" />
-          </template>
-          <ui-skeleton variant="rect" height="90px" width="100%" />
-        </ui-card>
+        <news-item-card
+          v-for="item in items"
+          :key="item.id"
+          :item="item"
+          :can-modify="canModify(item)"
+          @edit="$emit('edit', $event)"
+          @delete="$emit('delete', $event)"
+        />
       </div>
-    </template>
-
-    <template #empty-action>
-      <p class="text-base">Announcements will appear here when they are published.</p>
-    </template>
-
-    <div class="news-grid">
-      <news-item-card
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        :can-modify="canModify(item)"
-        @edit="$emit('edit', $event)"
-        @delete="$emit('delete', $event)"
-      />
-    </div>
+    </ui-query-state>
 
     <template #footer>
       <ui-card v-if="status === 'data' && totalNews > pageSize">
@@ -54,17 +49,16 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
 import NewsItemCard from './NewsItemCard.vue'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import { computed } from 'vue'
+import { useQueryState, type QueryLike } from '@/composables/useQueryState'
 import type { NewsArticleResponse } from '@/api/backendAPINinja.schemas.ts'
 
-defineProps<{
-  status: CardStatus
-  errorCode: CardErrorCode
-  isFetching: boolean
-  isStale: boolean
+const props = defineProps<{
+  query: QueryLike
   items: NewsArticleResponse[]
   totalNews: number
   totalPages: number
@@ -72,11 +66,12 @@ defineProps<{
   canModify: (item: NewsArticleResponse) => boolean
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   edit: [item: NewsArticleResponse]
   delete: [item: NewsArticleResponse]
-  retry: []
 }>()
+
+const { status } = useQueryState(computed(() => props.query))
 
 const currentPageModel = defineModel<number>('currentPage', { required: true })
 </script>

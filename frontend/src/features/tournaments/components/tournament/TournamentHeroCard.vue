@@ -41,7 +41,6 @@
 import { computed, ref } from 'vue'
 import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import UpdateBannerModal from './modals/UpdateBannerModal.vue'

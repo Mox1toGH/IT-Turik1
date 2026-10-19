@@ -5,7 +5,7 @@
   </div>
 
   <section class="page-shell">
-    <ui-skeleton-loader :loading="isEventsLoading">
+    <ui-query-state :query="eventsQuery">
       <template #skeleton>
         <div class="events-list">
           <ui-card v-for="i in 5" :key="i">
@@ -91,14 +91,14 @@
           </div>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </section>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import FinishIcon from '@/icons/FinishIcon.vue'
 import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
@@ -125,11 +125,8 @@ const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
 const isDescriptionOpen = ref(false)
 
-const {
-  data: events,
-  isLoading: isEventsLoading,
-  isError: isEventsError,
-} = useListEvents({ tournament: props.tournamentId })
+const eventsQuery = useListEvents({ tournament: props.tournamentId })
+const { data: events, isError: isEventsError } = eventsQuery
 </script>
 
 <style scoped>

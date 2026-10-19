@@ -1,11 +1,5 @@
 <template>
-  <ui-card class="info-card quick-card" :status="status" :error-code="errorCode">
-    <template #error>
-      <div class="empty-state">
-        <p>Failed to fetch profile info</p>
-      </div>
-    </template>
-
+  <ui-card class="info-card quick-card">
     <template #header>
       <div>
         <div>
@@ -15,11 +9,17 @@
       </div>
     </template>
 
-    <div class="panel-body">
+    <ui-query-state class="panel-body" :query="query">
+      <template #error>
+        <div class="empty-state">
+          <p>Failed to fetch profile info</p>
+        </div>
+      </template>
+
       <ul class="data-list">
         <li>
           <span>Tournament</span>
-          <ui-skeleton-loader :loading="isLoadingTournament">
+          <ui-query-state :query="tournamentsQuery">
             <template #skeleton>
               <ui-skeleton variant="rect" width="100%" />
             </template>
@@ -31,78 +31,69 @@
               {{ activeTournament.name }}
             </RouterLink>
             <span v-else>-</span>
-          </ui-skeleton-loader>
+          </ui-query-state>
         </li>
 
         <li>
           <span>Current task</span>
-          <ui-skeleton-loader :loading="isLoadingCurrentRoundBlock">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-            <RouterLink
-              v-if="activeTournament && currentRound?.name"
-              class="quick-link"
-              :to="`/tournaments/${activeTournament.id}?section=rounds`"
-            >
-              {{ currentRound.name }}
-            </RouterLink>
-            <span v-else>{{ currentRound?.name ?? '-' }}</span>
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="isLoadingCurrentRoundBlock" variant="rect" width="100%" />
+          <RouterLink
+            v-else-if="activeTournament && currentRound?.name"
+            class="quick-link"
+            :to="`/tournaments/${activeTournament.id}?section=rounds`"
+          >
+            {{ currentRound.name }}
+          </RouterLink>
+          <span v-else>{{ currentRound?.name ?? '-' }}</span>
         </li>
 
         <li>
           <span>Latest submission</span>
-          <ui-skeleton-loader :loading="isLoadingSubmissionsBlock">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-            <RouterLink
-              v-if="activeTournament && lastSubmission?.round_details?.name"
-              class="quick-link"
-              :to="`/tournaments/${activeTournament.id}?section=submissions`"
-            >
-              {{ lastSubmission.round_details.name }}
-            </RouterLink>
-            <span v-else>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="isLoadingSubmissionsBlock" variant="rect" width="100%" />
+          <RouterLink
+            v-else-if="activeTournament && lastSubmission?.round_details?.name"
+            class="quick-link"
+            :to="`/tournaments/${activeTournament.id}?section=submissions`"
+          >
+            {{ lastSubmission.round_details.name }}
+          </RouterLink>
+          <span v-else>{{ lastSubmission?.round_details?.name ?? '-' }}</span>
         </li>
       </ul>
-    </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import type { QueryLike } from '@/composables/useQueryState'
 import {
   useGetCurrentTask,
   useListMyTeamSubmissions,
   useListTournaments,
 } from '@/api/tournaments/tournaments'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
 import { computed } from 'vue'
 
 const props = defineProps<{
   user?: UserResponse
-  status: CardStatus
-  errorCode: CardErrorCode
-  isLoadingUser: boolean
+  query: QueryLike
 }>()
 
 const myTeamIds = computed(() => new Set((props.user?.teams ?? []).map((team) => team.id)))
 
 // TODO: add api to get active tournament
 
-const { data: tournamentsResponse, isLoading: isLoadingActiveTournament } = useListTournaments(
+const tournamentsQuery = useListTournaments(
   computed(() => ({
     page: 1,
     page_size: 100,
     status: 'registration,running',
   })),
 )
+const tournamentsResponse = tournamentsQuery.data
 
 const activeTournament = computed(() =>
   (tournamentsResponse.value?.data ?? []).find((tournament) =>
@@ -110,8 +101,6 @@ const activeTournament = computed(() =>
   ),
 )
 const activeTournamentId = computed(() => activeTournament.value?.id ?? 0)
-
-const isLoadingTournament = computed(() => props.isLoadingUser || isLoadingActiveTournament.value)
 
 const shouldFetchCurrentRound = computed(() => activeTournament.value?.status === 'running')
 const { data: currentRound, isLoading: isLoadingCurrentRound } = useGetCurrentTask(
@@ -125,14 +114,16 @@ const { data: currentRound, isLoading: isLoadingCurrentRound } = useGetCurrentTa
 )
 
 const isLoadingCurrentRoundBlock = computed(
-  () => isLoadingTournament.value || (shouldFetchCurrentRound.value && isLoadingCurrentRound.value),
+  () =>
+    tournamentsQuery.isLoading.value ||
+    (shouldFetchCurrentRound.value && isLoadingCurrentRound.value),
 )
 
 const { data: submissions, isLoading: isLoadingSubmissions } =
   useListMyTeamSubmissions(activeTournamentId)
 
 const isLoadingSubmissionsBlock = computed(
-  () => isLoadingTournament.value || isLoadingSubmissions.value,
+  () => tournamentsQuery.isLoading.value || isLoadingSubmissions.value,
 )
 
 const lastSubmission = computed(() => {

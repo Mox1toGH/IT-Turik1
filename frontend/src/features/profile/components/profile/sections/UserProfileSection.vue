@@ -1,18 +1,6 @@
 <template>
   <section class="page-shell">
-    <ui-card
-      :status="status"
-      :is-fetching="isFetching"
-      :is-stale="isStale"
-      :error-code="errorCode"
-      @retry="refetch"
-    >
-      <template #error>
-        <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info</p>
-        </div>
-      </template>
-
+    <ui-card>
       <template #header>
         <div class="head">
           <div>
@@ -32,83 +20,55 @@
         />
       </template>
 
-      <div class="details">
+      <ui-query-state :query="userQuery">
+        <template #error>
+          <div style="display: flex; height: 436px; justify-content: center; align-items: center">
+            <p>Error while fetching profile info</p>
+          </div>
+        </template>
+
+        <div class="details">
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">Username</span>
           </template>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
 
-            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">Email</span>
           </template>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">Role</span>
           </template>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
-          </ui-skeleton-loader>
+          <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">Full name</span>
           </template>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">City</span>
           </template>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
             <span class="card-text-title">Phone</span>
           </template>
 
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
-          </ui-skeleton-loader>
+          <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
         </ui-card>
         <ui-card class="field-card">
           <template #header>
@@ -116,26 +76,18 @@
           </template>
 
           <div>
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 2" :key="i" variant="rect" width="150px" />
-                </div>
-              </template>
+            <div class="team-list">
+              <router-link
+                v-for="team in user?.teams || []"
+                :key="team.id"
+                :to="`/teams/${team.id}`"
+                class="team-link"
+              >
+                {{ team.name }}
+              </router-link>
+            </div>
 
-              <div class="team-list">
-                <router-link
-                  v-for="team in user?.teams || []"
-                  :key="team.id"
-                  :to="`/teams/${team.id}`"
-                  class="team-link"
-                >
-                  {{ team.name }}
-                </router-link>
-              </div>
-
-              <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-            </ui-skeleton-loader>
+            <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
           </div>
         </ui-card>
       </div>
@@ -168,6 +120,7 @@
           </ui-card>
         </router-link>
       </div>
+      </ui-query-state>
     </ui-card>
   </section>
 </template>
@@ -178,18 +131,15 @@ import { useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiBadge from '@/components/ui/UiBadge'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUser } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import { formatDate } from '@/lib/date'
 
 const route = useRoute()
 const userId = computed(() => Number(route.params.id))
 const userQuery = useGetUser(userId)
-const { data: user, isLoading, isFetching, refetch } = userQuery
-const { status, errorCode, isStale } = useCardState(userQuery)
+const { data: user } = userQuery
 </script>
 
 <style scoped>

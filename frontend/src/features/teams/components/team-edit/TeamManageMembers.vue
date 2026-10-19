@@ -1,15 +1,5 @@
 <template>
-  <ui-card
-    class="panel members-panel"
-    :status="props.status"
-    :error-code="props.errorCode"
-  >
-    <template #error>
-      <div class="empty-state">
-        <p>Failed to fetch team members</p>
-      </div>
-    </template>
-
+  <ui-card class="panel members-panel">
     <template #header>
       <div class="panel-header">
         <span class="step-marker">02</span>
@@ -17,50 +7,32 @@
           <h2>Members</h2>
           <p class="text-muted">Review current members and manage pending invitations.</p>
         </div>
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="100px" />
-          </template>
-
-          <ui-card class="members-stat">
-            <strong>{{ team?.members.length ?? 0 }}</strong>
-            <span>People</span>
-          </ui-card>
-        </ui-skeleton-loader>
+        <ui-skeleton v-if="status === 'loading'" variant="rect" width="100px" />
+        <ui-card v-else class="members-stat">
+          <strong>{{ team?.members.length ?? 0 }}</strong>
+          <span>People</span>
+        </ui-card>
       </div>
     </template>
 
-    <div class="teams-rule" aria-hidden="true"></div>
-
-    <div class="form-item search-field">
-      <p class="form-label">Search members</p>
-      <ui-input
-        class="search-input"
-        v-model="memberSearch"
-        placeholder="Search by username or email"
-        :disabled="props.loading"
-      />
-    </div>
-
-    <ui-skeleton-loader :loading="props.loading">
-      <template #skeleton>
-        <div class="member-list">
-          <ui-card v-for="i in 2" :key="i" class="member-row">
-            <template #header>
-              <div class="member-row-top">
-                <ui-skeleton variant="rect" width="140px" />
-                <ui-skeleton variant="rect" width="120px" />
-              </div>
-            </template>
-
-            <ui-skeleton variant="rect" width="100px" />
-
-            <template #footer>
-              <ui-skeleton variant="rect" height="30px" width="70px" />
-            </template>
-          </ui-card>
+    <ui-query-state :query="props.query">
+      <template #error>
+        <div class="empty-state">
+          <p>Failed to fetch team members</p>
         </div>
       </template>
+
+      <div class="teams-rule" aria-hidden="true"></div>
+
+      <div class="form-item search-field">
+        <p class="form-label">Search members</p>
+        <ui-input
+          class="search-input"
+          v-model="memberSearch"
+          placeholder="Search by username or email"
+          :disabled="status === 'loading'"
+        />
+      </div>
 
       <div class="member-list">
         <ui-card
@@ -98,54 +70,40 @@
           </template>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
 
-    <div class="add-member-box">
-      <div class="box-header">
-        <h3>Invitations status</h3>
-        <span class="text-muted">{{ invitations?.length ?? 0 }} pending total</span>
-      </div>
+      <div class="add-member-box">
+        <div class="box-header">
+          <h3>Invitations status</h3>
+          <span class="text-muted">{{ invitations?.length ?? 0 }} pending total</span>
+        </div>
 
-      <ui-skeleton-loader :loading="props.loading">
-        <template #skeleton>
+        <ui-query-state :query="invitationsQuery" empty-text="No invitations yet.">
           <div class="member-list">
-            <ui-card v-for="i in 2" :key="i" class="member-row">
+            <ui-card
+              v-for="invitation in invitations"
+              :key="`inv-${invitation.id}`"
+              class="member-row"
+            >
               <div class="member-row-top">
-                <ui-skeleton variant="rect" width="80px" />
-                <ui-skeleton variant="rect" width="100px" />
+                <p class="member-name">{{ invitation.user.username }}</p>
+
+                <ui-badge v-if="invitation.status === 'declined'" variant="red">
+                  {{ invitation.status }}
+                </ui-badge>
+                <ui-badge v-if="invitation.status === 'accepted'" variant="green">{{
+                  invitation.status
+                }}</ui-badge>
+                <ui-badge v-else>{{ invitation.status }}</ui-badge>
               </div>
             </ui-card>
           </div>
-        </template>
+        </ui-query-state>
+      </div>
 
-        <div class="member-list">
-          <p v-if="!isLoadingInvitations && !invitations?.length" class="text-muted">
-            No invitations yet.
-          </p>
-          <ui-card
-            v-for="invitation in invitations"
-            :key="`inv-${invitation.id}`"
-            class="member-row"
-          >
-            <div class="member-row-top">
-              <p class="member-name">{{ invitation.user.username }}</p>
-
-              <ui-badge v-if="invitation.status === 'declined'" variant="red">
-                {{ invitation.status }}
-              </ui-badge>
-              <ui-badge v-if="invitation.status === 'accepted'" variant="green">{{
-                invitation.status
-              }}</ui-badge>
-              <ui-badge v-else>{{ invitation.status }}</ui-badge>
-            </div>
-          </ui-card>
-        </div>
-      </ui-skeleton-loader>
-    </div>
-
-    <p v-if="filteredMembers?.length === 0" class="text-muted member-note">
-      No members match your search.
-    </p>
+      <p v-if="filteredMembers?.length === 0" class="text-muted member-note">
+        No members match your search.
+      </p>
+    </ui-query-state>
 
     <div class="add-member-box" v-if="!team.is_in_active_tournament">
       <div class="box-header">
@@ -185,7 +143,7 @@ import UiSelect from '@/components/ui/UiSelect'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import {
   useInviteMemberToTeam,
@@ -193,23 +151,22 @@ import {
   useRemoveMemberFromTeam,
 } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import { useQueryState, type QueryLike } from '@/composables/useQueryState'
 import type { TeamMemberResponse, TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team: TeamResponse
-  loading: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
+  query: QueryLike
 }
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
+const { status } = useQueryState(computed(() => props.query))
+
 const { data: users, isLoading: isLoadingUsers } = useListUsers()
-const { data: invitations, isLoading: isLoadingInvitations } = useListTeamInvitationsByTeam(
-  props.team.id,
-)
+const invitationsQuery = useListTeamInvitationsByTeam(props.team.id)
+const { data: invitations } = invitationsQuery
 
 const memberSearch = ref('')
 const addMemberSelection = ref<number | null>(null)

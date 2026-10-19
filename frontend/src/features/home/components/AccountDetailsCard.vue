@@ -1,11 +1,5 @@
 <template>
-  <ui-card class="info-card" :status="status" :error-code="errorCode">
-    <template #error>
-      <div class="empty-state">
-        <p>Failed to fetch account info</p>
-      </div>
-    </template>
-
+  <ui-card class="info-card">
     <template #header>
       <div>
         <h2>Account details</h2>
@@ -13,7 +7,13 @@
       </div>
     </template>
 
-    <ui-skeleton-loader class="panel-body" :loading="isLoadingUser">
+    <ui-query-state class="panel-body" :query="query">
+      <template #error>
+        <div class="empty-state">
+          <p>Failed to fetch account info</p>
+        </div>
+      </template>
+
       <template #skeleton>
         <div class="skeleton-stack">
           <ui-skeleton variant="rect" width="55%" />
@@ -29,23 +29,21 @@
           <dd>{{ item.value }}</dd>
         </div>
       </dl>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import type { UserResponse } from '@/api/backendAPINinja.schemas'
 import UiCard from '@/components/ui/UiCard'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
 
 const props = defineProps<{
   user?: UserResponse
-  isLoadingUser: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
+  query: QueryLike
 }>()
 
 const teamNames = computed(() => (props.user?.teams ?? []).map((team) => team.name).join(', '))

@@ -1,17 +1,5 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations</p>
-      </div>
-    </template>
-
+  <ui-card>
     <template #header>
       <div class="section-head">
         <div>
@@ -21,20 +9,21 @@
         </div>
 
         <div class="section-meta">
-          <ui-skeleton-loader :loading="inboxLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="90px" height="38px" />
-            </template>
-
-            <span class="count-pill text-base"
-              >{{ pendingInboxInvitations?.length ?? 0 }} pending</span
-            >
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="inboxLoading" variant="rect" width="90px" height="38px" />
+          <span v-else class="count-pill text-base"
+            >{{ pendingInboxInvitations?.length ?? 0 }} pending</span
+          >
         </div>
       </div>
     </template>
 
-    <ui-skeleton-loader :loading="inboxLoading">
+    <ui-query-state :query="invitationsQuery">
+      <template #error>
+        <div style="display: flex; height: 136px; justify-content: center; align-items: center">
+          <p>Error while fetching invitations</p>
+        </div>
+      </template>
+
       <template #skeleton>
         <div class="team-grid">
           <ui-card class="team-item" v-for="i in 2" :key="i">
@@ -104,7 +93,7 @@
           </template>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -114,10 +103,9 @@ import UiCard from '@/components/ui/UiCard'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
-import { useCardState } from '@/composables/useCardState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
@@ -127,8 +115,7 @@ import {
 const { showNotification } = useNotification()
 
 const invitationsQuery = useListTeamInvitations()
-const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
-const { status, errorCode, isStale } = useCardState(invitationsQuery)
+const { data: inboxInvitations, isLoading: inboxLoading } = invitationsQuery
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),

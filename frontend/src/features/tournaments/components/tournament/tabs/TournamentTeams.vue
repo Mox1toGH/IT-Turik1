@@ -1,9 +1,5 @@
 <template>
-  <ui-card
-    class="tournament-card"
-    :query="activeTeamsQuery"
-    empty-text="No teams registered yet"
-  >
+  <ui-card class="tournament-card">
     <template #header>
       <div class="tournament-card-head">
         <div>
@@ -16,43 +12,44 @@
       </div>
     </template>
 
-    <template #error>
-      <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament teams</p>
+    <ui-query-state :query="activeTeamsQuery" empty-text="No teams registered yet">
+      <template #error>
+        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
+          <p>Error while fetching tournament teams</p>
+        </div>
+      </template>
+
+      <div>
+        <ui-input
+          v-model="search"
+          placeholder="Search team"
+          class="team-search"
+          :disabled="isActiveTeamsLoading"
+        />
+
+        <TournamentTeamSection
+          sectionType="active"
+          :teams="activeTeams"
+          :search="search"
+        >
+          <template #default="{ team }">
+            <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
+          </template>
+        </TournamentTeamSection>
+
+        <TournamentTeamSection
+          v-if="hasDisqualifiedTeams"
+          sectionType="disqualified"
+          :teams="disqualifiedTeams"
+          :query="disqualifiedTeamsQuery"
+          :search="search"
+        >
+          <template #default="{ team }">
+            <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
+          </template>
+        </TournamentTeamSection>
       </div>
-    </template>
-
-    <div>
-      <ui-input
-        v-model="search"
-        placeholder="Search team"
-        class="team-search"
-        :disabled="isActiveTeamsLoading"
-      />
-
-      <TournamentTeamSection
-        sectionType="active"
-        :teams="activeTeams"
-        :loading="isActiveTeamsLoading"
-        :search="search"
-      >
-        <template #default="{ team }">
-          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
-        </template>
-      </TournamentTeamSection>
-
-      <TournamentTeamSection
-        v-if="hasDisqualifiedTeams"
-        sectionType="disqualified"
-        :teams="disqualifiedTeams"
-        :loading="isDisqualifiedTeamsLoading"
-        :search="search"
-      >
-        <template #default="{ team }">
-          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
-        </template>
-      </TournamentTeamSection>
-    </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -60,6 +57,7 @@
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
+import UiQueryState from '@/components/ui/UiQueryState'
 import TournamentTeamSection from './tournament-teams/TournamentTeamSection.vue'
 import { useGetTournament, useListTournamentTeams } from '@/api/tournaments/tournaments'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -81,7 +79,7 @@ const disqualifiedTeamsQuery = useListTournamentTeams(props.tournamentId, {
   status: 'disqualified',
 })
 const { data: activeTeams, isLoading: isActiveTeamsLoading } = activeTeamsQuery
-const { data: disqualifiedTeams, isLoading: isDisqualifiedTeamsLoading } = disqualifiedTeamsQuery
+const { data: disqualifiedTeams } = disqualifiedTeamsQuery
 
 const hasDisqualifiedTeams = computed(() => (disqualifiedTeams.value?.length ?? 0) > 0)
 const { data: user } = useGetUserProfile()

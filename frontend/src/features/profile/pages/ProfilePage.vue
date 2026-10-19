@@ -35,7 +35,7 @@
             <ProfileOverviewSection
               v-if="activeSection === 'overview'"
               :user="user"
-              :is-loading="isLoading"
+              :query="userQuery"
             />
 
             <div v-else class="profile-content-view">
@@ -104,7 +104,8 @@ import UserStats from '../components/profile/sections/UserStats.vue'
 type ProfileSection = 'overview' | 'statistics'
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError } = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user, isLoading, isLoadingError } = userQuery
 const router = useRouter()
 const isDeleting = ref(false)
 const activeSection = ref<ProfileSection>('overview')

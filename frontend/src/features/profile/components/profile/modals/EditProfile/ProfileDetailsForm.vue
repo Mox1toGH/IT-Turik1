@@ -9,14 +9,34 @@
         </div>
       </div>
 
-      <div class="row two">
-        <label class="field">
-          <span class="label">Full name</span>
-          <ui-skeleton-loader :loading="isLoading" style="width: 100%">
-            <template #skeleton>
+      <ui-query-state :query="userQuery" style="width: 100%">
+        <template #skeleton>
+          <div class="row two">
+            <label class="field">
+              <span class="label">Full name</span>
               <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
+            </label>
 
+            <label class="field">
+              <span class="label">Username</span>
+              <ui-skeleton variant="rect" height="45px" width="100%" />
+            </label>
+
+            <label class="field">
+              <span class="label">Phone number</span>
+              <ui-skeleton variant="rect" height="45px" width="100%" />
+            </label>
+
+            <label class="field">
+              <span class="label">City</span>
+              <ui-skeleton variant="rect" height="45px" width="100%" />
+            </label>
+          </div>
+        </template>
+
+        <div class="row two">
+          <label class="field">
+            <span class="label">Full name</span>
             <ui-input
               v-model="form.fields.value.full_name"
               :disabled="isLoadingError"
@@ -27,19 +47,13 @@
               required
               @blur="form.validateField('full_name')"
             />
-          </ui-skeleton-loader>
-          <small v-if="form.errors.value.full_name" class="error">{{
-            form.errors.value.full_name
-          }}</small>
-        </label>
+            <small v-if="form.errors.value.full_name" class="error">{{
+              form.errors.value.full_name
+            }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">Username</span>
-          <ui-skeleton-loader :loading="isLoading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
+          <label class="field">
+            <span class="label">Username</span>
             <ui-input
               v-model="form.fields.value.username"
               :disabled="isLoadingError"
@@ -49,36 +63,24 @@
               required
               @blur="form.validateField('username')"
             />
-          </ui-skeleton-loader>
-          <small v-if="form.errors.value.username" class="error">{{
-            form.errors.value.username
-          }}</small>
-        </label>
+            <small v-if="form.errors.value.username" class="error">{{
+              form.errors.value.username
+            }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">Phone number</span>
-          <ui-skeleton-loader :loading="isLoading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
+          <label class="field">
+            <span class="label">Phone number</span>
             <PhoneField
               v-model="form.fields.value.phone"
               :disabled="isLoadingError"
               :isInvalid="!!form.errors.value.phone"
               @blur="form.validateField('phone')"
             />
-          </ui-skeleton-loader>
-          <small v-if="form.errors.value.phone" class="error">{{ form.errors.value.phone }}</small>
-        </label>
+            <small v-if="form.errors.value.phone" class="error">{{ form.errors.value.phone }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">City</span>
-          <ui-skeleton-loader :loading="isLoading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
+          <label class="field">
+            <span class="label">City</span>
             <ui-input
               v-model="form.fields.value.city"
               :disabled="isLoadingError"
@@ -89,10 +91,10 @@
               required
               @blur="form.validateField('city')"
             />
-          </ui-skeleton-loader>
-          <small v-if="form.errors.value.city" class="error">{{ form.errors.value.city }}</small>
-        </label>
-      </div>
+            <small v-if="form.errors.value.city" class="error">{{ form.errors.value.city }}</small>
+          </label>
+        </div>
+      </ui-query-state>
     </ui-card>
 
     <div class="footer-actions">
@@ -127,7 +129,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
@@ -148,7 +150,8 @@ const emit = defineEmits<{
 }>()
 
 const { showNotification } = useNotification()
-const { data: user, isLoading, isLoadingError } = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user, isLoading, isLoadingError } = userQuery
 
 const form = useForm<ProfileForm>(EditProfileSchema, {
   username: '',

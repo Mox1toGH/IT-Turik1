@@ -21,13 +21,8 @@
               <span class="card-label">{{ role }}</span>
             </template>
 
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100%" />
-              </template>
-
-              <strong class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
-            </ui-skeleton-loader>
+            <ui-skeleton v-if="isLoading" variant="rect" width="100%" />
+            <strong v-else class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
           </ui-card>
         </div>
 
@@ -80,7 +75,7 @@
       </div>
 
       <section class="codes-section">
-        <ui-skeleton-loader :loading="isLoading">
+        <ui-query-state :query="roleCodesQuery">
           <template #skeleton>
             <div class="codes-list">
               <ui-card v-for="i in 3" :key="i" class="code-card">
@@ -98,45 +93,38 @@
             </div>
           </template>
 
+          <template #empty>
+            <ui-card class="empty-card">
+              <p class="text-muted empty-error">No codes found for current filter.</p>
+            </ui-card>
+          </template>
+
           <div class="codes-list">
-            <div
-              v-if="isLoadingError"
-              style="display: flex; height: 120px; justify-content: center; align-items: center"
-            >
-              <p>Error while fetching role codes</p>
-            </div>
-
-            <template v-else>
-              <ui-card v-for="code in codes" :key="code.id" class="code-card">
-                <template #header>
-                  <div class="code-head">
-                    <strong class="mono">{{ code.code }}</strong>
-                    <ui-badge :variant="code.is_used ? 'gray' : 'green'">
-                      {{ code.is_used ? 'Used' : 'Active' }}
-                    </ui-badge>
-                  </div>
-                </template>
-
-                <div class="code-card-content">
-                  <p><strong>Role:</strong> {{ code.role }}</p>
-                  <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
-                  <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
-                  <template v-if="code.is_used">
-                    <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
-                    <p>
-                      <strong>Used at:</strong>
-                      {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
-                    </p>
-                  </template>
+            <ui-card v-for="code in codes" :key="code.id" class="code-card">
+              <template #header>
+                <div class="code-head">
+                  <strong class="mono">{{ code.code }}</strong>
+                  <ui-badge :variant="code.is_used ? 'gray' : 'green'">
+                    {{ code.is_used ? 'Used' : 'Active' }}
+                  </ui-badge>
                 </div>
-              </ui-card>
+              </template>
 
-              <ui-card v-if="!codes.length" class="empty-card">
-                <p class="text-muted empty-error">No codes found for current filter.</p>
-              </ui-card>
-            </template>
+              <div class="code-card-content">
+                <p><strong>Role:</strong> {{ code.role }}</p>
+                <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
+                <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
+                <template v-if="code.is_used">
+                  <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
+                  <p>
+                    <strong>Used at:</strong>
+                    {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
+                  </p>
+                </template>
+              </div>
+            </ui-card>
           </div>
-        </ui-skeleton-loader>
+        </ui-query-state>
       </section>
     </section>
   </section>
@@ -148,7 +136,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiSelect from '@/components/ui/UiSelect'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import UiBadge from '@/components/ui/UiBadge'
@@ -175,14 +163,15 @@ const generateForm = ref({
 
 const { showNotification } = useNotification()
 
+const roleCodesQuery = useListRoleActivationCodes(
+  computed(() => (selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {})),
+)
+
 const {
   data,
   isLoading,
-  isLoadingError,
   error: getRoleCodesError,
-} = useListRoleActivationCodes(
-  computed(() => (selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {})),
-)
+} = roleCodesQuery
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)

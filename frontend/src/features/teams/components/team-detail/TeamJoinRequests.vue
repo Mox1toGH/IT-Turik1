@@ -1,18 +1,12 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch join requests</p>
-      </div>
-    </template>
+  <ui-card>
+    <ui-query-state :query="joinRequestsQuery">
+      <template #error>
+        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
+          <p>Failed to fetch join requests</p>
+        </div>
+      </template>
 
-    <ui-skeleton-loader :loading="isLoading">
       <template #skeleton>
         <div class="join-requests-section">
           <header class="join-requests-subhead">
@@ -90,7 +84,7 @@
           No pending join requests.
         </p>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -103,9 +97,8 @@ import {
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import { useCardState } from '@/composables/useCardState'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 
@@ -118,8 +111,7 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 const joinRequestsQuery = useListTeamJoinRequestsByTeam(props.teamId)
-const { data: joinRequest, isLoading, isFetching, refetch } = joinRequestsQuery
-const { status, errorCode, isStale } = useCardState(joinRequestsQuery)
+const { data: joinRequest } = joinRequestsQuery
 
 const matches = (parts: (string | undefined)[]) => {
   const q = props.searchFilter?.trim().toLowerCase()

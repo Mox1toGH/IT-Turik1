@@ -173,7 +173,7 @@ import {
   Shield,
 } from 'lucide-vue-next'
 import SwitchThemeButton from './SwitchThemeButton.vue'
-import NotificationDropdown from '@/features/profile/components/notifications/NotificationDropdown.vue'
+import NotificationDropdown from '@/components/shared/NotificationDropdown.vue'
 import UserAvatar from './UserAvatar.vue'
 import UiButton from '@/components/ui/UiButton'
 import { useGetUserProfile } from '@/api/accounts/accounts'

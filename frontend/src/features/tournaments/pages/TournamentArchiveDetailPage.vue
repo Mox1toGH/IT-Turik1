@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell">
-    <ui-skeleton-loader :loading="isLoading">
+    <ui-query-state :query="archiveQuery">
       <template #skeleton>
         <div class="skeleton-stack">
           <ui-skeleton variant="rect" height="260px" />
@@ -44,14 +44,14 @@
           <archive-teams :teams="archive.teams ?? []" />
         </div>
       </template>
-    </ui-skeleton-loader>
+    </ui-query-state>
   </section>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'
 import ArchiveSummary from '../components/tournament-archive-detail/ArchiveSummary.vue'
 import ArchiveStandings from '../components/tournament-archive-detail/ArchiveStandings.vue'
@@ -67,7 +67,8 @@ import {
 
 const route = useRoute()
 const id = Number(route.params.id)
-const { data: archive, isLoading } = useGetTournamentArchive(id)
+const archiveQuery = useGetTournamentArchive(id)
+const { data: archive } = archiveQuery
 const { data: submissionsData } = useListTournamentArchiveSubmissions(id)
 
 const submissions = computed(() => submissionsData.value ?? [])

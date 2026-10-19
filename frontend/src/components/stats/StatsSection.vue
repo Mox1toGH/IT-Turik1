@@ -2,28 +2,41 @@
   <section class="stats-shell">
     <h2 class="stats-title">System Stats</h2>
 
-    <div v-if="isLoading" class="stats-grid">
-      <div v-for="n in 6" :key="n" class="stats-card loading-card">
-        <UiSkeleton variant="rect" height="16px" width="50%" />
-        <UiSkeleton variant="rect" height="36px" width="70%" />
-        <UiSkeleton variant="rect" height="120px" />
-      </div>
-    </div>
-    <p v-else-if="isError" class="error-text">Unable to load stats right now. Please try again.</p>
+    <ui-query-state v-if="props.user" :query="activeQuery">
+      <template #skeleton>
+        <div class="stats-grid">
+          <div v-for="n in 6" :key="n" class="stats-card loading-card">
+            <UiSkeleton variant="rect" height="16px" width="50%" />
+            <UiSkeleton variant="rect" height="36px" width="70%" />
+            <UiSkeleton variant="rect" height="120px" />
+          </div>
+        </div>
+      </template>
 
-    <template v-else>
+      <template #error>
+        <p class="error-text">Unable to load stats right now. Please try again.</p>
+      </template>
+
       <AdminStats v-if="isAdmin && adminStats" :stats="adminStats" />
       <div v-else style="display: grid; gap: 0.75rem">
         <PlayerStats v-if="playerStats" :stats="playerStats" :current-team-to="currentTeamTo" />
-        <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
+        <ui-query-state v-if="isTeamActive" :query="teamQuery">
+          <template #skeleton>
+            <UiSkeleton variant="rect" height="82px" />
+          </template>
+          <!-- Team stats are non-fatal: a failure must stay silent. -->
+          <template #error />
+          <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
+        </ui-query-state>
       </div>
-    </template>
+    </ui-query-state>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiQueryState from '@/components/ui/UiQueryState'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'
@@ -55,18 +68,7 @@ const { data: adminStats } = adminQuery
 const { data: playerStats } = playerQuery
 const { data: teamStats } = teamQuery
 
-const isLoading = computed(
-  () =>
-    (isAdmin.value && adminQuery.isPending.value) ||
-    (isPlayerActive.value && playerQuery.isPending.value) ||
-    (isTeamActive.value && teamQuery.isPending.value),
-)
-// Team stats are non-fatal: player stats stay visible if they fail.
-const isError = computed(
-  () =>
-    (isAdmin.value && adminQuery.isError.value) ||
-    (isPlayerActive.value && playerQuery.isError.value),
-)
+const activeQuery = computed(() => (isAdmin.value ? adminQuery : playerQuery))
 
 const currentTeamTo = computed(() => {
   const teamName = playerStats.value?.current_team_name

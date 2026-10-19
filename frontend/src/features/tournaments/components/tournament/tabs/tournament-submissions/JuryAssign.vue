@@ -1,27 +1,15 @@
 <template>
   <section class="jury-assign-shell">
-    <ui-card
-      :status="status"
-      :is-fetching="isFetching"
-      :is-stale="isStale"
-      :error-code="errorCode"
-      @retry="refetchAll"
-    >
-      <template #error>
-        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-          <p>{{ error?.message || 'Something went wrong' }}</p>
-        </div>
-      </template>
-
+    <ui-card>
       <template #header>
         <div class="submissions-header">
-          <ui-skeleton-loader :loading="isLoadingRound">
+          <ui-query-state :query="tournamentQuery">
             <template #skeleton>
               <ui-skeleton variant="rect" width="150px" />
             </template>
 
             <h2>Round: "{{ closedRound?.name ?? '-' }}"</h2>
-          </ui-skeleton-loader>
+          </ui-query-state>
           <div class="header-actions">
             <ui-select
               multiple
@@ -52,7 +40,13 @@
         </div>
       </template>
 
-      <ui-skeleton-loader :loading="isLoading">
+      <ui-query-state :query="submissionsQuery">
+        <template #error>
+          <div style="display: flex; justify-content: center; align-items: center; height: 200px">
+            <p>{{ error?.message || 'Something went wrong' }}</p>
+          </div>
+        </template>
+
         <template #skeleton>
           <div class="submissions-table">
             <div class="table-head">
@@ -132,7 +126,7 @@
             </div>
           </div>
         </div>
-      </ui-skeleton-loader>
+      </ui-query-state>
     </ui-card>
   </section>
 </template>
@@ -147,9 +141,8 @@ import { truncateText } from '@/lib/utils'
 import UiButton from '@/components/ui/UiButton'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import { useCardState } from '@/composables/useCardState'
 import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
 import {
   useAssignJuryToRound,
@@ -205,22 +198,7 @@ const {
 )
 
 const noClosedRound = computed(() => !!tournament.value && !closedRound.value)
-const isLoadingRound = computed(() => tournamentLoading.value)
 const isLoading = computed(() => tournamentLoading.value || submissionsLoading.value)
-const cardQuery = computed(() => ({
-  isPending: tournamentQuery.isPending.value || submissionsQuery.isPending.value,
-  isError: noClosedRound.value || tournamentQuery.isError.value || submissionsQuery.isError.value,
-  data: noClosedRound.value ? undefined : (submissions.value ?? tournament.value),
-  error: tournamentErrorData.value ?? submissionsErrorData.value ?? null,
-}))
-const { status, errorCode, isStale } = useCardState(cardQuery)
-const isFetching = computed(
-  () => tournamentQuery.isFetching.value || submissionsQuery.isFetching.value,
-)
-const refetchAll = () => {
-  void tournamentQuery.refetch()
-  void submissionsQuery.refetch()
-}
 const error = computed(() => {
   if (noClosedRound.value) {
     return { message: 'No finished round available' }

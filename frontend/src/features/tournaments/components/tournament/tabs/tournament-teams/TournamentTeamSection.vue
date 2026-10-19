@@ -1,25 +1,25 @@
 <template>
   <ui-card :class="['teams-list-wrap', { 'disqualified-wrap': sectionType === 'disqualified' }]">
-    <div class="team-label">
-      <p>{{ sectionTitle }}</p>
-
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
+    <ui-query-state v-if="query" :query="query">
+      <template #skeleton>
+        <div class="team-label">
+          <p>{{ sectionTitle }}</p>
           <ui-skeleton variant="rect" width="60px" />
-        </template>
+        </div>
 
-        <p class="text-muted">{{ teamCountLabel }}</p>
-      </ui-skeleton-loader>
-    </div>
-
-    <div class="teams-list">
-      <ui-skeleton-loader :loading="loading">
-        <template #skeleton>
+        <div class="teams-list">
           <div style="display: flex; flex-direction: column; gap: 0.4rem">
             <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="48px" width="100%" />
           </div>
-        </template>
+        </div>
+      </template>
 
+      <div class="team-label">
+        <p>{{ sectionTitle }}</p>
+        <p class="text-muted">{{ teamCountLabel }}</p>
+      </div>
+
+      <div class="teams-list">
         <template v-if="filteredTeams.length">
           <template v-for="team in filteredTeams" :key="team.id">
             <div class="team-row">
@@ -29,8 +29,27 @@
         </template>
 
         <p v-else class="text-muted">No teams found.</p>
-      </ui-skeleton-loader>
-    </div>
+      </div>
+    </ui-query-state>
+
+    <template v-else>
+      <div class="team-label">
+        <p>{{ sectionTitle }}</p>
+        <p class="text-muted">{{ teamCountLabel }}</p>
+      </div>
+
+      <div class="teams-list">
+        <template v-if="filteredTeams.length">
+          <template v-for="team in filteredTeams" :key="team.id">
+            <div class="team-row">
+              <slot :team="team" />
+            </div>
+          </template>
+        </template>
+
+        <p v-else class="text-muted">No teams found.</p>
+      </div>
+    </template>
   </ui-card>
 </template>
 
@@ -38,7 +57,8 @@
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
+import type { QueryLike } from '@/composables/useQueryState'
 import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
 
 type Team = TournamentTeamResponse
@@ -46,7 +66,8 @@ type Team = TournamentTeamResponse
 interface Props {
   sectionType: 'active' | 'disqualified'
   teams?: Team[]
-  loading: boolean
+  /** Real query result; when omitted (section covered by an ancestor wrapper) no wrapper is rendered. */
+  query?: QueryLike
   search: string
 }
 

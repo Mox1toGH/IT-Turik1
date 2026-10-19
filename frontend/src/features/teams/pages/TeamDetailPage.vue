@@ -10,21 +10,18 @@
           <span>Details</span>
         </div>
 
-        <ui-skeleton-loader :loading="isInfoLoading">
+        <ui-query-state :query="teamQuery">
           <template #skeleton>
             <ui-skeleton variant="rect" height="48px" width="320px" />
+            <ui-skeleton variant="rect" width="120px" />
+            <ui-skeleton variant="rect" width="120px" />
           </template>
 
           <h1 :title="team?.name">
             {{ truncateText(team?.name ?? 'Team details', 45) }}
           </h1>
-        </ui-skeleton-loader>
 
-        <div class="hero-contacts">
-          <ui-skeleton-loader :loading="isInfoLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="120px" />
-            </template>
+          <div class="hero-contacts">
             <a
               v-if="team?.contact_telegram"
               :href="telegramLink(team.contact_telegram)"
@@ -34,12 +31,7 @@
               <ui-badge>@{{ team?.contact_telegram }}</ui-badge>
             </a>
             <span v-else class="contact-pill muted">No Telegram</span>
-          </ui-skeleton-loader>
 
-          <ui-skeleton-loader :loading="isInfoLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="120px" />
-            </template>
             <a
               v-if="team?.contact_discord"
               class="contact-pill"
@@ -50,22 +42,15 @@
             </a>
 
             <span v-else class="contact-pill muted">No Discord</span>
-          </ui-skeleton-loader>
-        </div>
+          </div>
+        </ui-query-state>
       </div>
 
       <div class="hero-actions">
-        <ui-skeleton-loader :loading="isInfoLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-        </ui-skeleton-loader>
-
-        <ui-skeleton-loader :loading="isInfoLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="148px" height="45px" />
-          </template>
-        </ui-skeleton-loader>
+        <template v-if="isInfoLoading">
+          <ui-skeleton variant="rect" width="148px" height="45px" />
+          <ui-skeleton variant="rect" width="148px" height="45px" />
+        </template>
 
         <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
       </div>
@@ -136,9 +121,7 @@
     <div class="workspace-grid">
       <team-base-info
         :team="team"
-        :loading="isInfoLoading"
-        :status="status"
-        :error-code="errorCode"
+        :query="teamQuery"
         :is-captain="isCaptain"
         @deleted="router.push('/teams')"
         @leave="router.push('/teams')"
@@ -164,8 +147,7 @@
             :team="team"
             :user="user"
             :search-filter="searchInput"
-            :status="status"
-            :error-code="errorCode"
+            :query="teamQuery"
             :loading="isInfoLoading || isProfileLoading"
             :is-captain="isCaptain"
           />
@@ -186,14 +168,14 @@
       </ui-card>
     </div>
 
-    <ui-skeleton-loader :loading="isInfoLoading">
+    <ui-query-state :query="teamQuery">
       <team-manage-zone
         :team="team"
         :loading="isInfoLoading"
         :is-captain="isCaptain"
         @update-team="(newTeamValue) => (team = newTeamValue)"
       />
-    </ui-skeleton-loader>
+    </ui-query-state>
 
     <ui-modal v-model="isBannerModalOpen" @close="resetBannerState">
       <template #title>
@@ -255,7 +237,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { discordLink, telegramLink } from '../lib/team-links'
 import UiBadge from '@/components/ui/UiBadge'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiInput from '@/components/ui/UiInput'
 import { truncateText } from '@/lib/utils'
@@ -268,7 +250,7 @@ import {
   writeImagePosition,
 } from '@/lib/imagePosition'
 import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
-import { useCardState } from '@/composables/useCardState'
+import { useQueryState } from '@/composables/useQueryState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 import UiFileDrop from '@/components/ui/UiFileDrop'
@@ -281,7 +263,7 @@ const searchInput = ref('')
 const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
 const teamQuery = useGetTeam(teamId)
 const { data: team, isLoading: isInfoLoading } = teamQuery
-const { status, errorCode } = useCardState(teamQuery)
+const { status } = useQueryState(teamQuery)
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },

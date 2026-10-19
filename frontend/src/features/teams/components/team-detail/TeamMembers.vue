@@ -1,41 +1,36 @@
 <template>
-  <ui-card :status="props.status" :error-code="props.errorCode">
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch team members</p>
-      </div>
-    </template>
+  <ui-card>
+    <ui-query-state :query="props.query">
+      <template #error>
+        <div style="display: flex; justify-content: center; align-items: center; height: 200px">
+          <p>Failed to fetch team members</p>
+        </div>
+      </template>
 
-    <div class="members-sections">
+      <div class="members-sections">
       <section class="members-section">
         <header class="section-subhead">
           <h3>Members</h3>
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="80px" />
-            </template>
-
-            <span class="text-muted">{{ filteredMembers?.length }} people</span>
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="props.loading" variant="rect" width="80px" />
+          <span v-else class="text-muted">{{ filteredMembers?.length }} people</span>
         </header>
 
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <div class="member-list">
-              <ui-card v-for="i in 2" :key="i" class="card-item">
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <div style="display: flex; justify-content: space-between; gap: 10px">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="100px" />
-                  </div>
-
-                  <ui-skeleton variant="rect" width="200px" />
-                </div>
-              </ui-card>
-            </div>
-          </template>
-
+        <template v-if="props.loading">
           <div class="member-list">
+            <ui-card v-for="i in 2" :key="i" class="card-item">
+              <div style="display: flex; flex-direction: column; gap: 4px">
+                <div style="display: flex; justify-content: space-between; gap: 10px">
+                  <ui-skeleton variant="rect" width="100%" />
+                  <ui-skeleton variant="rect" width="100px" />
+                </div>
+
+                <ui-skeleton variant="rect" width="200px" />
+              </div>
+            </ui-card>
+          </div>
+        </template>
+
+        <div v-else class="member-list">
             <ui-card
               class="card-item"
               v-for="member in filteredMembers"
@@ -71,10 +66,10 @@
             <p v-if="filteredMembers?.length === 0" class="text-muted">
               No accepted members match your search.
             </p>
-          </div>
-        </ui-skeleton-loader>
+        </div>
       </section>
-    </div>
+      </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -82,9 +77,9 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
-import type { CardErrorCode, CardStatus } from '@/composables/useCardState'
+import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
 import type { TeamResponse, UserResponse } from '@/api/backendAPINinja.schemas'
 
@@ -92,8 +87,7 @@ interface Props {
   team?: TeamResponse
   user?: UserResponse
   loading: boolean
-  status: CardStatus
-  errorCode: CardErrorCode
+  query: QueryLike
   searchFilter?: string
   isCaptain: boolean
 }

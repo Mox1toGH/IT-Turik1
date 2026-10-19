@@ -1,17 +1,5 @@
 <template>
-  <ui-card
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
-    <template #error>
-      <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching my teams</p>
-      </div>
-    </template>
-
+  <ui-card>
     <template #header>
       <div class="section-head">
         <div>
@@ -21,18 +9,19 @@
         </div>
 
         <div class="section-meta">
-          <ui-skeleton-loader :loading="isLoadingTeams">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="82px" height="38px" />
-            </template>
-
-            <span class="count-pill text-base">{{ myTeams?.length ?? 0 }} joined</span>
-          </ui-skeleton-loader>
+          <ui-skeleton v-if="isLoadingTeams" variant="rect" width="82px" height="38px" />
+          <span v-else class="count-pill text-base">{{ myTeams?.length ?? 0 }} joined</span>
         </div>
       </div>
     </template>
 
-    <ui-skeleton-loader :loading="isLoadingTeams">
+    <ui-query-state :query="teamsQuery">
+      <template #error>
+        <div style="display: flex; height: 136px; justify-content: center; align-items: center">
+          <p>Error while fetching my teams</p>
+        </div>
+      </template>
+
       <template #skeleton>
         <div class="team-grid">
           <ui-card class="team-item" v-for="i in 2" :key="i">
@@ -91,7 +80,7 @@
           </template>
         </ui-card>
       </div>
-    </ui-skeleton-loader>
+    </ui-query-state>
 
     <ui-pagination
       v-if="myPages > 1"
@@ -109,11 +98,10 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
 import { computed, ref } from 'vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useCardState } from '@/composables/useCardState'
 import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
@@ -122,8 +110,7 @@ type Team = ListTeamsQueryResult[number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
-const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, errorCode, isStale } = useCardState(teamsQuery)
+const { data: teams, isLoading: isLoadingTeams } = teamsQuery
 
 const myTeams = computed(() => teams.value?.filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {

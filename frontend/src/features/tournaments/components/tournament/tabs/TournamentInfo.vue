@@ -1,12 +1,5 @@
 <template>
-  <ui-card
-    class="tournament-card"
-    :status="status"
-    :is-fetching="isFetching"
-    :is-stale="isStale"
-    :error-code="errorCode"
-    @retry="refetch"
-  >
+  <ui-card class="tournament-card">
     <template #header>
       <div class="tournament-header">
         <div>
@@ -22,122 +15,80 @@
       </div>
     </template>
 
-    <template #error>
-      <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-        <p>Error while fetching tournament info</p>
-      </div>
-    </template>
+    <ui-query-state :query="tournamentQuery">
+      <template #error>
+        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
+          <p>Error while fetching tournament info</p>
+        </div>
+      </template>
 
-    <div class="tournament-info">
+      <div class="tournament-info">
       <div class="tournament-name">
         <p class="text-muted">Name</p>
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.3rem">
-              <ui-skeleton variant="rect" width="100%" />
-              <ui-skeleton variant="rect" width="80%" />
-            </div>
-          </template>
-
-          <p :title="tournament?.name">{{ truncateText(tournament?.name ?? '', 200) }}</p>
-        </ui-skeleton-loader>
+        <p :title="tournament?.name">{{ truncateText(tournament?.name ?? '', 200) }}</p>
       </div>
 
       <div class="tournament-description">
         <p class="text-muted">Description</p>
 
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <div style="display: flex; flex-direction: column; gap: 0.4rem">
-              <ui-skeleton variant="rect" width="90%" />
-              <ui-skeleton variant="rect" width="70%" />
-              <ui-skeleton variant="rect" width="80%" />
-            </div>
+        <large-text-modal
+          v-model="isDesciptionOpen"
+          title="Tournament description"
+          :text="tournament?.description ?? ''"
+          max-length="190"
+        >
+          <template #trigger="{ toggleOpen }">
+            <p
+              :title="tournament?.description"
+              @click="toggleOpen"
+              :class="['tournament-description-text', { large: isDescriptionLarge }]"
+            >
+              {{ truncateText(tournament?.description ?? '', 190) }}
+            </p>
           </template>
-
-          <large-text-modal
-            v-model="isDesciptionOpen"
-            title="Tournament description"
-            :text="tournament?.description ?? ''"
-            max-length="190"
-          >
-            <template #trigger="{ toggleOpen }">
-              <p
-                :title="tournament?.description"
-                @click="toggleOpen"
-                :class="['tournament-description-text', { large: isDescriptionLarge }]"
-              >
-                {{ truncateText(tournament?.description ?? '', 190) }}
-              </p>
-            </template>
-          </large-text-modal>
-        </ui-skeleton-loader>
+        </large-text-modal>
       </div>
 
       <div class="tournament-dates">
         <div>
           <p class="text-muted">Start / end date</p>
           <div class="">
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="180px" />
-              </template>
-
-              <p>
-                {{
-                  tournament?.start_date
-                    ? formatDate(tournament.start_date, { showHours: true })
-                    : '-'
-                }}
-              </p>
-              <p>
-                {{
-                  tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
-                }}
-              </p>
-            </ui-skeleton-loader>
+            <p>
+              {{
+                tournament?.start_date
+                  ? formatDate(tournament.start_date, { showHours: true })
+                  : '-'
+              }}
+            </p>
+            <p>
+              {{
+                tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
+              }}
+            </p>
           </div>
         </div>
 
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="100px" />
-          </template>
-
-          <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
-        </ui-skeleton-loader>
+        <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
       </div>
 
       <div class="tournament-limits">
         <div>
           <p class="text-muted">Minimum team members</p>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" />
-            </template>
-
-            <p>
-              {{
-                tournament?.min_team_members
-                  ? `${tournament.min_team_members} members`
-                  : 'No minimum'
-              }}
-            </p>
-          </ui-skeleton-loader>
+          <p>
+            {{
+              tournament?.min_team_members
+                ? `${tournament.min_team_members} members`
+                : 'No minimum'
+            }}
+          </p>
         </div>
 
         <div>
           <p class="text-muted">Maximum teams</p>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100px" />
-            </template>
-
-            <p>
-              {{ tournament?.max_teams ?? 'No limit' }}
-              <span v-if="tournament?.max_teams">teams</span>
-            </p>
-          </ui-skeleton-loader>
+          <p>
+            {{ tournament?.max_teams ?? 'No limit' }}
+            <span v-if="tournament?.max_teams">teams</span>
+          </p>
         </div>
       </div>
     </div>
@@ -184,7 +135,8 @@
           <span>Leave Tournament</span>
         </ui-button>
       </template>
-    </div>
+      </div>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -192,15 +144,13 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import { computed, ref } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
 import LargeTextModal from '../../../../../components/shared/LargeTextModal.vue'
 import { useNotification } from '@/composables/useNotification'
-import { useCardState } from '@/composables/useCardState'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import UiSelect from '@/components/ui/UiSelect'
 import {
@@ -224,8 +174,7 @@ const { showNotification } = useNotification()
 const { data: user } = useGetUserProfile()
 
 const tournamentQuery = useGetTournament(props.tournamentId)
-const { data: tournament, isLoading, isFetching, refetch } = tournamentQuery
-const { status, errorCode, isStale } = useCardState(tournamentQuery)
+const { data: tournament } = tournamentQuery
 const { data: currentRound } = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {

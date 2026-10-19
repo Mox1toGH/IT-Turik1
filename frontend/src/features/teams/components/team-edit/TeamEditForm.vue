@@ -13,6 +13,15 @@
 
     <div class="teams-rule" aria-hidden="true"></div>
 
+    <ui-query-state :query="props.query">
+      <template #skeleton>
+        <ui-skeleton variant="rect" height="45px" width="100%" />
+        <ui-skeleton variant="rect" height="45px" width="100%" />
+        <ui-skeleton variant="rect" height="45px" width="100%" />
+        <ui-skeleton variant="rect" height="45px" width="100%" />
+        <ui-skeleton variant="rect" height="45px" width="100%" />
+      </template>
+
     <form class="form-grid" @submit.prevent="handleSubmit">
       <section class="form-section-grid identity-section">
         <div class="section-heading">
@@ -22,65 +31,47 @@
 
         <label class="form-item">
           <p class="form-label">Team name</p>
-          <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
-            <ui-input
-              v-model="form.fields.value.name"
-              required
-              :disabled="isSavingChanges"
-              :isInvalid="!!form.errors.value.name"
-              style="width: 100%"
-              @blur="form.validateField('name')"
-            />
-            <small v-if="form.errors.value.name" class="text-error">{{
-              form.errors.value.name
-            }}</small>
-          </ui-skeleton-loader>
+          <ui-input
+            v-model="form.fields.value.name"
+            required
+            :disabled="isSavingChanges"
+            :isInvalid="!!form.errors.value.name"
+            style="width: 100%"
+            @blur="form.validateField('name')"
+          />
+          <small v-if="form.errors.value.name" class="text-error">{{
+            form.errors.value.name
+          }}</small>
         </label>
 
         <label class="form-item">
           <p class="form-label">Team email</p>
-          <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
-            <ui-input
-              v-model="form.fields.value.email"
-              type="email"
-              required
-              :disabled="isSavingChanges"
-              :isInvalid="!!form.errors.value.email"
-              style="width: 100%"
-              @blur="form.validateField('email')"
-            />
-            <small v-if="form.errors.value.email" class="text-error">{{
-              form.errors.value.email
-            }}</small>
-          </ui-skeleton-loader>
+          <ui-input
+            v-model="form.fields.value.email"
+            type="email"
+            required
+            :disabled="isSavingChanges"
+            :isInvalid="!!form.errors.value.email"
+            style="width: 100%"
+            @blur="form.validateField('email')"
+          />
+          <small v-if="form.errors.value.email" class="text-error">{{
+            form.errors.value.email
+          }}</small>
         </label>
 
         <label class="form-item">
           <p class="form-label">Organization</p>
-          <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
-            <ui-input
-              v-model="form.fields.value.organization"
-              :disabled="isSavingChanges"
-              :isInvalid="!!form.errors.value.organization"
-              style="width: 100%"
-              @blur="form.validateField('organization')"
-            />
-            <small v-if="form.errors.value.organization" class="text-error">{{
-              form.errors.value.organization
-            }}</small>
-          </ui-skeleton-loader>
+          <ui-input
+            v-model="form.fields.value.organization"
+            :disabled="isSavingChanges"
+            :isInvalid="!!form.errors.value.organization"
+            style="width: 100%"
+            @blur="form.validateField('organization')"
+          />
+          <small v-if="form.errors.value.organization" class="text-error">{{
+            form.errors.value.organization
+          }}</small>
         </label>
       </section>
 
@@ -94,44 +85,32 @@
 
         <label class="form-item">
           <p class="form-label">Telegram</p>
-          <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
-            <ui-input
-              v-model="form.fields.value.contact_telegram"
-              title="Telegram username: 5-32 characters, start with a letter, letters/digits/_"
-              :disabled="isSavingChanges"
-              :isInvalid="!!form.errors.value.contact_telegram"
-              style="width: 100%"
-              @blur="form.validateField('contact_telegram')"
-            />
-            <small v-if="form.errors.value.contact_telegram" class="text-error">{{
-              form.errors.value.contact_telegram
-            }}</small>
-          </ui-skeleton-loader>
+          <ui-input
+            v-model="form.fields.value.contact_telegram"
+            title="Telegram username: 5-32 characters, start with a letter, letters/digits/_"
+            :disabled="isSavingChanges"
+            :isInvalid="!!form.errors.value.contact_telegram"
+            style="width: 100%"
+            @blur="form.validateField('contact_telegram')"
+          />
+          <small v-if="form.errors.value.contact_telegram" class="text-error">{{
+            form.errors.value.contact_telegram
+          }}</small>
         </label>
 
         <label class="form-item">
           <p class="form-label">Discord</p>
-          <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-            <template #skeleton>
-              <ui-skeleton variant="rect" height="45px" width="100%" />
-            </template>
-
-            <ui-input
-              v-model="form.fields.value.contact_discord"
-              title="Discord username: 2-32 characters, letters/digits/._ with optional #1234"
-              :disabled="isSavingChanges"
-              :isInvalid="!!form.errors.value.contact_discord"
-              style="width: 100%"
-              @blur="form.validateField('contact_discord')"
-            />
-            <small v-if="form.errors.value.contact_discord" class="text-error">{{
-              form.errors.value.contact_discord
-            }}</small>
-          </ui-skeleton-loader>
+          <ui-input
+            v-model="form.fields.value.contact_discord"
+            title="Discord username: 2-32 characters, letters/digits/._ with optional #1234"
+            :disabled="isSavingChanges"
+            :isInvalid="!!form.errors.value.contact_discord"
+            style="width: 100%"
+            @blur="form.validateField('contact_discord')"
+          />
+          <small v-if="form.errors.value.contact_discord" class="text-error">{{
+            form.errors.value.contact_discord
+          }}</small>
         </label>
       </section>
 
@@ -139,7 +118,7 @@
         <ui-button
           type="submit"
           size="lg"
-          :disabled="isSavingChanges || props.loading || props.status === 'error'"
+          :disabled="isSavingChanges || status === 'loading' || status === 'error'"
         >
           <loading-icon v-if="isSavingChanges" />
           Save changes
@@ -149,11 +128,12 @@
           variant="secondary"
           size="lg"
           :to="`/teams/${team?.id}`"
-          :disabled="props.loading"
+          :disabled="status === 'loading'"
           >Cancel</ui-button
         >
       </ui-card>
     </form>
+    </ui-query-state>
   </ui-card>
 </template>
 
@@ -163,26 +143,27 @@ import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
 import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
 import { useUpdateTeam } from '@/api/teams/teams'
-import type { CardStatus } from '@/composables/useCardState'
+import { useQueryState, type QueryLike } from '@/composables/useQueryState'
 import type { TeamResponse } from '@/api/backendAPINinja.schemas'
 
 interface Props {
   team?: TeamResponse
-  loading: boolean
-  status: CardStatus
+  query: QueryLike
 }
 
 const props = defineProps<Props>()
 const router = useRouter()
 const { showNotification } = useNotification()
+
+const { status } = useQueryState(computed(() => props.query))
 
 const form = useForm(EditTeamSchema, {
   name: props.team?.name ?? '',

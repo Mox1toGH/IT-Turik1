@@ -1,11 +1,5 @@
 <template>
-  <div v-if="isError" class="error-state">
-    <ui-card>
-      <p>Error while fetching tournament</p>
-    </ui-card>
-  </div>
-
-  <ui-skeleton-loader v-else :loading="isLoading || isFetching">
+  <ui-query-state :query="tournamentQuery">
     <template #skeleton>
       <div class="create-layout">
         <div class="tournament-form">
@@ -14,6 +8,14 @@
           <ui-skeleton variant="rect" height="200px" />
         </div>
         <ui-skeleton variant="rect" height="320px" />
+      </div>
+    </template>
+
+    <template #error>
+      <div class="error-state">
+        <ui-card>
+          <p>Error while fetching tournament</p>
+        </ui-card>
       </div>
     </template>
 
@@ -208,7 +210,7 @@
         </ui-card>
       </aside>
     </div>
-  </ui-skeleton-loader>
+  </ui-query-state>
 </template>
 
 <script setup lang="ts">
@@ -219,7 +221,7 @@ import UiInput from '@/components/ui/UiInput'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiTextArea from '@/components/ui/UiTextArea'
 import UiTimePicker from '@/components/ui/UiTimePicker'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader'
+import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
@@ -263,7 +265,8 @@ const form = useForm<Form>(EditTournamentSchema, {
   min_team_members: 2,
 })
 
-const { data: tournament, isLoading, isFetching, isError } = useGetTournament(props.tournamentId)
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { data: tournament } = tournamentQuery
 
 const { mutate: editTournament, isPending } = useUpdateTournament()
 

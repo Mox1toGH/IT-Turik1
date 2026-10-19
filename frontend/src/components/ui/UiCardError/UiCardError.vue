@@ -19,10 +19,10 @@
 import { computed } from 'vue'
 import { TriangleAlert, CloudOff } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
-import type { CardErrorCode } from '@/composables/useCardState'
+import type { QueryErrorCode } from '@/composables/useQueryState'
 
 interface Props {
-  errorCode?: CardErrorCode
+  errorCode?: QueryErrorCode
   title?: string
   isFetching?: boolean
 }
