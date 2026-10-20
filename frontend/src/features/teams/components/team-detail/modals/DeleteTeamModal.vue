@@ -33,7 +33,7 @@
       </ui-button>
 
       <ui-button variant="danger" size="sm" :disabled="!canDeleteTeam" @click="handleDeleteTeam">
-        <loading-icon v-if="isDeleting" />
+        <LoaderCircle class="animate-spin" v-if="isDeleting" />
         Delete permanently
       </ui-button>
     </template>
@@ -47,7 +47,7 @@ import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { truncateText } from '@/lib/utils'
 import { useDeleteTeam } from '@/api/teams/teams'
 import type { Team } from '@/features/teams/types'

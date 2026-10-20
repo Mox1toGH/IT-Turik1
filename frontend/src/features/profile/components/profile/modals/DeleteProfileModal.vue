@@ -24,7 +24,7 @@
         Cancel
       </ui-button>
       <ui-button size="sm" variant="danger" :disabled="!canDelete" @click="handleDeleteAccount">
-        <loading-icon v-if="isDeleting" />
+        <LoaderCircle class="animate-spin" v-if="isDeleting" />
         Delete permanently
       </ui-button>
     </template>
@@ -37,7 +37,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'

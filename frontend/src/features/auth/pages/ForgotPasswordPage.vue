@@ -34,7 +34,7 @@
           <div class="footer-actions">
             <ui-button :disabled="isLoading" type="submit">
               Send reset link
-              <loading-icon v-if="isLoading" />
+              <LoaderCircle class="animate-spin" v-if="isLoading" />
             </ui-button>
           </div>
         </form>
@@ -50,7 +50,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useRequestPasswordReset } from '@/api/accounts/accounts'
 
 const email = ref('')

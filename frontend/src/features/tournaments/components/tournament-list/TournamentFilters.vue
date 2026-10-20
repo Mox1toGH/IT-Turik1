@@ -14,7 +14,7 @@
         aria-label="Search tournaments"
         @click="applySearch"
       >
-        <arrow-right />
+        <ChevronRight :size="24" />
       </ui-button>
     </div>
 
@@ -36,7 +36,7 @@ import { ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiSelect from '@/components/ui/UiSelect'
-import ArrowRight from '@/icons/ArrowRight.vue'
+import { ChevronRight } from 'lucide-vue-next'
 import type { TournamentStatus } from '@/features/tournaments/types'
 
 const status = defineModel<TournamentStatus[]>('status', { required: true })

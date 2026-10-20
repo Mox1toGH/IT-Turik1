@@ -11,7 +11,7 @@
       <div class="gcal-actions">
         <template v-if="gcalLoading">
           <ui-button size="sm" variant="secondary" disabled>
-            <loading-icon class="gcal-icon spin" />
+            <LoaderCircle class="gcal-icon animate-spin" :size="16" />
             Loading…
           </ui-button>
         </template>
@@ -58,7 +58,7 @@
         </template>
 
         <div v-if="!hasItems" class="calendar-empty">
-          <calendar-icon class="empty-icon" />
+          <Calendar class="empty-icon" />
           <p>No upcoming events or deadlines</p>
           <p class="text-muted">Join a tournament to see its schedule here</p>
         </div>
@@ -80,9 +80,8 @@
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
-import CalendarIcon from '@/icons/CalendarIcon.vue'
+import { Calendar, LoaderCircle } from 'lucide-vue-next'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
 import { computed, onMounted, ref } from 'vue'
 import {
@@ -191,16 +190,6 @@ async function exportRound(roundId: number) {
 .gcal-icon {
   width: 16px;
   height: 16px;
-}
-
-.spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .eyebrow {

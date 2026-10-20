@@ -28,9 +28,9 @@
           :to="`/teams/${team.id}`"
           class="team-link"
         >
-          <TeamIcon />
+          <Users :size="28" />
           {{ team.name }}
-          <ArrowRight />
+          <ChevronRight :size="24" />
         </router-link>
       </div>
     </ui-section>
@@ -49,7 +49,7 @@
             {{ formatDate(user.active_tournament.end_date) }}
           </small>
         </span>
-        <ArrowRight />
+        <ChevronRight :size="24" />
       </router-link>
     </ui-section>
   </div>
@@ -61,8 +61,7 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiSection from '@/components/ui/UiSection'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import ArrowRight from '@/icons/ArrowRight.vue'
-import TeamIcon from '@/icons/TeamIcon.vue'
+import { ChevronRight, Users } from 'lucide-vue-next'
 import { formatDate } from '@/lib/date'
 import ProfileMiniCard from '../ProfileMiniCard.vue'
 import EditProfileModal from '../modals/EditProfile/EditProfileModal.vue'

@@ -40,7 +40,7 @@
               class="assign-btn"
               :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
             >
-              <loading-icon v-if="isPending" />Assign
+              <LoaderCircle class="animate-spin" v-if="isPending" />Assign
             </ui-button>
           </div>
         </div>
@@ -105,7 +105,7 @@ import UiQueryState from '@/components/ui/UiQueryState'
 import UiSection from '@/components/ui/UiSection'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import JuryAssignRow from './JuryAssignRow.vue'
 import { useJuryAssign } from '../../../../composables/useJuryAssign'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas'

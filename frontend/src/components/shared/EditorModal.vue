@@ -18,7 +18,7 @@
           :aria-pressed="editor?.isActive('heading', { level: 1 }) ?? false"
           :class="{ 'is-active': editor?.isActive('heading', { level: 1 }) }"
         >
-          <heading1-icon width="20px" height="20" />
+          <Heading1 :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -28,7 +28,7 @@
           :aria-pressed="editor?.isActive('heading', { level: 2 }) ?? false"
           :class="{ 'is-active': editor?.isActive('heading', { level: 2 }) }"
         >
-          <heading2-icon width="20px" height="20" />
+          <Heading2 :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -38,7 +38,7 @@
           :aria-pressed="editor?.isActive('bold') ?? false"
           :class="{ 'is-active': editor?.isActive('bold') }"
         >
-          <bold-icon width="20" height="20" />
+          <Bold :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -48,7 +48,7 @@
           @click="toggleUnderline"
           :class="{ 'is-active': editor?.isActive('underline') }"
         >
-          <underline-icon />
+          <Underline :size="16" />
         </ui-button>
         <ui-button
           size="sm"
@@ -58,7 +58,7 @@
           @click="toggleHighlight"
           :class="{ 'is-active': editor?.isActive('highlight') }"
         >
-          <highlight-icon />
+          <Highlighter :size="16" />
         </ui-button>
         <ui-button
           size="sm"
@@ -68,7 +68,7 @@
           :aria-pressed="editor?.isActive('italic') ?? false"
           :class="{ 'is-active': editor?.isActive('italic') }"
         >
-          <italic-icon width="20" height="20" />
+          <Italic :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -78,7 +78,7 @@
           :aria-pressed="editor?.isActive('bulletList') ?? false"
           :class="{ 'is-active': editor?.isActive('bulletList') }"
         >
-          <bullet-list-icon width="20px" height="20" />
+          <List :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -88,7 +88,7 @@
           :aria-pressed="editor?.isActive('orderedList') ?? false"
           :class="{ 'is-active': editor?.isActive('orderedList') }"
         >
-          <numeric-list-icon width="20px" height="20" />
+          <ListOrdered :size="20" />
         </ui-button>
         <ui-button
           size="sm"
@@ -147,19 +147,21 @@
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
-import BoldIcon from '@/icons/typography/BoldIcon.vue'
-import BulletListIcon from '@/icons/typography/BulletListIcon.vue'
-import Heading1Icon from '@/icons/typography/Heading1Icon.vue'
-import Heading2Icon from '@/icons/typography/Heading2Icon.vue'
-import ItalicIcon from '@/icons/typography/ItalicIcon.vue'
-import NumericListIcon from '@/icons/typography/NumericListIcon.vue'
 import type { JSONContent } from '@tiptap/core'
+import {
+  Bold,
+  Heading1,
+  Heading2,
+  Highlighter,
+  Italic,
+  List,
+  ListOrdered,
+  Underline,
+} from 'lucide-vue-next'
 import { EditorContent } from '@tiptap/vue-3'
 import { computed } from 'vue'
 import { tiptapJsonToText } from '@/lib/utils'
-import UnderlineIcon from '@/icons/typography/UnderlineIcon.vue'
-import HighlightIcon from '@/icons/typography/HighlightIcon.vue'
-import { useRoundEditor } from '@/composables/useRichTextEditor'
+import { useRichTextEditor } from '@/composables/useRichTextEditor'
 
 interface Props {
   title: string
@@ -205,7 +207,7 @@ const {
   applyLink,
   removeLink,
   closeLinkEditor,
-} = useRoundEditor(modelValue, {
+} = useRichTextEditor(modelValue, {
   title: () => props.title,
   ariaLabel: () => props.ariaLabel,
   onBlur: () => emit('blur'),

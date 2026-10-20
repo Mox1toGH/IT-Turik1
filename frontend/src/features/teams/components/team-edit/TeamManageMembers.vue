@@ -55,7 +55,7 @@
               :disabled="kickLoadingIds.has(member.id)"
               @click="removeMember(member)"
             >
-              <loading-icon v-if="kickLoadingIds.has(member.id)" />
+              <LoaderCircle class="animate-spin" v-if="kickLoadingIds.has(member.id)" />
               Remove
             </ui-button>
           </template>
@@ -75,7 +75,7 @@ import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useRemoveMemberFromTeam } from '@/api/teams/teams'

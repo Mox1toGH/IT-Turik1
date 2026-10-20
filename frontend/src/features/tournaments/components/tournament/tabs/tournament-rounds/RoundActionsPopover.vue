@@ -2,7 +2,7 @@
   <ui-popover minWidth="180px" header="actions">
     <template #trigger>
       <ui-button variant="secondary" class="actions-trigger" size="sm"
-        ><three-center-dots-icon width="18"
+        ><MoreHorizontal :size="18"
       /></ui-button>
     </template>
 
@@ -81,7 +81,7 @@ import {
 import UiButton from '@/components/ui/UiButton'
 import UiPopover from '@/components/ui/UiPopover'
 import { useNotification } from '@/composables/useNotification'
-import ThreeCenterDotsIcon from '@/icons/ThreeCenterDotsIcon.vue'
+import { MoreHorizontal } from 'lucide-vue-next'
 
 interface Props {
   roundId: number

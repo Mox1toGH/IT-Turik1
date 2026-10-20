@@ -14,16 +14,16 @@
         size="sm"
         type="button"
         @click="hideNotification()"
-        ><CrossIcon
+        ><X :size="16"
       /></ui-button>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
+import { X } from 'lucide-vue-next'
 import { useNotification } from '@/composables/useNotification'
 import UiButton from '@/components/ui/UiButton'
-import CrossIcon from '@/icons/CrossIcon.vue'
 
 const { notification, hideNotification } = useNotification()
 </script>

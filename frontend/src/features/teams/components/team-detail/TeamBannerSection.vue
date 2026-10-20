@@ -14,7 +14,7 @@
           class="banner-action"
           @click="emit('open')"
         >
-          <avatar-edit-icon class="banner-action-icon" />
+          <Pencil class="banner-action-icon" />
           {{ team?.banner ? 'Edit' : 'Add banner' }}
         </ui-button>
       </div>
@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
+import { Pencil } from 'lucide-vue-next'
 import type { Team } from '@/features/teams/types'
 
 interface Props {

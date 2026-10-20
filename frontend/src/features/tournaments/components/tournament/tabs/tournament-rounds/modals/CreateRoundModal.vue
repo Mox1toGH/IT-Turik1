@@ -192,7 +192,7 @@
     <template #footer>
       <ui-button variant="secondary" @click="isOpen = false">Cancel</ui-button>
       <ui-button type="submit" form="round-form" :disabled="isPending">
-        <loading-icon v-if="isPending" />
+        <LoaderCircle class="animate-spin" v-if="isPending" />
         <span>Create round</span>
       </ui-button>
     </template>
@@ -205,7 +205,7 @@ import UiModal from '@/components/ui/UiModal'
 import UiDatePicker from '@/components/ui/UiDatePicker'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiInput from '@/components/ui/UiInput'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import AddCriteriaModal from './AddCriteriaModal.vue'
 import EditorModal from '@/components/shared/EditorModal.vue'
 import { useForm } from '@/composables/useForm'

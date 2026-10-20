@@ -2,11 +2,11 @@
   <div class="calendar">
     <div class="calendar-nav">
       <ui-button size="sm" variant="ghost" @click="prev">
-        <arrow-left-icon />
+        <ChevronLeft :size="24" />
       </ui-button>
       <h3 class="calendar-label">{{ navLabel }}</h3>
       <ui-button size="sm" variant="ghost" @click="next">
-        <arrow-right-icon />
+        <ChevronRight :size="24" />
       </ui-button>
 
       <div class="view-switcher">
@@ -76,7 +76,7 @@
               <ui-badge :variant="item.color">{{ typeLabel(item.type) }}</ui-badge>
               <span v-if="item.link" class="day-view-link">
                 <a :href="item.link" target="_blank" rel="noopener noreferrer" @click.stop>
-                  <external-link-icon class="link-icon" />
+                  <ExternalLink class="link-icon" />
                   Join
                 </a>
               </span>
@@ -89,7 +89,7 @@
             <p class="day-view-title">{{ item.title }}</p>
             <p v-if="item.description" class="day-view-description">{{ item.description }}</p>
             <p class="day-view-time text-muted">
-              <clock-icon class="time-icon" />
+              <Clock class="time-icon" />
               {{ formatTime(item.date) }}
             </p>
           </div>
@@ -109,10 +109,7 @@
 <script setup lang="ts">
 import { ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
-import ArrowLeftIcon from '@/icons/ArrowLeft.vue'
-import ArrowRightIcon from '@/icons/ArrowRight.vue'
-import ClockIcon from '@/icons/ClockIcon.vue'
-import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
+import { ChevronLeft, ChevronRight, Clock, ExternalLink } from 'lucide-vue-next'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'

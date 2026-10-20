@@ -20,7 +20,7 @@
           Saved
         </span>
         <span v-else-if="saveState === 'saving'" class="save-indicator saving">
-          <LoadingIcon class="save-icon spin" />
+          <LoaderCircle class="save-icon animate-spin" :size="16" />
           Saving…
         </span>
         <span v-else-if="saveState === 'error'" class="save-indicator error">
@@ -219,8 +219,7 @@ import {
   useUpdateNotificationConfig,
   useUpdateGlobalNotificationConfig,
 } from '@/api/notifications/notifications'
-import { Search, Check, CircleAlert, ArrowLeft } from 'lucide-vue-next'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { Search, Check, CircleAlert, ArrowLeft, LoaderCircle } from 'lucide-vue-next'
 
 const router = useRouter()
 const { showNotification } = useNotification()
@@ -558,19 +557,6 @@ function scrollToGroup(key: string) {
 .save-icon {
   width: 16px;
   height: 16px;
-}
-
-.save-icon.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .btn-icon {

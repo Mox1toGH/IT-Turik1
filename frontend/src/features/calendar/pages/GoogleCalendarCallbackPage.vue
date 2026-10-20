@@ -6,12 +6,12 @@
         <p>Connecting Google Calendar...</p>
       </div>
       <div v-else-if="isSuccess" class="callback-status callback-status--success">
-        <selected-icon class="status-icon status-icon--success" />
+        <Check class="status-icon status-icon--success" />
         <p>Google Calendar connected successfully!</p>
         <p class="text-muted">Redirecting to calendar...</p>
       </div>
       <div v-else class="callback-status callback-status--error">
-        <cross-icon class="status-icon status-icon--error" />
+        <X class="status-icon status-icon--error" />
         <p>Failed to connect Google Calendar</p>
         <p class="text-muted">{{ errorMessage }}</p>
         <ui-button variant="default" @click="goToCalendar">Back to Calendar</ui-button>
@@ -24,8 +24,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
-import SelectedIcon from '@/icons/SelectedIcon.vue'
-import CrossIcon from '@/icons/CrossIcon.vue'
+import { Check, X } from 'lucide-vue-next'
 import { callbackGoogleCalendar } from '@/api/accounts/accounts'
 
 const router = useRouter()

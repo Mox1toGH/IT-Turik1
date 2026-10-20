@@ -36,7 +36,7 @@
       </label>
 
       <ui-button type="submit" :disabled="isUpdating">
-        <loading-icon v-if="isUpdating" />
+        <LoaderCircle class="animate-spin" v-if="isUpdating" />
         <span>Save</span>
       </ui-button>
     </form>
@@ -50,7 +50,7 @@ import UiModal from '@/components/ui/UiModal'
 import UiInput from '@/components/ui/UiInput'
 import UiSwitch from '@/components/ui/UiSwitch'
 import UiButton from '@/components/ui/UiButton'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import EditorModal from '@/components/shared/EditorModal.vue'
 import { useForm } from '@/composables/useForm'
 import { CreateNewsSchema } from '@/schemas/news.schema'

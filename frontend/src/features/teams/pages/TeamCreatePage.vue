@@ -50,7 +50,7 @@
         <div class="form-actions">
           <ui-button asLink variant="secondary" size="lg" to="/teams">Cancel</ui-button>
           <ui-button :disabled="teamForm.isCreatingTeam.value" type="submit" size="lg">
-            <loading-icon v-if="teamForm.isCreatingTeam.value" />
+            <LoaderCircle class="animate-spin" v-if="teamForm.isCreatingTeam.value" />
             {{ teamForm.isCreatingTeam.value ? 'Creating...' : 'Create team' }}
           </ui-button>
         </div>
@@ -72,7 +72,7 @@
 import { computed } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import UiSection from '@/components/ui/UiSection'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiSelect from '@/components/ui/UiSelect'
 import TeamIdentityFields from '../components/team-create/TeamIdentityFields.vue'
 import TeamContactFields from '../components/team-create/TeamContactFields.vue'

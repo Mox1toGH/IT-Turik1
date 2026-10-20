@@ -28,7 +28,7 @@
           <div class="submission-header">
             <div class="left-side">
               <div class="left-side-icon">
-                <FileCheckIcon width="20" />
+                <FileCheck :size="20" />
               </div>
 
               <div class="round-info">
@@ -80,7 +80,7 @@
         <div class="submission-header">
           <div class="left-side">
             <div class="left-side-icon">
-              <FileCheckIcon width="20" />
+              <FileCheck :size="20" />
             </div>
 
             <div class="round-info">
@@ -218,7 +218,7 @@ import UiProgressBar from '@/components/ui/UiProgressBar'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import FileCheckIcon from '@/icons/FileCheckIcon.vue'
+import { FileCheck } from 'lucide-vue-next'
 import { formatDate } from '@/lib/date'
 import { computed, ref } from 'vue'
 import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'

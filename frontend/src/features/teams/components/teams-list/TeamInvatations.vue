@@ -64,7 +64,7 @@
                     :disabled="loadingIds.has(invitation.id)"
                     @click="respondToInvitation(invitation.id, 'accept')"
                   >
-                    <loading-icon v-if="loadingIds.has(invitation.id)" />
+                    <LoaderCircle class="animate-spin" v-if="loadingIds.has(invitation.id)" />
                     Accept
                   </ui-button>
                   <ui-button
@@ -91,7 +91,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
 import { useQueryState } from '@/composables/useQueryState'

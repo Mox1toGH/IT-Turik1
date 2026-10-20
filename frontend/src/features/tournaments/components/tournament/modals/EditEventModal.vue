@@ -56,7 +56,7 @@
 
     <template #footer>
       <ui-button variant="secondary" @click="toggleClose"> Close </ui-button>
-      <ui-button @click="editEvent"> <loading-icon v-if="isPending" /> Save </ui-button>
+      <ui-button @click="editEvent"> <LoaderCircle class="animate-spin" v-if="isPending" /> Save </ui-button>
     </template>
   </ui-modal>
 </template>
@@ -71,7 +71,7 @@ import { useForm } from '@/composables/useForm'
 import { EditEventSchema } from '@/schemas/tournaments.schema'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiTextArea from '@/components/ui/UiTextArea'
 import { useUpdateEvent } from '@/api/tournaments/tournaments'
 

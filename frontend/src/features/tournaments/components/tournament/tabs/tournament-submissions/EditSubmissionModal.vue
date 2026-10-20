@@ -44,7 +44,7 @@
 
     <template #footer>
       <ui-button variant="secondary" @click="toggleClose"> Close </ui-button>
-      <ui-button @click="editRound"> <loading-icon v-if="isPending" /> Save </ui-button>
+      <ui-button @click="editRound"> <LoaderCircle v-if="isPending" class="animate-spin" :size="16" /> Save </ui-button>
     </template>
   </ui-modal>
 </template>
@@ -55,6 +55,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import UiTextArea from '@/components/ui/UiTextArea'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { EditSubmissionSchema } from '@/schemas/tournaments.schema'

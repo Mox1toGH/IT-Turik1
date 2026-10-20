@@ -27,7 +27,7 @@
       <ui-button variant="secondary" :disabled="isPending" @click="closeModal"> Cancel </ui-button>
 
       <ui-button variant="danger" :disabled="!canDelete" @click="handleDelete">
-        <loading-icon v-if="isPending" />
+        <LoaderCircle class="animate-spin" v-if="isPending" />
         Delete permanently
       </ui-button>
     </template>
@@ -41,7 +41,7 @@ import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import UiBadge from '@/components/ui/UiBadge'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useDeleteEvent } from '@/api/tournaments/tournaments'
 
 interface Props {

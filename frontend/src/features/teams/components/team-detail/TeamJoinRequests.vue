@@ -60,7 +60,7 @@
               :disabled="loadingJoinRequestIds.has(joinRequest.id)"
               @click="reviewJoinRequest(joinRequest.id, 'accept')"
             >
-              <loading-icon v-if="loadingJoinRequestIds.has(joinRequest.id)" />
+              <LoaderCircle class="animate-spin" v-if="loadingJoinRequestIds.has(joinRequest.id)" />
               Accept
             </ui-button>
             <ui-button
@@ -94,7 +94,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 interface Props {

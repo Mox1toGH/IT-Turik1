@@ -38,7 +38,7 @@
         <div class="event-content">
           <div class="event-left-side">
             <div class="event-icon">
-              <FinishIcon width="25px" height="25px" />
+              <Flag :size="25" />
             </div>
 
             <div class="event-info">
@@ -89,7 +89,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiQueryState from '@/components/ui/UiQueryState'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import FinishIcon from '@/icons/FinishIcon.vue'
+import { Flag } from 'lucide-vue-next'
 import { formatDate } from '@/lib/date'
 import EditEventModal from '../modals/EditEventModal.vue'
 import DeleteEventModal from '../modals/DeleteEventModal.vue'
