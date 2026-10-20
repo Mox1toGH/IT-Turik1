@@ -26,6 +26,16 @@ def dispatch_pending_async() -> None:
     _EXECUTOR.submit(_drain_pending_tasks)
 
 
+def drain_pending_tasks(batch_size: int = 50) -> None:
+    """Synchronously drain pending delivery tasks.
+
+    Public entrypoint used by the Celery beat task
+    (``notifications.drain_pending_deliveries``); safe to call concurrently
+    because the batch claim uses ``select_for_update(skip_locked=True)``.
+    """
+    _drain_pending_tasks(batch_size=batch_size)
+
+
 def _drain_pending_tasks(batch_size: int = 50) -> None:
     global _WORKER_RUNNING
     try:

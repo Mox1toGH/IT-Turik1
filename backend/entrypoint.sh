@@ -25,4 +25,5 @@ PY
 fi
 
 python manage.py migrate --noinput
-exec daphne -b 0.0.0.0 -p 8000 backend.asgi:application
+python manage.py collectstatic --noinput
+exec "$@"

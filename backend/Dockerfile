@@ -24,4 +24,7 @@ COPY --chmod=755 ./entrypoint.sh /entrypoint.sh
 
 EXPOSE 8000
 
+# Worker count is taken from WEB_CONCURRENCY (set in docker-compose.yml).
+CMD ["gunicorn", "backend.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--graceful-timeout", "30"]
+
 ENTRYPOINT ["/entrypoint.sh"]

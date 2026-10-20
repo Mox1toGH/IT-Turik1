@@ -1,10 +1,16 @@
 Django
+django-ninja
+djangorestframework-simplejwt
 django-cors-headers
 requests
+httpx
 google-auth
 python-dotenv
 python-json-logger
 channels
+channels-redis
+django-redis
+celery
 
 Pillow
 WeasyPrint
@@ -13,4 +19,10 @@ google-api-python-client
 google-auth-oauthlib
 
 daphne
-psycopg[binary]
+gunicorn
+uvicorn
+whitenoise
+psycopg[binary,pool]
+
+django-debug-toolbar
+django-silk

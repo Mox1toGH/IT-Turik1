@@ -91,3 +91,9 @@ backend/
 ## 🚀 Getting Started
 
 See [SETUP.md](./SETUP.md) for full setup instructions — manual and Docker variants, tests, and superuser creation.
+
+See [CONNECTION_POOLING.md](./CONNECTION_POOLING.md) before changing database or
+PgBouncer settings — it explains which pooler to use (never both).
+
+See [perf/RESULTS.md](./perf/RESULTS.md) for the 500-user load-test results and
+performance analysis.
