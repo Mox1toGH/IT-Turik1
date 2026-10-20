@@ -7,17 +7,26 @@ from teams.models import TeamMember
 from .models import Round, Tournament, TournamentTeamRegistration
 
 
-def _set_tournament_finished_if_all_rounds_evaluated(*, tournament):
+def _set_tournament_finished_if_all_rounds_evaluated(*, tournament, rounds=None):
     if tournament.status != Tournament.STATUS_RUNNING:
         return False
 
-    has_pending_rounds = tournament.rounds.exclude(status=Round.STATUS_EVALUATED).exists()
-    if has_pending_rounds:
-        return False
+    # `rounds` lets a caller pass in an already-loaded list (e.g. sync_time_based
+    # _statuses) instead of re-querying this tournament's rounds.
+    if rounds is None:
+        has_pending_rounds = tournament.rounds.exclude(status=Round.STATUS_EVALUATED).exists()
+        if has_pending_rounds:
+            return False
+        last_round = tournament.rounds.order_by('-start_date', '-id').first()
+    else:
+        if any(round_obj.status != Round.STATUS_EVALUATED for round_obj in rounds):
+            return False
+        last_round = max(
+            rounds, key=lambda r: (r.start_date, r.id), default=None
+        )
 
     tournament.status = Tournament.STATUS_FINISHED
     tournament.save(update_fields=['status', 'updated_at'])
-    last_round = tournament.rounds.order_by('-start_date', '-id').first()
     if last_round:
         from evaluation.leaderboard_service import save_leaderboard_snapshot
         save_leaderboard_snapshot(tournament_id=tournament.id, round_id=last_round.id)
@@ -127,9 +136,18 @@ def sync_time_based_statuses(reference_time=None):
     if updated_round_ids:
         active_rounds_to_close.update(status=Round.STATUS_SUBMISSION_CLOSED, updated_at=now)
 
-    running_tournaments = Tournament.objects.filter(status=Tournament.STATUS_RUNNING).prefetch_related('rounds')
+    # The rounds are prefetched once for all running tournaments, so the
+    # "still has unevaluated rounds?" check reads from memory instead of
+    # issuing one EXISTS query per tournament.
+    running_tournaments = (
+        Tournament.objects.filter(status=Tournament.STATUS_RUNNING)
+        .prefetch_related('rounds')
+    )
     for tournament in running_tournaments:
-        _set_tournament_finished_if_all_rounds_evaluated(tournament=tournament)
+        _set_tournament_finished_if_all_rounds_evaluated(
+            tournament=tournament,
+            rounds=list(tournament.rounds.all()),
+        )
 
     return {
         'closed_round_ids': updated_round_ids,

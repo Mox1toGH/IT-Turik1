@@ -687,7 +687,9 @@ def get_round_leaderboard(request, round_id: int):
         })
         raise_api_error(HTTPStatus.NOT_FOUND, 'Round not found.')
 
-    rankings = get_leaderboard(round_id=round_id, requesting_user=request.auth)
+    rankings = get_leaderboard(
+        round_id=round_id, requesting_user=request.auth, round_obj=round_obj
+    )
     return {
         'round_id': round_id,
         'is_snapshot': round_obj.tournament.status == Tournament.STATUS_FINISHED,
@@ -719,7 +721,11 @@ def get_tournament_leaderboard_view(request, tournament_id: int):
         })
         raise_api_error(HTTPStatus.NOT_FOUND, 'No rounds found for this tournament.')
 
-    rankings = get_tournament_leaderboard(tournament_id=tournament_id, requesting_user=request.auth)
+    rankings = get_tournament_leaderboard(
+        tournament_id=tournament_id,
+        requesting_user=request.auth,
+        tournament=tournament,
+    )
     return {
         'tournament_id': tournament_id,
         'is_snapshot': tournament.status == Tournament.STATUS_FINISHED,

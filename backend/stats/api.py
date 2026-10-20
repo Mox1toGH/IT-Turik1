@@ -88,10 +88,27 @@ def get_team_stats(request, team_id: int):
     top_player = None
 
     if members:
-        scores = []
-        for player in members:
-            average = SubmissionEvaluation.objects.filter(assignment__submission__team=team, assignment__submission__created_by=player).aggregate(value=Avg('final_score'))['value']
-            scores.append({'id': player.id, 'username': player.username, 'average_evaluation_score': _round2(average)})
+        # One grouped query instead of one AVG per member.
+        score_rows = (
+            SubmissionEvaluation.objects.filter(
+                assignment__submission__team=team,
+                assignment__submission__created_by__in=members,
+            )
+            .values('assignment__submission__created_by')
+            .annotate(value=Avg('final_score'))
+        )
+        scores_by_player = {
+            row['assignment__submission__created_by']: row['value']
+            for row in score_rows
+        }
+        scores = [
+            {
+                'id': player.id,
+                'username': player.username,
+                'average_evaluation_score': _round2(scores_by_player.get(player.id)),
+            }
+            for player in members
+        ]
         top_player = max(scores, key=lambda item: (item['average_evaluation_score'], -item['id']))
     else:
         logger.debug('Team has no members', extra={
@@ -177,16 +194,18 @@ def get_admin_stats(request):
     })
     now = timezone.now()
 
+    # Both registration windows in one query instead of two COUNT(*) round-trips.
+    registration_counts = User.objects.aggregate(
+        last_7_days=Count('id', filter=Q(date_joined__gte=now - timedelta(days=7))),
+        last_30_days=Count('id', filter=Q(date_joined__gte=now - timedelta(days=30))),
+    )
+
     return {
             'total_users': User.objects.count(),
             'total_teams': Team.objects.count(),
             'total_tournaments': Tournament.objects.count(),
-            'new_registrations_last_7_days': User.objects.filter(
-                date_joined__gte=now - timedelta(days=7)
-            ).count(),
-            'new_registrations_last_30_days': User.objects.filter(
-                date_joined__gte=now - timedelta(days=30)
-            ).count(),
+            'new_registrations_last_7_days': registration_counts['last_7_days'],
+            'new_registrations_last_30_days': registration_counts['last_30_days'],
             'active_tournaments': Tournament.objects.filter(
                 status__in=[
                     Tournament.STATUS_REGISTRATION,

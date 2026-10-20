@@ -10,7 +10,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -86,8 +86,13 @@ router = Router(tags=['accounts'])
 logger = logging.getLogger(__name__)
 
 
-def _user_response_data(user, request):
-    teams = user._prefetched_objects_cache.get('teams', [])
+def _user_response_data(user, request, teams=None):
+    # `teams` lets a caller that already has the list (or wants to control how
+    # it is fetched) pass it in. Otherwise use the public relation, which reuses
+    # a prefetch_related('teams') if the caller did one, and issues a single
+    # query if not.
+    if teams is None:
+        teams = list(user.teams.all())
     avatar = absolute_media_url(user.avatar, {'request': request}) if user.avatar else None
     return {
         'id': user.id,
@@ -179,10 +184,18 @@ def _send_link_email(
 
 
 def _active_counts() -> dict:
-    return {
-        role: RoleActivationCode.objects.filter(role=role, is_used=False).count()
-        for role in ('jury', 'organizer', 'admin')
+    """Unused activation-code counts per role, in a single GROUP BY query.
+
+    The previous comprehension issued one COUNT(*) per role; this computes all
+    three at once and fills in zeroes for roles with no rows.
+    """
+    counts = {
+        row['role']: row['total']
+        for row in RoleActivationCode.objects.filter(is_used=False)
+        .values('role')
+        .annotate(total=Count('id'))
     }
+    return {role: counts.get(role, 0) for role in ('jury', 'organizer', 'admin')}
 
 
 # --------------------------------------------------------------------------
@@ -421,8 +434,11 @@ async def google_auth(request, payload: GoogleAuthRequest):
     response={200: GetUserProfileResponse, 401: ErrorResponse},
 )
 def get_user_profile(request):
-    user = User.objects.prefetch_related('teams').get(pk=request.user.pk)
-    return _user_response_data(user, request)
+    # JWTAuth already loaded this user row onto request.user, so re-fetching it
+    # just to attach a teams prefetch would be a second identical SELECT.
+    # _user_response_data fetches the teams itself via the public relation, so
+    # this stays at one user SELECT + one teams SELECT.
+    return _user_response_data(request.user, request)
 
 @router.patch(
     '/profile',

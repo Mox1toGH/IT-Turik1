@@ -119,7 +119,21 @@ def _update_model(instance, values):
     return _validate_model(instance)
 
 
-def _get_registered_team(tournament, request):
+def _registered_team_ids(user):
+    """Team IDs the user belongs to, as captain or member.
+
+    This does not depend on the tournament, so callers must compute it once per
+    request instead of per tournament; doing it inside the serialisation loop
+    produced two identical queries for every row on the page.
+    """
+    if not (user and getattr(user, "is_authenticated", False)):
+        return set()
+    return set(user.teams.values_list("id", flat=True)) | set(
+        Team.objects.filter(captain=user).values_list("id", flat=True)
+    )
+
+
+def _get_registered_team(tournament, request, team_ids=None):
     if 'rounds' not in getattr(tournament, '_prefetched_objects_cache', {}):
         tournament._prefetched_objects_cache = getattr(
             tournament, '_prefetched_objects_cache', {}
@@ -133,9 +147,8 @@ def _get_registered_team(tournament, request):
     if not (user and getattr(user, "is_authenticated", False)):
         return None
 
-    team_ids = set(user.teams.values_list("id", flat=True)) | set(
-        Team.objects.filter(captain=user).values_list("id", flat=True)
-    )
+    if team_ids is None:
+        team_ids = _registered_team_ids(user)
 
     registration = (
         tournament.team_registrations
@@ -147,8 +160,8 @@ def _get_registered_team(tournament, request):
     return registration.team if registration else None
 
 
-def _tournament_response_data(tournament, request):
-    registered_team = _get_registered_team(tournament, request)
+def _tournament_response_data(tournament, request, team_ids=None):
+    registered_team = _get_registered_team(tournament, request, team_ids)
     rounds = tournament._prefetched_objects_cache.get('rounds', [])
     return {
         'id': tournament.id,
@@ -680,9 +693,14 @@ def list_tournaments(request, page: int = 1, page_size: int = 20, searchQuery: s
     size = min(page_size, 100)
     page_items = list(queryset[(page - 1) * size:page * size])
 
+    # Resolve the user's teams once for the whole page instead of once per row.
+    team_ids = _registered_team_ids(getattr(request, 'auth', None))
 
     return {
-        'data': [_tournament_response_data(tournament, request) for tournament in page_items],
+        'data': [
+            _tournament_response_data(tournament, request, team_ids)
+            for tournament in page_items
+        ],
         'total': total,
     }
 
