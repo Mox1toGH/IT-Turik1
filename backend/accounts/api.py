@@ -2,19 +2,18 @@ import secrets
 import logging
 from urllib.parse import urlencode
 
-import requests as http_requests
+import httpx
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
 
 from ninja import File, Query, Router
 from ninja.pagination import paginate
@@ -38,8 +37,8 @@ from .google_calendar import (
     SCOPES,
     generate_code_challenge,
     generate_code_verifier,
-    sync_all_calendar_items,
 )
+from .tasks import send_html_email_task, sync_google_calendar_task
 
 from backend.schemas import ErrorResponse
 from backend.errors import raise_api_error
@@ -87,8 +86,13 @@ router = Router(tags=['accounts'])
 logger = logging.getLogger(__name__)
 
 
-def _user_response_data(user, request):
-    teams = user._prefetched_objects_cache.get('teams', [])
+def _user_response_data(user, request, teams=None):
+    # `teams` lets a caller that already has the list (or wants to control how
+    # it is fetched) pass it in. Otherwise use the public relation, which reuses
+    # a prefetch_related('teams') if the caller did one, and issues a single
+    # query if not.
+    if teams is None:
+        teams = list(user.teams.all())
     avatar = absolute_media_url(user.avatar, {'request': request}) if user.avatar else None
     return {
         'id': user.id,
@@ -150,16 +154,8 @@ def send_html_email(
     context: dict,
     recipient: str,
 ) -> None:
-    html_message = render_to_string(template_name, context)
-
-    email = EmailMessage(
-        subject=subject,
-        body=html_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient],
-    )
-    email.content_subtype = "html"
-    email.send()
+    """Queue a HTML email for background delivery via Celery."""
+    send_html_email_task.delay(subject, template_name, context, recipient)
 
 def _send_link_email(
     user,
@@ -188,10 +184,18 @@ def _send_link_email(
 
 
 def _active_counts() -> dict:
-    return {
-        role: RoleActivationCode.objects.filter(role=role, is_used=False).count()
-        for role in ('jury', 'organizer', 'admin')
+    """Unused activation-code counts per role, in a single GROUP BY query.
+
+    The previous comprehension issued one COUNT(*) per role; this computes all
+    three at once and fills in zeroes for roles with no rows.
+    """
+    counts = {
+        row['role']: row['total']
+        for row in RoleActivationCode.objects.filter(is_used=False)
+        .values('role')
+        .annotate(total=Count('id'))
     }
+    return {role: counts.get(role, 0) for role in ('jury', 'organizer', 'admin')}
 
 
 # --------------------------------------------------------------------------
@@ -357,12 +361,13 @@ def refresh_token(request, payload: TokenRefreshRequest):
     url_name="google_login",
     response={200: GoogleAuthResponse, 400: ErrorResponse},
 )
-def google_auth(request, payload: GoogleAuthRequest):
+async def google_auth(request, payload: GoogleAuthRequest):
     from google.auth.transport import requests as google_requests
     from google.oauth2 import id_token as google_id_token
 
     try:
-        info = google_id_token.verify_oauth2_token(
+        # Signature verification fetches Google's certs over the network.
+        info = await sync_to_async(google_id_token.verify_oauth2_token)(
             payload.id_token,
             google_requests.Request(),
             settings.GOOGLE_OAUTH_CLIENT_ID,
@@ -380,25 +385,25 @@ def google_auth(request, payload: GoogleAuthRequest):
             'Google account email is not verified.'
         )
 
-    user = User.objects.filter(email__iexact=email).first()
+    user = await sync_to_async(User.objects.filter(email__iexact=email).first)()
     is_new_user = user is None
 
     if user is None:
         base = email.split('@')[0]
         username, suffix = base, 1
-        while User.objects.filter(username__iexact=username).exists():
+        while await sync_to_async(User.objects.filter(username__iexact=username).exists)():
             username = f'{base}{suffix}'
             suffix += 1
         user = User(username=username, email=email, full_name=info.get('name', ''), needs_onboarding=True, is_active=True)
         user.set_unusable_password()
-        user.save()
+        await sync_to_async(user.save)()
     elif not user.is_active:
         raise_api_error(
             HTTPStatus.BAD_REQUEST,
             'This account is inactive.'
         )
 
-    refresh = RefreshToken.for_user(user)
+    refresh = await sync_to_async(RefreshToken.for_user)(user)
 
     logger.info(
         'User authenticated with Google',
@@ -407,7 +412,7 @@ def google_auth(request, payload: GoogleAuthRequest):
             'new_user': is_new_user
         }
     )
-    user = User.objects.prefetch_related('teams').get(pk=user.pk)
+    user = await sync_to_async(User.objects.prefetch_related('teams').get)(pk=user.pk)
 
     return {
         'access': str(refresh.access_token),
@@ -429,8 +434,11 @@ def google_auth(request, payload: GoogleAuthRequest):
     response={200: GetUserProfileResponse, 401: ErrorResponse},
 )
 def get_user_profile(request):
-    user = User.objects.prefetch_related('teams').get(pk=request.user.pk)
-    return _user_response_data(user, request)
+    # JWTAuth already loaded this user row onto request.user, so re-fetching it
+    # just to attach a teams prefetch would be a second identical SELECT.
+    # _user_response_data fetches the teams itself via the public relation, so
+    # this stays at one user SELECT + one teams SELECT.
+    return _user_response_data(request.user, request)
 
 @router.patch(
     '/profile',
@@ -629,20 +637,21 @@ def connect_google_calendar(request):
     url_name="google_calendar_callback",
     response={200: GoogleCalendarStatusResponse, 400: ErrorResponse, 401: ErrorResponse, 503: ErrorResponse},
 )
-def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
+async def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
     try:
         code_verifier = (request.user.google_calendar_token or {}).get('_code_verifier')
-        token_response = http_requests.post(
-            GOOGLE_TOKEN_URI,
-            data={
-                'code': payload.code,
-                'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
-                'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
-                'redirect_uri': settings.GOOGLE_CALENDAR_REDIRECT_URI,
-                'grant_type': 'authorization_code',
-                'code_verifier': code_verifier,
-            },
-        )
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                GOOGLE_TOKEN_URI,
+                data={
+                    'code': payload.code,
+                    'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+                    'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
+                    'redirect_uri': settings.GOOGLE_CALENDAR_REDIRECT_URI,
+                    'grant_type': 'authorization_code',
+                    'code_verifier': code_verifier,
+                },
+            )
         if token_response.status_code != 200:
             raise_api_error(HTTPStatus.BAD_REQUEST,  "Authentication failed. Please try again.")
 
@@ -653,17 +662,11 @@ def callback_google_calendar(request, payload: GoogleCalendarCallbackRequest):
             'refresh_token': tokens.get('refresh_token'),
         }
         user.google_calendar_connected = True
-        user.save(update_fields=['google_calendar_token', 'google_calendar_connected'])
-        
-        try:
-            sync_all_calendar_items(user)
-        except Exception:
-            logger.exception('Google Calendar synchronization failed', extra={'user_id': user.id})
-             
-            raise_api_error(
-                HTTPStatus.BAD_REQUEST,
-                "Failed to connect Google Calendar. Please try again.",
-            )
+        await sync_to_async(user.save)(update_fields=['google_calendar_token', 'google_calendar_connected'])
+
+        # Full calendar sync runs in the background (Celery retries on failure)
+        # instead of blocking the request with N Google API calls.
+        sync_google_calendar_task.delay(user.id)
 
         return {'connected': True}
     except HttpError:

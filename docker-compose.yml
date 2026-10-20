@@ -16,6 +16,38 @@ services:
       timeout: 5s
       retries: 20
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Connection pooler in front of Postgres. Keeps client connections cheap so
+  # every gunicorn worker / thread can hold one without exhausting Postgres.
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: itturik
+      DB_PASSWORD: itturik
+      DB_NAME: itturik
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "25"
+      MAX_DB_CONNECTIONS: "60"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # 6432 (not 5432) so a local Postgres can keep using 5432
+      - "6432:5432"
+
   backend:
     build:
       context: ./backend
@@ -29,10 +61,15 @@ services:
       DB_PASSWORD: itturik
       DB_HOST: db
       DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      WEB_CONCURRENCY: "2"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
       CORS_ALLOWED_ORIGINS: http://localhost:5173
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - ./backend:/app
@@ -43,6 +80,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  celery:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: itturik
+      DB_USER: itturik
+      DB_PASSWORD: itturik
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      # Avoid profiling middleware noise inside worker processes.
+      PROFILING_ENABLED: "False"
+    command: celery -A backend worker -l info --concurrency=2 --beat -s /tmp/celerybeat-schedule
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
 
   frontend:
     build:

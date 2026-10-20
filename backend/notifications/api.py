@@ -141,17 +141,32 @@ def delete_all_notifications(request):
 @router.get('/settings', operation_id='getNotificationSettings', url_name="notification-settings", response={200: NotificationSettingsResponse, 401: ErrorResponse})
 def get_notification_settings(request):
     logger.debug('Fetching notification settings', extra={'user_id': request.auth.id})
-    created_count = 0
-    for event_type, event in EVENTS.items():
-        _, created = NotificationConfig.objects.get_or_create(user=request.auth, event_type=event_type, defaults={'is_system_enabled': 'system' in event.channels, 'is_email_enabled': 'email' in event.channels})
-        if created:
-            created_count += 1
-    if created_count:
+
+    # Fetch every existing config for this user in one query, then bulk-create
+    # only what is missing. The previous get_or_create-per-event loop issued one
+    # SELECT for each of the 18 event types on every page load.
+    existing = set(
+        NotificationConfig.objects.filter(user=request.auth).values_list(
+            'event_type', flat=True
+        )
+    )
+    missing = [
+        NotificationConfig(
+            user=request.auth,
+            event_type=event_type,
+            is_system_enabled='system' in event.channels,
+            is_email_enabled='email' in event.channels,
+        )
+        for event_type, event in EVENTS.items()
+        if event_type not in existing
+    ]
+    if missing:
+        NotificationConfig.objects.bulk_create(missing, ignore_conflicts=True)
         logger.info(
             'Notification configs initialised',
-            extra={'user_id': request.auth.id, 'created_count': created_count},
+            extra={'user_id': request.auth.id, 'created_count': len(missing)},
         )
-    
+
     settings, _ = UserNotificationSettings.objects.get_or_create(user=request.auth)
     
     return {

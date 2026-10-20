@@ -130,8 +130,11 @@ def save_leaderboard_snapshot(tournament_id: int, round_id: int) -> None:
     LeaderboardEntry.objects.bulk_create(tournament_entries)
 
 
-def get_leaderboard(round_id: int, requesting_user) -> list[dict]:
-    round_obj = Round.objects.select_related('tournament').filter(id=round_id).first()
+def get_leaderboard(round_id: int, requesting_user, round_obj=None) -> list[dict]:
+    # The API view already loads the round (to answer 404 and is_snapshot), so
+    # accept it here rather than issuing the identical query twice.
+    if round_obj is None:
+        round_obj = Round.objects.select_related('tournament').filter(id=round_id).first()
     if round_obj is None:
         return []
 
@@ -221,8 +224,13 @@ def compute_tournament_leaderboard(tournament_id: int) -> list[dict]:
     return result
 
 
-def get_tournament_leaderboard(tournament_id: int, requesting_user) -> list[dict]:
-    tournament = Tournament.objects.filter(id=tournament_id).first()
+def get_tournament_leaderboard(
+    tournament_id: int, requesting_user, tournament=None
+) -> list[dict]:
+    # Callers that already loaded the tournament (the API view does, to answer
+    # 404 and is_snapshot) pass it in so this does not refetch the same row.
+    if tournament is None:
+        tournament = Tournament.objects.filter(id=tournament_id).first()
     if tournament is None:
         return []
 
