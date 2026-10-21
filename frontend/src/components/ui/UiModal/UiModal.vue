@@ -39,7 +39,7 @@
                     size="sm"
                     aria-label="Close"
                   >
-                    <CrossIcon />
+                    <X :size="16" />
                   </ui-button>
                 </DialogClose>
               </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import CrossIcon from '@/icons/CrossIcon.vue'
+import { X } from 'lucide-vue-next'
 import UiButton from '../UiButton'
 import UiCard from '../UiCard'
 import {

@@ -18,7 +18,7 @@
     />
 
     <span class="banner-drag-label" aria-hidden="true">
-      <drag-icon />
+      <Move :size="14" />
       Drag to reposition
     </span>
   </div>
@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import DragIcon from '@/icons/DragIcon.vue'
+import { Move } from 'lucide-vue-next'
 import { toObjectPosition } from '@/lib/imagePosition'
 import type { BannerPosition } from '../../../composables/useBannerUpload'
 

@@ -32,7 +32,7 @@
           type="button"
           @click.stop="emit('redirect', notification)"
         >
-          <external-link-icon class="action-icon" />
+          <ExternalLink class="action-icon" />
           Open
         </ui-button>
         <ui-button
@@ -41,7 +41,7 @@
           type="button"
           @click.stop="emit('delete', notification.id)"
         >
-          <trash-icon class="action-icon" />
+          <Trash2 class="action-icon" />
           Delete
         </ui-button>
       </div>
@@ -72,7 +72,7 @@
           title="Go to page"
           @click.stop="emit('redirect', notification)"
         >
-          <external-link-icon class="icon" />
+          <ExternalLink class="icon" />
         </button>
         <button
           class="icon-btn danger"
@@ -80,7 +80,7 @@
           title="Delete notification"
           @click.stop="emit('delete', notification.id)"
         >
-          <trash-icon class="icon" />
+          <Trash2 class="icon" />
         </button>
       </div>
     </div>
@@ -99,8 +99,7 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiTruncate from '@/components/ui/UiTruncate'
-import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
-import TrashIcon from '@/icons/TrashIcon.vue'
+import { ExternalLink, Trash2 } from 'lucide-vue-next'
 import NotificationMessage from './NotificationMessage.vue'
 import {
   formatNotificationDate,

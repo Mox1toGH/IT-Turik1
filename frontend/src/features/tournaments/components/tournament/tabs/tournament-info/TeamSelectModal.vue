@@ -5,7 +5,7 @@
     </template>
 
     <div v-if="isLoadingTeams" class="team-loading">
-      <LoadingIcon />
+      <LoaderCircle class="animate-spin" />
     </div>
 
     <template v-else>
@@ -36,7 +36,7 @@ import { ref, computed, watch } from 'vue'
 import UiModal from '@/components/ui/UiModal'
 import UiBadge from '@/components/ui/UiBadge'
 import UiInput from '@/components/ui/UiInput'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useNotification } from '@/composables/useNotification'
 import {
   useListEligibleTeamsForTournament,

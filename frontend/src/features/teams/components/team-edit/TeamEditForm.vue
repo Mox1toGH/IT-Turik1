@@ -100,7 +100,7 @@
           size="lg"
           :disabled="isSavingChanges || props.loading || props.status === 'error'"
         >
-          <loading-icon v-if="isSavingChanges" />
+          <LoaderCircle class="animate-spin" v-if="isSavingChanges" />
           Save changes
         </ui-button>
         <ui-button
@@ -121,7 +121,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiSkeleton from '@/components/ui/UiSkeleton'

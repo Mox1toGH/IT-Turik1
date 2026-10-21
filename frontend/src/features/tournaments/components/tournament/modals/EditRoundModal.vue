@@ -141,7 +141,7 @@
       </label>
 
       <ui-button class="submit-btn" type="submit" :disabled="isPending">
-        <loading-icon v-if="isPending" />
+        <LoaderCircle class="animate-spin" v-if="isPending" />
         <p>Edit</p></ui-button
       >
     </form>
@@ -157,7 +157,7 @@ import { useForm } from '@/composables/useForm'
 import { EditRoundSchema } from '@/schemas/tournaments.schema'
 import AddCriteriaModal from '../tabs/tournament-rounds/modals/AddCriteriaModal.vue'
 import UiButton from '@/components/ui/UiButton'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
 import { useUpdateRound } from '@/api/tournaments/tournaments'

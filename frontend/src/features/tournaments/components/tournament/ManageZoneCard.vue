@@ -18,7 +18,7 @@
 
       <div>
         <div class="danger-zone-header">
-          <DangerIcon />
+          <TriangleAlert />
           <span>Danger Zone</span>
         </div>
 
@@ -56,7 +56,7 @@ import { ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import DeleteTournamentModal from './modals/DeleteTournamentModal.vue'
 import UiButton from '@/components/ui/UiButton'
-import DangerIcon from '@/icons/DangerIcon.vue'
+import { TriangleAlert } from 'lucide-vue-next'
 
 import { useGetTournament } from '@/api/tournaments/tournaments.ts'
 

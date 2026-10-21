@@ -12,9 +12,19 @@
           {{ selectedLabel }}
         </span>
 
-        <LoadingIcon v-if="isLoading" data-testid="loading-icon" />
+        <LoaderCircle
+          v-if="isLoading"
+          class="animate-spin"
+          :size="16"
+          data-testid="loading-icon"
+        />
 
-        <ArrowDown v-else class="select-chevron" data-testid="arrow-icon" />
+        <ChevronDown
+          v-else
+          class="select-chevron"
+          :size="16"
+          data-testid="arrow-icon"
+        />
       </UiButton>
     </SelectTrigger>
 
@@ -67,7 +77,7 @@
             </div>
 
             <SelectItemIndicator class="select-indicator">
-              <SelectedIcon class="select-check" />
+              <Check class="select-check" :size="14" />
             </SelectItemIndicator>
           </SelectItem>
         </SelectViewport>
@@ -91,10 +101,7 @@ import {
 
 import UiButton from '../UiButton'
 import UiHoverCard from '../UiHoverCard'
-import ArrowDown from '@/icons/ArrowDown.vue'
-import SelectedIcon from '@/icons/SelectedIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { TriangleAlert } from 'lucide-vue-next'
+import { Check, ChevronDown, LoaderCircle, TriangleAlert } from 'lucide-vue-next'
 
 type alignPositions = 'start' | 'end' | 'center'
 

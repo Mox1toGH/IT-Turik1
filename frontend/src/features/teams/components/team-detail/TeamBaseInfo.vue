@@ -68,7 +68,7 @@
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
         >
-          <loading-icon v-if="joinRequestLoading" size="md" />
+          <LoaderCircle class="animate-spin" v-if="joinRequestLoading" :size="22" />
           {{ joinRequestLoading ? 'Sending...' : 'Request to join this team' }}
         </ui-button>
 
@@ -90,7 +90,7 @@
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiTruncate from '@/components/ui/UiTruncate'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
 import UiSkeleton from '@/components/ui/UiSkeleton'

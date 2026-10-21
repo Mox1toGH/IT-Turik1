@@ -1,7 +1,7 @@
 <template>
   <div class="notification-dropdown-container" ref="dropdownContainer">
     <button class="notification-bell" @click="toggleDropdown" :class="{ active: isOpen }">
-      <bell-icon class="icon" />
+      <Bell class="icon" />
       <span v-if="unreadCount?.unread_count" class="badge">
         {{ unreadCount.unread_count > 99 ? '99+' : unreadCount.unread_count }}
       </span>
@@ -62,14 +62,14 @@
                     @click.stop="handleNotificationClick(notification)"
                     title="Go to page"
                   >
-                    <external-link-icon class="icon" />
+                    <ExternalLink class="icon" />
                   </button>
                   <button
                     class="delete-btn-mini"
                     @click.stop="handleDelete(notification.id)"
                     title="Delete notification"
                   >
-                    <trash-icon class="icon" />
+                    <Trash2 class="icon" />
                   </button>
                 </div>
                 <span class="item-message">
@@ -132,10 +132,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import BellIcon from '@/icons/BellIcon.vue'
-import ExternalLinkIcon from '@/icons/ExternalLinkIcon.vue'
-
-import TrashIcon from '@/icons/TrashIcon.vue'
+import { Bell, ExternalLink, Trash2 } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import UiQueryState from '@/components/ui/UiQueryState'

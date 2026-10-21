@@ -22,7 +22,7 @@
         Remove
       </ui-button>
       <ui-button size="sm" :disabled="isBannerUpdating || !canSave" @click="saveBanner">
-        <loading-icon v-if="isBannerUpdating" />
+        <LoaderCircle class="animate-spin" v-if="isBannerUpdating" />
         Save
       </ui-button>
     </template>
@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
 import UiFileDrop from '@/components/ui/UiFileDrop'

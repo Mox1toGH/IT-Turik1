@@ -1,7 +1,7 @@
 <template>
   <div class="team-item">
     <div class="team-info">
-      <TeamIcon :class="[{ 'text-muted': !team.is_active }]" />
+      <Users :class="[{ 'text-muted': !team.is_active }]" :size="28" />
       <RouterLink
         :to="`/teams/${team.id}`"
         :title="team.name"
@@ -24,7 +24,7 @@
           aria-label="Disqualify team"
           @click.prevent.stop="openDisqualifyModal(team)"
         >
-          <TeamDeleteIcon />
+          <UserX :size="16" />
         </ui-button>
       </template>
       <template v-else>
@@ -39,7 +39,7 @@
           aria-label="Reactivate team"
           @click.prevent.stop="openReactivateModal(team)"
         >
-          <AddTeamIcon />
+          <UserPlus :size="20" />
         </ui-button>
       </template>
     </div>
@@ -75,9 +75,8 @@ import { useNotification } from '@/composables/useNotification'
 import { useDisqualifyTeamFromTournament } from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
-import AddTeamIcon from '@/icons/AddTeamIcon.vue'
+import { UserPlus, UserX, Users } from 'lucide-vue-next'
 import UiInput from '@/components/ui/UiInput'
-import TeamDeleteIcon from '@/icons/TeamDeleteIcon.vue'
 import type { Tournament, TournamentTeam } from '@/features/tournaments/types'
 
 interface Props {

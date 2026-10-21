@@ -54,7 +54,7 @@
       <div class="reset-hint">
         <span>Forgot your current password?</span>
         <ui-button type="button" size="sm" :disabled="isSendingReset" @click="sendResetEmail">
-          <LoadingIcon v-if="isSendingReset" />
+          <LoaderCircle class="animate-spin" v-if="isSendingReset" />
           Send reset email
         </ui-button>
       </div>
@@ -65,7 +65,7 @@
         Back to profile
       </ui-button>
       <ui-button type="submit" :disabled="isChangingPassword">
-        <LoadingIcon v-if="isChangingPassword" />
+        <LoaderCircle class="animate-spin" v-if="isChangingPassword" />
         Update password
       </ui-button>
     </div>
@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiPasswordField from '@/components/ui/UiPasswordField'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { ChangePasswordSchema } from '@/schemas/profile.schema'

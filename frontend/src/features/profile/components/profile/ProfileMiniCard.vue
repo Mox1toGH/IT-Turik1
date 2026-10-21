@@ -13,7 +13,7 @@
             @click="openAvatarModal"
           />
           <span class="avatar-edit-indicator" aria-hidden="true">
-            <AvatarEditIcon />
+            <SquarePen :size="18" />
           </span>
           <avatar-modal
             ref="avatarModal"
@@ -49,8 +49,7 @@ import UiCard from '@/components/ui/UiCard'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import AvatarModal from './modals/AvatarModal.vue'
 import type { UserSummary } from '@/shared/types/user'
-import { Pencil } from 'lucide-vue-next'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
+import { Pencil, SquarePen } from 'lucide-vue-next'
 
 const props = defineProps<{
   user?: UserSummary

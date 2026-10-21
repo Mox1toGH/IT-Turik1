@@ -2,7 +2,7 @@
   <div class="tournament-hero-wrap">
     <div class="hero-topbar">
       <router-link to="/tournaments" class="back-link">
-        <arrow-left class="back-icon" aria-hidden="true" />
+        <ChevronLeft class="back-icon" aria-hidden="true" />
         Back to tournaments
       </router-link>
       <button
@@ -12,7 +12,7 @@
         aria-label="Edit tournament banner"
         @click="isBannerModalOpen = true"
       >
-        <avatar-edit-icon />
+        <SquarePen :size="18" />
       </button>
     </div>
 
@@ -46,8 +46,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import ArrowLeft from '@/icons/ArrowLeft.vue'
+import { ChevronLeft, SquarePen } from 'lucide-vue-next'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'

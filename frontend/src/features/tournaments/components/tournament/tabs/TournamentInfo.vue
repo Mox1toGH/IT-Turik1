@@ -9,7 +9,7 @@
         </div>
 
         <ui-button v-if="tournament?.status === 'draft'" @click="handleStartRegistration">
-          <loading-icon v-if="isPending" />
+          <LoaderCircle class="animate-spin" v-if="isPending" />
           Start registration
         </ui-button>
       </div>
@@ -132,7 +132,7 @@
         </p>
         <div v-if="!registeredTeamId && canManageRegistration" class="join-controls">
           <ui-button :disabled="!canJoinSelectedTeam" @click="handleJoin">
-            <loading-icon v-if="isRegistering" />
+            <LoaderCircle class="animate-spin" v-if="isRegistering" />
             Join Tournament
           </ui-button>
           <ui-select
@@ -151,7 +151,7 @@
           :disabled="isLeaving"
           @click="handleLeave"
         >
-          <loading-icon v-if="isLeaving" />
+          <LoaderCircle class="animate-spin" v-if="isLeaving" />
           <span>Leave Tournament</span>
         </ui-button>
       </template>
@@ -170,7 +170,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { computed, ref } from 'vue'
 import { formatDate } from '@/lib/date'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useNotification } from '@/composables/useNotification'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import UiSelect from '@/components/ui/UiSelect'

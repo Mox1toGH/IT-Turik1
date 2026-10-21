@@ -24,7 +24,7 @@
         :disabled="addMemberLoading || isLoadingUsers || !addMemberSelection"
         @click="addMember"
       >
-        <loading-icon v-if="addMemberLoading" />
+        <LoaderCircle class="animate-spin" v-if="addMemberLoading" />
         {{ addMemberLoading ? 'Sending...' : 'Send invitation' }}
       </ui-button>
     </div>
@@ -35,7 +35,7 @@
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useInviteMemberToTeam } from '@/api/teams/teams'
 import { useListUsers } from '@/api/accounts/accounts'

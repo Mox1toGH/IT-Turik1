@@ -12,9 +12,19 @@
             {{ selectedLabel }}
           </span>
 
-          <LoadingIcon v-if="isLoading" data-testid="loading-icon" />
+          <LoaderCircle
+            v-if="isLoading"
+            class="animate-spin"
+            :size="16"
+            data-testid="loading-icon"
+          />
 
-          <ArrowDown v-else class="select-chevron" data-testid="arrow-icon" />
+          <ChevronDown
+            v-else
+            class="select-chevron"
+            :size="16"
+            data-testid="arrow-icon"
+          />
         </UiButton>
       </ComboboxTrigger>
     </ComboboxAnchor>
@@ -60,7 +70,7 @@
             </span>
 
             <ComboboxItemIndicator>
-              <SelectedIcon class="select-check" />
+              <Check class="select-check" :size="14" />
             </ComboboxItemIndicator>
           </ComboboxItem>
         </ComboboxViewport>
@@ -85,9 +95,7 @@ import {
 } from 'reka-ui'
 
 import UiButton from '../UiButton'
-import ArrowDown from '@/icons/ArrowDown.vue'
-import SelectedIcon from '@/icons/SelectedIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { Check, ChevronDown, LoaderCircle } from 'lucide-vue-next'
 
 type alignPositions = 'start' | 'end' | 'center'
 

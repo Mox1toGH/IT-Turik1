@@ -39,7 +39,7 @@
           />
           <div class="visibility-option-content">
             <div class="visibility-option-header">
-              <eye-in-circle />
+              <Eye />
               <strong>Public</strong>
             </div>
             <p class="visibility-subtext">Anyone can find and request to join this team.</p>
@@ -57,7 +57,7 @@
           />
           <div class="visibility-option-content">
             <div class="visibility-option-header">
-              <lock-icon />
+              <Lock />
               <strong>Private</strong>
             </div>
             <p>Only invited members can find and access this team.</p>
@@ -66,7 +66,7 @@
       </div>
 
       <div v-if="selectedVisibility !== team?.is_public" class="visibility-confirm-note">
-        <danger-icon />
+        <TriangleAlert />
         <span>
           You are about to change this team from
           <strong>{{ team?.is_public ? 'Public' : 'Private' }}</strong>
@@ -98,7 +98,11 @@
         :disabled="isChangingVisibility || selectedVisibility === team?.is_public"
         @click="confirmChangeVisibility"
       >
-        <loading-icon v-if="isChangingVisibility" size="sm" />
+        <LoaderCircle
+          v-if="isChangingVisibility"
+          class="animate-spin"
+          :size="16"
+        />
         Confirm change
       </ui-button>
     </template>
@@ -111,10 +115,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
-import DangerIcon from '@/icons/DangerIcon.vue'
-import EyeInCircle from '@/icons/EyeInCircle.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import LockIcon from '@/icons/LockIcon.vue'
+import { Eye, LoaderCircle, Lock, TriangleAlert } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { truncateText } from '@/lib/utils'
 import { useUpdateTeam } from '@/api/teams/teams'

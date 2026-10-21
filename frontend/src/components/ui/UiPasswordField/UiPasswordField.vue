@@ -17,7 +17,8 @@
       type="button"
       :class="['password-toggle', { invalid: isInvalid }]"
     >
-      <EyeIcon class="toggle-icon" @click="isVisible = !isVisible" :is-crossed="!isVisible" />
+      <Eye v-if="isVisible" class="toggle-icon" @click="isVisible = !isVisible" />
+      <EyeOff v-else class="toggle-icon" @click="isVisible = !isVisible" />
     </button>
   </div>
 </template>
@@ -25,7 +26,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import UiInput from '../UiInput'
-import EyeIcon from '@/icons/EyeIcon.vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 interface Props {
   modelValue: string

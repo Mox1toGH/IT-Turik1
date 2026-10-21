@@ -111,7 +111,7 @@
 
         <ui-button class="submit-btn" :disabled="isUpdatingProfile" type="submit">
           Complete registration
-          <loading-icon v-if="isUpdatingProfile" />
+          <LoaderCircle class="animate-spin" v-if="isUpdatingProfile" />
         </ui-button>
       </form>
     </ui-card>
@@ -128,7 +128,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiSelect from '@/components/ui/UiSelect'
 import UiCard from '@/components/ui/UiCard'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
 import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'

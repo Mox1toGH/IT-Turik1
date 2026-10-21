@@ -8,13 +8,13 @@ import Highlight from '@tiptap/extension-highlight'
 import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 
-export interface RoundEditorLinkSelection {
+export interface RichTextEditorLinkSelection {
   from: number
   to: number
   wasLink: boolean
 }
 
-export function useRoundEditor(
+export function useRichTextEditor(
   modelValue: Ref<JSONContent | null>,
   options: {
     title: MaybeRefOrGetter<string>
@@ -27,7 +27,7 @@ export function useRoundEditor(
   const isLinkEditorOpen = ref<boolean>(false)
   const linkUrl = ref<string>('')
   const linkError = ref<string>('')
-  const linkSelection = ref<RoundEditorLinkSelection | null>(null)
+  const linkSelection = ref<RichTextEditorLinkSelection | null>(null)
 
   const editor = useEditor({
     extensions: [

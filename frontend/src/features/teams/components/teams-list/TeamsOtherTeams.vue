@@ -67,7 +67,7 @@
                     :disabled="loadingIds.has(team.id)"
                     @click="sendJoinRequest(team.id)"
                   >
-                    <loading-icon v-if="loadingIds.has(team.id)" />
+                    <LoaderCircle class="animate-spin" v-if="loadingIds.has(team.id)" />
                     Request to join
                   </ui-button>
                   <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`"
@@ -99,7 +99,7 @@ import UiPagination from '@/components/ui/UiPagination'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useQueryState } from '@/composables/useQueryState'

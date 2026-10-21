@@ -163,7 +163,7 @@
           :disabled="banner.isBannerUpdating.value || !banner.selectedBanner.value.length"
           @click="banner.saveBanner"
         >
-          <loading-icon v-if="banner.isBannerUpdating.value" />
+          <LoaderCircle class="animate-spin" v-if="banner.isBannerUpdating.value" />
           Save
         </ui-button>
       </template>
@@ -172,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'

@@ -1,11 +1,11 @@
 <template>
   <ui-button variant="secondary" size="sm" @click="themeStore.toggleTheme">
-    <BrushIcon />
+    <Brush :size="16" />
   </ui-button>
 </template>
 
 <script setup lang="ts">
-import BrushIcon from '@/icons/BrushIcon.vue'
+import { Brush } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/theme'
 import UiButton from '../ui/UiButton'
 

@@ -89,7 +89,7 @@
         Cancel
       </ui-button>
       <ui-button type="submit" :disabled="isUpdatingProfile || isLoadingError || isLoading">
-        <LoadingIcon v-if="isUpdatingProfile" />
+        <LoaderCircle class="animate-spin" v-if="isUpdatingProfile" />
         Save changes
       </ui-button>
     </div>
@@ -102,7 +102,7 @@ import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useForm } from '@/composables/useForm'
 import { useNotification } from '@/composables/useNotification'
 import { EditProfileSchema } from '@/schemas/profile.schema'

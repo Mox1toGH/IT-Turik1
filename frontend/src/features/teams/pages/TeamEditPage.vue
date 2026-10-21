@@ -2,7 +2,7 @@
   <section class="page-shell teams-edit-page">
     <header class="edit-header">
       <router-link class="back-link" :to="team ? `/teams/${team.id}` : '/teams'">
-        <arrow-left class="back-icon" aria-hidden="true" />
+        <ChevronLeft class="back-icon" aria-hidden="true" />
         Back to team
       </router-link>
 
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import ArrowLeft from '@/icons/ArrowLeft.vue'
+import { ChevronLeft } from 'lucide-vue-next'
 import { computed, watchEffect } from 'vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'

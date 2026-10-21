@@ -6,7 +6,7 @@
     @click="avatar.isOpen.value = true"
     :disabled="disabled"
   >
-    <AvatarEditIcon />
+    <SquarePen :size="18" />
   </button>
 
   <ui-modal v-model="avatar.isOpen.value" @close="avatar.resetState">
@@ -46,7 +46,11 @@
         Remove
       </ui-button>
       <ui-button size="sm" :disabled="avatar.isUpdating.value" @click="avatar.saveAvatar">
-        <LoadingIcon v-if="avatar.isUpdating.value" />
+        <LoaderCircle
+          v-if="avatar.isUpdating.value"
+          class="animate-spin"
+          :size="16"
+        />
         Save
       </ui-button>
     </template>
@@ -57,8 +61,7 @@
 import { toRef } from 'vue'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle, SquarePen } from 'lucide-vue-next'
 import UiFileDrop from '@/components/ui/UiFileDrop'
 import { useAvatarUpload } from '../../../composables/useAvatarUpload'
 import type { UserSummary } from '@/shared/types/user'

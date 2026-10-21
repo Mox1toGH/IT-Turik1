@@ -39,7 +39,7 @@
         :disabled="!canDeleteTournament"
         @click="handleDeleteTournament"
       >
-        <loading-icon v-if="isDeleting" />
+        <LoaderCircle class="animate-spin" v-if="isDeleting" />
         Delete permanently
       </ui-button>
     </template>
@@ -53,7 +53,7 @@ import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { truncateText } from '@/lib/utils'
 import { useDeleteTournament, useGetTournament } from '@/api/tournaments/tournaments'
 import { useRouter } from 'vue-router'

@@ -75,7 +75,7 @@
                 :disabled="loadingInvitationIds.has(invitation.id)"
                 @click="resendInvitation(invitation.user.id)"
               >
-                <loading-icon v-if="loadingInvitationIds.has(invitation.id)" />
+                <LoaderCircle class="animate-spin" v-if="loadingInvitationIds.has(invitation.id)" />
                 Resend invitation
               </ui-button>
             </div>
@@ -95,7 +95,7 @@ import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useInviteMemberToTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
 import type { TeamInvitationResponse, UpdateTeamResponse } from '@/api/backendAPINinja.schemas'
 

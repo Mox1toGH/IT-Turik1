@@ -13,7 +13,7 @@
 
       <div>
         <div class="danger-zone-header">
-          <danger-icon width="20" height="20" />
+          <TriangleAlert :size="20" />
           <span>Danger Zone</span>
         </div>
 
@@ -65,7 +65,7 @@
 import DeleteTeamModal from './modals/DeleteTeamModal.vue'
 import TeamVisibilityModal from './modals/TeamVisibilityModal.vue'
 import UiCard from '@/components/ui/UiCard'
-import DangerIcon from '@/icons/DangerIcon.vue'
+import { TriangleAlert } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
 import { useRouter } from 'vue-router'

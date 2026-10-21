@@ -60,7 +60,7 @@
 
           <div class="footer-actions">
             <ui-button :disabled="isResetingPassword" type="submit">
-              <loading-icon v-if="isResetingPassword" />
+              <LoaderCircle class="animate-spin" v-if="isResetingPassword" />
               Set new password
             </ui-button>
           </div>
@@ -76,7 +76,7 @@ import { useRoute } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
 import UiPasswordField from '@/components/ui/UiPasswordField'
 import UiButton from '@/components/ui/UiButton'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 
 const route = useRoute()
