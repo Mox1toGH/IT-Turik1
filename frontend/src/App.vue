@@ -1,32 +1,42 @@
 <template>
-  <div id="app" class="app-shell">
+  <div id="app" class="app-shell" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <VueQueryDevtools />
 
-    <app-navbar />
+    <app-sidebar v-model:collapsed="sidebarCollapsed" />
 
     <app-notification />
 
-    <main class="page-content">
-      <ui-offline-banner />
-      <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <div :key="$route.path">
-            <component :is="Component" />
-          </div>
-        </transition>
-      </router-view>
-    </main>
+    <div class="app-main">
+      <main class="page-content">
+        <ui-offline-banner />
+        <router-view v-slot="{ Component }">
+          <transition name="page" mode="out-in">
+            <div :key="$route.path">
+              <component :is="Component" />
+            </div>
+          </transition>
+        </router-view>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import AppNavbar from './components/shared/AppNavbar.vue'
+import { ref, watch } from 'vue'
+import AppSidebar from './components/shared/AppSidebar.vue'
 import AppNotification from './components/shared/AppNotification.vue'
 import UiOfflineBanner from './components/ui/UiOfflineBanner'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 import { useThemeStore } from '@/stores/theme'
 
 useThemeStore()
+
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
+const sidebarCollapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1')
+
+watch(sidebarCollapsed, (collapsed) => {
+  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0')
+})
 </script>
 
 <style scoped>
@@ -53,35 +63,54 @@ useThemeStore()
 }
 
 .app-shell {
-  --nav-offset: 76px;
+  --sidebar-width: 264px;
+  --sidebar-width-collapsed: 78px;
+  --nav-offset: 0px;
   position: relative;
   min-height: 100vh;
   overflow-x: clip;
-  padding-top: var(--nav-offset);
+}
+
+.app-shell.sidebar-collapsed {
+  --sidebar-width: var(--sidebar-width-collapsed);
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .page-content {
+  flex: 1;
   width: 100%;
-  margin: 2rem 0 0;
-  padding: 0 clamp(1rem, 3vw, 2.5rem) 2rem;
+  margin: 0;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem) 2rem;
   position: relative;
   z-index: 9;
 }
 
-@media (max-width: 680px) {
-  .nav-container {
-    align-items: flex-start;
-    flex-direction: column;
+@media (max-width: 900px) {
+  .app-shell {
+    --nav-offset: 60px;
   }
 
-  .nav-links {
-    width: 100%;
-    justify-content: flex-start;
+  .app-main {
+    margin-left: 0;
+    padding-top: var(--nav-offset);
+    transition: none;
   }
 
   .page-content {
-    padding: 0 1rem;
-    margin-top: 1rem;
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-main {
+    transition: none;
   }
 }
 </style>
