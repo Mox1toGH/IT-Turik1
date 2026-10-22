@@ -11,55 +11,63 @@
       </p>
     </div>
 
-    <ui-query-state :query="props.query">
-<template #skeleton>
-        <div class="invitation-grid">
-          <div v-for="i in 2" :key="`invitation-skeleton-${i}`" class="invitation-card-skeleton">
-            <div class="invitation-card-skeleton-top">
-              <ui-skeleton variant="rounded" width="44px" height="44px" />
-              <div class="invitation-card-skeleton-lines">
-                <ui-skeleton variant="rect" width="120px" height="14px" />
-                <ui-skeleton variant="rect" width="160px" height="12px" />
+    <ui-query-block :query="props.query">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="invitation-grid">
+            <div v-for="i in 2" :key="`invitation-skeleton-${i}`" class="invitation-card-skeleton">
+              <div class="invitation-card-skeleton-top">
+                <ui-skeleton variant="rounded" width="44px" height="44px" />
+                <div class="invitation-card-skeleton-lines">
+                  <ui-skeleton variant="rect" width="120px" height="14px" />
+                  <ui-skeleton variant="rect" width="160px" height="12px" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </template><div v-if="props.invitations.length" class="invitation-grid">
-        <ui-card
-          v-for="invitation in props.invitations"
-          :key="`inv-${invitation.id}`"
-          class="invitation-card"
-        >
-          <div class="invitation-top">
-            <user-avatar
-              :avatar="invitation.user.avatar"
-              :username="invitation.user.username"
-              :full-name="invitation.user.full_name || ''"
-              :size="44"
-            />
+        </template>
 
-            <div class="invitation-main">
-              <p class="invitation-name">{{ invitation.user.username }}</p>
-              <p class="text-muted invitation-email">{{ invitation.user.email }}</p>
-            </div>
+        <template #default>
+          <p v-if="isEmpty" class="text-muted invitations-note">No invitations yet.</p>
+          <div v-else class="invitation-grid">
+            <ui-card
+              v-for="invitation in props.invitations"
+              :key="`inv-${invitation.id}`"
+              class="invitation-card"
+            >
+              <div class="invitation-top">
+                <user-avatar
+                  :avatar="invitation.user.avatar"
+                  :username="invitation.user.username"
+                  :full-name="invitation.user.full_name || ''"
+                  :size="44"
+                />
 
-            <ui-badge :variant="invitationVariant(invitation.status)">
-              {{ invitation.status }}
-            </ui-badge>
+                <div class="invitation-main">
+                  <p class="invitation-name">{{ invitation.user.username }}</p>
+                  <p class="text-muted invitation-email">{{ invitation.user.email }}</p>
+                </div>
+
+                <ui-badge :variant="invitationVariant(invitation.status)">
+                  {{ invitation.status }}
+                </ui-badge>
+              </div>
+
+              <p class="text-muted invitation-date">
+                Invited {{ formatDate(invitation.created_at, { showHours: true }) }}
+              </p>
+            </ui-card>
           </div>
-
-          <p class="text-muted invitation-date">
-            Invited {{ formatDate(invitation.created_at, { showHours: true }) }}
-          </p>
-        </ui-card>
-      </div><p v-else class="text-muted invitations-note">No invitations yet.</p>
-</ui-query-state>
+        </template>
+      </ui-query-field>
+    </ui-query-block>
   </div>
 </template>
 
 <script setup lang="ts">
 import UiBadge, { type Variants } from '@/components/ui/UiBadge'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { computed } from 'vue'
@@ -69,11 +77,12 @@ import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
   invitations: TeamInvitation[]
-  loading: boolean
   query: QueryLike
 }
 
 const props = defineProps<Props>()
+
+const isEmpty = computed(() => props.invitations.length === 0)
 
 const pendingInvitations = computed(() =>
   props.invitations.filter((invitation) => invitation.status === 'invited'),

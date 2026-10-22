@@ -7,11 +7,14 @@
       </router-link>
 
       <div class="edit-header-copy">
-        <ui-query-state :query="teamQuery">
-<template #skeleton>
-            <ui-skeleton variant="rect" height="34px" width="280px" />
-          </template><h1 :title="team?.name">Edit {{ truncateText(team?.name ?? 'team', 40) }}</h1>
-</ui-query-state>
+        <h1 :title="team?.name">
+          <ui-query-field :loading="isLoadingTeamInfo">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="34px" width="280px" />
+            </template>
+            Edit {{ truncateText(team?.name ?? 'team', 40) }}
+          </ui-query-field>
+        </h1>
 
         <p class="section-subtitle">Update the team profile and manage who belongs to it.</p>
       </div>
@@ -22,24 +25,20 @@
 
       <ui-tabs :items="tabItems" query-key="tab" sticky>
         <template #profile>
-          <team-edit-form
-            :status="status"
-            :loading="isLoadingTeamInfo"
-            :team="team"
-            :query="teamQuery"
-          />
+          <team-edit-form :loading="isLoadingTeamInfo" :team="team" />
         </template>
 
         <template #members>
-          <team-manage-members :loading="isLoadingTeamInfo" :team="team" :query="teamQuery" />
+          <team-manage-members
+            :loading="isLoadingMembers"
+            :team="team"
+            :members="members"
+            :query="membersQuery"
+          />
         </template>
 
         <template #invitations>
-          <team-invitations
-            :loading="isLoadingTeamInvitations"
-            :invitations="invitationList"
-            :query="invitationsQuery"
-          />
+          <team-invitations :invitations="invitationList" :query="invitationsQuery" />
         </template>
 
         <template v-if="!team.is_in_active_tournament" #invite>
@@ -59,12 +58,17 @@ import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
 import TeamInvitations from '../components/team-edit/TeamInvitations.vue'
 import TeamInvite from '../components/team-edit/TeamInvite.vue'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
+import { UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { truncateText } from '@/lib/utils'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useQueryState } from '@/composables/useQueryState'
-import { useGetTeam, useListTeamInvitationsByTeam } from '@/api/teams/teams'
+import {
+  useGetTeam,
+  useListTeamInvitationsByTeam,
+  useListTeamMembers,
+} from '@/api/teams/teams'
 import { isTeamCaptain } from '../lib/team-permissions'
+import type { TeamMember } from '../types'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,12 +78,25 @@ const { data: user } = useGetUserProfile()
 const teamId = computed(() => Number(route.params.id))
 const teamQuery = useGetTeam(teamId.value)
 const { data: team, isLoading: isLoadingTeamInfo } = teamQuery
-const { status } = useQueryState(teamQuery)
+const membersQuery = useListTeamMembers(teamId, {
+  query: { enabled: computed(() => route.query.tab === 'members') },
+})
+const { data: memberResponses, isLoading: isLoadingMembers } = membersQuery
+const members = computed<TeamMember[]>(() =>
+  (memberResponses.value ?? []).map((member) => ({
+    id: member.id,
+    username: member.username,
+    email: member.email,
+    full_name: member.full_name,
+    role: member.role,
+    avatar: member.avatar,
+  })),
+)
 
 // Invitations query lives at page level (same cache key as any nested use, so
 // no extra fetch): the pending count is needed here for the tab badge.
 const invitationsQuery = useListTeamInvitationsByTeam(teamId)
-const { data: invitationsData, isLoading: isLoadingTeamInvitations } = invitationsQuery
+const { data: invitationsData } = invitationsQuery
 const invitationList = computed(() => invitationsData.value?.items ?? [])
 const pendingInvitationCount = computed(
   () => invitationList.value.filter((invitation) => invitation.status === 'invited').length,
@@ -88,7 +105,11 @@ const pendingInvitationCount = computed(
 const tabItems = computed<TabItem[]>(() => {
   const items: TabItem[] = [
     { value: 'profile', label: 'Team profile' },
-    { value: 'members', label: 'Members', count: team.value?.members.length },
+    {
+      value: 'members',
+      label: 'Members',
+      count: memberResponses.value ? members.value.length : team.value?.members.length,
+    },
     {
       value: 'invitations',
       label: 'Invitations',

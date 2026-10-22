@@ -11,12 +11,21 @@
 
     <div class="invite-row">
       <div class="invite-select-wrap">
-        <ui-select-search
-          placeholder="Select user"
-          v-model="addMemberSelection"
-          :options="userOptions"
-          :isLoading="isLoadingUsers"
-        />
+        <ui-query-block :query="usersQuery" title="users">
+          <template #error><p class="text-muted">Could not load users.</p></template>
+          <ui-query-field>
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="40px" width="100%" />
+            </template>
+            <p v-if="userOptions.length === 0" class="text-muted">No users available to invite.</p>
+            <ui-select-search
+              v-else
+              placeholder="Select user"
+              v-model="addMemberSelection"
+              :options="userOptions"
+            />
+          </ui-query-field>
+        </ui-query-block>
       </div>
 
       <ui-button
@@ -34,6 +43,8 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
@@ -49,7 +60,8 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: users, isLoading: isLoadingUsers } = useListUsers()
+const usersQuery = useListUsers()
+const { data: users, isLoading: isLoadingUsers } = usersQuery
 
 const addMemberSelection = ref<number | null>(null)
 

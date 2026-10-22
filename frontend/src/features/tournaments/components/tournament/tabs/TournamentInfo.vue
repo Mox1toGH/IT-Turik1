@@ -15,148 +15,157 @@
       </div>
     </template>
 
-    <ui-query-state :query="tournamentQuery" title="tournament">
-      <template #skeleton>
+    <ui-query-block :query="tournamentQuery">
       <div class="tournament-info">
         <div class="info-section">
           <p class="section-label">Name</p>
-          <div class="skeleton-lines">
-            <ui-skeleton variant="rect" width="100%" />
-            <ui-skeleton variant="rect" width="80%" />
-          </div>
+          <ui-query-field class="info-value">
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="70%" />
+            </template>
+            <ui-truncate :text="tournament?.name ?? ''" />
+          </ui-query-field>
         </div>
 
         <div class="info-section">
           <p class="section-label">Description</p>
-          <div class="skeleton-lines">
-            <ui-skeleton variant="rect" width="90%" />
-            <ui-skeleton variant="rect" width="70%" />
-            <ui-skeleton variant="rect" width="80%" />
-          </div>
+          <ui-query-field class="info-value">
+            <template #skeleton>
+              <div class="skeleton-lines">
+                <ui-skeleton variant="rect" width="90%" />
+                <ui-skeleton variant="rect" width="70%" />
+              </div>
+            </template>
+            <ui-expandable-text :text="tournament?.description ?? ''" :lines="3" />
+          </ui-query-field>
         </div>
 
         <div class="info-section">
           <p class="section-label">Dates</p>
-          <div class="dates-row">
+          <div class="dates-row info-value">
             <div class="dates-values">
-              <ui-skeleton variant="rect" width="180px" />
+              <div class="date-value">
+                <span class="date-label">Start</span>
+                <ui-query-field>
+                  <template #skeleton><ui-skeleton variant="rect" width="180px" /></template>
+
+                  <span>
+                    {{
+                      tournament?.start_date
+                        ? formatDate(tournament.start_date, { showHours: true })
+                        : '-'
+                    }}
+                  </span>
+                </ui-query-field>
+              </div>
+              <div class="date-value">
+                <span class="date-label">End</span>
+                <ui-query-field>
+                  <template #skeleton><ui-skeleton variant="rect" width="180px" /></template>
+                  <span>
+                    {{
+                      tournament?.end_date
+                        ? formatDate(tournament.end_date, { showHours: true })
+                        : '-'
+                    }}
+                  </span>
+                </ui-query-field>
+              </div>
             </div>
-            <ui-skeleton variant="rect" width="100px" />
+            <ui-query-field>
+              <template #skeleton><ui-skeleton variant="rect" width="100px" /></template>
+              <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
+            </ui-query-field>
           </div>
         </div>
 
         <div class="info-section">
           <p class="section-label">Limits</p>
-          <div class="limits-row">
-            <ui-skeleton variant="rect" width="100px" />
-            <ui-skeleton variant="rect" width="100px" />
+          <div class="limits-row info-value">
+            <div class="limit-item">
+              <div class="limit-value">
+                <ui-query-field>
+                  <template #skeleton><ui-skeleton variant="rect" width="100px" /></template>
+                  <span>
+                    {{
+                      tournament?.min_team_members
+                        ? `${tournament.min_team_members} members`
+                        : 'No minimum'
+                    }}
+                  </span>
+                </ui-query-field>
+              </div>
+            </div>
+            <div class="limit-item">
+              <div class="limit-value">
+                <ui-query-field>
+                  <template #skeleton><ui-skeleton variant="rect" width="100px" /></template>
+                  <span>
+                    {{ tournament?.max_teams ?? 'No limit' }}
+                    <span v-if="tournament?.max_teams">teams</span>
+                  </span>
+                </ui-query-field>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      </template>
 
-    <div class="tournament-info">
-      <div class="info-section">
-        <p class="section-label">Name</p>
-        <ui-truncate :text="tournament?.name ?? ''" />
-      </div>
-
-      <div class="info-section">
-        <p class="section-label">Description</p>
-        <ui-expandable-text :text="tournament?.description ?? ''" :lines="3" />
-      </div>
-
-      <div class="info-section">
-        <p class="section-label">Dates</p>
-        <div class="dates-row">
-          <div class="dates-values">
-            <p class="date-value">
-              <span class="date-label">Start</span>
-              {{
-                tournament?.start_date
-                  ? formatDate(tournament.start_date, { showHours: true })
-                  : '-'
-              }}
-            </p>
-            <p class="date-value">
-              <span class="date-label">End</span>
-              {{
-                tournament?.end_date ? formatDate(tournament.end_date, { showHours: true }) : '-'
-              }}
-            </p>
-          </div>
-
-          <ui-badge :variant="statusBadgeVariant">{{ tournament?.status }}</ui-badge>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <p class="section-label">Limits</p>
-        <div class="limits-row">
-          <div class="limit-item">
-            <p class="limit-value">
-              {{
-                tournament?.min_team_members
-                  ? `${tournament.min_team_members} members`
-                  : 'No minimum'
-              }}
-            </p>
-          </div>
-
-          <div class="limit-item">
-            <p class="limit-value">
-              {{ tournament?.max_teams ?? 'No limit' }}
-              <span v-if="tournament?.max_teams">teams</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tournament-action">
-      <ui-button
-        v-if="currentRound"
-        as-link
-        :to="`/tournaments/${tournament?.id}?section=rounds`"
-        class="tournament-action-btn"
-      >
-        Current round: {{ currentRound.name }}
-      </ui-button>
-
-      <template v-if="tournament?.status === 'registration'">
-        <p v-if="!isTeamsError && !canManageRegistration && !registeredTeamId">
-          You cannot register for this tournament
-        </p>
-        <p v-if="isTeamsError && !registeredTeamId" class="team-registration-reason" role="alert">
-          Failed to load teams. Please try again.
-        </p>
-        <div v-if="!registeredTeamId && canManageRegistration" class="join-controls">
-          <ui-button :disabled="!canJoinSelectedTeam" @click="handleJoin">
-            <LoaderCircle class="animate-spin" v-if="isRegistering" />
-            Join Tournament
-          </ui-button>
-          <ui-select
-            v-model="selectedTeamId"
-            :options="teamOptions"
-            placeholder="Select a team"
-            min-width="220px"
-            :is-loading="isLoadingTeams"
-            :is-error="isTeamsError"
-            error="Failed to fetch teams"
-          />
-        </div>
-        <ui-button
-          v-if="registeredTeamId"
-          variant="danger"
-          :disabled="isLeaving"
-          @click="handleLeave"
+      <div class="tournament-action">
+        <ui-query-block
+          v-if="tournament?.status === 'running'"
+          :query="currentRoundQuery"
+          title="current round"
         >
-          <LoaderCircle class="animate-spin" v-if="isLeaving" />
-          <span>Leave Tournament</span>
-        </ui-button>
-      </template>
-    </div>
-    </ui-query-state>
+          <ui-query-field>
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" height="40px" />
+            </template>
+            <ui-button
+              v-if="currentRound"
+              as-link
+              :to="`/tournaments/${tournament?.id}?section=rounds`"
+              class="tournament-action-btn"
+            >
+              Current round: {{ currentRound.name }}
+            </ui-button>
+          </ui-query-field>
+        </ui-query-block>
+
+        <template v-if="tournament?.status === 'registration'">
+          <p v-if="isTeamsError && !registeredTeamId" class="team-registration-reason" role="alert">
+            Failed to load teams. Please try again.
+          </p>
+          <p v-if="user && !canManageRegistration && !registeredTeamId">
+            You cannot register for this tournament
+          </p>
+          <div v-if="!registeredTeamId && canManageRegistration" class="join-controls">
+            <ui-button :disabled="!canJoinSelectedTeam" @click="handleJoin">
+              <LoaderCircle class="animate-spin" v-if="isRegistering" />
+              Join Tournament
+            </ui-button>
+            <ui-select
+              v-model="selectedTeamId"
+              :options="teamOptions"
+              placeholder="Select a team"
+              min-width="220px"
+              :is-loading="isLoadingTeams"
+              :is-error="isTeamsError"
+              error="Failed to fetch teams"
+            />
+          </div>
+          <ui-button
+            v-if="registeredTeamId"
+            variant="danger"
+            :disabled="isLeaving"
+            @click="handleLeave"
+          >
+            <LoaderCircle class="animate-spin" v-if="isLeaving" />
+            <span>Leave Tournament</span>
+          </ui-button>
+        </template>
+      </div>
+    </ui-query-block>
   </ui-card>
 </template>
 
@@ -164,7 +173,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -191,22 +200,21 @@ const props = defineProps<Props>()
 const selectedTeamId = ref<number | null>(null)
 
 const { showNotification } = useNotification()
-const { data: user } = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user } = userQuery
 
 const tournamentQuery = useGetTournament(props.tournamentId)
 const { data: tournament } = tournamentQuery
-const { data: currentRound } = useGetCurrentTask(
+const currentRoundQuery = useGetCurrentTask(
   { tournament_id: props.tournamentId },
   {
     query: { enabled: computed(() => tournament.value?.status === 'running') },
   },
 )
+const { data: currentRound } = currentRoundQuery
 
-const {
-  data: teams,
-  isLoading: isLoadingTeams,
-  isError: isTeamsError,
-} = useListEligibleTeamsForTournament(props.tournamentId)
+const teamsQuery = useListEligibleTeamsForTournament(props.tournamentId)
+const { data: teams, isLoading: isLoadingTeams, isError: isTeamsError } = teamsQuery
 const { mutate: register, isPending: isRegistering } = useRegisterTeamForTournament()
 const { mutate: leave, isPending: isLeaving } = useUnregisterTeamFromTournament()
 
@@ -228,7 +236,8 @@ const canJoinSelectedTeam = computed(
 
 const canManageRegistration = computed(
   () =>
-    user.value?.role === 'team' && ((teams.value?.items.length ?? 0) > 0 || !!registeredTeamId.value),
+    user.value?.role === 'team' &&
+    ((teams.value?.items.length ?? 0) > 0 || !!registeredTeamId.value),
 )
 
 const statusBadgeVariant = computed(() => {
@@ -319,6 +328,10 @@ function handleJoin() {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted-foreground);
+}
+
+.info-value {
+  min-width: 0;
 }
 
 .dates-row {

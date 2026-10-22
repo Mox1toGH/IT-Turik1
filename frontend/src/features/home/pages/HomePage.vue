@@ -8,28 +8,25 @@
           <span>Home</span>
         </div>
 
-        <h1>
-          Welcome back,
-          <ui-query-state :query="userQuery" class="name-loader">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="160px" />
-            </template>
-
-            <span>{{ displayName }}</span>
-          </ui-query-state>
-        </h1>
+        <ui-query-block :query="userQuery">
+          <template #error>
+            <h1>Welcome back, there</h1>
+          </template>
+          <h1>
+            Welcome back,
+            <ui-query-field>
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="160px" />
+              </template>
+              <span>{{ displayName }}</span>
+            </ui-query-field>
+          </h1>
+        </ui-query-block>
 
         <p class="section-subtitle">
           Manage your profile, track competition readiness, and jump back into the work that
           matters.
         </p>
-      </div>
-
-      <div class="hero-actions">
-        <ui-card v-for="item in heroStats" :key="item.label" class="hero-stat">
-          <span class="text-base">{{ item.label }}:</span>
-          <strong class="text-base">{{ item.value }}</strong>
-        </ui-card>
       </div>
     </header>
 
@@ -51,8 +48,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import StatsPreview from '@/components/stats/StatsPreview.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -67,11 +63,6 @@ const { data: user } = userQuery
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')
 
 const isTeamRole = computed(() => hasRole(user.value, 'team'))
-
-const heroStats = computed(() => [
-  { label: 'Role', value: user.value?.role ?? '-' },
-  // { label: 'Teams', value: String(user.value?.teams?.length ?? 0) },
-])
 </script>
 
 <style scoped>
@@ -114,23 +105,11 @@ const heroStats = computed(() => [
   font-weight: 800;
 }
 
-.name-loader {
-  display: inline-block;
-}
-
 .home-hero .section-subtitle {
   max-width: 760px;
   margin: 0.45rem 0 0;
   font-size: var(--text-base);
   line-height: var(--text-base--line-height);
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
 }
 
 .hero-stat {
@@ -317,10 +296,6 @@ const heroStats = computed(() => [
   .home-hero .section-subtitle {
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-  }
-
-  .hero-actions {
-    justify-content: flex-start;
   }
 
   :deep(.data-list li),

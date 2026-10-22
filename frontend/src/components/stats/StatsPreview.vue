@@ -4,27 +4,28 @@
       <h2 id="stats-preview-title">Statistics</h2>
     </div>
 
-    <ui-query-state v-if="props.user" :query="activeQuery">
-      <template #skeleton>
-        <div class="preview-grid">
-          <ui-skeleton v-for="n in 4" :key="n" variant="rect" height="82px" />
-        </div>
-      </template>
-
+    <ui-query-block v-if="props.user" :query="activeQuery">
       <template #error>
         <p class="preview-error">Unable to load stats preview right now.</p>
       </template>
 
-      <div class="preview-grid">
-        <ui-card v-for="item in cards" :key="item.label" class="preview-item">
-          <p class="label">{{ item.label }}</p>
-          <p class="value">
-            <RouterLink v-if="item.to" :to="item.to">{{ item.value }}</RouterLink>
-            <span v-else>{{ item.value }}</span>
-          </p>
-        </ui-card>
-      </div>
-    </ui-query-state>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="preview-grid">
+            <ui-skeleton v-for="n in 4" :key="n" variant="rect" height="82px" />
+          </div>
+        </template>
+        <div class="preview-grid">
+          <ui-card v-for="item in cards" :key="item.label" class="preview-item">
+            <p class="label">{{ item.label }}</p>
+            <p class="value">
+              <RouterLink v-if="item.to" :to="item.to">{{ item.value }}</RouterLink>
+              <span v-else>{{ item.value }}</span>
+            </p>
+          </ui-card>
+        </div>
+      </ui-query-field>
+    </ui-query-block>
   </section>
 </template>
 
@@ -33,7 +34,7 @@ import { computed } from 'vue'
 import { hasRole } from '@/shared/lib/permissions'
 import { RouterLink } from 'vue-router'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import UiCard from '../ui/UiCard'
 import type { UserRole } from '@/shared/types/user'

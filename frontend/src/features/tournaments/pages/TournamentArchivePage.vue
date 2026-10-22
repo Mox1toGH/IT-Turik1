@@ -14,38 +14,41 @@
         </div>
       </header>
 
-      <ui-query-state :query="archiveQuery">
-        <template #skeleton>
-          <div class="archive-grid">
-            <ui-card v-for="i in 6" :key="i" class="archive-card">
-              <template #header>
-                <ui-skeleton variant="rect" width="70%" height="24px" />
-              </template>
-              <ui-skeleton variant="rect" class="archive-description" height="56px" />
-              <div class="archive-meta">
-                <div class="archive-date">
-                  <ui-skeleton variant="rect" width="70px" />
-                  <ui-skeleton variant="rect" width="150px" />
+      <ui-query-block :query="archiveQuery">
+        <ui-query-field>
+          <template #skeleton>
+            <div class="archive-grid">
+              <ui-card v-for="i in 6" :key="i" class="archive-card">
+                <template #header>
+                  <ui-skeleton variant="rect" width="70%" height="24px" />
+                </template>
+                <ui-skeleton variant="rect" class="archive-description" height="56px" />
+                <div class="archive-meta">
+                  <div class="archive-date">
+                    <ui-skeleton variant="rect" width="70px" />
+                    <ui-skeleton variant="rect" width="150px" />
+                  </div>
+                  <ui-skeleton variant="rect" width="90px" height="28px" />
                 </div>
-                <ui-skeleton variant="rect" width="90px" height="28px" />
-              </div>
-              <ui-skeleton variant="rect" width="100%" height="36px" />
+                <ui-skeleton variant="rect" width="100%" height="36px" />
+              </ui-card>
+            </div>
+          </template>
+
+          <template #default>
+            <ui-card v-if="isEmpty" class="empty-card">
+              <p class="empty-error">No finished tournaments yet.</p>
             </ui-card>
-          </div>
-        </template>
-
-        <div v-if="tournamentItems.length" class="archive-grid">
-          <tournament-archive-card
-            v-for="tournament in tournamentItems"
-            :key="tournament.id"
-            :tournament="tournament"
-          />
-        </div>
-
-        <ui-card v-else class="empty-card">
-          <p class="empty-error">No finished tournaments yet.</p>
-        </ui-card>
-      </ui-query-state>
+            <div v-else class="archive-grid">
+              <tournament-archive-card
+                v-for="tournament in tournamentItems"
+                :key="tournament.id"
+                :tournament="tournament"
+              />
+            </div>
+          </template>
+        </ui-query-field>
+      </ui-query-block>
     </section>
   </section>
 </template>
@@ -54,7 +57,7 @@
 import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { computed } from 'vue'
 import { useListTournamentArchive } from '@/api/tournaments/tournaments'
 import TournamentArchiveCard from '../components/tournament-archive/TournamentArchiveCard.vue'
@@ -62,6 +65,7 @@ import TournamentArchiveCard from '../components/tournament-archive/TournamentAr
 const archiveQuery = useListTournamentArchive()
 const { data: tournaments } = archiveQuery
 const tournamentItems = computed(() => tournaments.value?.items ?? [])
+const isEmpty = computed(() => tournamentItems.value.length === 0)
 </script>
 
 <style scoped>

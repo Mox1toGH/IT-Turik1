@@ -23,14 +23,19 @@
       </template>
 
       <template #submissions>
-        <TournamentSubmissions v-if="user?.role === 'team'" :tournament-id="id" />
-        <JuryAssign
-          v-else-if="user?.role === 'admin'"
-          :tournament-id="id"
-          :tournament-status="tournament?.status ?? 'draft'"
-        />
-        <ui-card v-else>
-          <p>Submissions are available for team members and admins.</p>
+        <template v-if="user">
+          <TournamentSubmissions v-if="user?.role === 'team'" :tournament-id="id" />
+          <JuryAssign
+            v-else-if="user?.role === 'admin'"
+            :tournament-id="id"
+            :tournament-status="tournament?.status ?? 'draft'"
+          />
+          <ui-card v-else>
+            <p>Submissions are available for team members and admins.</p>
+          </ui-card>
+        </template>
+        <ui-card v-else-if="userQuery.isError.value">
+          <p>Could not load your access level.</p>
         </ui-card>
       </template>
 
@@ -70,8 +75,10 @@ const route = useRoute()
 
 const id = Number(route.params.id)
 
-const { data: user } = useGetUserProfile()
-const { data: tournament } = useGetTournament(id)
+const userQuery = useGetUserProfile()
+const { data: user } = userQuery
+const tournamentQuery = useGetTournament(id)
+const { data: tournament } = tournamentQuery
 
 const canViewSubmissions = computed(() => user.value?.role === 'admin' || user.value?.role === 'team')
 

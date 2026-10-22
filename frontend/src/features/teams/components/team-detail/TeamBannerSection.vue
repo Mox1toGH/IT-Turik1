@@ -1,5 +1,5 @@
 <template>
-  <ui-card v-if="team?.banner || (isCaptain && !loading)" class="banner-card">
+  <ui-card class="banner-card">
     <template #header>
       <div class="panel-header">
         <div class="banner-copy">
@@ -20,29 +20,42 @@
       </div>
     </template>
 
-    <div
-      v-if="team?.banner"
-      class="banner-frame"
-      :style="heroBannerStyle"
-      role="img"
-      :aria-label="`Banner of ${team?.name ?? 'team'}`"
-    ></div>
+    <ui-query-block :query="query">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="banner-frame banner-frame--empty">
+            <ui-skeleton variant="rect" width="100%" height="100%" />
+          </div>
+        </template>
 
-    <div v-else class="banner-frame banner-frame--empty">
-      <span>No banner yet</span>
-    </div>
+        <div
+          v-if="team?.banner"
+          class="banner-frame"
+          :style="heroBannerStyle"
+          role="img"
+          :aria-label="`Banner of ${team?.name ?? 'team'}`"
+        ></div>
+
+        <div v-else class="banner-frame banner-frame--empty">
+          <span>This team does not have a banner yet.</span>
+        </div>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { Pencil } from 'lucide-vue-next'
 import type { Team } from '@/features/teams/types'
+import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
   team?: Team
-  loading: boolean
+  query: QueryLike
   isCaptain: boolean
   heroBannerStyle: Record<string, string>
 }

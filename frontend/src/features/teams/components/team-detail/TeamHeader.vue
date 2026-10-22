@@ -1,14 +1,4 @@
 <template>
-  <ui-query-state :query="props.query">
-    <template #skeleton>
-      <div class="team-detail-hero">
-        <ui-skeleton variant="rect" height="48px" width="320px" />
-        <div class="hero-contacts">
-          <ui-skeleton variant="rect" width="120px" />
-          <ui-skeleton variant="rect" width="120px" />
-        </div>
-      </div>
-    </template>
   <header class="team-detail-hero">
     <div class="team-detail-copy">
       <div class="breadcrumb-label">
@@ -19,36 +9,46 @@
         <span>Details</span>
       </div>
 
-      <h1 class="team-detail-title">
+      <ui-query-field :loading="props.loading">
+        <template #skeleton>
+          <div class="hero-skeleton">
+            <ui-skeleton variant="rect" height="48px" width="320px" />
+            <div class="hero-contacts">
+              <ui-skeleton variant="rect" width="120px" />
+              <ui-skeleton variant="rect" width="120px" />
+            </div>
+          </div>
+        </template>
+        <h1 class="team-detail-title">
           <ui-truncate :text="team?.name ?? 'Team details'" />
         </h1>
 
-      <div class="hero-contacts">
-        <a
+        <div class="hero-contacts">
+          <a
             v-if="team?.contact_telegram"
             :href="telegramLink(team.contact_telegram)"
             class="contact-pill"
           >
             <telegram-icon class="contact-icon" />
-            <ui-badge>@{{ team?.contact_telegram }}</ui-badge>
-          </a><span v-else class="contact-pill muted">No Telegram</span>
+            <ui-badge>@{{ team?.contact_telegram }}</ui-badge> </a
+          ><span v-else class="contact-pill muted">No Telegram</span>
 
-        <a
+          <a
             v-if="team?.contact_discord"
             class="contact-pill"
             :href="discordLink(team.contact_discord)"
           >
             <discord-icon class="contact-icon" />
-            <ui-badge>{{ team.contact_discord }}</ui-badge>
-          </a><span v-else class="contact-pill muted">No Discord</span>
-      </div>
+            <ui-badge>{{ team.contact_discord }}</ui-badge> </a
+          ><span v-else class="contact-pill muted">No Discord</span>
+        </div>
+      </ui-query-field>
     </div>
 
     <div class="hero-actions">
       <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
     </div>
   </header>
-  </ui-query-state>
 </template>
 
 <script setup lang="ts">
@@ -56,15 +56,15 @@ import TelegramIcon from '@/icons/TelegramIcon.vue'
 import DiscordIcon from '@/icons/DiscordIcon.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiBadge from '@/components/ui/UiBadge'
+import { UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { discordLink, telegramLink } from '../../lib/team-links'
 import type { Team } from '@/features/teams/types'
-import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
   team?: Team
-  query: QueryLike
+  loading: boolean
 }
 
 const props = defineProps<Props>()
@@ -118,6 +118,12 @@ const props = defineProps<Props>()
   gap: 0.7rem;
   flex-wrap: wrap;
   margin-top: 0.8rem;
+}
+
+.hero-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .contact-icon {

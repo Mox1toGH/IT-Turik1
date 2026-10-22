@@ -11,56 +11,67 @@
         <ui-button variant="secondary" @click="goBack">Back</ui-button>
       </div>
 
-      <ui-query-state :query="historyQuery">
-<template #skeleton>
-          <div class="history-list">
-            <div v-for="i in 4" :key="`skeleton-${i}`" class="history-card history-card-skeleton">
-              <ui-skeleton variant="rect" width="60%" height="24px" />
-              <ui-skeleton variant="rect" width="100%" height="18px" />
-              <ui-skeleton variant="rect" width="45%" height="18px" />
-              <ui-skeleton variant="rect" width="100%" height="34px" />
-            </div>
-          </div>
-        </template><p v-if="isError" class="text-muted">
-          Failed to load tournament history ({{ historyError?.message ?? 'unknown error' }}).
-        </p><p v-else-if="!historyItems.length" class="text-muted">No tournament history yet.</p><div v-else class="history-list">
-          <ui-card
-            v-for="item in historyItems"
-            :key="`${item.tournament_id}-${item.team.id}`"
-            class="history-card"
-          >
-            <template #header>
-              <div class="history-head">
-                <h3 class="history-title">{{ item.tournament_name }}</h3>
-                <ui-badge :variant="statusVariant(item.tournament_status)">
-                  {{ item.tournament_status }}
-                </ui-badge>
+      <ui-query-block :query="historyQuery">
+        <template #error="{ errorCode }">
+          <p class="text-muted">Failed to load tournament history (code: {{ errorCode }}).</p>
+        </template>
+        <ui-query-field>
+          <template #skeleton>
+            <div class="history-list">
+              <div v-for="i in 4" :key="`skeleton-${i}`" class="history-card history-card-skeleton">
+                <ui-skeleton variant="rect" width="60%" height="24px" />
+                <ui-skeleton variant="rect" width="100%" height="18px" />
+                <ui-skeleton variant="rect" width="45%" height="18px" />
+                <ui-skeleton variant="rect" width="100%" height="34px" />
               </div>
-            </template>
-
-            <div class="history-grid">
-              <p><strong>Dates:</strong> {{ formatDateRange(item.start_date, item.end_date) }}</p>
-              <p><strong>Team:</strong> {{ item.team.name }}</p>
-              <p>
-                <strong>Final place:</strong> {{ item.final_rank ? `#${item.final_rank}` : '-' }}
-              </p>
-              <p><strong>Final score:</strong> {{ formatScore(item.final_score) }}</p>
             </div>
+          </template>
 
-            <template #footer>
-              <ui-button
-                as-link
-                :to="`/tournaments/archive/${item.tournament_id}`"
-                variant="secondary"
-                size="sm"
-                class="open-btn"
+          <template #default>
+            <p v-if="isEmpty" class="text-muted">No tournament history yet.</p>
+            <div v-else class="history-list">
+              <ui-card
+                v-for="item in historyItems"
+                :key="`${item.tournament_id}-${item.team.id}`"
+                class="history-card"
               >
-                Open archive
-              </ui-button>
-            </template>
-          </ui-card>
-        </div>
-</ui-query-state>
+                <template #header>
+                  <div class="history-head">
+                    <h3 class="history-title">{{ item.tournament_name }}</h3>
+                    <ui-badge :variant="statusVariant(item.tournament_status)">
+                      {{ item.tournament_status }}
+                    </ui-badge>
+                  </div>
+                </template>
+
+                <div class="history-grid">
+                  <p>
+                    <strong>Dates:</strong> {{ formatDateRange(item.start_date, item.end_date) }}
+                  </p>
+                  <p><strong>Team:</strong> {{ item.team.name }}</p>
+                  <p>
+                    <strong>Final place:</strong>
+                    {{ item.final_rank ? `#${item.final_rank}` : '-' }}
+                  </p>
+                  <p><strong>Final score:</strong> {{ formatScore(item.final_score) }}</p>
+                </div>
+
+                <template #footer>
+                  <ui-button
+                    as-link
+                    :to="`/tournaments/archive/${item.tournament_id}`"
+                    variant="secondary"
+                    size="sm"
+                    class="open-btn"
+                  >
+                    Open archive
+                  </ui-button>
+                </template>
+              </ui-card>
+            </div>
+          </template>
+        </ui-query-field>
+      </ui-query-block>
     </div>
   </section>
 </template>
@@ -71,6 +82,7 @@ import { useRoute, useRouter } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import {
   useGetUser,
@@ -91,19 +103,13 @@ const targetUserId = computed(() =>
 const { data: viewedUser } = useGetUser(routeUserId, {
   query: { enabled: computed(() => !isOwnView.value && routeUserId.value > 0) },
 })
-const historyQuery = useListUserTournamentHistory(
-  targetUserId,
-  undefined,
-  { query: { enabled: computed(() => targetUserId.value > 0) } },
-)
-const {
-  data: history,
-  isLoading,
-  isError,
-  error: historyError,
-} = historyQuery
+const historyQuery = useListUserTournamentHistory(targetUserId, undefined, {
+  query: { enabled: computed(() => targetUserId.value > 0) },
+})
+const { data: history } = historyQuery
 
 const historyItems = computed(() => history.value?.items ?? [])
+const isEmpty = computed(() => historyItems.value.length === 0)
 const displayUserName = computed(
   () => viewedUser.value?.full_name || viewedUser.value?.username || 'User',
 )

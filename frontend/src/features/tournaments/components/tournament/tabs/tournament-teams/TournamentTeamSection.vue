@@ -8,24 +8,24 @@
 
     <div class="teams-list">
       <template v-if="filteredTeams.length">
-          <template v-for="team in filteredTeams" :key="team.id">
-            <div class="team-row">
-              <slot :team="team" />
-            </div>
-          </template>
-        </template><div v-else class="no-results">
-          <p class="no-results-text">No teams match your search</p>
-          <button type="button" class="clear-search-btn" @click="$emit('clear-search')">
-            Clear search
-          </button>
-        </div>
+        <template v-for="team in filteredTeams" :key="team.id">
+          <div class="team-row">
+            <slot :team="team" />
+          </div>
+        </template>
+      </template>
+      <div v-else class="no-results">
+        <p class="no-results-text">No teams match your search</p>
+        <button type="button" class="clear-search-btn" @click="$emit('clear-search')">
+          Clear search
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiSkeleton from '@/components/ui/UiSkeleton'
 import type { TournamentTeamResponse } from '@/api/backendAPINinja.schemas'
 
 type Team = TournamentTeamResponse
@@ -33,12 +33,11 @@ type Team = TournamentTeamResponse
 interface Props {
   sectionType: 'active' | 'disqualified'
   teams?: Team[]
-  loading: boolean
   search: string
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ (e: 'clear-search'): void }>()
+defineEmits<{ (e: 'clear-search'): void }>()
 
 const sectionTitle = computed(() =>
   props.sectionType === 'active' ? 'Team' : 'Disqualified Teams',

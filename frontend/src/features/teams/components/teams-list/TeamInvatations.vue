@@ -1,46 +1,35 @@
 <template>
   <div class="teams-widget">
-    <div
-      v-if="status === 'error'"
-      style="display: flex; height: 136px; justify-content: center; align-items: center"
-    >
-      <p>Error while fetching invitations</p>
-    </div>
+    <ui-query-block :query="invitationsQuery" title="invitations">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-grid">
+            <div class="team-item-skeleton" v-for="i in 2" :key="i">
+              <div class="team-skeleton-body">
+                <div class="team-meta">
+                  <ui-skeleton variant="rect" width="100%" />
+                  <ui-skeleton variant="rect" width="80px" />
+                </div>
 
-    <div v-else class="teams-body">
-      <div v-if="isStale" class="stale-banner" role="status">
-        <span>Update failed</span>
-        <button type="button" :disabled="isFetching" @click="() => refetch()">
-          {{ isFetching ? 'Retrying…' : 'Retry' }}
-        </button>
-      </div>
+                <ui-skeleton variant="rect" width="120px" />
 
-      <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-query-state :query="invitationsQuery">
-<template #skeleton>
-            <div class="team-grid">
-              <div class="team-item-skeleton" v-for="i in 2" :key="i">
-                <div class="team-skeleton-body">
-                  <div class="team-meta">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="80px" />
-                  </div>
-
-                  <ui-skeleton variant="rect" width="120px" />
-
-                  <div style="display: flex; gap: 10px">
-                    <ui-skeleton variant="rect" height="1.8rem" width="80px" />
-                    <ui-skeleton variant="rect" height="1.8rem" width="80px" />
-                  </div>
+                <div style="display: flex; gap: 10px">
+                  <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                  <ui-skeleton variant="rect" height="1.8rem" width="80px" />
                 </div>
               </div>
             </div>
-          </template><div v-if="pendingInboxInvitations?.length === 0" class="empty-text text-muted">
+          </div>
+        </template>
+
+        <template #default>
+          <div v-if="isEmpty" class="empty-text text-muted">
             <p>No invitations. When someone invites you, it will appear here.</p>
             <button type="button" class="empty-link text-sm" @click="emit('browse-teams')">
               Browse available teams <span aria-hidden="true">-&gt;</span>
             </button>
-          </div><div v-else class="team-grid">
+          </div>
+          <div v-else class="team-grid">
             <ui-card
               v-for="invitation in pendingInboxInvitations"
               :key="`invite-${invitation.id}`"
@@ -54,7 +43,6 @@
                     Invited by: {{ invitation.invited_by?.username || 'Unknown user' }}
                   </ui-badge>
                 </div>
-
               </div>
 
               <template #footer>
@@ -79,22 +67,22 @@
               </template>
             </ui-card>
           </div>
-</ui-query-state>
-      </div>
-    </div>
+        </template>
+      </ui-query-field>
+    </ui-query-block>
   </div>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiBadge from '@/components/ui/UiBadge'
-import { useQueryState } from '@/composables/useQueryState'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
@@ -108,12 +96,12 @@ const emit = defineEmits<{
 const { showNotification } = useNotification()
 
 const invitationsQuery = useListTeamInvitations()
-const { data: inboxInvitations, isLoading: inboxLoading, isFetching, refetch } = invitationsQuery
-const { status, isStale } = useQueryState(invitationsQuery)
+const { data: inboxInvitations } = invitationsQuery
 
 const pendingInboxInvitations = computed(() =>
   inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited'),
 )
+const isEmpty = computed(() => pendingInboxInvitations.value?.length === 0)
 
 const { mutate: accept } = useAcceptTeamInvitation()
 const { mutate: decline } = useDeclineTeamInvitation()
@@ -159,11 +147,6 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 
 .empty-text p {
   margin: 0;
-}
-
-.teams-body {
-  display: grid;
-  gap: 1rem;
 }
 
 .team-grid {
@@ -243,43 +226,5 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 
 .team-item :deep(.card-footer) {
   padding: 0 1.25rem 1.25rem;
-}
-
-.dimmed > * {
-  opacity: 0.6;
-}
-
-.stale-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.stale-banner button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.stale-banner button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.stale-banner button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 </style>

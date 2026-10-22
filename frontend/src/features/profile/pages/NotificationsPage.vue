@@ -29,16 +29,15 @@
       <div class="notifications-rule" aria-hidden="true"></div>
 
       <notifications-list
-          :items="notifications.notificationsData.value?.items ?? []"
-          :is-loading="notifications.isLoading.value"
-          :error="notifications.error.value"
-          :page="page"
-          :total-pages="notifications.totalPages.value"
-          @mark-read="notifications.handleMarkRead"
-          @delete="notifications.requestDeleteConfirm"
-          @redirect="handleRedirect"
-          @prev="prevPage"
-          @next="nextPage"
+        :query="notifications.query"
+        :items="notifications.notificationsData.value?.items ?? []"
+        :page="page"
+        :total-pages="notifications.totalPages.value"
+        @mark-read="notifications.handleMarkRead"
+        @delete="notifications.requestDeleteConfirm"
+        @redirect="handleRedirect"
+        @prev="prevPage"
+        @next="nextPage"
       />
     </section>
 

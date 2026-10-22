@@ -6,9 +6,7 @@
           <h3>Edit team</h3>
           <p class="text-muted">Update team profile and manage members in edit workspace.</p>
         </div>
-        <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team?.id}/edit`"
-          >Edit team</ui-button
-        >
+        <ui-button asLink variant="secondary" :to="`/teams/${team?.id}/edit`">Edit team</ui-button>
       </div>
 
       <div>

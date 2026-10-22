@@ -297,6 +297,7 @@ function formatItemTime(item: CalendarItem): string {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.3;
+  color: var(--foreground);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;

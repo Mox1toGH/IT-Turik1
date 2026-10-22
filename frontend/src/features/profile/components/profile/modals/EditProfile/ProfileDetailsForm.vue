@@ -9,73 +9,97 @@
         </div>
       </div>
 
-      <div class="row two">
-        <label class="field">
-          <span class="label">Full name</span>
-          <ui-input
-              v-model="form.fields.value.full_name"
-              :disabled="isLoadingError"
-              :isInvalid="!!form.errors.value.full_name"
-              style="width: 100%"
-              type="text"
-              placeholder="John Doe"
-              required
-              @blur="form.validateField('full_name')"
-            />
-          <small v-if="form.errors.value.full_name" class="error">{{
-            form.errors.value.full_name
-          }}</small>
-        </label>
+      <ui-query-block :query="userQuery">
+        <div class="row two">
+          <label class="field">
+            <span class="label">Full name</span>
+            <ui-query-field>
+              <template #skeleton
+                ><ui-skeleton variant="rect" width="100%" height="40px"
+              /></template>
+              <ui-input
+                v-model="form.fields.value.full_name"
+                :disabled="isFormDisabled"
+                :isInvalid="!!form.errors.value.full_name"
+                style="width: 100%"
+                type="text"
+                placeholder="John Doe"
+                required
+                @blur="form.validateField('full_name')"
+              />
+            </ui-query-field>
+            <small v-if="form.errors.value.full_name" class="error">{{
+              form.errors.value.full_name
+            }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">Username</span>
-          <ui-input
-              v-model="form.fields.value.username"
-              :disabled="isLoadingError"
-              :isInvalid="!!form.errors.value.username"
-              style="width: 100%"
-              placeholder="johndoe"
-              required
-              @blur="form.validateField('username')"
-            />
-          <small v-if="form.errors.value.username" class="error">{{
-            form.errors.value.username
-          }}</small>
-        </label>
+          <label class="field">
+            <span class="label">Username</span>
+            <ui-query-field>
+              <template #skeleton
+                ><ui-skeleton variant="rect" width="100%" height="40px"
+              /></template>
+              <ui-input
+                v-model="form.fields.value.username"
+                :disabled="isFormDisabled"
+                :isInvalid="!!form.errors.value.username"
+                style="width: 100%"
+                placeholder="johndoe"
+                required
+                @blur="form.validateField('username')"
+              />
+            </ui-query-field>
+            <small v-if="form.errors.value.username" class="error">{{
+              form.errors.value.username
+            }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">Phone number</span>
-          <PhoneField
-              v-model="form.fields.value.phone"
-              :disabled="isLoadingError"
-              :isInvalid="!!form.errors.value.phone"
-              @blur="form.validateField('phone')"
-            />
-          <small v-if="form.errors.value.phone" class="error">{{ form.errors.value.phone }}</small>
-        </label>
+          <label class="field">
+            <span class="label">Phone number</span>
+            <ui-query-field>
+              <template #skeleton
+                ><ui-skeleton variant="rect" width="100%" height="40px"
+              /></template>
+              <PhoneField
+                v-model="form.fields.value.phone"
+                :disabled="isFormDisabled"
+                :isInvalid="!!form.errors.value.phone"
+                @blur="form.validateField('phone')"
+              />
+            </ui-query-field>
+            <small v-if="form.errors.value.phone" class="error">{{
+              form.errors.value.phone
+            }}</small>
+          </label>
 
-        <label class="field">
-          <span class="label">City</span>
-          <ui-input
-              v-model="form.fields.value.city"
-              :disabled="isLoadingError"
-              :isInvalid="!!form.errors.value.city"
-              style="width: 100%"
-              type="text"
-              placeholder="Kyiv"
-              required
-              @blur="form.validateField('city')"
-            />
-          <small v-if="form.errors.value.city" class="error">{{ form.errors.value.city }}</small>
-        </label>
-      </div>
+          <label class="field">
+            <span class="label">City</span>
+            <ui-query-field>
+              <template #skeleton
+                ><ui-skeleton variant="rect" width="100%" height="40px"
+              /></template>
+              <ui-input
+                v-model="form.fields.value.city"
+                :disabled="isFormDisabled"
+                :isInvalid="!!form.errors.value.city"
+                style="width: 100%"
+                type="text"
+                placeholder="Kyiv"
+                required
+                @blur="form.validateField('city')"
+              />
+            </ui-query-field>
+            <small v-if="form.errors.value.city" class="error">{{ form.errors.value.city }}</small>
+          </label>
+        </div>
+      </ui-query-block>
     </div>
 
     <div class="footer-actions">
       <ui-button
         type="button"
         variant="secondary"
-        :disabled="isLoadingError || isLoading"
+        :disabled="isFormDisabled"
         @click="emit('change-password')"
       >
         Change password
@@ -83,12 +107,12 @@
       <ui-button
         type="button"
         variant="secondary"
-        :disabled="isUpdatingProfile || isLoadingError || isLoading"
+        :disabled="isUpdatingProfile || isFormDisabled"
         @click="emit('cancel')"
       >
         Cancel
       </ui-button>
-      <ui-button type="submit" :disabled="isUpdatingProfile || isLoadingError || isLoading">
+      <ui-button type="submit" :disabled="isUpdatingProfile || isFormDisabled">
         <LoaderCircle class="animate-spin" v-if="isUpdatingProfile" />
         Save changes
       </ui-button>
@@ -97,10 +121,11 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { LoaderCircle } from 'lucide-vue-next'
 import { useForm } from '@/composables/useForm'
@@ -123,7 +148,11 @@ const emit = defineEmits<{
 
 const { showNotification } = useNotification()
 const userQuery = useGetUserProfile()
-const { data: user, isLoading, isLoadingError } = userQuery
+const { data: user } = userQuery
+
+// The form stays disabled until the profile request settles (successfully or
+// not), so the user never edits stale values.
+const isFormDisabled = computed(() => userQuery.isPending.value || userQuery.isError.value)
 
 const form = useForm<ProfileForm>(EditProfileSchema, {
   username: '',

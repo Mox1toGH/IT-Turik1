@@ -10,6 +10,7 @@ import {
 } from '@/api/notifications/notifications'
 import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 import { useNotification } from '@/composables/useNotification'
+import type { QueryLike } from '@/composables/useQueryState'
 
 export interface NotificationMessagePart {
   type: string
@@ -119,11 +120,9 @@ export interface UseNotificationsOptions {
 }
 
 export interface UseNotificationsReturn {
-  notificationsData: Ref<
-    { items: NotificationResponse[]; count: number } | undefined
-  >
-  isLoading: Ref<boolean>
-  error: Ref<unknown>
+  /** Query state consumed by `UiQueryBlock` for loading, error, and empty handling. */
+  query: QueryLike
+  notificationsData: Ref<{ items: NotificationResponse[]; count: number } | undefined>
   unreadCount: Ref<{ unread_count: number } | undefined>
   unreadNotifications: ComputedRef<NotificationResponse[]>
   hasUnread: ComputedRef<boolean>
@@ -146,20 +145,14 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   const { showNotification } = useNotification()
 
   const listParams =
-    options?.page !== undefined
-      ? computed(() => ({ page: options.page!.value }))
-      : undefined
-  const {
-    data: notificationsData,
-    isLoading,
-    error,
-  } = useListNotifications(listParams)
+    options?.page !== undefined ? computed(() => ({ page: options.page!.value })) : undefined
+  const notificationsQuery = useListNotifications(listParams)
+  const { data: notificationsData } = notificationsQuery
   const { data: unreadCount } = useGetUnreadNotificationCount()
   const { mutate: markAsRead } = useMarkNotificationRead()
   const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
   const { mutate: deleteNotification } = useDeleteNotification()
-  const { mutate: deleteAllNotifications, isPending: isDeletingAll } =
-    useDeleteAllNotifications()
+  const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAllNotifications()
 
   const isConfirmModalOpen = ref(false)
   const confirmModalConfig = ref<NotificationConfirmConfig>({
@@ -248,9 +241,8 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   }
 
   return {
+    query: notificationsQuery,
     notificationsData: notificationsData as UseNotificationsReturn['notificationsData'],
-    isLoading,
-    error,
     unreadCount: unreadCount as UseNotificationsReturn['unreadCount'],
     unreadNotifications,
     hasUnread,

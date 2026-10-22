@@ -17,195 +17,154 @@
       </div>
     </template>
 
-    <ui-query-state :query="displayQuery" :is-empty="submissions.length === 0" empty-text="No submissions yet">
-      <template #empty-action>
-        <p class="text-sm text-muted">Submissions you send for a round appear here.</p>
-      </template>
+    <ui-query-block :query="displayQuery">
+      <ui-query-field>
+        <template #skeleton>
+          <submissions-list-skeleton />
+        </template>
 
-      <template #skeleton>
-      <div class="submissions-list">
-        <div v-for="i in 3" :key="i" class="submission-row">
-          <div class="submission-header">
-            <div class="left-side">
-              <div class="left-side-icon">
-                <FileCheck :size="20" />
-              </div>
-
-              <div class="round-info">
-                <p class="text-muted">Round</p>
-                <ui-skeleton width="140px" />
-              </div>
-            </div>
-
-            <div class="right-side">
-              <div class="round-info">
-                <p class="text-muted">submitted on</p>
-                <ui-skeleton width="120px" />
-              </div>
-
-              <div class="round-info">
-                <p class="text-muted">status</p>
-                <ui-skeleton width="120px" />
-              </div>
-            </div>
-          </div>
-
-          <div class="skeleton-body">
-            <ui-skeleton width="120px" />
-            <ui-skeleton width="180px" />
-            <ui-skeleton width="140px" />
-          </div>
-
-          <div class="submission-footer">
-            <div class="submission-links">
-              <ui-skeleton width="80px" />
-              <ui-skeleton width="80px" />
-            </div>
-          </div>
+        <div v-if="isEmpty" class="submissions-empty">
+          <p class="text-muted">{{ emptyText }}</p>
+          <p class="text-sm text-muted">{{ emptyHint }}</p>
         </div>
-      </div>
-      </template>
-
-    <div class="submissions-list">
-      <p v-if="filteredSubmissions.length === 0" class="text-muted submissions-empty">
-        No submissions match the selected rounds.
-      </p>
-
-      <div
-        v-else
-        v-for="submission in filteredSubmissions"
-        :key="submission.id"
-        class="submission-row"
-      >
-        <div class="submission-header">
-          <div class="left-side">
-            <div class="left-side-icon">
-              <FileCheck :size="20" />
-            </div>
-
-            <div class="round-info">
-              <p class="text-muted">Round</p>
-              <p>{{ submission.round_details.name }}</p>
-            </div>
-          </div>
-
-          <div class="right-side">
-            <div class="round-info">
-              <p class="text-muted">submitted on</p>
-              <p class="text-muted">{{ formatDate(submission.created_at) }}</p>
-            </div>
-
-            <div class="round-info">
-              <p class="text-muted">status</p>
-              <ui-badge :variant="badgeVariant(submission.round_details.status)">{{
-                submissionStatus(submission.round_details.status)
-              }}</ui-badge>
-            </div>
-          </div>
-        </div>
-
-        <ui-expandable-text :text="submission.description ?? '-'" :lines="3" />
-
-        <div class="submission-footer">
-          <div class="submission-links">
-            <a :href="submission.github_url" target="_blank" class="submission-link">Github</a>
-            <a :href="submission.demo_video_url" target="_blank" class="submission-link">Demo</a>
-          </div>
-
-          <ui-button
-            size="sm"
-            v-if="submission.round_details.status === 'active'"
-            @click="isEditOpen = true"
-            >Edit Submission</ui-button
-          >
-          <EditSubmissionModal
-            v-model="isEditOpen"
-            :tournament-id="props.tournamentId"
-            :submission-id="submission.id"
-            :default-values="{
-              github_url: submission.github_url,
-              demo_video_url: submission.demo_video_url,
-              description: submission.description,
-            }"
-          />
-        </div>
-
-        <div class="submission-results">
-          <div class="submission-results-head">
-            <p class="text-muted">Jury evaluations</p>
-            <p class="text-muted">
-              {{ evaluatedCount(submission) }}/{{ submissionAssignments(submission).length }}
-              evaluated
-              <template v-if="evaluatedCount(submission) > 0">
-                • Avg:
-                <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
-              </template>
-            </p>
-          </div>
-
+        <div v-else class="submissions-list">
           <div
-            v-for="assignment in submissionAssignments(submission)"
-            :key="assignment.id"
-            class="submission-result-item"
+            v-for="submission in filteredSubmissions"
+            :key="submission.id"
+            class="submission-row"
           >
-            <div class="jury-head">
-              <p class="jury-name">
-                {{ assignment.jury.full_name || assignment.jury.username }}
-              </p>
-              <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
-                {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
-              </ui-badge>
+            <div class="submission-header">
+              <div class="left-side">
+                <div class="left-side-icon">
+                  <FileCheck :size="20" />
+                </div>
+
+                <div class="round-info">
+                  <p class="text-muted">Round</p>
+                  <p>{{ submission.round_details.name }}</p>
+                </div>
+              </div>
+
+              <div class="right-side">
+                <div class="round-info">
+                  <p class="text-muted">submitted on</p>
+                  <p class="text-muted">{{ formatDate(submission.created_at) }}</p>
+                </div>
+
+                <div class="round-info">
+                  <p class="text-muted">status</p>
+                  <ui-badge :variant="badgeVariant(submission.round_details.status)">{{
+                    submissionStatus(submission.round_details.status)
+                  }}</ui-badge>
+                </div>
+              </div>
             </div>
 
-            <template v-if="assignment.evaluation">
-              <div class="jury-metrics">
-                <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
-                <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
-                <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
-              </div>
+            <ui-expandable-text :text="submission.description ?? '-'" :lines="3" />
 
-              <div class="score-track-wrap">
-                <div class="score-track-head">
-                  <p class="text-muted">Score</p>
-                  <p class="text-muted">
-                    {{ assignment.evaluation.total_score }} /
-                    {{ roundMaxScore(submission.round_details.id) }}
-                  </p>
-                </div>
-                <ui-progress-bar
-                  :percent="
-                    scorePercent(submission.round_details.id, assignment.evaluation.total_score)
-                  "
-                  :height="10"
-                  fill-color="var(--primary)"
-                />
-              </div>
-
-              <div class="jury-criteria">
-                <p class="text-muted">Criteria</p>
-                <div
-                  v-for="score in assignment.evaluation.scores"
-                  :key="`${assignment.id}-${score.criterion_id}`"
-                  class="jury-criterion-row"
+            <div class="submission-footer">
+              <div class="submission-links">
+                <a :href="submission.github_url" target="_blank" class="submission-link">Github</a>
+                <a :href="submission.demo_video_url" target="_blank" class="submission-link"
+                  >Demo</a
                 >
-                  <span>{{ score.criterion_name || score.criterion_id }}</span>
-                  <span>
-                    {{ score.score }}/{{
-                      criterionMaxScore(submission.round_details.id, score.criterion_id)
-                    }}
-                  </span>
-                </div>
               </div>
 
-              <p v-if="assignment.evaluation.comment" class="jury-comment">
-                {{ assignment.evaluation.comment }}
-              </p>
-            </template>
+              <ui-button
+                size="sm"
+                v-if="submission.round_details.status === 'active'"
+                @click="isEditOpen = true"
+                >Edit Submission</ui-button
+              >
+              <EditSubmissionModal
+                v-model="isEditOpen"
+                :tournament-id="props.tournamentId"
+                :submission-id="submission.id"
+                :default-values="{
+                  github_url: submission.github_url,
+                  demo_video_url: submission.demo_video_url,
+                  description: submission.description,
+                }"
+              />
+            </div>
+
+            <div class="submission-results">
+              <div class="submission-results-head">
+                <p class="text-muted">Jury evaluations</p>
+                <p class="text-muted">
+                  {{ evaluatedCount(submission) }}/{{ submissionAssignments(submission).length }}
+                  evaluated
+                  <template v-if="evaluatedCount(submission) > 0">
+                    • Avg:
+                    <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
+                  </template>
+                </p>
+              </div>
+
+              <div
+                v-for="assignment in submissionAssignments(submission)"
+                :key="assignment.id"
+                class="submission-result-item"
+              >
+                <div class="jury-head">
+                  <p class="jury-name">
+                    {{ assignment.jury.full_name || assignment.jury.username }}
+                  </p>
+                  <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
+                    {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
+                  </ui-badge>
+                </div>
+
+                <template v-if="assignment.evaluation">
+                  <div class="jury-metrics">
+                    <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
+                    <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
+                    <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
+                  </div>
+
+                  <div class="score-track-wrap">
+                    <div class="score-track-head">
+                      <p class="text-muted">Score</p>
+                      <p class="text-muted">
+                        {{ assignment.evaluation.total_score }} /
+                        {{ roundMaxScore(submission.round_details.id) }}
+                      </p>
+                    </div>
+                    <ui-progress-bar
+                      :percent="
+                        scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                      "
+                      :height="10"
+                      fill-color="var(--primary)"
+                    />
+                  </div>
+
+                  <div class="jury-criteria">
+                    <p class="text-muted">Criteria</p>
+                    <div
+                      v-for="score in assignment.evaluation.scores"
+                      :key="`${assignment.id}-${score.criterion_id}`"
+                      class="jury-criterion-row"
+                    >
+                      <span>{{ score.criterion_name || score.criterion_id }}</span>
+                      <span>
+                        {{ score.score }}/{{
+                          criterionMaxScore(submission.round_details.id, score.criterion_id)
+                        }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p v-if="assignment.evaluation.comment" class="jury-comment">
+                    {{ assignment.evaluation.comment }}
+                  </p>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    </ui-query-state>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
@@ -215,9 +174,9 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiProgressBar from '@/components/ui/UiProgressBar'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSelect from '@/components/ui/UiSelect'
-import UiSkeleton from '@/components/ui/UiSkeleton'
+import SubmissionsListSkeleton from './tournament-submissions/SubmissionsListSkeleton.vue'
 import { FileCheck } from 'lucide-vue-next'
 import { formatDate } from '@/lib/date'
 import { computed, ref } from 'vue'
@@ -271,6 +230,18 @@ const filteredSubmissions = computed(() => {
     filterOption.value.includes(submission.round_details.name ?? ''),
   )
 })
+
+const isEmpty = computed(() => filteredSubmissions.value.length === 0)
+const emptyText = computed(() =>
+  submissions.value.length === 0
+    ? 'No submissions yet'
+    : 'No submissions match the selected rounds',
+)
+const emptyHint = computed(() =>
+  submissions.value.length === 0
+    ? 'Submissions you send for a round appear here.'
+    : 'Try clearing the round filter to see all submissions.',
+)
 
 const submissionStatus = (roundStatus?: RoundStatus) => {
   return roundStatus === 'active' ? 'Active' : 'Closed'
@@ -351,11 +322,6 @@ const averageFinalScore = (submission: NonNullable<typeof submissions.value>[num
 .submission-row:first-child {
   border-top: 0;
   padding-top: 0;
-}
-
-.submissions-empty {
-  padding: 1.5rem 0;
-  text-align: center;
 }
 
 .submission-header {

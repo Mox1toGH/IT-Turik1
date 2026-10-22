@@ -9,12 +9,11 @@
     >
       <span>{{ notification.message }}</span>
       <ui-button
-        class="close-notice-btn"
         :variant="notification.type === 'success' ? 'default' : 'danger'"
         size="sm"
         type="button"
         @click="hideNotification()"
-        ><X :size="16"
+        ><X :size="16" class="x-icon"
       /></ui-button>
     </div>
   </Transition>
@@ -42,11 +41,6 @@ const { notification, hideNotification } = useNotification()
   z-index: 2000;
   box-shadow: var(--shadow-overlay);
   backdrop-filter: blur(20px);
-}
-
-.close-notice-btn {
-  background: transparent;
-  border: none;
 }
 
 .type-info {

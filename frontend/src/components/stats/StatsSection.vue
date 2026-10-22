@@ -2,34 +2,38 @@
   <section class="stats-shell">
     <h2 class="stats-title">System Stats</h2>
 
-    <ui-query-state v-if="props.user" :query="activeQuery">
-      <template #skeleton>
-        <div class="stats-grid">
-          <div v-for="n in 6" :key="n" class="stats-card loading-card">
-            <UiSkeleton variant="rect" height="16px" width="50%" />
-            <UiSkeleton variant="rect" height="36px" width="70%" />
-            <UiSkeleton variant="rect" height="120px" />
-          </div>
-        </div>
-      </template>
-
+    <ui-query-block v-if="props.user" :query="activeQuery">
       <template #error>
         <p class="error-text">Unable to load stats right now. Please try again.</p>
       </template>
 
-      <AdminStats v-if="isAdmin && adminStats" :stats="adminStats" />
-      <div v-else style="display: grid; gap: 0.75rem">
-        <PlayerStats v-if="playerStats" :stats="playerStats" :current-team-to="currentTeamTo" />
-        <ui-query-state v-if="isTeamActive" :query="teamQuery">
-          <template #skeleton>
-            <UiSkeleton variant="rect" height="82px" />
-          </template>
-          <!-- Team stats are non-fatal: a failure must stay silent. -->
-          <template #error />
-          <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
-        </ui-query-state>
-      </div>
-    </ui-query-state>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="stats-grid">
+            <div v-for="n in 6" :key="n" class="stats-card loading-card">
+              <UiSkeleton variant="rect" height="16px" width="50%" />
+              <UiSkeleton variant="rect" height="36px" width="70%" />
+              <UiSkeleton variant="rect" height="120px" />
+            </div>
+          </div>
+        </template>
+
+        <AdminStats v-if="isAdmin && adminStats" :stats="adminStats" />
+        <div v-else style="display: grid; gap: 0.75rem">
+          <PlayerStats v-if="playerStats" :stats="playerStats" :current-team-to="currentTeamTo" />
+          <ui-query-block v-if="isTeamActive" :query="teamQuery">
+            <!-- Team stats are non-fatal: a failure must stay silent. -->
+            <template #error />
+            <ui-query-field>
+              <template #skeleton>
+                <UiSkeleton variant="rect" height="82px" />
+              </template>
+              <TeamStats v-if="isTeamRole && teamStats" :stats="teamStats" />
+            </ui-query-field>
+          </ui-query-block>
+        </div>
+      </ui-query-field>
+    </ui-query-block>
   </section>
 </template>
 
@@ -37,7 +41,7 @@
 import { computed } from 'vue'
 import { hasRole } from '@/shared/lib/permissions'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock } from '@/components/query'
 import PlayerStats from './PlayerStats.vue'
 import TeamStats from './TeamStats.vue'
 import AdminStats from './AdminStats.vue'

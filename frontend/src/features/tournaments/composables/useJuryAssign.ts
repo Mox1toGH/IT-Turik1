@@ -1,6 +1,5 @@
 import { computed, reactive, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import { useQueryState } from '@/composables/useQueryState'
 import { useGetTournament, useListRoundSubmissions } from '@/api/tournaments/tournaments'
 import {
   useAssignJuryToRound,
@@ -17,7 +16,6 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
   const {
     data: tournament,
     isLoading: tournamentLoading,
-    isError: tournamentError,
     error: tournamentErrorData,
   } = tournamentQuery
 
@@ -55,7 +53,6 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
   const juryItems = computed(() => availableJury.value?.items ?? [])
 
   const noClosedRound = computed<boolean>(() => !!tournament.value && !closedRound.value)
-  const isLoadingRound = computed<boolean>(() => tournamentLoading.value)
   const isLoading = computed<boolean>(() => tournamentLoading.value || submissionsLoading.value)
   const isFetching = computed<boolean>(
     () => tournamentQuery.isFetching.value || submissionsQuery.isFetching.value,
@@ -76,17 +73,6 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     isFetching: isFetching.value,
     refetch: refetchAll,
   }))
-  const { status, errorCode, isStale } = useQueryState(cardQuery)
-  const error = computed(() => {
-    if (noClosedRound.value) {
-      return { message: 'No finished round available' }
-    }
-    if (tournamentError.value) {
-      return tournamentErrorData.value ?? { message: 'Failed to fetch tournament info' }
-    }
-    return submissionsErrorData.value ?? { message: 'Failed to fetch submissions' }
-  })
-
   const juryOptions = computed<SelectOption[]>(
     () =>
       juryItems.value.map((jury) => ({
@@ -162,15 +148,10 @@ export function useJuryAssign(tournamentId: MaybeRefOrGetter<number>) {
     closedRound,
     submissions: submissionItems,
     noClosedRound,
-    isLoadingRound,
     isLoading,
     cardQuery,
-    status,
-    errorCode,
-    isStale,
     isFetching,
     refetchAll,
-    error,
     juryOptions,
     juryFetchError,
     isFetchingJury,

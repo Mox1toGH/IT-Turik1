@@ -1,88 +1,105 @@
 <template>
   <ui-card>
-    <ui-query-state :query="invitationsQuery" title="team invitations">
-    <section class="team-invitations-section">
-      <header class="team-invitations-subhead">
-        <h3>Invitations</h3>
+    <template #header>
+      <h3 class="team-invitations-title">Invitations</h3>
+    </template>
 
-        <span class="text-muted">
-            {{ filteredPendingInvitations.length }} awaiting response
-            <span v-if="filteredDeclinedInvitations.length">
-              , {{ filteredDeclinedInvitations.length }} declined
-            </span>
-          </span>
-      </header>
-
-      <p
-          v-if="filteredPendingInvitations.length === 0 && filteredDeclinedInvitations.length === 0"
-          class="text-muted"
-        >
-          No invitations yet.
-        </p><div v-else class="team-invitations-list">
-          <div
-            v-for="invitation in filteredPendingInvitations"
-            :key="`invitation-pending-${invitation.id}`"
-            class="invitation-row"
-          >
-            <div class="team-invitations-user">
-              <user-avatar
-                :avatar="invitation.user.avatar"
-                :username="invitation.user.username"
-                :full-name="invitation.user.full_name"
-                :size="40"
-              />
+    <ui-query-block :query="invitationsQuery" title="team invitations">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-invitations-list">
+            <div v-for="i in 2" :key="`invitation-skeleton-${i}`" class="invitation-card">
+              <ui-skeleton variant="rounded" width="44px" height="44px" />
               <div class="invitation-main">
-                <div class="invitation-top">
-                  <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                  <ui-badge>invited</ui-badge>
-                </div>
-
-                <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
+                <ui-skeleton variant="rect" width="150px" height="16px" />
+                <ui-skeleton variant="rect" width="190px" height="14px" />
               </div>
+              <ui-skeleton variant="rounded" width="74px" height="24px" />
             </div>
           </div>
+        </template>
 
-          <div
-            v-for="invitation in filteredDeclinedInvitations"
-            :key="`invitation-declined-${invitation.id}`"
-            class="invitation-row"
-          >
-            <div class="team-invitations-user">
-              <user-avatar
-                :avatar="invitation.user.avatar"
-                :username="invitation.user.username"
-                :full-name="invitation.user.full_name"
-                :size="40"
-              />
-              <div class="invitation-main">
-                <div class="invitation-top">
-                  <p class="team-invitations-name">{{ invitation.user.username }}</p>
-                  <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
-                  <div v-else class="declined-badges">
-                    <ui-badge variant="red">Declined</ui-badge>
-                    <ui-badge>Invatation</ui-badge>
+        <template #default>
+          <p v-if="isEmpty" class="text-muted">No invitations yet.</p>
+          <section v-else class="team-invitations-section">
+            <header class="team-invitations-subhead">
+              <span class="text-muted">
+                {{ filteredPendingInvitations.length }} awaiting response
+                <span v-if="filteredDeclinedInvitations.length">
+                  , {{ filteredDeclinedInvitations.length }} declined
+                </span>
+              </span>
+            </header>
+
+            <div class="team-invitations-list">
+              <article
+                v-for="invitation in filteredPendingInvitations"
+                :key="`invitation-pending-${invitation.id}`"
+                class="invitation-card"
+              >
+                <div class="team-invitations-user">
+                  <user-avatar
+                    :avatar="invitation.user.avatar"
+                    :username="invitation.user.username"
+                    :full-name="invitation.user.full_name"
+                    :size="44"
+                  />
+                  <div class="invitation-main">
+                    <div class="invitation-top">
+                      <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                      <ui-badge>invited</ui-badge>
+                    </div>
+
+                    <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
                   </div>
                 </div>
-              </div>
-            </div>
+              </article>
 
-            <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
-
-            <div class="row-actions">
-              <ui-button
-                variant="secondary"
-                size="sm"
-                :disabled="loadingInvitationIds.has(invitation.id)"
-                @click="resendInvitation(invitation.user.id)"
+              <article
+                v-for="invitation in filteredDeclinedInvitations"
+                :key="`invitation-declined-${invitation.id}`"
+                class="invitation-card"
               >
-                <LoaderCircle class="animate-spin" v-if="loadingInvitationIds.has(invitation.id)" />
-                Resend invitation
-              </ui-button>
+                <div class="team-invitations-user">
+                  <user-avatar
+                    :avatar="invitation.user.avatar"
+                    :username="invitation.user.username"
+                    :full-name="invitation.user.full_name"
+                    :size="44"
+                  />
+                  <div class="invitation-main">
+                    <div class="invitation-top">
+                      <p class="team-invitations-name">{{ invitation.user.username }}</p>
+                      <ui-badge v-if="props.isCaptain" variant="green">Captain</ui-badge>
+                      <div v-else class="declined-badges">
+                        <ui-badge variant="red">Declined</ui-badge>
+                        <ui-badge>Invatation</ui-badge>
+                      </div>
+                    </div>
+                    <p class="text-muted team-invitations-email">{{ invitation.user.email }}</p>
+                  </div>
+                </div>
+
+                <div class="row-actions">
+                  <ui-button
+                    variant="secondary"
+                    size="sm"
+                    :disabled="loadingInvitationIds.has(invitation.id)"
+                    @click="resendInvitation(invitation.user.id)"
+                  >
+                    <LoaderCircle
+                      class="animate-spin"
+                      v-if="loadingInvitationIds.has(invitation.id)"
+                    />
+                    Resend invitation
+                  </ui-button>
+                </div>
+              </article>
             </div>
-          </div>
-        </div>
-    </section>
-    </ui-query-state>
+          </section>
+        </template>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
@@ -90,7 +107,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
@@ -113,7 +130,7 @@ const { showNotification } = useNotification()
 const props = defineProps<Props>()
 
 const invitationsQuery = useListTeamInvitationsByTeam(props.teamId)
-const { data: invitations, isLoading } = invitationsQuery
+const { data: invitations } = invitationsQuery
 
 const uniqueInvitations = computed(() => {
   const byUserId = new Map<number, TeamInvitationResponse>()
@@ -144,6 +161,11 @@ const filteredDeclinedInvitations = computed(() =>
   uniqueInvitations.value
     .filter((i) => i.status === 'declined')
     .filter((i) => matches([i.user.username, i.user.email, i.user.full_name])),
+)
+
+const isEmpty = computed(
+  () =>
+    filteredPendingInvitations.value.length === 0 && filteredDeclinedInvitations.value.length === 0,
 )
 
 const loadingInvitationIds = ref<Set<number>>(new Set())
@@ -182,7 +204,7 @@ const resendInvitation = (userId: number) => {
   gap: 0.8rem;
 }
 
-.team-invitations-subhead h3 {
+.team-invitations-title {
   margin: 0;
   font-size: 1rem;
 }
@@ -191,18 +213,27 @@ const resendInvitation = (userId: number) => {
   overflow-y: auto;
   max-height: 350px;
   display: grid;
-  gap: 0;
-  grid-template-rows: auto;
+  gap: 0.75rem;
+  padding: 1px;
 }
 
-.invitation-row {
+.invitation-card {
   display: grid;
-  gap: 0.5rem;
-  padding: 0.7rem 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
-.team-invitations-list .invitation-row + .invitation-row {
-  border-top: 1px solid var(--border);
+.invitation-card:hover {
+  border-color: var(--primary);
+  background: var(--muted);
 }
 
 .team-invitations-name {
@@ -225,6 +256,8 @@ const resendInvitation = (userId: number) => {
 }
 
 .invitation-main {
+  display: grid;
+  gap: 0.15rem;
   flex: 1;
   min-width: 0;
 }
@@ -245,5 +278,21 @@ const resendInvitation = (userId: number) => {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+@media (max-width: 620px) {
+  .invitation-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .row-actions {
+    justify-content: end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invitation-card {
+    transition: none;
+  }
 }
 </style>

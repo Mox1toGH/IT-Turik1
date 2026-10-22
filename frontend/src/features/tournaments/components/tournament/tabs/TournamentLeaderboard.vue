@@ -56,37 +56,39 @@
       </div>
     </template>
 
-    <ui-query-state :query="leaderboardQuery" :is-empty="rankings.length === 0 || isLeaderboardNotReady" empty-text="No leaderboard data yet.">
-      <template #skeleton>
-        <leaderboard-skeleton />
-      </template>
-
-      <template #empty-action>
-        <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
-      </template>
-
-      <leaderboard-table
-        :rankings="rankings"
-        :round-columns="roundColumns"
-        :has-round-overflow="hasRoundOverflow"
-        :table-vars="tableVars"
-        :table-wrap-ref="tableWrapRef"
-        :get-round-score="getRoundScore"
-        :has-round-participation="hasRoundParticipation"
-        :get-round-max-score="getRoundMaxScore"
-        :get-entry-max-score="getEntryMaxScore"
-        :format-score="formatScore"
-        :on-table-wheel="onTableWheel"
-        @update:table-wrap-ref="tableWrapRef = $event"
-      />
-    </ui-query-state>
+    <ui-query-block :query="leaderboardQuery">
+      <ui-query-field>
+        <template #skeleton>
+          <leaderboard-skeleton />
+        </template>
+        <div v-if="rankings.length === 0 || isLeaderboardNotReady" class="leaderboard-empty">
+          <p class="text-muted">No leaderboard data yet.</p>
+          <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
+        </div>
+        <leaderboard-table
+          v-else
+          :rankings="rankings"
+          :round-columns="roundColumns"
+          :has-round-overflow="hasRoundOverflow"
+          :table-vars="tableVars"
+          :table-wrap-ref="tableWrapRef"
+          :get-round-score="getRoundScore"
+          :has-round-participation="hasRoundParticipation"
+          :get-round-max-score="getRoundMaxScore"
+          :get-entry-max-score="getEntryMaxScore"
+          :format-score="formatScore"
+          :on-table-wheel="onTableWheel"
+          @update:table-wrap-ref="tableWrapRef = $event"
+        />
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiPopover from '@/components/ui/UiPopover'
 import LeaderboardSkeleton from './tournament-leaderboard/LeaderboardSkeleton.vue'
 import LeaderboardTable from './tournament-leaderboard/LeaderboardTable.vue'

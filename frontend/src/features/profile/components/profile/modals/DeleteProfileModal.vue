@@ -4,18 +4,23 @@
       <h3>Delete account</h3>
     </template>
 
-    <p class="modal-text">
-      This action cannot be undone. Enter
-      <ui-badge variant="red">{{ expectedDeleteText }}</ui-badge>
-      to confirm.
-    </p>
+    <p class="modal-text">This action cannot be undone. Enter this username to confirm.</p>
 
-    <ui-input
-      v-model="deleteConfirmInput"
-      :placeholder="expectedDeleteText"
-      :disabled="isDeleting"
-      style="width: 100%"
-    />
+    <ui-query-block :query="userQuery">
+      <template #error><p class="text-error">Could not load account details.</p></template>
+      <ui-query-field>
+        <template #skeleton><ui-skeleton variant="rect" width="100%" height="40px" /></template>
+        <div class="delete-confirmation">
+          <ui-badge variant="red">{{ expectedDeleteText }}</ui-badge>
+          <ui-input
+            v-model="deleteConfirmInput"
+            :placeholder="expectedDeleteText"
+            :disabled="isDeleting"
+            style="width: 100%"
+          />
+        </div>
+      </ui-query-field>
+    </ui-query-block>
 
     <p v-if="deleteError">{{ deleteError }}</p>
 
@@ -36,6 +41,8 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
@@ -47,7 +54,8 @@ import { useDeleteUserProfile, useGetUserProfile } from '@/api/accounts/accounts
 const isOpen = defineModel<boolean>({ default: false })
 
 const store = useUserStore()
-const { data: user } = useGetUserProfile()
+const userQuery = useGetUserProfile()
+const { data: user } = userQuery
 const { mutate: deleteAccount, isPending: isDeleting } = useDeleteUserProfile()
 
 const router = useRouter()

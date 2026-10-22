@@ -4,18 +4,17 @@
     description="Assign jury members to evaluate round submissions."
     class="jury-assign-shell"
   >
-    <ui-card :query="cardQuery" empty-text="No submissions to evaluate yet">
-      <template #empty-action>
-        <p class="text-sm text-muted">Assignments appear once teams submit to the closed round.</p>
-      </template>
-
+    <ui-card>
       <template #header>
         <div class="submissions-header">
-          <ui-query-state :query="cardQuery">
-<template #skeleton>
+          <ui-query-field :loading="isLoading">
+            <template #skeleton>
               <ui-skeleton variant="rect" width="150px" />
-            </template><h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2><h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
-</ui-query-state>
+            </template>
+
+            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
+            <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
+          </ui-query-field>
           <div class="header-actions">
             <ui-select
               multiple
@@ -46,34 +45,7 @@
         </div>
       </template>
 
-      <template #skeleton>
-        <div class="submissions-table">
-          <div class="table-head">
-            <span>Team</span>
-            <span>Submitted On</span>
-            <span>Assigned Jury</span>
-            <span style="text-align: end">Actions</span>
-          </div>
-
-          <div v-for="i in 2" :key="`skeleton-${i}`" class="table-row">
-            <div class="team-cell">
-              <div class="team-avatar">
-                <ui-skeleton variant="rounded" width="40px" height="40px" />
-              </div>
-              <div class="skeleton-lines">
-                <ui-skeleton variant="rect" width="100px" />
-                <ui-skeleton variant="rect" width="140px" />
-              </div>
-            </div>
-
-            <ui-skeleton variant="rect" width="100px" />
-            <ui-skeleton variant="rect" width="100px" />
-            <ui-skeleton variant="rect" width="100px" />
-          </div>
-        </div>
-      </template>
-
-      <div class="submissions-table">
+      <ui-query-block :query="cardQuery" title="submissions">
         <div class="table-head">
           <span>Team</span>
           <span>Submitted On</span>
@@ -81,19 +53,33 @@
           <span style="text-align: end">Actions</span>
         </div>
 
-        <jury-assign-row
-          v-for="submission in submissions"
-          :key="submission.id"
-          :submission="submission"
-          v-model:assigned="assignedJury[submission.id]"
-          :jury-options="juryOptions"
-          :is-failed-to-fetch-jury="isFailedToFetchJury"
-          :jury-fetch-error-message="juryFetchError?.message"
-          :is-fetching-jury="isFetchingJury"
-          :team-abbr="teamAbbr"
-          :jury-label="juryLabel"
-        />
-      </div>
+        <ui-query-field>
+          <template #skeleton>
+            <jury-assign-skeleton />
+          </template>
+
+          <div v-if="submissions.length" class="submissions-table">
+            <jury-assign-row
+              v-for="submission in submissions"
+              :key="submission.id"
+              :submission="submission"
+              v-model:assigned="assignedJury[submission.id]"
+              :jury-options="juryOptions"
+              :is-failed-to-fetch-jury="isFailedToFetchJury"
+              :jury-fetch-error-message="juryFetchError?.message"
+              :is-fetching-jury="isFetchingJury"
+              :team-abbr="teamAbbr"
+              :jury-label="juryLabel"
+            />
+          </div>
+          <div v-else class="query-empty-message">
+            <p class="text-muted">No submissions to evaluate yet.</p>
+            <p class="text-sm text-muted">
+              Assignments appear once teams submit to the closed round.
+            </p>
+          </div>
+        </ui-query-field>
+      </ui-query-block>
     </ui-card>
   </ui-section>
 </template>
@@ -101,10 +87,10 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSection from '@/components/ui/UiSection'
 import UiSelect from '@/components/ui/UiSelect'
-import UiSkeleton from '@/components/ui/UiSkeleton'
+import JuryAssignSkeleton from './JuryAssignSkeleton.vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import JuryAssignRow from './JuryAssignRow.vue'
 import { useJuryAssign } from '../../../../composables/useJuryAssign'
@@ -121,7 +107,6 @@ const {
   closedRound,
   submissions,
   noClosedRound,
-  isLoadingRound,
   isLoading,
   cardQuery,
   juryOptions,

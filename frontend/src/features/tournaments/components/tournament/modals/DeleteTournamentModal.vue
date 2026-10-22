@@ -5,20 +5,25 @@
     </template>
 
     <div>
-      <p class="modal-text">
-        This action cannot be undone. Enter
-        <ui-badge :title="tournament?.name" variant="red">{{
-          truncateText(tournament?.name || `Tournament ${props.tournamentId}`, 15)
-        }}</ui-badge>
-        to confirm.
-      </p>
+      <p class="modal-text">This action cannot be undone. Enter the tournament name to confirm.</p>
 
-      <ui-input
-        v-model="deleteConfirmInput"
-        :placeholder="tournament?.name"
-        :disabled="isDeleting"
-        style="width: 100%"
-      />
+      <ui-query-block :query="tournamentQuery">
+        <template #error><p class="text-error">Could not load tournament details.</p></template>
+        <ui-query-field>
+          <template #skeleton><ui-skeleton variant="rect" width="100%" height="40px" /></template>
+          <div class="delete-confirmation">
+            <ui-badge :title="tournament?.name" variant="red">{{
+              truncateText(tournament?.name || `Tournament ${props.tournamentId}`, 15)
+            }}</ui-badge>
+            <ui-input
+              v-model="deleteConfirmInput"
+              :placeholder="tournament?.name"
+              :disabled="isDeleting"
+              style="width: 100%"
+            />
+          </div>
+        </ui-query-field>
+      </ui-query-block>
 
       <p v-if="deleteError" class="text-error">{{ deleteError }}</p>
     </div>
@@ -51,6 +56,8 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiInput from '@/components/ui/UiInput'
 import UiModal from '@/components/ui/UiModal'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
@@ -68,7 +75,8 @@ const isDeleteModalOpen = defineModel({ default: false })
 const deleteConfirmInput = ref('')
 const deleteError = ref('')
 
-const { data: tournament } = useGetTournament(props.tournamentId)
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { data: tournament } = tournamentQuery
 
 const canDeleteTournament = computed(
   () => deleteConfirmInput.value === tournament.value?.name && !isDeleting.value,
@@ -109,5 +117,10 @@ const handleDeleteTournament = () => {
 .modal-text {
   margin-bottom: 1rem;
   color: var(--muted-foreground);
+}
+
+.delete-confirmation {
+  display: grid;
+  gap: 0.5rem;
 }
 </style>

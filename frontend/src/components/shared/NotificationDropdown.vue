@@ -31,84 +31,81 @@
       </div>
 
       <div class="dropdown-body">
-        <ui-query-state :query="notificationsQuery">
-          <template #skeleton>
-            <div class="state-message">Loading...</div>
-          </template>
+        <ui-query-block :query="notificationsQuery">
           <template #error>
             <div class="state-message">Error loading</div>
           </template>
-          <template #empty>
-            <div class="state-message">There are currently no new notifications</div>
-          </template>
 
-          <div v-if="unreadNotifications.length === 0" class="state-message">
-            There are currently no new notifications
-          </div>
-          <div v-else class="notifications-list">
-            <div
-              v-for="notification in unreadNotifications"
-              :key="notification.id"
-              class="notification-item is-unread"
-              @click="markAsRead({ notificationId: notification.id })"
-            >
-              <div class="item-content">
-                <div class="item-title-row">
-                  <span v-if="!notification.is_read" class="unread-dot"></span>
-                  <span class="item-title">{{ notification.title }}</span>
-                  <button
-                    v-if="getRedirectUrl(notification)"
-                    class="redirect-btn-mini"
-                    @click.stop="handleNotificationClick(notification)"
-                    title="Go to page"
-                  >
-                    <ExternalLink class="icon" />
-                  </button>
-                  <button
-                    class="delete-btn-mini"
-                    @click.stop="handleDelete(notification.id)"
-                    title="Delete notification"
-                  >
-                    <Trash2 class="icon" />
-                  </button>
+          <ui-query-field>
+            <template #skeleton>
+              <div class="state-message">Loading...</div>
+            </template>
+            <div v-if="isEmpty" class="state-message">There are currently no new notifications</div>
+            <div v-else class="notifications-list">
+              <div
+                v-for="notification in unreadNotifications"
+                :key="notification.id"
+                class="notification-item is-unread"
+                @click="markAsRead({ notificationId: notification.id })"
+              >
+                <div class="item-content">
+                  <div class="item-title-row">
+                    <span v-if="!notification.is_read" class="unread-dot"></span>
+                    <span class="item-title">{{ notification.title }}</span>
+                    <button
+                      v-if="getRedirectUrl(notification)"
+                      class="redirect-btn-mini"
+                      @click.stop="handleNotificationClick(notification)"
+                      title="Go to page"
+                    >
+                      <ExternalLink class="icon" />
+                    </button>
+                    <button
+                      class="delete-btn-mini"
+                      @click.stop="handleDelete(notification.id)"
+                      title="Delete notification"
+                    >
+                      <Trash2 class="icon" />
+                    </button>
+                  </div>
+                  <span class="item-message">
+                    <template
+                      v-for="(part, index) in parseMessage(notification.message)"
+                      :key="index"
+                    >
+                      <a
+                        v-if="part.type === 'user'"
+                        :href="`/users/${part.id}`"
+                        class="user-link"
+                        @click.stop
+                      >
+                        {{ part.text }}
+                      </a>
+                      <router-link
+                        v-else-if="part.type === 'team'"
+                        :to="`/teams/${part.id}`"
+                        class="user-link"
+                        @click.stop
+                      >
+                        {{ part.text }}
+                      </router-link>
+                      <router-link
+                        v-else-if="part.type === 'news'"
+                        :to="`/news#news-${part.id}`"
+                        class="user-link"
+                        @click.stop
+                      >
+                        {{ part.text }}
+                      </router-link>
+                      <span v-else>{{ part.text }}</span>
+                    </template>
+                  </span>
+                  <span class="item-date">{{ formatDate(notification.created_at) }}</span>
                 </div>
-                <span class="item-message">
-                  <template
-                    v-for="(part, index) in parseMessage(notification.message)"
-                    :key="index"
-                  >
-                    <a
-                      v-if="part.type === 'user'"
-                      :href="`/users/${part.id}`"
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </a>
-                    <router-link
-                      v-else-if="part.type === 'team'"
-                      :to="`/teams/${part.id}`"
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <router-link
-                      v-else-if="part.type === 'news'"
-                      :to="`/news#news-${part.id}`"
-                      class="user-link"
-                      @click.stop
-                    >
-                      {{ part.text }}
-                    </router-link>
-                    <span v-else>{{ part.text }}</span>
-                  </template>
-                </span>
-                <span class="item-date">{{ formatDate(notification.created_at) }}</span>
               </div>
             </div>
-          </div>
-        </ui-query-state>
+          </ui-query-field>
+        </ui-query-block>
       </div>
 
       <div class="dropdown-footer">
@@ -135,7 +132,7 @@ import { useRouter } from 'vue-router'
 import { Bell, ExternalLink, Trash2 } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import {
   useDeleteAllNotifications,
   useDeleteNotification,
@@ -176,6 +173,7 @@ const unreadNotifications = computed(() => {
 
 const hasUnread = computed(() => unreadNotifications.value.length > 0)
 const hasNotifications = computed(() => (notifications.value?.items.length ?? 0) > 0)
+const isEmpty = computed(() => unreadNotifications.value.length === 0)
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value

@@ -4,26 +4,27 @@
       <h2>Statistics</h2>
     </template>
 
-    <ui-query-state :query="playerQuery">
+    <ui-query-block :query="playerQuery">
       <template #error>
         <div class="error-state">
           <p>{{ errorMessage }}</p>
         </div>
       </template>
 
-      <template #skeleton>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="stats-grid">
+            <ui-skeleton v-for="n in 6" :key="n" variant="rect" height="84px" />
+          </div>
+        </template>
         <div class="stats-grid">
-          <ui-skeleton v-for="n in 6" :key="n" variant="rect" height="84px" />
+          <ui-card v-for="item in statsCards" :key="item.label" class="stat-card">
+            <p class="stat-label">{{ item.label }}</p>
+            <p class="stat-value">{{ item.value }}</p>
+          </ui-card>
         </div>
-      </template>
-
-      <div class="stats-grid">
-        <ui-card v-for="item in statsCards" :key="item.label" class="stat-card">
-          <p class="stat-label">{{ item.label }}</p>
-          <p class="stat-value">{{ item.value }}</p>
-        </ui-card>
-      </div>
-    </ui-query-state>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
@@ -31,7 +32,7 @@
 import { computed } from 'vue'
 import { hasRole } from '@/shared/lib/permissions'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
 import type { UserRole } from '@/shared/types/user'
