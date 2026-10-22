@@ -36,18 +36,7 @@
 
     <div class="settings-rule" aria-hidden="true"></div>
 
-    <div v-if="isLoading" class="settings-state">
-      <ui-skeleton variant="rect" height="60px" width="100%" />
-      <ui-skeleton variant="rect" height="200px" width="100%" style="margin-top: 1rem" />
-      <ui-skeleton variant="rect" height="200px" width="100%" style="margin-top: 1rem" />
-    </div>
-
-    <div v-else-if="error" class="settings-state">
-      <p class="error-text">Failed to load notification settings.</p>
-      <ui-button variant="secondary" size="sm" @click="refetch">Retry</ui-button>
-    </div>
-
-    <div v-else class="settings-layout">
+    <div class="settings-layout">
       <aside class="settings-sidebar">
         <div class="sidebar-sticky">
           <div class="search-wrap">
@@ -81,8 +70,8 @@
               </div>
             </template>
             <div class="quick-actions">
-              <ui-button variant="secondary" size="sm" @click="enableAll"> Enable all </ui-button>
-              <ui-button variant="secondary" size="sm" @click="disableAll"> Disable all </ui-button>
+              <ui-button variant="secondary" size="sm" @click="enableAll">Enable all</ui-button>
+              <ui-button variant="secondary" size="sm" @click="disableAll">Disable all</ui-button>
               <ui-button variant="secondary" size="sm" @click="confirmReset">
                 Reset to defaults
               </ui-button>
@@ -91,105 +80,140 @@
         </div>
       </aside>
 
-      <div class="settings-content">
-        <ui-card class="global-card">
-          <template #header>
-            <div class="global-header">
-              <div>
-                <p class="section-eyebrow">Email</p>
-                <h2 class="text-xl">Email notifications</h2>
-              </div>
-            </div>
-          </template>
-          <div class="global-body">
-            <div class="global-toggle-row">
-              <div class="global-toggle-info">
-                <span class="global-toggle-title">Disable all email notifications</span>
-                <span class="global-toggle-desc">
-                  You will not receive any emails from the system. Individual email settings are
-                  preserved but ignored.
-                </span>
-              </div>
-              <ui-switch
-                :modelValue="globalEmailsDisabled"
-                @update:modelValue="handleGlobalToggle"
-                aria-label="Disable all email notifications"
-              />
-            </div>
-          </div>
-        </ui-card>
-
-        <div v-for="group in visibleGroups" :key="group.key" :id="group.key" class="settings-group">
-          <ui-card>
+      <ui-query-block :query="settingsQuery" title="notification settings">
+        <div class="settings-content">
+          <ui-card class="global-card">
             <template #header>
-              <div class="group-header">
-                <div class="group-header-text">
-                  <h3 class="text-lg">{{ group.label }}</h3>
-                  <p class="group-count">{{ group.events.length }} events</p>
-                </div>
-                <div class="group-bulk">
-                  <div class="bulk-toggle">
-                    <span class="bulk-label">All system</span>
-                    <ui-switch
-                      :modelValue="getGroupAllSystem(group.key)"
-                      :indeterminate="getGroupIndeterminateSystem(group.key)"
-                      @update:modelValue="(val) => setGroupAllSystem(group.key, val)"
-                      :aria-label="`${group.label} – All system`"
-                    />
-                  </div>
-                  <div class="bulk-toggle">
-                    <span class="bulk-label">All email</span>
-                    <ui-switch
-                      :modelValue="getGroupAllEmail(group.key)"
-                      :indeterminate="getGroupIndeterminateEmail(group.key)"
-                      @update:modelValue="(val) => setGroupAllEmail(group.key, val)"
-                      :disabled="globalEmailsDisabled"
-                      :aria-label="`${group.label} – All email`"
-                    />
-                  </div>
+              <div class="global-header">
+                <div>
+                  <p class="section-eyebrow">Email</p>
+                  <h2 class="text-xl">Email notifications</h2>
                 </div>
               </div>
             </template>
-
-            <div class="group-table-header">
-              <span class="col-event">Event</span>
-              <span class="col-toggle">System</span>
-              <span class="col-toggle">Email</span>
-            </div>
-
-            <div class="group-events">
-              <div v-for="event in group.events" :key="event.key" class="event-row">
-                <div class="event-info">
-                  <span class="event-title">{{ event.title }}</span>
-                  <span v-if="event.description" class="event-desc">{{ event.description }}</span>
+            <div class="global-body">
+              <div class="global-toggle-row">
+                <div class="global-toggle-info">
+                  <span class="global-toggle-title">Disable all email notifications</span>
+                  <span class="global-toggle-desc">
+                    You will not receive any emails from the system. Individual email settings are
+                    preserved but ignored.
+                  </span>
                 </div>
-                <div class="event-toggles">
-                  <div class="toggle-cell">
-                    <ui-switch
-                      :modelValue="getEventSystemEnabled(event.key)"
-                      @update:modelValue="(val) => setEventSystemEnabled(event.key, val)"
-                      :aria-label="`${event.title} – System`"
+                <ui-query-field>
+                  <template #skeleton>
+                    <ui-skeleton
+                      class="global-toggle-state"
+                      variant="rect"
+                      width="44px"
+                      height="24px"
                     />
-                  </div>
-                  <div class="toggle-cell">
-                    <ui-switch
-                      :modelValue="getEventEmailEnabled(event.key)"
-                      @update:modelValue="(val) => setEventEmailEnabled(event.key, val)"
-                      :disabled="globalEmailsDisabled"
-                      :aria-label="`${event.title} – Email`"
-                      :title="
-                        globalEmailsDisabled
-                          ? 'Email notifications are disabled globally'
-                          : undefined
-                      "
-                    />
-                  </div>
-                </div>
+                  </template>
+                  <ui-switch
+                    class="global-toggle-state"
+                    :modelValue="globalEmailsDisabled"
+                    @update:modelValue="handleGlobalToggle"
+                    aria-label="Disable all email notifications"
+                  />
+                </ui-query-field>
               </div>
             </div>
           </ui-card>
+
+          <ui-query-field>
+            <template #skeleton>
+              <div class="settings-state">
+                <ui-skeleton variant="rect" height="200px" width="100%" />
+                <ui-skeleton variant="rect" height="200px" width="100%" style="margin-top: 1rem" />
+              </div>
+            </template>
+
+            <template #default>
+              <p v-if="visibleGroups.length === 0" class="text-muted settings-empty">
+                {{ emptyGroupsText }}
+              </p>
+              <div
+                v-else
+                v-for="group in visibleGroups"
+                :key="group.key"
+                :id="group.key"
+                class="settings-group"
+              >
+                <ui-card>
+                  <template #header>
+                    <div class="group-header">
+                      <div class="group-header-text">
+                        <h3 class="text-lg">{{ group.label }}</h3>
+                        <p class="group-count">{{ group.events.length }} events</p>
+                      </div>
+                      <div class="group-bulk">
+                        <div class="bulk-toggle">
+                          <span class="bulk-label">All system</span>
+                          <ui-switch
+                            :modelValue="getGroupAllSystem(group.key)"
+                            :indeterminate="getGroupIndeterminateSystem(group.key)"
+                            @update:modelValue="(val) => setGroupAllSystem(group.key, val)"
+                            :aria-label="`${group.label} – All system`"
+                          />
+                        </div>
+                        <div class="bulk-toggle">
+                          <span class="bulk-label">All email</span>
+                          <ui-switch
+                            :modelValue="getGroupAllEmail(group.key)"
+                            :indeterminate="getGroupIndeterminateEmail(group.key)"
+                            @update:modelValue="(val) => setGroupAllEmail(group.key, val)"
+                            :disabled="globalEmailsDisabled"
+                            :aria-label="`${group.label} – All email`"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="group-table-header">
+                    <span class="col-event">Event</span>
+                    <span class="col-toggle">System</span>
+                    <span class="col-toggle">Email</span>
+                  </div>
+
+                  <div class="group-events">
+                    <div v-for="event in group.events" :key="event.key" class="event-row">
+                      <div class="event-info">
+                        <span class="event-title">{{ event.title }}</span>
+                        <span v-if="event.description" class="event-desc">{{
+                          event.description
+                        }}</span>
+                      </div>
+                      <div class="event-toggles">
+                        <div class="toggle-cell">
+                          <ui-switch
+                            :modelValue="getEventSystemEnabled(event.key)"
+                            @update:modelValue="(val) => setEventSystemEnabled(event.key, val)"
+                            :aria-label="`${event.title} – System`"
+                          />
+                        </div>
+                        <div class="toggle-cell">
+                          <ui-switch
+                            :modelValue="getEventEmailEnabled(event.key)"
+                            @update:modelValue="(val) => setEventEmailEnabled(event.key, val)"
+                            :disabled="globalEmailsDisabled"
+                            :aria-label="`${event.title} – Email`"
+                            :title="
+                              globalEmailsDisabled
+                                ? 'Email notifications are disabled globally'
+                                : undefined
+                            "
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ui-card>
+              </div>
+            </template>
+          </ui-query-field>
         </div>
-      </div>
+      </ui-query-block>
     </div>
 
     <ui-modal v-model="showResetConfirm" title="Reset to defaults" max-width="400px">
@@ -213,6 +237,7 @@ import UiSwitch from '@/components/ui/UiSwitch'
 import UiButton from '@/components/ui/UiButton'
 import UiModal from '@/components/ui/UiModal'
 import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { useNotification } from '@/composables/useNotification'
 import {
   useGetNotificationSettings,
@@ -228,7 +253,8 @@ const search = ref('')
 const showResetConfirm = ref(false)
 const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-const { data: settings, isLoading, error, refetch } = useGetNotificationSettings()
+const settingsQuery = useGetNotificationSettings()
+const { data: settings } = settingsQuery
 const { mutate: updateEvent } = useUpdateNotificationConfig()
 const { mutate: updateGlobal } = useUpdateGlobalNotificationConfig()
 
@@ -315,6 +341,10 @@ const visibleGroups = computed(() => {
     }))
     .filter((g) => g.events.length > 0)
 })
+
+const emptyGroupsText = computed(() =>
+  search.value.trim() ? 'No events match your search.' : 'No notification events are available.',
+)
 
 // ─── State helpers ────────────────────────────────────────────────
 
@@ -668,6 +698,10 @@ function scrollToGroup(key: string) {
 
 .global-card {
   flex-shrink: 0;
+}
+
+.global-toggle-state {
+  flex: 0 0 auto;
 }
 
 .global-header h2 {

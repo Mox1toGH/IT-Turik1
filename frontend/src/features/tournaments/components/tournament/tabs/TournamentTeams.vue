@@ -11,63 +11,69 @@
       </div>
     </template>
 
-    <ui-query-state
-      :query="activeTeamsQuery"
-      :is-empty="!isDisqualifiedTeamsLoading && activeTeams.length === 0 && disqualifiedTeams.length === 0"
-      empty-text="No teams registered yet."
-    >
-      <template #skeleton>
-        <div class="skeleton-stack">
-          <ui-skeleton variant="rect" height="40px" width="100%" />
-          <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
-        </div>
-      </template>
-
-      <div class="teams-body">
+    <div class="teams-body">
       <div class="teams-search-wrap">
         <SearchIcon class="search-icon" />
         <ui-input
           v-model="search"
           placeholder="Search teams..."
           class="team-search"
-        :disabled="isActiveTeamsLoading"
+          :disabled="isActiveTeamsLoading"
         />
       </div>
 
-      <TournamentTeamSection
-        v-if="activeTeams.length"
-        sectionType="active"
-        :teams="activeTeams"
-        :loading="isActiveTeamsLoading"
-        :search="search"
-        @clear-search="search = ''"
-      >
-        <template #default="{ team }">
-          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
-        </template>
-      </TournamentTeamSection>
+      <ui-query-block :query="activeTeamsQuery">
+        <ui-query-field>
+          <template #skeleton>
+            <div class="skeleton-stack">
+              <ui-skeleton variant="rect" height="40px" width="100%" />
+              <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
+            </div>
+          </template>
+          <p
+            v-if="
+              !isDisqualifiedTeamsLoading &&
+              activeTeams.length === 0 &&
+              disqualifiedTeams.length === 0
+            "
+            class="text-muted"
+          >
+            No teams registered yet.
+          </p>
 
-      <TournamentTeamSection
-        v-if="hasDisqualifiedTeams"
-        sectionType="disqualified"
-        :teams="disqualifiedTeams"
-        :loading="isDisqualifiedTeamsLoading"
-        :search="search"
-        @clear-search="search = ''"
-      >
-        <template #default="{ team }">
-          <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
-        </template>
-      </TournamentTeamSection>
-      </div>
-    </ui-query-state>
+          <TournamentTeamSection
+            v-if="activeTeams.length"
+            sectionType="active"
+            :teams="activeTeams"
+            :search="search"
+            @clear-search="search = ''"
+          >
+            <template #default="{ team }">
+              <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" />
+            </template>
+          </TournamentTeamSection>
+
+          <TournamentTeamSection
+            v-if="hasDisqualifiedTeams"
+            sectionType="disqualified"
+            :teams="disqualifiedTeams"
+            :search="search"
+            @clear-search="search = ''"
+          >
+            <template #default="{ team }">
+              <TeamCard :team="team" :tournament="tournament" :is-admin="isAdmin" is-disqualified />
+            </template>
+          </TournamentTeamSection>
+        </ui-query-field>
+      </ui-query-block>
+    </div>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { SearchIcon } from 'lucide-vue-next'

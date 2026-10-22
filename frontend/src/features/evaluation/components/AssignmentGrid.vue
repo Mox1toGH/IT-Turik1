@@ -1,19 +1,19 @@
 <template>
   <ui-card v-if="assignments.length === 0" class="empty-card">
-        <p class="empty-text">No assignments found for selected filters</p>
-      </ui-card><div v-else class="assignments-grid">
-        <evaluation-assignment-card
-          v-for="assignment in assignments"
-          :key="assignment.id"
-          :assignment="assignment"
-          @evaluated="$emit('evaluated')"
-        />
-      </div>
+    <p class="empty-text">No assignments found for selected filters</p>
+  </ui-card>
+  <div v-else class="assignments-grid">
+    <evaluation-assignment-card
+      v-for="assignment in assignments"
+      :key="assignment.id"
+      :assignment="assignment"
+      @evaluated="$emit('evaluated')"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiSkeleton from '@/components/ui/UiSkeleton'
 import EvaluationAssignmentCard from './EvaluationAssignmentCard.vue'
 import type { JuryAssignmentResponse } from '@/api/backendAPINinja.schemas'
 

@@ -1,52 +1,50 @@
 <template>
-  <div v-if="isError" class="error-state">
-    <ui-card>
-      <p>Error while fetching tournament</p>
-    </ui-card>
-  </div>
-
-  <ui-query-state :query="tournamentQuery">
-<template #skeleton>
-      <div class="create-layout">
-        <div class="tournament-form">
-          <ui-skeleton variant="rect" height="220px" />
-          <ui-skeleton variant="rect" height="140px" />
-          <ui-skeleton variant="rect" height="200px" />
+  <ui-query-block :query="tournamentQuery" title="tournament">
+    <ui-query-field>
+      <template #skeleton>
+        <div class="create-layout">
+          <div class="tournament-form">
+            <ui-skeleton variant="rect" height="220px" />
+            <ui-skeleton variant="rect" height="140px" />
+            <ui-skeleton variant="rect" height="200px" />
+          </div>
+          <ui-skeleton variant="rect" height="320px" />
         </div>
-        <ui-skeleton variant="rect" height="320px" />
+      </template>
+      <div class="create-layout">
+        <form class="tournament-form" @submit.prevent="handleSubmit">
+          <tournament-basics-fields :form="form" />
+          <tournament-capacity-fields :form="form" />
+          <tournament-schedule-fields :form="form" />
+
+          <ui-card class="form-actions">
+            <ui-button asLink :to="`/tournaments/${tournamentId}`" variant="secondary" size="lg">
+              Cancel
+            </ui-button>
+            <ui-button type="submit" size="lg" :disabled="isPending">
+              {{ isPending ? 'Saving...' : 'Save changes' }}
+            </ui-button>
+          </ui-card>
+        </form>
+
+        <tournament-summary-aside
+          :name="form.fields.value.name"
+          :description="form.fields.value.description"
+          :max-teams="form.fields.value.max_teams"
+          :min-team-members="form.fields.value.min_team_members"
+          :starts-label="startsLabel"
+          :ends-label="endsLabel"
+          truncate-description
+        />
       </div>
-    </template><div class="create-layout">
-      <form class="tournament-form" @submit.prevent="handleSubmit">
-        <tournament-basics-fields :form="form" />
-        <tournament-capacity-fields :form="form" />
-        <tournament-schedule-fields :form="form" />
-
-        <ui-card class="form-actions">
-          <ui-button asLink :to="`/tournaments/${tournamentId}`" variant="secondary" size="lg">
-            Cancel
-          </ui-button>
-          <ui-button type="submit" size="lg" :disabled="isPending">
-            {{ isPending ? 'Saving...' : 'Save changes' }}
-          </ui-button>
-        </ui-card>
-      </form>
-
-      <tournament-summary-aside
-        :name="form.fields.value.name"
-        :description="form.fields.value.description"
-        :max-teams="form.fields.value.max_teams"
-        :min-team-members="form.fields.value.min_team_members"
-        :starts-label="startsLabel"
-        :ends-label="endsLabel"
-        truncate-description
-      />
-    </div>
-</ui-query-state>
+    </ui-query-field>
+  </ui-query-block>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useForm } from '@/composables/useForm'
 import { combineDateAndTime } from '@/lib/date'
@@ -80,7 +78,7 @@ const { showNotification } = useNotification()
 const form = useForm<TournamentFormFields>(EditTournamentSchema, createTournamentFormDefaults())
 
 const tournamentQuery = useGetTournament(props.tournamentId)
-const { data: tournament, isLoading, isFetching, isError } = tournamentQuery
+const { data: tournament } = tournamentQuery
 
 const { mutate: editTournament, isPending } = useUpdateTournament()
 
@@ -153,11 +151,6 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.error-state {
-  display: flex;
-  justify-content: center;
-}
-
 .create-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
@@ -173,8 +166,6 @@ const handleSubmit = () => {
 }
 
 .form-actions {
-  position: sticky;
-  bottom: 1rem;
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -183,13 +174,6 @@ const handleSubmit = () => {
 @media (max-width: 980px) {
   .create-layout {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .form-actions {
-    position: static;
-    flex-direction: column-reverse;
   }
 }
 </style>

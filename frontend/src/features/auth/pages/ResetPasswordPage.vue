@@ -15,17 +15,27 @@
           </div>
         </div>
 
-        <p v-if="isLoading" class="text-muted">Checking your reset link...</p>
-        <p v-else-if="error" class="notice error">{{ error.message }}</p>
+        <ui-query-block :query="linkQuery" title="reset link">
+          <template #error="{ errorCode }">
+            <p class="notice error">
+              This reset link is invalid or has expired (code: {{ errorCode }}).
+            </p>
+          </template>
+          <ui-query-field>
+            <template #skeleton>
+              <p class="text-muted">Checking your reset link...</p>
+            </template>
+          </ui-query-field>
+        </ui-query-block>
 
-        <div v-else-if="isSuccess" class="notice success reset-success">
+        <div v-if="isSuccess" class="notice success reset-success">
           Password has been reset successfully.
           <div class="footer-actions">
             <ui-button as-link to="/login">Back to Login</ui-button>
           </div>
         </div>
 
-        <form v-else class="reset-form" @submit.prevent="handleReset">
+        <form v-else-if="!isLinkInvalid" class="reset-form" @submit.prevent="handleReset">
           <label class="field">
             <span class="label">New password</span>
             <ui-password-field
@@ -59,7 +69,7 @@
           </label>
 
           <div class="footer-actions">
-            <ui-button :disabled="isResetingPassword" type="submit">
+            <ui-button :disabled="isResetingPassword || isLinkPending" type="submit">
               <LoaderCircle class="animate-spin" v-if="isResetingPassword" />
               Set new password
             </ui-button>
@@ -75,6 +85,7 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
 import UiPasswordField from '@/components/ui/UiPasswordField'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiButton from '@/components/ui/UiButton'
 import { LoaderCircle } from 'lucide-vue-next'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
@@ -95,7 +106,12 @@ const form = ref({
 const uid = computed(() => String(route.params.uid))
 const token = computed(() => String(route.params.token))
 
-const { isLoading, error } = useValidatePasswordResetLink(uid, token)
+const linkQuery = useValidatePasswordResetLink(uid, token)
+
+const isLinkInvalid = computed(
+  () => linkQuery.isError.value === true && linkQuery.data.value === undefined,
+)
+const isLinkPending = computed(() => linkQuery.isPending.value === true)
 
 function handleReset() {
   resetPassword({

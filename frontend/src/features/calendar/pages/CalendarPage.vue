@@ -37,41 +37,43 @@
     </section>
 
     <section class="calendar-content">
-      <ui-query-state :query="calendarQuery">
-        <template #skeleton>
-          <div class="calendar-skeleton">
-            <div class="skeleton-nav">
-              <ui-skeleton variant="rect" width="32px" height="32px" />
-              <ui-skeleton variant="rect" width="180px" height="24px" />
-              <ui-skeleton variant="rect" width="32px" height="32px" />
-            </div>
-            <div class="skeleton-grid">
-              <ui-skeleton v-for="i in 42" :key="i" variant="rect" height="90px" />
-            </div>
-          </div>
-        </template>
-
+      <ui-query-block :query="calendarQuery">
         <template #error="{ errorCode }">
           <div class="calendar-error">
             <p>Failed to load calendar data (code: {{ errorCode }})</p>
           </div>
         </template>
+        <ui-query-field>
+          <template #skeleton>
+            <div class="calendar-skeleton">
+              <div class="skeleton-nav">
+                <ui-skeleton variant="rect" width="32px" height="32px" />
+                <ui-skeleton variant="rect" width="180px" height="24px" />
+                <ui-skeleton variant="rect" width="32px" height="32px" />
+              </div>
+              <div class="skeleton-grid">
+                <ui-skeleton v-for="i in 42" :key="i" variant="rect" height="90px" />
+              </div>
+            </div>
+          </template>
 
-        <div v-if="!hasItems" class="calendar-empty">
-          <Calendar class="empty-icon" />
-          <p>No upcoming events or deadlines</p>
-          <p class="text-muted">Join a tournament to see its schedule here</p>
-        </div>
-
-        <schedule-calendar
-          v-else
-          :events="events"
-          :rounds="rounds"
-          :gcal-connected="gcalConnected"
-          @export-event="exportEvent"
-          @export-round="exportRound"
-        />
-      </ui-query-state>
+          <template #default>
+            <div v-if="isEmpty" class="calendar-empty">
+              <Calendar class="empty-icon" />
+              <p>No upcoming events or deadlines</p>
+              <p class="text-muted">Join a tournament to see its schedule here</p>
+            </div>
+            <schedule-calendar
+              v-else
+              :events="events"
+              :rounds="rounds"
+              :gcal-connected="gcalConnected"
+              @export-event="exportEvent"
+              @export-round="exportRound"
+            />
+          </template>
+        </ui-query-field>
+      </ui-query-block>
     </section>
   </section>
 </template>
@@ -79,7 +81,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { Calendar, LoaderCircle } from 'lucide-vue-next'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
@@ -98,6 +100,7 @@ const { data } = calendarQuery
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])
 const hasItems = computed(() => events.value.length > 0 || rounds.value.length > 0)
+const isEmpty = computed(() => !hasItems.value)
 
 const gcalConnected = ref(false)
 const gcalLoading = ref(true)

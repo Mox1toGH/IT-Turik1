@@ -10,55 +10,83 @@
       </div>
     </template>
 
-    <ui-query-state :query="props.query">
-      <template #error>
-        <div style="display: flex; justify-content: center; align-items: center; height: 502px">
-          <p>Failed to fetch team info</p>
-        </div>
-      </template>
-
-      <div>
+    <ui-query-block :query="props.query">
       <div class="info-grid">
         <div class="info-row">
           <span class="card-label">Name</span>
-          <strong class="text-muted info-value">
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="70%" />
+            </template>
+
+            <strong class="text-muted info-value">
               <ui-truncate :text="props.team?.name ?? ''" />
             </strong>
+          </ui-query-field>
         </div>
 
         <div class="info-row">
           <span class="card-label">Email</span>
-          <strong class="text-muted info-value">{{ props.team?.email }}</strong>
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="70%" />
+            </template>
+
+            <strong class="text-muted info-value">{{ props.team?.email }}</strong>
+          </ui-query-field>
         </div>
 
         <div class="info-row">
           <span class="card-label">Organization</span>
-          <strong class="text-muted info-value">{{ props.team?.organization || '-' }}</strong>
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="70%" />
+            </template>
+
+            <strong class="text-muted info-value">{{ props.team?.organization || '-' }}</strong>
+          </ui-query-field>
         </div>
 
         <div class="info-row">
           <span class="card-label">Captain</span>
-          <strong v-if="props.team?.captain_id" class="info-value">
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="50%" />
+            </template>
+
+            <strong v-if="props.team?.captain_id" class="info-value">
               <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
                 {{ captainName }}
-              </RouterLink>
-            </strong><strong v-else class="text-muted info-value">{{ captainName }}</strong>
+              </RouterLink> </strong
+            ><strong v-else class="text-muted info-value">{{ captainName }}</strong>
+          </ui-query-field>
         </div>
 
         <div class="info-row">
           <span class="card-label">Members count</span>
-          <strong class="text-muted info-value">{{ props.team?.members.length }}</strong>
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="30%" />
+            </template>
+
+            <strong class="text-muted info-value">{{ props.team?.members.length }}</strong>
+          </ui-query-field>
         </div>
 
         <div class="info-row">
           <span class="card-label">Visibility</span>
-          <strong class="text-muted info-value">{{
+          <ui-query-field class="info-value-cell">
+            <template #skeleton>
+              <ui-skeleton variant="rect" height="16px" width="40%" />
+            </template>
+
+            <strong class="text-muted info-value">{{
               props.team?.is_public ? 'Public' : 'Private'
             }}</strong>
+          </ui-query-field>
         </div>
       </div>
-      </div>
-    </ui-query-state>
+    </ui-query-block>
 
     <template #footer>
       <div class="info-actions">
@@ -89,11 +117,12 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { LoaderCircle } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useNotification } from '@/composables/useNotification'
-import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { hasRole } from '@/shared/lib/permissions'
@@ -102,7 +131,6 @@ import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
   team?: Team
-  loading?: boolean
   query: QueryLike
   isCaptain: boolean
 }
@@ -223,6 +251,10 @@ const leaveTeam = () => {
 .info-value {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.info-value-cell {
+  min-width: 0;
 }
 
 .captain-link {

@@ -1,16 +1,18 @@
 <template>
   <section class="page-shell">
-    <ui-query-state :query="archiveQuery">
-<template #skeleton>
-        <div class="skeleton-stack">
-          <ui-skeleton variant="rect" height="260px" />
-          <div class="skeleton-stats">
-            <ui-skeleton v-for="i in 4" :key="`stats-${i}`" variant="rect" height="96px" />
+    <ui-query-block :query="archiveQuery">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="skeleton-stack">
+            <ui-skeleton variant="rect" height="260px" />
+            <div class="skeleton-stats">
+              <ui-skeleton v-for="i in 4" :key="`stats-${i}`" variant="rect" height="96px" />
+            </div>
+            <ui-skeleton variant="rect" height="220px" />
+            <ui-skeleton variant="rect" height="220px" />
           </div>
-          <ui-skeleton variant="rect" height="220px" />
-          <ui-skeleton variant="rect" height="220px" />
-        </div>
-      </template><div v-if="archive" class="content-stack">
+        </template>
+        <div v-if="archive" class="content-stack">
           <archive-hero
             :tournament-id="id"
             :name="archive.name"
@@ -49,11 +51,13 @@
             </template>
           </ui-tabs>
         </div>
-</ui-query-state>
+      </ui-query-field>
+    </ui-query-block>
   </section>
 </template>
 
 <script setup lang="ts">
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'

@@ -1,45 +1,34 @@
 <template>
   <div class="teams-widget">
-    <div
-      v-if="status === 'error'"
-      style="display: flex; height: 200px; justify-content: center; align-items: center"
-    >
-      <p>Error while fetching invitations</p>
-    </div>
+    <ui-query-block :query="teamsQuery" title="teams">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-grid">
+            <div class="team-item-skeleton" v-for="i in 2" :key="i">
+              <div class="team-skeleton-body">
+                <ui-skeleton variant="rect" width="120px" />
 
-    <div v-else class="teams-body">
-      <div v-if="isStale" class="stale-banner" role="status">
-        <span>Update failed</span>
-        <button type="button" :disabled="isFetching" @click="() => refetch()">
-          {{ isFetching ? 'Retrying…' : 'Retry' }}
-        </button>
-      </div>
-
-      <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-query-state :query="teamsQuery">
-<template #skeleton>
-            <div class="team-grid">
-              <div class="team-item-skeleton" v-for="i in 2" :key="i">
-                <div class="team-skeleton-body">
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <ui-skeleton variant="rect" width="80px" />
                   <ui-skeleton variant="rect" width="120px" />
+                  <ui-skeleton variant="rect" width="100px" />
+                  <ui-skeleton variant="rect" width="110px" />
+                </div>
 
-                  <div style="display: flex; flex-direction: column; gap: 4px">
-                    <ui-skeleton variant="rect" width="80px" />
-                    <ui-skeleton variant="rect" width="120px" />
-                    <ui-skeleton variant="rect" width="100px" />
-                    <ui-skeleton variant="rect" width="110px" />
-                  </div>
-
-                  <div class="actions">
-                    <ui-skeleton variant="rect" height="2rem" width="100%" />
-                    <ui-skeleton variant="rect" height="2rem" width="100%" />
-                  </div>
+                <div class="actions">
+                  <ui-skeleton variant="rect" height="2rem" width="100%" />
+                  <ui-skeleton variant="rect" height="2rem" width="100%" />
                 </div>
               </div>
             </div>
-          </template><p v-if="otherTeams?.length === 0" class="empty-text text-muted">
+          </div>
+        </template>
+
+        <template #default>
+          <p v-if="isEmpty" class="empty-text text-muted">
             No teams to discover. Available teams will show up here when they can be joined.
-          </p><div v-else class="team-grid">
+          </p>
+          <div v-else class="team-grid">
             <ui-card
               v-for="team in otherTeamsPageItems"
               :key="`other-${team.id}`"
@@ -70,25 +59,25 @@
                     <LoaderCircle class="animate-spin" v-if="loadingIds.has(team.id)" />
                     Request to join
                   </ui-button>
-                  <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`"
-                    >Open workspace</ui-button
-                  >
+                  <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`">
+                    Open workspace
+                  </ui-button>
                 </div>
               </template>
             </ui-card>
           </div>
-</ui-query-state>
 
-        <ui-pagination
-          class="teams-pagination"
-          v-if="otherPages > 1"
-          v-model="otherPage"
-          :total-items="otherTeams?.length ?? 0"
-          :page-size="OTHER_TEAMS_PER_PAGE"
-          :show-summary="false"
-        />
-      </div>
-    </div>
+          <ui-pagination
+            class="teams-pagination"
+            v-if="otherPages > 1"
+            v-model="otherPage"
+            :total-items="otherTeams?.length ?? 0"
+            :page-size="OTHER_TEAMS_PER_PAGE"
+            :show-summary="false"
+          />
+        </template>
+      </ui-query-field>
+    </ui-query-block>
   </div>
 </template>
 
@@ -96,13 +85,13 @@
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useQueryState } from '@/composables/useQueryState'
 import {
   useCreateTeamJoinRequest,
   useListTeams,
@@ -115,8 +104,7 @@ type Team = ListTeamsQueryResult['items'][number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
-const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, isStale } = useQueryState(teamsQuery)
+const { data: teams } = teamsQuery
 
 const { showNotification } = useNotification()
 
@@ -133,6 +121,7 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 const otherTeams = computed(() =>
   (teams.value?.items ?? []).filter((team) => !isAcceptedMember(team)),
 )
+const isEmpty = computed(() => otherTeams.value.length === 0)
 const otherPages = computed(() =>
   Math.max(1, Math.ceil((otherTeams.value?.length ?? 0) / OTHER_TEAMS_PER_PAGE)),
 )
@@ -174,11 +163,6 @@ const sendJoinRequest = (teamId: number) => {
   padding: 2rem 0;
   text-align: center;
   overflow-wrap: anywhere;
-}
-
-.teams-body {
-  display: grid;
-  gap: 1rem;
 }
 
 .teams-pagination {
@@ -258,43 +242,5 @@ const sendJoinRequest = (teamId: number) => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.dimmed > * {
-  opacity: 0.6;
-}
-
-.stale-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.stale-banner button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.stale-banner button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.stale-banner button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 </style>

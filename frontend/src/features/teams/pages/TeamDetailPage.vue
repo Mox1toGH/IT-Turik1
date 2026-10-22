@@ -1,6 +1,6 @@
 <template>
   <section class="page-shell teams-detail-page">
-    <team-header :team="team" :query="teamQuery" />
+    <team-header :team="team" :loading="isInfoLoading" />
 
     <div class="teams-rule" aria-hidden="true"></div>
 
@@ -9,7 +9,6 @@
         <div class="overview-grid">
           <team-base-info
             :team="team"
-            :loading="isInfoLoading"
             :query="teamQuery"
             :is-captain="isCaptain"
             @deleted="router.push('/teams')"
@@ -18,7 +17,7 @@
 
           <team-banner-section
             :team="team"
-            :loading="isInfoLoading"
+            :query="teamQuery"
             :is-captain="isCaptain"
             :hero-banner-style="banner.heroBannerStyle.value"
             @open="banner.isBannerModalOpen.value = true"
@@ -35,15 +34,15 @@
             <ui-input
               v-model="searchInput"
               placeholder="Search by username or email"
-              :disabled="isInfoLoading || status === 'error'"
+              :disabled="isInfoLoading"
             />
 
             <team-members
               :team="team"
               :user="user"
-              :query="teamQuery"
+              :members="members"
+              :query="membersQuery"
               :search-filter="searchInput"
-              :loading="isInfoLoading"
               :is-captain="isCaptain"
             />
 
@@ -109,14 +108,19 @@
       </template>
 
       <template v-if="isCaptain" #settings>
-        <ui-query-state :query="teamQuery">
-<team-manage-zone
-            :team="team"
-            :loading="isInfoLoading"
-            :is-captain="isCaptain"
-            @update-team="(newTeamValue) => (team = newTeamValue)"
-          />
-</ui-query-state>
+        <ui-query-block :query="teamQuery">
+          <ui-query-field>
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" height="72px" />
+            </template>
+            <team-manage-zone
+              :team="team"
+              :loading="isInfoLoading"
+              :is-captain="isCaptain"
+              @update-team="(newTeamValue) => (team = newTeamValue)"
+            />
+          </ui-query-field>
+        </ui-query-block>
       </template>
     </ui-tabs>
 
@@ -147,9 +151,7 @@
       </div>
 
       <template #footer>
-        <ui-button size="sm" variant="secondary" @click="banner.resetBannerState"
-          >Cancel</ui-button
-        >
+        <ui-button size="sm" variant="secondary" @click="banner.resetBannerState">Cancel</ui-button>
         <ui-button
           size="sm"
           variant="secondary"
@@ -176,6 +178,8 @@ import { LoaderCircle } from 'lucide-vue-next'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiSection from '@/components/ui/UiSection'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -191,10 +195,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
 import UiInput from '@/components/ui/UiInput'
-import { useQueryState } from '@/composables/useQueryState'
 import { formatDate } from '@/lib/date'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useGetTeam } from '@/api/teams/teams'
+import { useGetTeam, useListTeamMembers } from '@/api/teams/teams'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
 import UiFileDrop from '@/components/ui/UiFileDrop'
 
@@ -206,7 +209,10 @@ const searchInput = ref('')
 const { data: user } = useGetUserProfile()
 const teamQuery = useGetTeam(teamId)
 const { data: team, isLoading: isInfoLoading } = teamQuery
-const { status } = useQueryState(teamQuery)
+const membersQuery = useListTeamMembers(teamId, {
+  query: { enabled: computed(() => route.query.tab === 'members') },
+})
+const { data: members } = membersQuery
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },

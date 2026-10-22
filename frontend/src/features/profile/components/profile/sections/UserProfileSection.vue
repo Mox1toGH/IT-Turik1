@@ -1,96 +1,154 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">User Profile</p>
-            <h1 class="section-title profile-title">
-              {{ user?.full_name || user?.username || '-' }}
-            </h1>
-          </div>
-          <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
-        </div>
-        <user-avatar
-          :avatar="user?.avatar"
-          :username="user?.username || 'user'"
-          :full-name="user?.full_name || ''"
-          :size="108"
-          :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
-        />
-      </template>
-
-      <ui-query-state :query="userQuery" title="profile">
-      <div class="details">
-        <div class="field-row">
-          <span class="field-label">Username</span>
-          <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
-        </div>
-        <div class="field-row">
-          <span class="field-label">Email</span>
-          <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
-        </div>
-        <div class="field-row">
-          <span class="field-label">Role</span>
-          <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
-        </div>
-        <div class="field-row">
-          <span class="field-label">Full name</span>
-          <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
-        </div>
-        <div class="field-row">
-          <span class="field-label">City</span>
-          <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
-        </div>
-        <div class="field-row">
-          <span class="field-label">Phone</span>
-          <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
-        </div>
-        <div class="field-row field-row--wide">
-          <span class="field-label">Teams</span>
-          <div>
-            <div class="team-list">
-                <router-link
-                  v-for="team in user?.teams || []"
-                  :key="team.id"
-                  :to="`/teams/${team.id}`"
-                  class="team-link"
-                >
-                  {{ team.name }}
-                </router-link>
-              </div><p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="user?.active_tournament" class="tournament-overview-row">
-        <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
-          <div class="active-tournament-card">
-            <span class="card-text-title">Active tournament</span>
-            <div class="active-tournament-content">
-              <div>
-                <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
-                <p class="active-tournament-meta">
-                  {{ formatDate(user.active_tournament.start_date) }} -
-                  {{ formatDate(user.active_tournament.end_date) }}
-                </p>
+    <ui-query-block :query="userQuery" title="profile">
+      <ui-card>
+        <template #header>
+          <div class="head">
+            <div>
+              <p class="section-eyebrow">User Profile</p>
+              <div class="section-title profile-title" role="heading" aria-level="1">
+                <ui-query-field>
+                  <template #skeleton
+                    ><ui-skeleton variant="rect" width="220px" height="36px"
+                  /></template>
+                  <span>{{ user?.full_name || user?.username || '-' }}</span>
+                </ui-query-field>
               </div>
-              <ui-button
-                as-link
-                :to="`/users/${userId}/tournaments-history`"
-                variant="secondary"
-                size="sm"
-                class="history-btn"
-                @click.stop
-              >
-                Tournament history
-              </ui-button>
+            </div>
+            <div class="meta">
+              Joined:
+              <ui-query-field>
+                <template #skeleton
+                  ><ui-skeleton variant="rect" width="100px" height="16px"
+                /></template>
+                <span>{{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</span>
+              </ui-query-field>
             </div>
           </div>
-        </router-link>
-      </div>
-      </ui-query-state>
-    </ui-card>
+          <ui-query-field>
+            <template #skeleton
+              ><ui-skeleton variant="rounded" width="108px" height="108px"
+            /></template>
+            <user-avatar
+              :avatar="user?.avatar"
+              :username="user?.username || 'user'"
+              :full-name="user?.full_name || ''"
+              :size="108"
+              :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+            />
+          </ui-query-field>
+        </template>
+
+        <div class="details">
+          <div class="field-row">
+            <span class="field-label">Username</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="120px" /></template
+              ><strong class="item-value value-wrap">{{
+                user?.username || '-'
+              }}</strong></ui-query-field
+            >
+          </div>
+          <div class="field-row">
+            <span class="field-label">Email</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="160px" /></template
+              ><strong class="item-value value-wrap">{{
+                user?.email || '-'
+              }}</strong></ui-query-field
+            >
+          </div>
+          <div class="field-row">
+            <span class="field-label">Role</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="80px" /></template
+              ><ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge></ui-query-field
+            >
+          </div>
+          <div class="field-row">
+            <span class="field-label">Full name</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="140px" /></template
+              ><strong class="item-value value-wrap">{{
+                user?.full_name || '-'
+              }}</strong></ui-query-field
+            >
+          </div>
+          <div class="field-row">
+            <span class="field-label">City</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="90px" /></template
+              ><strong class="item-value value-wrap">{{
+                user?.city || '-'
+              }}</strong></ui-query-field
+            >
+          </div>
+          <div class="field-row">
+            <span class="field-label">Phone</span>
+            <ui-query-field
+              ><template #skeleton><ui-skeleton variant="rect" width="120px" /></template
+              ><strong class="item-value value-fixed">{{
+                user?.phone || '-'
+              }}</strong></ui-query-field
+            >
+          </div>
+          <div class="field-row field-row--wide">
+            <span class="field-label">Teams</span>
+            <div>
+              <ui-query-field>
+                <template #skeleton>
+                  <div class="team-list-skeleton">
+                    <ui-skeleton variant="rect" width="140px" height="20px" /><ui-skeleton
+                      variant="rect"
+                      width="120px"
+                      height="20px"
+                    />
+                  </div>
+                </template>
+                <div class="team-list">
+                  <router-link
+                    v-for="team in user?.teams || []"
+                    :key="team.id"
+                    :to="`/teams/${team.id}`"
+                    class="team-link"
+                  >
+                    {{ team.name }}
+                  </router-link>
+                </div>
+                <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
+              </ui-query-field>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="user?.active_tournament" class="tournament-overview-row">
+          <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
+            <div class="active-tournament-card">
+              <span class="card-text-title">Active tournament</span>
+              <div class="active-tournament-content">
+                <div>
+                  <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
+                  <p class="active-tournament-meta">
+                    {{ formatDate(user.active_tournament.start_date) }} -
+                    {{ formatDate(user.active_tournament.end_date) }}
+                  </p>
+                </div>
+                <ui-button
+                  as-link
+                  :to="`/users/${userId}/tournaments-history`"
+                  variant="secondary"
+                  size="sm"
+                  class="history-btn"
+                  @click.stop
+                >
+                  Tournament history
+                </ui-button>
+              </div>
+            </div>
+          </router-link>
+        </div>
+      </ui-card>
+    </ui-query-block>
   </section>
 </template>
 
@@ -99,7 +157,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiBadge from '@/components/ui/UiBadge'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
@@ -109,7 +167,7 @@ import { formatDate } from '@/lib/date'
 const route = useRoute()
 const userId = computed(() => Number(route.params.id))
 const userQuery = useGetUser(userId)
-const { data: user, isLoading } = userQuery
+const { data: user } = userQuery
 </script>
 
 <style scoped>

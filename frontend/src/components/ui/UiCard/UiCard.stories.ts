@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { fn } from 'storybook/test'
 import UiCard from './UiCard.vue'
 import UiButton from '../UiButton'
-import UiQueryState from '../UiQueryState'
+import { UiQueryBlock } from '../../query'
 
 const meta: Meta<typeof UiCard> = {
   title: 'UI/UiCard',
@@ -61,7 +61,7 @@ export const WithTitleHeader: Story = {
     },
     template: `
       <ui-card v-bind="args" style="max-width: 560px">
-        <p>Card body. UiCard is presentational — pair it with UiQueryState for query states.</p>
+        <p>Card body. UiCard is presentational; pair it with UiQueryBlock for query states.</p>
         <template #footer>
           <ui-button size="sm" variant="secondary">Filter</ui-button>
         </template>
@@ -143,10 +143,10 @@ export const CustomHeaderSlot: Story = {
   }),
 }
 
-/** UiCard renders whatever it is given; query states belong to UiQueryState. */
-export const ComposedWithQueryState: Story = {
+/** UiCard renders whatever it is given; query states belong to UiQueryBlock. */
+export const ComposedWithQueryBlock: Story = {
   render: () => ({
-    components: { UiCard, UiQueryState },
+    components: { UiCard, UiQueryBlock },
     setup() {
       const isPending = ref(true)
       const query = {
@@ -161,12 +161,12 @@ export const ComposedWithQueryState: Story = {
     },
     template: `
       <ui-card title="Tournaments" variant="panel" style="max-width: 480px">
-        <ui-query-state :query="query">
+        <ui-query-block :query="query">
           <template #skeleton>
             <p class="text-muted">Loading tournaments…</p>
           </template>
           <p>12 active tournaments.</p>
-        </ui-query-state>
+        </ui-query-block>
       </ui-card>
     `,
   }),

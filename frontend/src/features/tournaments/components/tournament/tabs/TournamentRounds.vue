@@ -5,90 +5,86 @@
   </div>
 
   <section>
-    <div v-if="status === 'loading'" class="rounds-list">
-      <ui-card v-for="i in 3" :key="`round-skeleton-${i}`" class="round-card">
-        <template #header>
-          <div class="round-header">
-            <ui-skeleton variant="rect" width="180px" height="24px" />
-            <ui-skeleton variant="rect" width="80px" height="24px" />
-          </div>
+    <ui-query-block :query="roundsQuery" title="rounds">
+      <ui-query-field>
+        <template #skeleton>
+          <rounds-list-skeleton />
         </template>
 
-        <div class="skeleton-lines">
-          <ui-skeleton variant="rect" width="220px" />
-          <ui-skeleton variant="rect" width="220px" />
-        </div>
+        <template #default>
+          <div v-if="rounds.length === 0" class="rounds-empty">
+            <p>No rounds added yet.</p>
+            <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
+          </div>
+          <div v-else class="rounds-list">
+            <ui-card v-for="round in rounds" :key="round.id" class="round-card">
+              <template #header>
+                <div class="round-header">
+                  <h4>{{ truncateText(round.name ?? '-', 40) }}</h4>
 
-        <div class="round-actions">
-          <ui-skeleton variant="rect" width="110px" height="36px" />
-        </div>
-      </ui-card>
-    </div>
+                  <div class="header-right">
+                    <ui-badge :variant="badgeVariant(getEffectiveRoundStatus(round))">{{
+                      badgeStatus(getEffectiveRoundStatus(round))
+                    }}</ui-badge>
+                    <round-actions-popover
+                      v-if="user?.role === 'admin'"
+                      :roundId="round.id"
+                      :tournamentId="props.tournamentId"
+                      :status="round.status"
+                    />
+                  </div>
+                </div>
+              </template>
 
-    <ui-query-state
-      v-else-if="status !== 'data'"
-      :query="roundsQuery"
-      class="rounds-state"
-      empty-text="No rounds added yet"
-    >
-      <template #empty-action>
-        <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
-      </template>
-    </ui-query-state>
+              <div class="round-dates">
+                <p class="text-muted">
+                  Start: {{ formatDate(round.start_date, { showHours: true }) }}
+                </p>
+                <p class="text-muted">End: {{ formatDate(round.end_date, { showHours: true }) }}</p>
+              </div>
 
-    <div v-else class="rounds-list">
-      <ui-card v-for="round in rounds" :key="round.id" class="round-card">
-        <template #header>
-          <div class="round-header">
-            <h4>{{ truncateText(round.name ?? '-', 40) }}</h4>
+              <div class="round-actions">
+                <ui-button size="sm" variant="secondary" @click="openDetails(round)">
+                  View details
+                </ui-button>
 
-            <div class="header-right">
-              <ui-badge :variant="badgeVariant(getEffectiveRoundStatus(round))">{{
-                badgeStatus(getEffectiveRoundStatus(round))
-              }}</ui-badge>
-              <round-actions-popover
-                v-if="user?.role === 'admin'"
-                :roundId="round.id"
-                :tournamentId="props.tournamentId"
-                :status="round.status"
-              />
-            </div>
+                <ui-button
+                  v-if="user?.role === 'admin' && round.status === 'draft'"
+                  size="sm"
+                  variant="secondary"
+                  @click="openEdit(round)"
+                >
+                  Edit
+                </ui-button>
+
+                <template
+                  v-if="getEffectiveRoundStatus(round) === 'active' && user?.role === 'team'"
+                >
+                  <ui-query-block :query="submissionsQuery">
+                    <ui-query-field>
+                      <template #skeleton>
+                        <ui-skeleton variant="rect" width="110px" height="36px" />
+                      </template>
+                      <ui-button
+                        v-if="submittedRoundIds.has(round.id)"
+                        size="sm"
+                        variant="secondary"
+                        @click="openSubmissionsSection"
+                      >
+                        View submission
+                      </ui-button>
+                      <ui-button v-else size="sm" @click="openSubmissionForm(round.id)">
+                        Submit
+                      </ui-button>
+                    </ui-query-field>
+                  </ui-query-block>
+                </template>
+              </div>
+            </ui-card>
           </div>
         </template>
-
-        <div class="round-dates">
-          <p class="text-muted">Start: {{ formatDate(round.start_date, { showHours: true }) }}</p>
-          <p class="text-muted">End: {{ formatDate(round.end_date, { showHours: true }) }}</p>
-        </div>
-
-        <div class="round-actions">
-          <ui-button size="sm" variant="secondary" @click="openDetails(round)">
-            View details
-          </ui-button>
-
-          <ui-button
-            v-if="user?.role === 'admin' && round.status === 'draft'"
-            size="sm"
-            variant="secondary"
-            @click="openEdit(round)"
-          >
-            Edit
-          </ui-button>
-
-          <template v-if="getEffectiveRoundStatus(round) === 'active' && user?.role === 'team'">
-            <ui-button
-              v-if="submittedRoundIds.has(round.id)"
-              size="sm"
-              variant="secondary"
-              @click="openSubmissionsSection"
-            >
-              View submission
-            </ui-button>
-            <ui-button v-else size="sm" @click="openSubmissionForm(round.id)"> Submit </ui-button>
-          </template>
-        </div>
-      </ui-card>
-    </div>
+      </ui-query-field>
+    </ui-query-block>
 
     <submit-modal
       v-if="selectedSubmitRoundId !== null"
@@ -114,8 +110,8 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
-import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import RoundsListSkeleton from './tournament-rounds/RoundsListSkeleton.vue'
 import { truncateText } from '@/lib/utils'
 import { formatDate } from '@/lib/date'
 import { computed, ref, watch } from 'vue'
@@ -127,7 +123,6 @@ import CreateRoundModal from './tournament-rounds/modals/CreateRoundModal.vue'
 import EditRoundModal from '../modals/EditRoundModal.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useQueryState } from '@/composables/useQueryState'
 import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
 import type { RoundResponse } from '@/api/backendAPINinja.schemas.ts'
 
@@ -136,13 +131,14 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const { data: user } = useGetUserProfile()
+const profileQuery = useGetUserProfile()
+const { data: user } = profileQuery
 const router = useRouter()
 const route = useRoute()
 
 const roundsQuery = useListRounds(props.tournamentId)
-const { status } = useQueryState(roundsQuery)
-const { data: submissions } = useListMyTeamSubmissions(props.tournamentId)
+const submissionsQuery = useListMyTeamSubmissions(props.tournamentId)
+const { data: submissions } = submissionsQuery
 
 const rounds = computed(() => roundsQuery.data.value?.items ?? [])
 const submittedRoundIds = computed(
@@ -224,21 +220,6 @@ function badgeStatus(status: RoundResponse['status']) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
-}
-
-/* The state card only carries the placeholder panel: it draws no frame of its own. */
-.rounds-state {
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.rounds-state :deep(.card-empty),
-.rounds-state :deep(.card-state-error) {
-  flex: 1 1 auto;
-  min-height: 220px;
-  justify-content: center;
-  padding: 2rem 1rem;
 }
 
 .skeleton-lines {

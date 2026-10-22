@@ -49,6 +49,7 @@ import type {
   PagedTeamInvitationInboxResponse,
   PagedTeamInvitationResponse,
   PagedTeamJoinRequestResponse,
+  TeamMemberResponse,
   TeamBannerResponse,
   TeamBannerUpdateBody,
   TeamCreateRequest,
@@ -264,6 +265,47 @@ export function useGetTeam<TData = Awaited<ReturnType<typeof getTeam>>, TError =
 
 
 
+
+/** @summary List Team Members */
+export const listTeamMembers = (
+  pk: MaybeRef<number>,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  pk = unref(pk)
+  return customInstance<TeamMemberResponse[]>(
+    { url: `http://localhost:8000/api/teams/${pk}/members`, method: 'GET', signal },
+    options,
+  )
+}
+
+export const getListTeamMembersQueryKey = (pk?: MaybeRef<number>) =>
+  ['http:', 'localhost:8000', 'api', 'teams', pk, 'members'] as const
+
+export function useListTeamMembers<TData = Awaited<ReturnType<typeof listTeamMembers>>, TError = ErrorType<ErrorResponse>>(
+  pk: MaybeRef<number>,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTeamMembers>>, TError, TData>>
+    request?: SecondParameter<typeof customInstance>
+  },
+  queryClient?: QueryClient,
+): UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const { query: queryOptions, request: requestOptions } = options ?? {}
+  const queryKey = getListTeamMembersQueryKey(unref(pk))
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeamMembers>>> = ({ signal }) =>
+    listTeamMembers(pk, requestOptions, signal)
+  const query = useQuery(
+    {
+      queryKey,
+      queryFn,
+      enabled: computed(() => !!unref(pk)),
+      ...queryOptions,
+    } as UseQueryOptions<Awaited<ReturnType<typeof listTeamMembers>>, TError, TData>,
+    queryClient,
+  ) as UseQueryReturnType<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+  query.queryKey = queryKey as unknown as DataTag<QueryKey, TData, TError>
+  return query
+}
 
 /**
  * @summary Update Team

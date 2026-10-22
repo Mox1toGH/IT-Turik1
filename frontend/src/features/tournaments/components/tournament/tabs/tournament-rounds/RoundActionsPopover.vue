@@ -92,7 +92,8 @@ interface Props {
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
 
-const { data: profile } = useGetUserProfile()
+const profileQuery = useGetUserProfile()
+const { data: profile } = profileQuery
 const { mutate: deleteRound } = useDeleteRound()
 const { mutate: startRound } = useStartRound()
 const { mutate: closeSubmissions } = useCloseRoundSubmissions()

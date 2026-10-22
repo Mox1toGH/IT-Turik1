@@ -1,53 +1,42 @@
 <template>
   <div class="teams-widget">
-    <div
-      v-if="status === 'error'"
-      style="display: flex; height: 136px; justify-content: center; align-items: center"
-    >
-      <p>Error while fetching my teams</p>
-    </div>
-
-    <div v-else class="teams-body">
-      <div v-if="isStale" class="stale-banner" role="status">
-        <span>Update failed</span>
-        <button type="button" :disabled="isFetching" @click="() => refetch()">
-          {{ isFetching ? 'Retrying…' : 'Retry' }}
-        </button>
-      </div>
-
-      <div :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <ui-query-state :query="teamsQuery">
-<template #skeleton>
-            <div class="team-grid">
-              <div class="team-item-skeleton" v-for="i in 2" :key="i">
-                <div class="team-skeleton-body">
-                  <div class="team-header">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="160px" />
-                  </div>
-
-                  <div style="display: flex; flex-direction: column; gap: 5px">
-                    <ui-skeleton variant="rect" width="80px" />
-                    <ui-skeleton variant="rect" width="120px" />
-                    <ui-skeleton variant="rect" width="100px" />
-                  </div>
-
-                  <ui-skeleton variant="rect" height="2rem" width="100%" />
+    <ui-query-block :query="teamsQuery" title="my teams">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-grid">
+            <div class="team-item-skeleton" v-for="i in 2" :key="i">
+              <div class="team-skeleton-body">
+                <div class="team-header">
+                  <ui-skeleton variant="rect" width="100%" />
+                  <ui-skeleton variant="rect" width="160px" />
                 </div>
+
+                <div style="display: flex; flex-direction: column; gap: 5px">
+                  <ui-skeleton variant="rect" width="80px" />
+                  <ui-skeleton variant="rect" width="120px" />
+                  <ui-skeleton variant="rect" width="100px" />
+                </div>
+
+                <ui-skeleton variant="rect" height="2rem" width="100%" />
               </div>
             </div>
-          </template><p v-if="myTeams?.length === 0" class="empty-text text-muted">
+          </div>
+        </template>
+
+        <template #default>
+          <p v-if="isEmpty" class="empty-text text-muted">
             No joined teams yet. Create a team or request to join an available workspace.
-          </p><div v-else class="team-grid">
+          </p>
+          <div v-else class="team-grid">
             <ui-card v-for="team in myTeamsPageItems" :key="`my-${team.id}`" class="team-item">
               <div class="team-body">
                 <div class="team-header">
                   <ui-truncate :text="team.name" class="team-title" />
                   <div class="badges">
                     <ui-badge v-if="isCaptain(team)" variant="green">Captain</ui-badge>
-                    <ui-badge v-if="team.is_in_active_tournament" variant="orange"
-                      >Active tournament</ui-badge
-                    >
+                    <ui-badge v-if="team.is_in_active_tournament" variant="orange">
+                      Active tournament
+                    </ui-badge>
                   </div>
                 </div>
 
@@ -59,23 +48,23 @@
               </div>
 
               <template #footer>
-                <ui-button asLink variant="default" size="sm" :to="`/teams/${team.id}`"
-                  >Open workspace</ui-button
-                >
+                <ui-button asLink variant="default" size="sm" :to="`/teams/${team.id}`">
+                  Open workspace
+                </ui-button>
               </template>
             </ui-card>
           </div>
-</ui-query-state>
 
-        <ui-pagination
-          v-if="myPages > 1"
-          v-model="myPage"
-          :total-items="myTeams?.length ?? 0"
-          :page-size="TEAMS_PER_PAGE"
-          :show-summary="false"
-        />
-      </div>
-    </div>
+          <ui-pagination
+            v-if="myPages > 1"
+            v-model="myPage"
+            :total-items="myTeams?.length ?? 0"
+            :page-size="TEAMS_PER_PAGE"
+            :show-summary="false"
+          />
+        </template>
+      </ui-query-field>
+    </ui-query-block>
   </div>
 </template>
 
@@ -84,11 +73,11 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiPagination from '@/components/ui/UiPagination'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { computed, ref } from 'vue'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { useQueryState } from '@/composables/useQueryState'
 import { useListTeams, type ListTeamsQueryResult } from '@/api/teams/teams'
 
 const TEAMS_PER_PAGE = 8
@@ -97,16 +86,15 @@ type Team = ListTeamsQueryResult['items'][number]
 
 const { data: user } = useGetUserProfile()
 const teamsQuery = useListTeams()
-const { data: teams, isLoading: isLoadingTeams, isFetching, refetch } = teamsQuery
-const { status, isStale } = useQueryState(teamsQuery)
+const { data: teams } = teamsQuery
 
-const myTeams = computed(() =>
-  (teams.value?.items ?? []).filter((team) => isAcceptedMember(team)),
-)
+const myTeams = computed(() => (teams.value?.items ?? []).filter((team) => isAcceptedMember(team)))
 const myTeamsPageItems = computed(() => {
   const from = (myPage.value - 1) * TEAMS_PER_PAGE
   return myTeams.value?.slice(from, from + TEAMS_PER_PAGE)
 })
+
+const isEmpty = computed(() => myTeams.value.length === 0)
 
 const myPage = ref(1)
 const myPages = computed(() =>
@@ -133,11 +121,6 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
   padding: 2rem 0;
   text-align: center;
   overflow-wrap: anywhere;
-}
-
-.teams-body {
-  display: grid;
-  gap: 1rem;
 }
 
 .team-grid {
@@ -216,43 +199,5 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
   justify-content: flex-end;
   gap: 0.5rem;
   max-width: 100%;
-}
-
-.dimmed > * {
-  opacity: 0.6;
-}
-
-.stale-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.stale-banner button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.stale-banner button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.stale-banner button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 </style>

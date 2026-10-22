@@ -37,6 +37,7 @@ from .schemas import (
     TeamInvitationInboxResponse,
     TeamInvitationResponse,
     TeamJoinRequestResponse,
+    TeamMemberResponse,
     TeamUpdateRequest,
     UpdateTeamResponse,
 )
@@ -558,6 +559,27 @@ def delete_team_banner(request, pk: int):
 # --------------------------------------------------------------------------
 # Members
 # --------------------------------------------------------------------------
+
+@router.get(
+    '/{int:pk}/members',
+    operation_id='listTeamMembers',
+    url_name='team_member_list',
+    response={
+        200: list[TeamMemberResponse],
+        401: ErrorResponse,
+        403: ErrorResponse,
+        404: ErrorResponse,
+    },
+)
+def list_team_members(request, pk: int):
+    team = get_accessible_team(request, pk)
+    members = team._prefetched_objects_cache.get('members', [])
+    logger.debug(
+        'Listing team members',
+        extra={'team_id': pk, 'user_id': request.auth.id},
+    )
+    return [_member_response_data(member, request) for member in members]
+
 
 @router.post(
     '/{int:pk}/members/invite',

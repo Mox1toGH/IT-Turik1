@@ -13,22 +13,20 @@
       </div>
 
       <div class="profile-hero-actions">
-        <ui-card class="joined-card">
-          <strong class="text-base">{{
-            user?.created_at ? formatDate(user.created_at) : 'N/A'
-          }}</strong>
-          <span class="text-sm">Joined</span>
-        </ui-card>
+        <ui-query-block :query="userQuery">
+          <template #error>
+            <ui-card class="joined-card">
+              <strong class="text-base">-</strong>
+              <span class="text-sm">Joined</span>
+            </ui-card>
+          </template>
+        </ui-query-block>
       </div>
     </header>
 
     <div class="profile-rule" aria-hidden="true"></div>
 
-    <div v-if="isLoadingError" class="error-state">
-      <p>Error while fetching profile info</p>
-    </div>
-
-    <div v-else class="profile-layout">
+    <div class="profile-layout">
       <aside class="profile-sidebar">
         <div class="sidebar-sticky">
           <ui-card class="sidebar-card">
@@ -111,12 +109,12 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock } from '@/components/query'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
 import UserStats from '../components/profile/sections/UserStats.vue'
 import { useUserStore } from '@/stores/user'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { formatDate } from '@/lib/date'
 
 interface ProfileSection {
   key: string
@@ -131,7 +129,7 @@ const profileSections: ProfileSection[] = [
 
 const store = useUserStore()
 const userQuery = useGetUserProfile()
-const { data: user, isLoading, isLoadingError } = userQuery
+const { data: user, isLoading } = userQuery
 const router = useRouter()
 const isDeleting = ref(false)
 const isDeleteModalOpen = ref(false)
@@ -199,30 +197,6 @@ function scrollToSection(key: string) {
   gap: 1rem;
   flex-wrap: wrap;
   flex-shrink: 0;
-}
-
-.joined-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  padding: 0.5rem 1.1rem;
-  min-height: 30px;
-  border-color: var(--border);
-}
-
-.joined-card strong {
-  color: var(--foreground);
-  font-family: var(--font-display);
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.joined-card span {
-  color: var(--muted-foreground);
-  font-weight: 700;
-  white-space: nowrap;
 }
 
 .profile-rule {
@@ -349,16 +323,6 @@ function scrollToSection(key: string) {
   color: var(--muted-foreground);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
-}
-
-.error-state {
-  display: grid;
-  min-height: 360px;
-  place-items: center;
-  border: 1px solid var(--destructive-ring);
-  border-radius: var(--radius);
-  background: var(--destructive-soft);
-  color: var(--destructive);
 }
 
 @media (max-width: 1024px) {

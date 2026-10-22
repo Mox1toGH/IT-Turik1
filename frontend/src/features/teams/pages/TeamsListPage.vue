@@ -36,6 +36,20 @@
       <template #invitations>
         <team-invatations @browse-teams="activeTab = 'all'" />
       </template>
+
+      <template #label-invitations>
+        <span>Invitations</span>
+        <ui-query-block :query="invitationsQuery" class="invitation-count-state">
+          <!-- A failed count query should not replace the Invitations tab label with a full error card. -->
+          <template #error />
+          <ui-query-field>
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="18px" height="16px" />
+            </template>
+            <span v-if="pendingCount > 0" class="invitation-count">{{ pendingCount }}</span>
+          </ui-query-field>
+        </ui-query-block>
+      </template>
     </ui-tabs>
   </section>
 </template>
@@ -44,6 +58,8 @@
 import { computed, ref } from 'vue'
 import UiButton from '@/components/ui/UiButton'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import TeamInvatations from '../components/teams-list/TeamInvatations.vue'
 import TeamMyTeams from '../components/teams-list/TeamMyTeams.vue'
 import TeamsOtherTeams from '../components/teams-list/TeamsOtherTeams.vue'
@@ -56,9 +72,12 @@ const activeTab = ref('my')
 
 // The invitations query stays at page level (same key as the tab panel, so no
 // extra fetch): the pending count is needed outside the tab for the tab badge.
-const { data: inboxInvitations } = useListTeamInvitations()
+const invitationsQuery = useListTeamInvitations()
+const { data: inboxInvitations } = invitationsQuery
 const pendingCount = computed(
-  () => inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited').length ?? 0,
+  () =>
+    inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited').length ??
+    0,
 )
 
 const tabItems = computed<TabItem[]>(() => [
@@ -67,7 +86,6 @@ const tabItems = computed<TabItem[]>(() => [
   {
     value: 'invitations',
     label: 'Invitations',
-    count: pendingCount.value > 0 ? pendingCount.value : undefined,
   },
 ])
 </script>
@@ -129,6 +147,17 @@ const tabItems = computed<TabItem[]>(() => [
 .create-plus {
   font-weight: 800;
   line-height: 1;
+}
+
+.invitation-count-state {
+  display: inline-flex;
+  min-width: 18px;
+  align-items: center;
+}
+
+.invitation-count {
+  color: var(--muted-foreground);
+  font-weight: 600;
 }
 
 .teams-rule {

@@ -11,86 +11,89 @@
         <h1 class="text-6xl">My Evaluations</h1>
         <p class="section-subtitle text-xl">Review and evaluate submitted projects.</p>
       </div>
-
-      <div class="hero-actions">
-        <ui-skeleton v-if="isLoading" variant="rect" width="180px" height="64px" />
-      </div>
     </header>
 
     <div class="jury-rule" aria-hidden="true"></div>
 
-    <section class="evaluation-section">
-      <header class="page-controls-header">
-        <div class="page-controls">
-          <div class="filters-wrap">
-            <ui-select
-              v-model="selectedRounds"
-              :options="roundOptions"
-              multiple
-              min-width="220px"
-              placeholder="Filter by round"
-              align-to="left"
-              :is-loading="isLoading"
-              :is-error="isError"
-              error="Failed to fetch rounds"
-            />
-            <ui-select
-              v-model="selectedTournamentIds"
-              :options="tournamentOptions"
-              multiple
-              min-width="220px"
-              placeholder="Filter by tournament"
-              align-to="left"
-              :is-loading="isLoading || isTournamentsLoading"
-              :is-error="isError || isTournamentsError"
-              error="Failed to fetch tournaments"
-            />
-            <ui-select
-              v-model="evaluationStatus"
-              :options="evaluationStatusOptions"
-              min-width="220px"
-              placeholder="Filter by evaluation"
-              align-to="left"
-              :is-loading="isLoading"
-              :is-error="isError"
-              error="Failed to fetch assignments"
-            />
-          </div>
-
-          <div class="progress-wrap">
-            <p class="progress-text">{{ evaluatedCount }} / {{ totalCount }} evaluated</p>
-            <div class="progress-bar">
-              <div class="progress-value" :style="{ width: `${progressPercent}%` }" />
+    <ui-query-block :query="assignmentsQuery" title="assignments">
+      <section class="evaluation-section">
+        <header class="page-controls-header">
+          <div class="page-controls">
+            <div class="filters-wrap">
+              <ui-select
+                v-model="selectedRounds"
+                :options="roundOptions"
+                multiple
+                min-width="220px"
+                placeholder="Filter by round"
+                align-to="left"
+                :is-loading="isLoading"
+                :is-error="isError"
+                error="Failed to fetch rounds"
+              />
+              <ui-select
+                v-model="selectedTournamentIds"
+                :options="tournamentOptions"
+                multiple
+                min-width="220px"
+                placeholder="Filter by tournament"
+                align-to="left"
+                :is-loading="isLoading || isTournamentsLoading"
+                :is-error="isError || isTournamentsError"
+                error="Failed to fetch tournaments"
+              />
+              <ui-select
+                v-model="evaluationStatus"
+                :options="evaluationStatusOptions"
+                min-width="220px"
+                placeholder="Filter by evaluation"
+                align-to="left"
+                :is-loading="isLoading"
+                :is-error="isError"
+                error="Failed to fetch assignments"
+              />
             </div>
-          </div>
-        </div>
-      </header>
 
-      <ui-query-state
-        :query="assignmentsQuery"
-        :is-empty="pagedAssignments.length === 0"
-        empty-text="No assignments found for selected filters"
-      >
-        <template #skeleton>
-          <div class="assignments-grid">
-            <ui-card v-for="i in 4" :key="i" class="assignment-skeleton">
-              <ui-skeleton variant="rect" width="60%" height="20px" />
-              <ui-skeleton variant="rect" width="30%" height="16px" />
-              <ui-skeleton variant="rect" width="100%" height="14px" />
-              <ui-skeleton variant="rect" width="80%" height="14px" />
-            </ui-card>
+            <ui-query-field class="progress-wrap">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="180px" height="16px" />
+                <ui-skeleton variant="rect" width="100%" height="8px" />
+              </template>
+              <p class="progress-text">{{ evaluatedCount }} / {{ totalCount }} evaluated</p>
+              <div class="progress-bar">
+                <div class="progress-value" :style="{ width: `${progressPercent}%` }" />
+              </div>
+            </ui-query-field>
           </div>
-        </template>
-        <assignment-grid :assignments="pagedAssignments" @evaluated="refetch" />
-      </ui-query-state>
+        </header>
 
-      <ui-pagination
-        v-if="totalCount > pageSize"
-        v-model="currentPage"
-        :total-items="totalCount"
-        :page-size="pageSize"
-      />
-    </section>
+        <ui-query-field>
+          <template #skeleton>
+            <div class="assignments-grid">
+              <ui-card v-for="i in 4" :key="i" class="assignment-skeleton">
+                <ui-skeleton variant="rect" width="60%" height="20px" />
+                <ui-skeleton variant="rect" width="30%" height="16px" />
+                <ui-skeleton variant="rect" width="100%" height="14px" />
+                <ui-skeleton variant="rect" width="80%" height="14px" />
+              </ui-card>
+            </div>
+          </template>
+          <assignment-grid
+            v-if="pagedAssignments.length > 0"
+            :assignments="pagedAssignments"
+            @evaluated="refetch"
+          />
+          <p v-else class="text-muted">No assignments found for selected filters.</p>
+        </ui-query-field>
+
+        <ui-pagination
+          v-if="totalCount > pageSize"
+          v-model="currentPage"
+          :total-items="totalCount"
+          :page-size="pageSize"
+        />
+      </section>
+    </ui-query-block>
   </section>
 </template>
 
@@ -101,6 +104,7 @@ import { useListTournaments } from '@/api/tournaments/tournaments'
 import UiPagination from '@/components/ui/UiPagination'
 import UiSelect from '@/components/ui/UiSelect'
 import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import AssignmentGrid from '../components/AssignmentGrid.vue'
 import {

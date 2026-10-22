@@ -95,7 +95,7 @@ describe('UiCard', () => {
     expect(fixed.container.querySelector('.card.scrollable')).toBeNull()
   })
 
-  it('leaves empty-state rendering to UiQueryState', async () => {
+  it('keeps query empty-state rendering outside UiCard', async () => {
     const screen = render(UiCard, {
       props: { status: 'empty', emptyText: 'No rounds added yet' },
       slots: { 'empty-action': '<p>Create the first round to get started.</p>' },

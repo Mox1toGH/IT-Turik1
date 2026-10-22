@@ -20,20 +20,34 @@
       class="tournament-hero"
       :class="{ 'tournament-hero--with-banner': Boolean(tournament?.banner) }"
     >
-      <img
-        v-if="tournament?.banner"
-        class="hero-img"
-        :src="tournament.banner"
-        :alt="`${tournament?.name ?? 'Tournament'} banner`"
-        :style="{ objectPosition: bannerObjectPosition }"
-      />
-      <div v-else class="hero-fallback" aria-hidden="true" />
-      <div v-if="tournament?.banner" class="hero-overlay" aria-hidden="true" />
+      <ui-query-field class="hero-data-state" :loading="isTournamentLoading">
+        <template #skeleton>
+          <div class="hero-fallback" aria-hidden="true" />
+        </template>
+        <template #default>
+          <img
+            v-if="tournament?.banner"
+            class="hero-img"
+            :src="tournament.banner"
+            :alt="`${tournament?.name ?? 'Tournament'} banner`"
+            :style="{ objectPosition: bannerObjectPosition }"
+          />
+          <div v-else class="hero-fallback" aria-hidden="true" />
+          <div v-if="tournament?.banner" class="hero-overlay" aria-hidden="true" />
+        </template>
+      </ui-query-field>
 
       <div class="hero-content">
-        <h1 class="text-6xl">
-          <ui-truncate :text="tournament?.name ?? `Tournament ${tournamentId}`" />
-        </h1>
+        <ui-query-field :loading="isTournamentLoading">
+          <template #skeleton>
+            <ui-skeleton variant="rect" width="min(480px, 75vw)" height="48px" />
+          </template>
+          <template #default>
+            <h1 class="text-6xl">
+              <ui-truncate :text="tournament?.name ?? `Tournament ${tournamentId}`" />
+            </h1>
+          </template>
+        </ui-query-field>
         <p class="section-subtitle text-xl">
           Review tournament information, rounds, teams, and results.
         </p>
@@ -48,6 +62,8 @@
 import { ref } from 'vue'
 import { ChevronLeft, SquarePen } from 'lucide-vue-next'
 import UiTruncate from '@/components/ui/UiTruncate'
+import { UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'
 import UpdateBannerModal from './modals/UpdateBannerModal.vue'
@@ -60,7 +76,9 @@ const props = defineProps<{
 const isBannerModalOpen = ref(false)
 
 const { data: user } = useGetUserProfile()
-const { data: tournament } = useGetTournament(props.tournamentId)
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { isLoading: isTournamentLoading } = tournamentQuery
+const { data: tournament } = tournamentQuery
 const { objectPosition: bannerObjectPosition } = useBannerPosition(props.tournamentId)
 </script>
 
@@ -77,6 +95,20 @@ const { objectPosition: bannerObjectPosition } = useBannerPosition(props.tournam
   justify-content: space-between;
   gap: 1rem;
   min-width: 0;
+}
+
+.hero-data-state {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-data-state :deep(.hero-fallback),
+.hero-data-state :deep(.hero-img),
+.hero-data-state :deep(.hero-overlay) {
+  position: absolute;
+  inset: 0;
 }
 
 .back-link {

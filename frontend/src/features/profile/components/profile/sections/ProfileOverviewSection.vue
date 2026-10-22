@@ -9,15 +9,20 @@
       description="Profile details"
       aria-labelledby="profile-details-title"
     >
-      <ui-query-state :query="props.query">
-      <div class="details-grid">
-        <div v-for="field in profileFields" :key="field.label" class="field-row">
-          <span class="field-label">{{ field.label }}</span>
-          <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
-          <strong v-else class="field-value">{{ field.value }}</strong>
+      <ui-query-block :query="props.query">
+        <div class="details-grid">
+          <div v-for="field in profileFields" :key="field.label" class="field-row">
+            <span class="field-label">{{ field.label }}</span>
+            <ui-query-field>
+              <template #skeleton
+                ><ui-skeleton variant="rect" width="120px" height="18px"
+              /></template>
+              <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
+              <strong v-else class="field-value">{{ field.value }}</strong>
+            </ui-query-field>
+          </div>
         </div>
-      </div>
-      </ui-query-state>
+      </ui-query-block>
     </ui-section>
 
     <ui-section v-if="user?.teams?.length" divider title="Your teams" description="Membership">
@@ -59,7 +64,7 @@
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
 import UiSection from '@/components/ui/UiSection'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { ChevronRight, Users } from 'lucide-vue-next'
 import { formatDate } from '@/lib/date'

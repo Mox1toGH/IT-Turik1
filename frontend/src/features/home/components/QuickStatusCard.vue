@@ -7,36 +7,37 @@
       </div>
     </template>
 
-    <ui-query-state class="panel-body" :query="query">
+    <ui-query-block class="panel-body" :query="query">
       <template #error>
         <div class="empty-state">
           <p>Failed to fetch profile info</p>
         </div>
       </template>
 
-      <template #skeleton>
-        <div class="skeleton-stack">
-          <ui-skeleton variant="rect" width="45%" />
-          <ui-skeleton variant="rect" width="38%" />
-          <ui-skeleton variant="rect" width="42%" />
-        </div>
-      </template>
-
-      <ul class="status-list">
-        <li v-for="item in statusItems" :key="item.label">
-          <span class="status-dot" :class="{ ready: item.ready }" aria-hidden="true"></span>
-          <span>{{ item.label }}</span>
-          <strong>{{ item.ready ? 'Ready' : 'Missing' }}</strong>
-        </li>
-      </ul>
-    </ui-query-state>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="skeleton-stack">
+            <ui-skeleton variant="rect" width="45%" />
+            <ui-skeleton variant="rect" width="38%" />
+            <ui-skeleton variant="rect" width="42%" />
+          </div>
+        </template>
+        <ul class="status-list">
+          <li v-for="item in statusItems" :key="item.label">
+            <span class="status-dot" :class="{ ready: item.ready }" aria-hidden="true"></span>
+            <span>{{ item.label }}</span>
+            <strong>{{ item.ready ? 'Ready' : 'Missing' }}</strong>
+          </li>
+        </ul>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import type { UserSummary } from '@/shared/types/user'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'

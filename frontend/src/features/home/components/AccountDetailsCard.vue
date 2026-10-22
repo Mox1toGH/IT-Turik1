@@ -7,36 +7,37 @@
       </div>
     </template>
 
-    <ui-query-state class="panel-body" :query="query">
+    <ui-query-block class="panel-body" :query="query">
       <template #error>
         <div class="empty-state">
           <p>Failed to fetch account info</p>
         </div>
       </template>
 
-      <template #skeleton>
-        <div class="skeleton-stack">
-          <ui-skeleton variant="rect" width="55%" />
-          <ui-skeleton variant="rect" width="65%" />
-          <ui-skeleton variant="rect" width="35%" />
-          <ui-skeleton variant="rect" width="70%" />
-        </div>
-      </template>
-
-      <dl class="detail-list">
-        <div v-for="item in accountDetails" :key="item.label">
-          <dt>{{ item.label }}</dt>
-          <dd>{{ item.value }}</dd>
-        </div>
-      </dl>
-    </ui-query-state>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="skeleton-stack">
+            <ui-skeleton variant="rect" width="55%" />
+            <ui-skeleton variant="rect" width="65%" />
+            <ui-skeleton variant="rect" width="35%" />
+            <ui-skeleton variant="rect" width="70%" />
+          </div>
+        </template>
+        <dl class="detail-list">
+          <div v-for="item in accountDetails" :key="item.label">
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </div>
+        </dl>
+      </ui-query-field>
+    </ui-query-block>
   </ui-card>
 </template>
 
 <script setup lang="ts">
 import type { UserSummary } from '@/shared/types/user'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'

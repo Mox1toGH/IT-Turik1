@@ -272,24 +272,117 @@ This document does not prescribe a global query-invalidation registry. Cache upd
 
 ## FE-008 Query State and Presentational Containers
 
-`UiCard` MUST remain a presentational container. It MUST NOT own API-query orchestration or be responsible for interpreting query lifecycle state.
+`UiCard` MUST remain a presentational container. It MUST NOT own API-query orchestration or interpret query lifecycle state. Query-state UI is independent of cards and MUST work inside any layout.
 
-`UiCard` MAY provide presentation features such as:
+The legacy monolithic `UiQueryState` component is deprecated and has been removed. It MUST NOT be reintroduced; use `UiQueryBlock` for query-level errors and retry behavior, and `UiQueryField` for per-region skeletons and background-fetch dimming. The `useQueryState.ts` composable remains the shared internal lifecycle adapter used by `UiQueryBlock`; it is not the deprecated component.
 
-- Variants and visual styling.
-- Title and subtitle.
-- Header, content, and footer slots.
-- Scrollable layout and other purely visual options.
+The query UI has three separate responsibilities:
 
-Query-state presentation SHOULD be handled by a dedicated component such as `UiQueryState`, independently of `UiCard` or any other specific container.
+- `useQueryState.ts` derives reactive query data, initial loading, fetching, errors, error codes, and refetch behavior.
+- `UiQueryBlock` owns initial query errors, retry, offline handling, stale-data retry feedback, and provides reactive query context. It MUST always render its default slot during loading and success. It MUST NOT render skeletons or interpret empty data.
+- `UiQueryField` owns optional loading presentation and background-fetch dimming. It works inside and outside a block, and MUST NOT handle query errors, retries, or empty states.
+- The feature consuming the data MUST decide what empty or missing data means and render the appropriate message, action, or fallback.
 
-`UiQueryState` SHOULD support the states and behaviors needed by the application, such as loading, error, empty, success, stale data, background fetching, retry, and offline status, where applicable. It SHOULD allow slots or equivalent extension points for custom skeleton, error, empty, and success content.
+### Choosing a component
 
-- Query-state UI MUST NOT be coupled to `UiCard`; it MUST be usable inside different layouts.
-- Existing components such as skeletons, error displays, error boundaries, and connection-state helpers SHOULD be reused when they fit the responsibility.
-- Skeleton-to-content transitions SHOULD be handled by the relevant query-state or transition component rather than being an implicit responsibility of `UiCard`.
-- Existing `UiSkeletonLoader` usages SHOULD be migrated when they represent query state. Components MUST NOT be mechanically wrapped with `UiQueryState` when they do not need query-state handling.
-- Query-state behavior SHOULD be tested independently from card presentation.
+- Use one `UiQueryBlock` for a region that shares error and retry feedback. Nested blocks provide an isolated context to their descendant fields.
+- Use fields for logical UI sections that need skeletons; keep static headings, labels, and role-independent controls outside them.
+- A field uses its explicit `loading` prop when supplied, otherwise it inherits initial loading from the nearest block, otherwise it is not loading.
+- A field without a skeleton always renders its default content. A standalone field can use `:loading` but has no inherited background-fetch state.
+- `isFetching` dims existing field content. Initial loading controls skeleton visibility; background fetching never swaps existing content for a skeleton.
+- Do not add `isEmpty`, `#empty`, `#empty-action`, or other empty-state APIs to either query component.
+
+### State behavior
+
+- Initial loading: render the block default slot; fields with a skeleton show it, while fields without one keep content visible.
+- Initial error with no data: replace the block default content with its custom `#error` slot or the default full error UI.
+- Background refetch: preserve content and dim fields. Never dim a skeleton.
+- Refetch failure after data loaded: keep old content and show one block-level “Update failed” / Retry banner. Fields do not show errors or skeletons.
+- Refetch success: preserve content and restore field opacity.
+
+### Public API examples
+
+Named slots MUST be declared before default content. The block supports only `#error`; fields support only `#skeleton` and the default slot.
+
+Block content with feature-owned empty-state handling:
+
+```vue
+<script setup lang="ts">
+import { useListTournaments } from '@/api/tournaments/tournaments'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import TournamentList from './TournamentList.vue'
+
+const tournamentsQuery = useListTournaments()
+const { data: tournaments } = tournamentsQuery
+</script>
+
+<template>
+  <ui-query-block :query="tournamentsQuery" title="tournaments">
+    <template #error="{ errorCode, retry }">
+      <div role="alert">
+        <p>Could not load tournaments ({{ errorCode }}).</p>
+        <button type="button" @click="retry">Retry</button>
+      </div>
+    </template>
+
+    <ui-query-field>
+      <template #skeleton><ui-skeleton v-for="i in 3" :key="i" width="100%" /></template>
+      <p v-if="tournaments?.length === 0">No tournaments yet.</p>
+      <TournamentList v-else :tournaments="tournaments" />
+    </ui-query-field>
+  </ui-query-block>
+</template>
+```
+
+Mixed static and query-backed content, with per-field skeletons:
+
+```vue
+<script setup lang="ts">
+import { useGetTournament } from '@/api/tournaments/tournaments'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+
+const tournamentQuery = useGetTournament(1)
+const { data: tournament } = tournamentQuery
+</script>
+
+<template>
+  <ui-query-block :query="tournamentQuery">
+    <template #error="{ errorCode, retry }">
+      <div role="alert">
+        <p>Could not load tournament ({{ errorCode }}).</p>
+        <button type="button" @click="retry">Retry</button>
+      </div>
+    </template>
+
+    <h2>Tournament info</h2>
+    <p>Dates and limits</p>
+
+    <ui-query-field>
+      <template #skeleton><ui-skeleton width="120px" /></template>
+      <span>{{ tournament?.start_date ?? '-' }}</span>
+    </ui-query-field>
+
+    <ui-query-field>
+      <template #skeleton><ui-skeleton width="40px" /></template>
+      <span>{{ tournament?.participants_count ?? '-' }}</span>
+    </ui-query-field>
+  </ui-query-block>
+</template>
+```
+
+Fields inherit loading and background-fetch state unless `loading` is explicitly supplied. The block `#error` slot is optional; without it, the shared error component and offline message are shown. Empty data is handled by normal consumer template logic.
+
+### Additional requirements
+
+- Existing skeleton, error, error-boundary, and connection-state components SHOULD be reused when they fit.
+- Query-state behavior MUST be tested independently of card presentation. Tests SHOULD cover default-slot rendering during initial loading, explicit and inherited field loading, initial errors, retry, offline handling, background refetch, nested context isolation, and opacity restoration.
+- Existing `UiSkeletonLoader` usages SHOULD be migrated when they represent query state. Components MUST NOT be mechanically wrapped when they do not need query-state handling.
+- `UiQueryBlock` and `UiQueryField` are not globally registered; each single-file component MUST import the components it uses.
+- A disabled query stays pending forever. Guard it with `v-if` or a matching `enabled` computed rather than mounting its `UiQueryBlock` while disabled.
+- Query lifecycle interpretation MUST NOT be duplicated in other composables. A composable MAY expose the query object, but `useQueryState` remains the shared lifecycle logic.
+- Page and feature code MUST use `UiQueryBlock` and `UiQueryField` for query-state UI.
 
 ## FE-009 Forms and Validation
 

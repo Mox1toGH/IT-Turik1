@@ -11,63 +11,48 @@
     />
 
     <section class="tournaments-section" aria-label="Tournaments">
-      <div v-if="isStale && status === 'data'" class="stale-banner" role="status">
-        <span>Update failed</span>
-        <button type="button" :disabled="isFetching" @click="() => refetch()">
-          {{ isFetching ? 'Retrying…' : 'Retry' }}
-        </button>
-      </div>
-
-      <div v-if="status === 'loading'" class="tournaments-grid">
-        <div v-for="i in pageSize" :key="i" class="tournament-card-skeleton">
-          <ui-skeleton variant="rect" class="skeleton-media" />
-          <div class="skeleton-body">
-            <ui-skeleton variant="rect" width="70%" height="24px" />
-            <ui-skeleton variant="rect" width="100%" height="32px" />
-            <div class="tournaments-meta">
-              <ui-skeleton variant="rect" width="130px" />
-              <ui-skeleton variant="rect" width="90px" height="28px" />
+      <ui-query-block :query="tournamentsQuery" title="tournaments">
+        <ui-query-field>
+          <template #skeleton>
+            <div class="tournaments-grid">
+              <div v-for="i in pageSize" :key="i" class="tournament-card-skeleton">
+                <ui-skeleton variant="rect" class="skeleton-media" />
+                <div class="skeleton-body">
+                  <ui-skeleton variant="rect" width="70%" height="24px" />
+                  <ui-skeleton variant="rect" width="100%" height="32px" />
+                  <div class="tournaments-meta">
+                    <ui-skeleton variant="rect" width="130px" />
+                    <ui-skeleton variant="rect" width="90px" height="28px" />
+                  </div>
+                  <ui-skeleton variant="rect" width="100%" height="36px" />
+                </div>
+              </div>
             </div>
-            <ui-skeleton variant="rect" width="100%" height="36px" />
-          </div>
-        </div>
-      </div>
+          </template>
 
-      <div v-else-if="status === 'error'" class="tournaments-state">
-        <p v-if="errorCode === 'network' && !isOnline" class="card-muted">
-          Waiting for connection…
-        </p>
-        <ui-card-error
-          v-else
-          title="tournaments"
-          :error-code="errorCode"
-          :is-fetching="isFetching"
-          @retry="refetch"
-        />
-      </div>
+          <template #default>
+            <div v-if="(tournaments?.data?.length ?? 0) === 0" class="empty-results">
+              <p class="card-muted">No tournaments found</p>
+              <p class="text-base text-muted">Try changing the search text or status filters.</p>
+            </div>
+            <div v-else class="tournaments-grid">
+              <tournament-card
+                v-for="tournament in tournaments?.data ?? []"
+                :key="tournament.id"
+                :tournament="tournament"
+              />
+            </div>
 
-      <div v-else-if="status === 'empty'" class="tournaments-state">
-        <p class="card-muted">No tournaments found</p>
-        <p class="text-base text-muted">Try changing the search text or status filters.</p>
-      </div>
-
-      <div v-else :class="{ dimmed: isFetching }" :aria-busy="isFetching || undefined">
-        <div v-if="tournaments?.total" class="tournaments-grid">
-          <tournament-card
-            v-for="tournament in tournaments.data"
-            :key="tournament.id"
-            :tournament="tournament"
-          />
-        </div>
-
-        <ui-pagination
-          class="tournaments-pagination"
-          v-if="(tournaments?.total ?? 0) > pageSize"
-          v-model="currentPage"
-          :total-items="tournaments?.total ?? 0"
-          :page-size="pageSize"
-        />
-      </div>
+            <ui-pagination
+              class="tournaments-pagination"
+              v-if="(tournaments?.total ?? 0) > pageSize"
+              v-model="currentPage"
+              :total-items="tournaments?.total ?? 0"
+              :page-size="pageSize"
+            />
+          </template>
+        </ui-query-field>
+      </ui-query-block>
     </section>
   </section>
 </template>
@@ -75,11 +60,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
-import UiCardError from '@/components/ui/UiCardError'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiPagination from '@/components/ui/UiPagination'
-import { useQueryState } from '@/composables/useQueryState'
-import { useConnection } from '@/composables/useConnection'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import TournamentsHero from '../components/tournament-list/TournamentsHero.vue'
 import TournamentFilters from '../components/tournament-list/TournamentFilters.vue'
 import TournamentCard from '../components/tournament-list/TournamentCard.vue'
@@ -94,7 +77,6 @@ const statusFilter = ref<TournamentStatus[]>([])
 
 const { data: user } = useGetUserProfile()
 const isAdmin = computed(() => user.value?.role === 'admin')
-const { isOnline } = useConnection()
 
 const statusOptions = computed(() => {
   const base = [
@@ -118,8 +100,7 @@ const tournamentsQuery = useListTournaments(params, {
   query: { staleTime: 1000 * 60 * 5, placeholderData: keepPreviousData },
 })
 
-const { data: tournaments, isFetching, refetch } = tournamentsQuery
-const { status, errorCode, isStale } = useQueryState(tournamentsQuery)
+const { data: tournaments } = tournamentsQuery
 
 const onSearch = (query: string) => {
   currentPage.value = 1
@@ -192,60 +173,10 @@ watch(statusFilter, () => {
   gap: 12px;
 }
 
-.tournaments-state {
-  display: grid;
-  gap: 0.5rem;
-  justify-items: center;
-  text-align: center;
-  padding: 2rem 1rem;
-  /* Same placeholder panel the cards use for their error and empty states. */
-  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 45%, transparent);
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-}
-
 .card-muted {
   margin: 0;
   font-size: 0.9rem;
   color: var(--muted-foreground);
-}
-
-.dimmed > * {
-  opacity: 0.6;
-}
-
-.stale-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.stale-banner button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.stale-banner button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.stale-banner button:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 
 @media (max-width: 760px) {

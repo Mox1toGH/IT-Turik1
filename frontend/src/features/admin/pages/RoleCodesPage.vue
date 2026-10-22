@@ -14,118 +14,137 @@
         </div>
       </header>
 
-      <div>
-        <div class="counts">
-          <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
-            <template #header>
-              <span class="card-label">{{ role }}</span>
+      <ui-query-block :query="roleCodesQuery">
+        <div>
+          <ui-query-field>
+            <template #skeleton>
+              <div class="counts">
+                <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
+                  <template #header>
+                    <span class="card-label">{{ role }}</span>
+                  </template>
+
+                  <ui-skeleton variant="rect" width="100%" />
+                </ui-card>
+              </div>
             </template>
 
-            <ui-skeleton v-if="isLoading" variant="rect" width="100%" />
-            <strong v-else class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
-          </ui-card>
-        </div>
+            <template #default>
+              <div class="counts">
+                <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
+                  <template #header>
+                    <span class="card-label">{{ role }}</span>
+                  </template>
 
-        <form class="generator" @submit.prevent="handleGenerate">
-          <div class="form-item">
-            <label class="form-label"> Role </label>
-            <ui-select
-              v-model="generateForm.role"
-              :miltiple="true"
-              :options="[
-                { value: 'jury', label: 'Jury' },
-                { value: 'organizer', label: 'Organizer' },
-                { value: 'admin', label: 'Admin' },
-              ]"
-              required
-            >
-              <option value="jury">Jury</option>
-              <option value="organizer">Organizer</option>
-              <option value="admin">Admin</option>
-            </ui-select>
-            <small v-if="errors?.role" class="text-error">{{ errors.role[0] }}</small>
-          </div>
-
-          <div class="form-item">
-            <label class="form-label"> Quantity </label>
-            <ui-number-input v-model="generateForm.quantity" min="1" max="10" required />
-            <small v-if="errors?.quantity" class="text-error">{{ errors.quantity[0] }}</small>
-          </div>
-
-          <ui-button type="submit" class="generate-btn" :disabled="submitting">
-            {{ submitting ? 'Generating...' : 'Generate Codes' }}
-          </ui-button>
-        </form>
-
-        <div class="filters">
-          <div class="form-item">
-            <label class="form-label"> Filter by role </label>
-
-            <ui-select
-              v-model="selectedRoleFilter"
-              :options="[
-                { value: 'all', label: 'All restricted roles' },
-                { value: 'jury', label: 'Jury' },
-                { value: 'organizer', label: 'Organizer' },
-                { value: 'admin', label: 'Admin' },
-              ]"
-            />
-          </div>
-        </div>
-      </div>
-
-      <section class="codes-section">
-        <ui-query-state :query="roleCodesQuery">
-          <template #skeleton>
-            <div class="codes-list">
-              <ui-card v-for="i in 3" :key="i" class="code-card">
-                <template #header>
-                  <div class="code-head">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="100px" />
-                  </div>
-                </template>
-
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 6" :key="i" variant="rect" width="100%" />
-                </div>
-              </ui-card>
-            </div>
-          </template>
-
-          <template #empty>
-            <ui-card class="empty-card">
-              <p class="text-muted empty-error">No codes found for current filter.</p>
-            </ui-card>
-          </template>
-
-          <div class="codes-list">
-            <ui-card v-for="code in codes" :key="code.id" class="code-card">
-              <template #header>
-                <div class="code-head">
-                  <strong class="mono">{{ code.code }}</strong>
-                  <ui-badge :variant="code.is_used ? 'gray' : 'green'">
-                    {{ code.is_used ? 'Used' : 'Active' }}
-                  </ui-badge>
-                </div>
-              </template>
-
-              <div class="code-card-content">
-                <p><strong>Role:</strong> {{ code.role }}</p>
-                <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
-                <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
-                <template v-if="code.is_used">
-                  <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
-                  <p>
-                    <strong>Used at:</strong>
-                    {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
-                  </p>
-                </template>
+                  <strong class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
+                </ui-card>
               </div>
-            </ui-card>
+            </template>
+          </ui-query-field>
+
+          <form class="generator" @submit.prevent="handleGenerate">
+            <div class="form-item">
+              <label class="form-label"> Role </label>
+              <ui-select
+                v-model="generateForm.role"
+                :miltiple="true"
+                :options="[
+                  { value: 'jury', label: 'Jury' },
+                  { value: 'organizer', label: 'Organizer' },
+                  { value: 'admin', label: 'Admin' },
+                ]"
+                required
+              >
+                <option value="jury">Jury</option>
+                <option value="organizer">Organizer</option>
+                <option value="admin">Admin</option>
+              </ui-select>
+              <small v-if="errors?.role" class="text-error">{{ errors.role[0] }}</small>
+            </div>
+
+            <div class="form-item">
+              <label class="form-label"> Quantity </label>
+              <ui-number-input v-model="generateForm.quantity" min="1" max="10" required />
+              <small v-if="errors?.quantity" class="text-error">{{ errors.quantity[0] }}</small>
+            </div>
+
+            <ui-button type="submit" class="generate-btn" :disabled="submitting">
+              {{ submitting ? 'Generating...' : 'Generate Codes' }}
+            </ui-button>
+          </form>
+
+          <div class="filters">
+            <div class="form-item">
+              <label class="form-label"> Filter by role </label>
+
+              <ui-select
+                v-model="selectedRoleFilter"
+                :options="[
+                  { value: 'all', label: 'All restricted roles' },
+                  { value: 'jury', label: 'Jury' },
+                  { value: 'organizer', label: 'Organizer' },
+                  { value: 'admin', label: 'Admin' },
+                ]"
+              />
+            </div>
           </div>
-        </ui-query-state>
-      </section>
+        </div>
+
+        <section class="codes-section">
+          <ui-query-field>
+            <template #skeleton>
+              <div class="codes-list">
+                <ui-card v-for="i in 3" :key="i" class="code-card">
+                  <template #header>
+                    <div class="code-head">
+                      <ui-skeleton variant="rect" width="100%" />
+                      <ui-skeleton variant="rect" width="100px" />
+                    </div>
+                  </template>
+
+                  <div style="display: flex; flex-direction: column; gap: 4px">
+                    <ui-skeleton v-for="i in 6" :key="i" variant="rect" width="100%" />
+                  </div>
+                </ui-card>
+              </div>
+            </template>
+
+            <template #default>
+              <div v-if="isEmpty" class="codes-list">
+                <ui-card class="empty-card">
+                  <p class="text-muted empty-error">No codes found for current filter.</p>
+                </ui-card>
+              </div>
+
+              <div v-else class="codes-list">
+                <ui-card v-for="code in codes" :key="code.id" class="code-card">
+                  <template #header>
+                    <div class="code-head">
+                      <strong class="mono">{{ code.code }}</strong>
+                      <ui-badge :variant="code.is_used ? 'gray' : 'green'">
+                        {{ code.is_used ? 'Used' : 'Active' }}
+                      </ui-badge>
+                    </div>
+                  </template>
+
+                  <div class="code-card-content">
+                    <p><strong>Role:</strong> {{ code.role }}</p>
+                    <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
+                    <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
+                    <template v-if="code.is_used">
+                      <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
+                      <p>
+                        <strong>Used at:</strong>
+                        {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
+                      </p>
+                    </template>
+                  </div>
+                </ui-card>
+              </div>
+            </template>
+          </ui-query-field>
+        </section>
+      </ui-query-block>
     </section>
   </section>
 </template>
@@ -136,7 +155,7 @@ import UiButton from '@/components/ui/UiButton'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiSelect from '@/components/ui/UiSelect'
 import UiCard from '@/components/ui/UiCard'
-import UiQueryState from '@/components/ui/UiQueryState'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import UiBadge from '@/components/ui/UiBadge'
@@ -167,14 +186,11 @@ const roleCodesQuery = useListRoleActivationCodes(
   computed(() => (selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {})),
 )
 
-const {
-  data,
-  isLoading,
-  error: getRoleCodesError,
-} = roleCodesQuery
+const { data, error: getRoleCodesError } = roleCodesQuery
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)
+const isEmpty = computed(() => codes.value.length === 0)
 
 watch(getRoleCodesError, (err) => {
   if (err) {

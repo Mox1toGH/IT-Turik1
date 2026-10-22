@@ -7,63 +7,67 @@
       :disabled="props.loading"
     />
 
-    <ui-query-state :query="props.query">
-<template #skeleton>
-        <div class="member-grid">
-          <div v-for="i in 4" :key="`member-skeleton-${i}`" class="member-card-skeleton">
-            <div class="member-card-skeleton-top">
-              <ui-skeleton variant="rounded" width="44px" height="44px" />
-              <div class="member-card-skeleton-lines">
-                <ui-skeleton variant="rect" width="120px" height="14px" />
-                <ui-skeleton variant="rect" width="160px" height="12px" />
+    <ui-query-block :query="props.query">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="member-grid">
+            <div v-for="i in 4" :key="`member-skeleton-${i}`" class="member-card-skeleton">
+              <div class="member-card-skeleton-top">
+                <ui-skeleton variant="rounded" width="44px" height="44px" />
+                <div class="member-card-skeleton-lines">
+                  <ui-skeleton variant="rect" width="120px" height="14px" />
+                  <ui-skeleton variant="rect" width="160px" height="12px" />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </template><div class="member-grid">
-        <ui-card
-          v-for="member in filteredMembers"
-          :key="`member-${member.id}`"
-          class="member-card card-actions-divided"
-        >
-          <div class="member-top">
-            <user-avatar
-              :avatar="member.avatar"
-              :username="member.username"
-              :full-name="member.full_name || ''"
-              :size="44"
-            />
+        </template>
+        <div class="member-grid">
+          <ui-card
+            v-for="member in filteredMembers"
+            :key="`member-${member.id}`"
+            class="member-card card-actions-divided"
+          >
+            <div class="member-top">
+              <user-avatar
+                :avatar="member.avatar"
+                :username="member.username"
+                :full-name="member.full_name || ''"
+                :size="44"
+              />
 
-            <div class="member-main">
-              <p class="member-name">
-                <RouterLink :to="`/users/${member.id}`" class="member-link">
-                  {{ member.username }}
-                </RouterLink>
-              </p>
-              <p class="text-muted member-email">{{ member.email }}</p>
+              <div class="member-main">
+                <p class="member-name">
+                  <RouterLink :to="`/users/${member.id}`" class="member-link">
+                    {{ member.username }}
+                  </RouterLink>
+                </p>
+                <p class="text-muted member-email">{{ member.email }}</p>
+              </div>
+
+              <ui-badge v-if="member.id === team?.captain_id" variant="green">Captain</ui-badge>
+              <ui-badge v-else variant="gray">Member</ui-badge>
             </div>
 
-            <ui-badge v-if="member.id === team?.captain_id" variant="green">Captain</ui-badge>
-            <ui-badge v-else variant="gray">Member</ui-badge>
-          </div>
-
-          <template v-if="canRemove(member)" #footer>
-            <ui-button
-              variant="danger"
-              size="sm"
-              class="remove-member-btn"
-              :disabled="kickLoadingIds.has(member.id)"
-              @click="removeMember(member)"
-            >
-              <LoaderCircle class="animate-spin" v-if="kickLoadingIds.has(member.id)" />
-              Remove
-            </ui-button>
-          </template>
-        </ui-card>
-      </div><p v-if="filteredMembers?.length === 0" class="text-muted members-note">
-        No members match your search.
-      </p>
-</ui-query-state>
+            <template v-if="canRemove(member)" #footer>
+              <ui-button
+                variant="danger"
+                size="sm"
+                class="remove-member-btn"
+                :disabled="kickLoadingIds.has(member.id)"
+                @click="removeMember(member)"
+              >
+                <LoaderCircle class="animate-spin" v-if="kickLoadingIds.has(member.id)" />
+                Remove
+              </ui-button>
+            </template>
+          </ui-card>
+        </div>
+        <p v-if="filteredMembers?.length === 0" class="text-muted members-note">
+          No members match your search.
+        </p>
+      </ui-query-field>
+    </ui-query-block>
   </div>
 </template>
 
@@ -72,33 +76,40 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useNotification } from '@/composables/useNotification'
 import { LoaderCircle } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useRemoveMemberFromTeam } from '@/api/teams/teams'
+import {
+  getListTeamMembersQueryKey,
+  useRemoveMemberFromTeam,
+} from '@/api/teams/teams'
 import type { TeamMember } from '@/features/teams/types'
 import type { Team } from '@/features/teams/types'
 import type { QueryLike } from '@/composables/useQueryState'
+import { useQueryClient } from '@tanstack/vue-query'
 
 interface Props {
   team: Team
+  members: TeamMember[]
   loading: boolean
   query: QueryLike
 }
 
 const props = defineProps<Props>()
 const { showNotification } = useNotification()
+const queryClient = useQueryClient()
 
 const memberSearch = ref('')
 const kickLoadingIds = ref<Set<number>>(new Set())
 
 const filteredMembers = computed(() => {
   const search = memberSearch.value.trim().toLowerCase()
-  if (!search) return props.team?.members
-  return props.team?.members.filter((member) =>
+  if (!search) return props.members
+  return props.members.filter((member) =>
     [member.username, member.email, member.full_name || '']
       .join(' ')
       .toLowerCase()
@@ -120,6 +131,9 @@ const removeMember = (member: TeamMember) => {
     { pk: props.team.id, userId: member.id },
     {
       onSuccess: () => {
+        void queryClient.invalidateQueries({
+          queryKey: getListTeamMembersQueryKey(props.team.id),
+        })
         showNotification('Member removed.', 'success')
       },
       onError: (error) => {
