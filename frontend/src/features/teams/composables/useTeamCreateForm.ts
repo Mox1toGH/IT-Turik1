@@ -14,7 +14,7 @@ export interface UseTeamCreateFormReturn {
   form: ReturnType<typeof useForm<TeamCreateFormFields>>
   isCreatingTeam: Ref<boolean>
   isLoadingUsers: Ref<boolean>
-  isLoadingError: unknown
+  isLoadingError: Ref<boolean>
   createCandidateUsers: ComputedRef<TeamUserListResponse[] | undefined>
   selectedMembersCount: ComputedRef<number>
   contactSummary: ComputedRef<string>

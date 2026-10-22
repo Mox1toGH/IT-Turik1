@@ -1,28 +1,30 @@
 <template>
-  <ui-card class="edit-hero">
+  <header class="edit-hero">
     <div>
-      <p class="section-eyebrow">Tournament workspace</p>
-      <h1>Edit tournament</h1>
+      <p class="section-eyebrow">Tournaments</p>
+      <div class="heading-title-row">
+        <h1>Edit tournament</h1>
+        <ui-button
+          asLink
+          :to="`/tournaments/${tournamentId}`"
+          variant="ghost"
+          size="sm"
+          class="back-button"
+        >
+          <ArrowLeft :size="16" aria-hidden="true" />
+          Back to tournament
+        </ui-button>
+      </div>
       <p class="section-subtitle">
-        Update the public details, team limits, and registration window for this tournament.
+        Update the tournament details, team limits, and registration dates.
       </p>
     </div>
-
-    <ui-button
-      asLink
-      :to="`/tournaments/${tournamentId}`"
-      variant="secondary"
-      size="lg"
-      class="back-link"
-    >
-      Back to tournament
-    </ui-button>
-  </ui-card>
+  </header>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
+import { ArrowLeft } from 'lucide-vue-next'
 
 defineProps<{
   tournamentId: number
@@ -31,10 +33,16 @@ defineProps<{
 
 <style scoped>
 .edit-hero {
+  display: block;
+  margin-bottom: 0;
+}
+
+.heading-title-row {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .edit-hero h1 {
@@ -51,20 +59,28 @@ defineProps<{
   margin: 0.45rem 0 0;
 }
 
-.back-link {
+.back-button {
   flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {
-  .edit-hero {
-    flex-direction: column;
+  .heading-title-row {
     align-items: flex-start;
-    padding: 1.2rem;
   }
 
   .edit-hero h1 {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
+  }
+}
+
+@media (max-width: 560px) {
+  .heading-title-row {
+    flex-direction: column;
+    gap: 0.6rem;
   }
 }
 </style>

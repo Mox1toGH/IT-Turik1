@@ -2,35 +2,30 @@
   <section class="team-create-page page-shell">
     <header class="create-hero">
       <div>
-        <p class="section-eyebrow">Team workspace</p>
+        <p class="section-eyebrow">Teams</p>
         <h1>Create new team</h1>
-        <p class="section-subtitle">
-          Set up the team profile, contact channels, and optional starting members.
-        </p>
+        <p class="section-subtitle">Add the team details and choose members to invite.</p>
       </div>
 
-      <ui-button asLink class="back-link" variant="default" size="lg" to="/teams">
+      <ui-button asLink class="back-link" variant="secondary" to="/teams">
         Back to teams
       </ui-button>
     </header>
 
-    <div class="create-layout">
-      <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
-        <team-identity-fields :form="teamForm.form" />
+    <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
+      <team-identity-fields :form="teamForm.form" />
 
-        <team-contact-fields :form="teamForm.form" />
+      <team-contact-fields :form="teamForm.form" />
 
-        <ui-section
-          title="Members"
-          description="Invite initial members now, or leave this empty for later."
-        >
+      <ui-card class="team-form-panel">
+        <ui-section title="Members" description="Invite members now, or add them later.">
           <label class="form-item">
-            <p class="form-label">Add initial members</p>
+            <p class="form-label">Initial members</p>
             <ui-select
               v-model="teamForm.form.fields.value.member_ids!"
               :isLoading="teamForm.isLoadingUsers.value"
-              :isError="isLoadingError || !!teamForm.form.errors.value.member_ids"
-              :error="`Error while fetching users`"
+              :isError="isLoadingError"
+              :error="'Could not load users.'"
               :multiple="true"
               :options="
                 teamForm.createCandidateUsers.value?.map((u) => ({
@@ -46,42 +41,34 @@
             }}</small>
           </label>
         </ui-section>
+      </ui-card>
 
-        <div class="form-actions">
-          <ui-button asLink variant="secondary" size="lg" to="/teams">Cancel</ui-button>
-          <ui-button :disabled="teamForm.isCreatingTeam.value" type="submit" size="lg">
-            <LoaderCircle class="animate-spin" v-if="teamForm.isCreatingTeam.value" />
-            {{ teamForm.isCreatingTeam.value ? 'Creating...' : 'Create team' }}
-          </ui-button>
-        </div>
-      </form>
-
-      <team-create-summary
-        :selected-members-count="teamForm.selectedMembersCount.value"
-        :contact-summary="teamForm.contactSummary.value"
-        :team-name="teamForm.form.fields.value.name"
-        :organization="teamForm.form.fields.value.organization"
-        :email="teamForm.form.fields.value.email"
-        :is-public="teamForm.form.fields.value.is_public"
-      />
-    </div>
+      <div class="form-actions">
+        <ui-button :disabled="teamForm.isCreatingTeam.value" type="submit" size="lg">
+          <LoaderCircle class="animate-spin" v-if="teamForm.isCreatingTeam.value" />
+          {{ teamForm.isCreatingTeam.value ? 'Creating...' : 'Create team' }}
+        </ui-button>
+      </div>
+    </form>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 import UiSection from '@/components/ui/UiSection'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSelect from '@/components/ui/UiSelect'
 import TeamIdentityFields from '../components/team-create/TeamIdentityFields.vue'
 import TeamContactFields from '../components/team-create/TeamContactFields.vue'
-import TeamCreateSummary from '../components/team-create/TeamCreateSummary.vue'
 import { useTeamCreateForm } from '../composables/useTeamCreateForm'
 
 const teamForm = useTeamCreateForm()
 
-const isLoadingError = computed(() => Boolean(teamForm.isLoadingError))
+const isLoadingError = computed(
+  () => teamForm.isLoadingError.value && teamForm.createCandidateUsers.value === undefined,
+)
 </script>
 
 <style scoped>
@@ -92,7 +79,7 @@ const isLoadingError = computed(() => Boolean(teamForm.isLoadingError))
 .create-hero {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 1.5rem;
 }
 
@@ -114,18 +101,12 @@ const isLoadingError = computed(() => Boolean(teamForm.isLoadingError))
   flex: 0 0 auto;
 }
 
-.create-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
-  gap: 2rem;
-  align-items: start;
-}
-
 .team-form {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
   min-width: 0;
+  width: 100%;
 }
 
 .form-label {
@@ -135,15 +116,6 @@ const isLoadingError = computed(() => Boolean(teamForm.isLoadingError))
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-@media (max-width: 980px) {
-  .create-layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 760px) {
