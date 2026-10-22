@@ -34,7 +34,7 @@ If the component is genuinely reusable, move it to an appropriate shared locatio
 Forbidden: a shared component depending on a feature.
 
 ```ts
-// components/shared/AppNavbar.vue
+// components/shared/AppSidebar.vue
 import NotificationDropdown from '@/features/profile/components/NotificationDropdown.vue'
 ```
 
