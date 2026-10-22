@@ -2,54 +2,34 @@
   <ui-query-block :query="tournamentQuery" title="tournament">
     <ui-query-field>
       <template #skeleton>
-        <div class="create-layout">
-          <div class="tournament-form">
-            <ui-skeleton variant="rect" height="220px" />
-            <ui-skeleton variant="rect" height="140px" />
-            <ui-skeleton variant="rect" height="200px" />
-          </div>
-          <ui-skeleton variant="rect" height="320px" />
+        <div class="form-skeleton">
+          <ui-skeleton variant="rect" height="220px" />
+          <ui-skeleton variant="rect" height="140px" />
+          <ui-skeleton variant="rect" height="200px" />
         </div>
       </template>
-      <div class="create-layout">
-        <form class="tournament-form" @submit.prevent="handleSubmit">
-          <tournament-basics-fields :form="form" />
-          <tournament-capacity-fields :form="form" />
-          <tournament-schedule-fields :form="form" />
+      <form class="tournament-form" @submit.prevent="handleSubmit">
+        <tournament-basics-fields :form="form" />
+        <tournament-capacity-fields :form="form" />
+        <tournament-schedule-fields :form="form" />
 
-          <ui-card class="form-actions">
-            <ui-button asLink :to="`/tournaments/${tournamentId}`" variant="secondary" size="lg">
-              Cancel
-            </ui-button>
-            <ui-button type="submit" size="lg" :disabled="isPending">
-              {{ isPending ? 'Saving...' : 'Save changes' }}
-            </ui-button>
-          </ui-card>
-        </form>
-
-        <tournament-summary-aside
-          :name="form.fields.value.name"
-          :description="form.fields.value.description"
-          :max-teams="form.fields.value.max_teams"
-          :min-team-members="form.fields.value.min_team_members"
-          :starts-label="startsLabel"
-          :ends-label="endsLabel"
-          truncate-description
-        />
-      </div>
+        <div class="form-actions">
+          <ui-button type="submit" size="lg" :disabled="isPending">
+            {{ isPending ? 'Saving...' : 'Save changes' }}
+          </ui-button>
+        </div>
+      </form>
     </ui-query-field>
   </ui-query-block>
 </template>
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useForm } from '@/composables/useForm'
-import { combineDateAndTime } from '@/lib/date'
 import { EditTournamentSchema } from '@/schemas/tournaments.schema'
-import { computed, unref, watch } from 'vue'
+import { unref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotification } from '@/composables/useNotification'
 import {
@@ -60,7 +40,6 @@ import {
 import TournamentBasicsFields from '../tournament-form/TournamentBasicsFields.vue'
 import TournamentCapacityFields from '../tournament-form/TournamentCapacityFields.vue'
 import TournamentScheduleFields from '../tournament-form/TournamentScheduleFields.vue'
-import TournamentSummaryAside from '../tournament-form/TournamentSummaryAside.vue'
 import {
   createTournamentFormDefaults,
   toTime,
@@ -85,27 +64,6 @@ const { mutate: editTournament, isPending } = useUpdateTournament()
 function toPayload(values: TournamentFormFields): UpdateTournamentMutationBody {
   return toTournamentPayload(values)
 }
-
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-function formatDateTime(date: Date, time: string) {
-  try {
-    const value = combineDateAndTime(date, time)
-    return Number.isNaN(value.getTime()) ? '—' : dateTimeFormatter.format(value)
-  } catch {
-    return '—'
-  }
-}
-
-const startsLabel = computed(() =>
-  formatDateTime(form.fields.value.startDate, form.fields.value.startTime),
-)
-const endsLabel = computed(() =>
-  formatDateTime(form.fields.value.endDate, form.fields.value.endTime),
-)
 
 watch(
   tournament,
@@ -151,29 +109,22 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.create-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
-  gap: 1rem;
-  align-items: start;
-}
-
 .tournament-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
   min-width: 0;
+  width: 100%;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
 }
 
-@media (max-width: 980px) {
-  .create-layout {
-    grid-template-columns: 1fr;
-  }
+.form-skeleton {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
 }
 </style>

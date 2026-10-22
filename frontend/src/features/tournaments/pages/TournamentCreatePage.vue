@@ -1,36 +1,49 @@
 <template>
-  <ui-card class="create-hero">
-    <div>
-      <p class="section-eyebrow">Tournament workspace</p>
-      <h1>Create tournament</h1>
-      <p class="section-subtitle">
-        Set the public details, team limits, and registration window before rounds are added.
-      </p>
-    </div>
+  <section class="page-shell tournament-create-page">
+    <header class="page-heading">
+      <div>
+        <p class="section-eyebrow">Tournaments</p>
+        <div class="heading-title-row">
+          <h1>Create tournament</h1>
+          <ui-button asLink to="/tournaments" variant="ghost" size="sm" class="back-button">
+            <ArrowLeft :size="16" aria-hidden="true" />
+            Back to tournaments
+          </ui-button>
+        </div>
+        <p class="section-subtitle">
+          Set the tournament details, team limits, and registration dates.
+        </p>
+      </div>
+    </header>
 
-    <ui-button asLink to="/tournaments" variant="secondary" size="lg" class="back-link">
-      Back to tournaments
-    </ui-button>
-  </ui-card>
-  <CreateTournamentForm />
+    <CreateTournamentForm />
+  </section>
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
 import UiButton from '@/components/ui/UiButton'
-import UiCard from '@/components/ui/UiCard'
 import CreateTournamentForm from '../components/tournament-create/CreateTournamentForm.vue'
 </script>
 
 <style scoped>
-.create-hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 1rem;
+.tournament-create-page {
+  gap: 1.4rem;
 }
 
-.create-hero h1 {
+.page-heading {
+  display: block;
+}
+
+.heading-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-heading h1 {
   margin: 0.35rem 0 0;
   color: var(--foreground);
   font-family: var(--font-display);
@@ -39,25 +52,38 @@ import CreateTournamentForm from '../components/tournament-create/CreateTourname
   font-weight: 800;
 }
 
-.create-hero .section-subtitle {
+.page-heading .section-subtitle {
   max-width: 680px;
   margin: 0.45rem 0 0;
 }
 
-.back-link {
+.back-button {
   flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {
-  .create-hero {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.2rem;
+  .tournament-create-page {
+    padding: 1rem 1rem 2rem;
   }
 
-  .create-hero h1 {
+  .heading-title-row {
+    align-items: flex-start;
+  }
+
+  .page-heading h1 {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
+  }
+}
+
+@media (max-width: 560px) {
+  .heading-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
   }
 }
 </style>
