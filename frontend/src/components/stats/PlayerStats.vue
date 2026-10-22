@@ -94,9 +94,9 @@ const heatCells = computed(() =>
 }
 
 .chip {
-  border: 1px solid var(--stats-border);
+  border: 1px solid var(--border);
   background: transparent;
-  color: var(--stats-muted);
+  color: var(--muted-foreground);
   border-radius: 999px;
   font-size: 0.72rem;
   padding: 0.2rem 0.5rem;

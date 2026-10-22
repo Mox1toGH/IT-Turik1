@@ -1,246 +1,141 @@
 <template>
-  <section class="page-shell teams-page">
-    <ui-card>
-      <template #header>
-        <div>
-          <p class="section-eyebrow">Teams</p>
-          <h1 class="section-title">Create new team</h1>
-          <p class="section-subtitle">Create a team and optionally add initial members.</p>
-          <ui-button asLink class="back-link" variant="secondary" size="sm" to="/teams"
-            >Back to teams list</ui-button
-          >
-        </div>
-      </template>
+  <section class="team-create-page page-shell">
+    <header class="create-hero">
+      <div>
+        <p class="section-eyebrow">Teams</p>
+        <h1>Create new team</h1>
+        <p class="section-subtitle">Add the team details and choose members to invite.</p>
+      </div>
 
-      <form class="form-grid" @submit.prevent="handleFormSubmit">
-        <label class="form-item">
-          <p class="form-label">Team name</p>
-          <ui-input
-            v-model="form.fields.value.name"
-            :is-invalid="!!form.errors.value.name"
-            required
-            @blur="form.validateField('name')"
-          />
-          <small v-if="form.errors.value.name" class="text-error">{{
-            form.errors.value.name
-          }}</small>
-        </label>
+      <ui-button asLink class="back-link" variant="secondary" to="/teams">
+        Back to teams
+      </ui-button>
+    </header>
 
-        <label class="form-item">
-          <p class="form-label">Team email</p>
-          <ui-input
-            v-model="form.fields.value.email"
-            :is-invalid="!!form.errors.value.email"
-            type="email"
-            required
-            @blur="form.validateField('email')"
-          />
-          <small v-if="form.errors.value.email" class="text-error">{{
-            form.errors.value.email
-          }}</small>
-        </label>
+    <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
+      <team-identity-fields :form="teamForm.form" />
 
-        <label class="form-item">
-          <p class="form-label">Organization</p>
-          <ui-input
-            v-model="form.fields.value.organization"
-            :is-invalid="!!form.errors.value.organization"
-            @blur="form.validateField('organization')"
-          />
-          <small v-if="form.errors.value.organization" class="text-error">{{
-            form.errors.value.organization
-          }}</small>
-        </label>
+      <team-contact-fields :form="teamForm.form" />
 
-        <label class="form-label toggle-field">
-          <span>Team visibility</span>
-          <div class="visibility-control">
-            <span class="visibility-label">Private</span>
-            <ui-switch
-              v-model="form.fields.value.is_public"
-              :aria-checked="form.fields.value.is_public ? 'true' : 'false'"
-              :aria-label="`Team visibility: ${form.fields.value.is_public ? 'Public' : 'Private'}`"
-              @blur="form.validateField('is_public')"
+      <ui-card class="team-form-panel">
+        <ui-section title="Members" description="Invite members now, or add them later.">
+          <label class="form-item">
+            <p class="form-label">Initial members</p>
+            <ui-select
+              v-model="teamForm.form.fields.value.member_ids!"
+              :isLoading="teamForm.isLoadingUsers.value"
+              :isError="isLoadingError"
+              :error="'Could not load users.'"
+              :multiple="true"
+              :options="
+                teamForm.createCandidateUsers.value?.map((u) => ({
+                  value: u.id,
+                  label: `${u.username} (${u.email})`,
+                }))
+              "
+              placeholder="Select members"
+              @blur="teamForm.form.validateField('member_ids')"
             />
-            <span class="visibility-label">Public</span>
-          </div>
-          <small v-if="form.errors.value.is_public" class="text-error">{{
-            form.errors.value.is_public
-          }}</small>
-        </label>
+            <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
+              teamForm.form.errors.value.member_ids
+            }}</small>
+          </label>
+        </ui-section>
+      </ui-card>
 
-        <label class="form-item">
-          <p class="form-label">Telegram</p>
-          <ui-input
-            v-model="form.fields.value.contact_telegram"
-            :is-invalid="!!form.errors.value.contact_telegram"
-            placeholder="@team_username"
-            title="Telegram username: 5-32 characters, start with a letter, letters/digits/_"
-            @blur="form.validateField('contact_telegram')"
-          />
-          <small v-if="form.errors.value.contact_telegram" class="text-error">{{
-            form.errors.value.contact_telegram
-          }}</small>
-        </label>
-
-        <label class="form-item">
-          <p class="form-label">Discord</p>
-          <ui-input
-            v-model="form.fields.value.contact_discord"
-            :is-invalid="!!form.errors.value.contact_discord"
-            placeholder="team.username"
-            title="Discord username: 2-32 characters, letters/digits/._ with optional #1234"
-            @blur="form.validateField('contact_discord')"
-          />
-          <small v-if="form.errors.value.contact_discord" class="text-error">{{
-            form.errors.value.contact_discord
-          }}</small>
-        </label>
-
-        <label class="form-item">
-          <p class="form-label">Add initial members</p>
-          <ui-select
-            v-model="form.fields.value.member_ids!"
-            :isLoading="isLoadingUsers"
-            :isError="isLoadingError || !!form.errors.value.member_ids"
-            :error="`Error while fetching users (code: ${usersError?.code})`"
-            :multiple="true"
-            :options="
-              createCandidateUsers?.map((u) => ({
-                value: u.id,
-                label: `${u.username} (${u.email})`,
-              }))
-            "
-            placeholder="Select members"
-            @blur="form.validateField('member_ids')"
-          />
-          <small v-if="form.errors.value.member_ids" class="text-error">{{
-            form.errors.value.member_ids
-          }}</small>
-        </label>
-
-        <ui-button class="full-width" :disabled="isCreatingTeam" type="submit">
-          <loading-icon v-if="isCreatingTeam" />
-          Create team
+      <div class="form-actions">
+        <ui-button :disabled="teamForm.isCreatingTeam.value" type="submit" size="lg">
+          <LoaderCircle class="animate-spin" v-if="teamForm.isCreatingTeam.value" />
+          {{ teamForm.isCreatingTeam.value ? 'Creating...' : 'Create team' }}
         </ui-button>
-      </form>
-    </ui-card>
+      </div>
+    </form>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import { useNotification } from '@/composables/useNotification'
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiSwitch from '@/components/ui/UiSwitch.vue'
-import { useForm } from '@/composables/useForm'
-import { CreateTeamSchema } from '@/schemas/teams.schema'
-import { useCreateTeam, type CreateTeamMutationBody } from '@/api/teams/teams'
-import { useGetUserProfile, useListUsers } from '@/api/accounts/accounts'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiSection from '@/components/ui/UiSection'
+import { LoaderCircle } from 'lucide-vue-next'
+import UiSelect from '@/components/ui/UiSelect'
+import TeamIdentityFields from '../components/team-create/TeamIdentityFields.vue'
+import TeamContactFields from '../components/team-create/TeamContactFields.vue'
+import { useTeamCreateForm } from '../composables/useTeamCreateForm'
 
-const router = useRouter()
-const { showNotification } = useNotification()
+const teamForm = useTeamCreateForm()
 
-type Form = CreateTeamMutationBody
-
-const form = useForm<Form>(CreateTeamSchema, {
-  name: '',
-  email: '',
-  organization: '',
-  contact_telegram: '',
-  contact_discord: '',
-  is_public: false,
-  member_ids: [],
-})
-
-const resetForm = () => {
-  form.reset()
-}
-
-const { data: user } = useGetUserProfile()
-
-const createCandidateUsers = computed(() => {
-  return users.value?.filter((u) => {
-    if (u.id === user.value?.id) return false
-    return [u.username, u.email, u.full_name || ''].join(' ').toLowerCase()
-  })
-})
-
-const { data: users, isLoading: isLoadingUsers, error: usersError, isLoadingError } = useListUsers()
-const { mutate: createTeam, isPending: isCreatingTeam } = useCreateTeam()
-
-const handleFormSubmit = () => {
-  if (!form.validate()) return
-
-  createTeam(
-    { data: form.fields.value },
-    {
-      onSuccess: (data) => {
-        showNotification('Team created successfully.', 'success')
-        resetForm()
-
-        router.push(`/teams/${data.id}`)
-      },
-      onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
-        }
-
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
+const isLoadingError = computed(
+  () => teamForm.isLoadingError.value && teamForm.createCandidateUsers.value === undefined,
+)
 </script>
 
 <style scoped>
-.teams-page {
-  gap: 1.2rem;
+.team-create-page {
+  gap: 2rem;
+}
+
+.create-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.create-hero h1 {
+  margin: 0.35rem 0 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-weight: 800;
+}
+
+.create-hero .section-subtitle {
+  max-width: 680px;
+  margin: 0.45rem 0 0;
 }
 
 .back-link {
-  margin-top: 0.8rem;
-  display: inline-block;
+  flex: 0 0 auto;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
+.team-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+  width: 100%;
 }
 
-.full-width {
-  grid-column: 1 / -1;
+.form-label {
+  margin: 0;
 }
 
-.toggle-field {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.visibility-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  border: 1px solid var(--border);
-  background: var(--input);
-  padding: 0.75rem 0.85rem;
-  border-radius: 12px;
-}
-
-.visibility-label {
-  font-size: 0.86rem;
-  user-select: none;
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 760px) {
-  .form-grid {
-    grid-template-columns: 1fr;
+  .team-create-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .create-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
   }
 }
 </style>

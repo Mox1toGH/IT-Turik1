@@ -1,52 +1,44 @@
 <template>
-  <ui-card class="preview-shell" :is-error="isError">
-    <template #header>
-      <div class="preview-head">
-        <h2>Statistics</h2>
-      </div>
-    </template>
+  <section class="preview-shell" aria-labelledby="stats-preview-title">
+    <div class="preview-head">
+      <h2 id="stats-preview-title">Statistics</h2>
+    </div>
 
-    <template #error>
-      <p class="preview-error">Unable to load stats preview right now.</p>
-    </template>
-
-    <ui-skeleton-loader :loading="isLoading">
-      <template #skeleton>
-        <div class="preview-grid">
-          <ui-skeleton v-for="n in 4" :key="n" variant="rect" height="82px" />
-        </div>
+    <ui-query-block v-if="props.user" :query="activeQuery">
+      <template #error>
+        <p class="preview-error">Unable to load stats preview right now.</p>
       </template>
 
-      <div class="preview-grid">
-        <div v-for="item in cards" :key="item.label" class="preview-item">
-          <p class="label">{{ item.label }}</p>
-          <p class="value">
-            <RouterLink v-if="item.to" :to="item.to" class="value-link">{{
-              item.value
-            }}</RouterLink>
-            <span v-else>{{ item.value }}</span>
-          </p>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="preview-grid">
+            <ui-skeleton v-for="n in 4" :key="n" variant="rect" height="82px" />
+          </div>
+        </template>
+        <div class="preview-grid">
+          <ui-card v-for="item in cards" :key="item.label" class="preview-item">
+            <p class="label">{{ item.label }}</p>
+            <p class="value">
+              <RouterLink v-if="item.to" :to="item.to">{{ item.value }}</RouterLink>
+              <span v-else>{{ item.value }}</span>
+            </p>
+          </ui-card>
         </div>
-      </div>
-
-      <div class="preview-actions">
-        <ui-button as-link to="/stats" variant="secondary" size="sm">View full stats →</ui-button>
-      </div>
-    </ui-skeleton-loader>
-  </ui-card>
+      </ui-query-field>
+    </ui-query-block>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed } from 'vue'
+import { hasRole } from '@/shared/lib/permissions'
 import { RouterLink } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
-import { getAdminStats, getPlayerStats, getTeamStats } from '@/api/stats/stats'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import { useGetAdminStats, useGetPlayerStats, useGetTeamStats } from '@/api/stats/stats'
+import UiCard from '../ui/UiCard'
+import type { UserRole } from '@/shared/types/user'
 
-type UserRole = RoleB96Enum
 type TeamRef = { id: number; name: string }
 type ProfileLike = {
   role?: UserRole
@@ -54,34 +46,29 @@ type ProfileLike = {
   readonly teams?: readonly TeamRef[]
 }
 
-type PlayerStatsResponse = {
-  total_tournaments: number
-  win_rate: number
-  average_evaluation_score: number
-  current_team_name: string | null
-}
-
-type TeamStatsResponse = {
-  active_members_count: number
-}
-
-type AdminStatsResponse = {
-  total_users: number
-  total_tournaments: number
-  active_tournaments: number
-  new_registrations_last_7_days: number
-}
-
 interface Props {
   user?: ProfileLike | null
 }
 
 const props = defineProps<Props>()
-const isLoading = ref(false)
-const isError = ref(false)
-const playerStats = ref<PlayerStatsResponse | null>(null)
-const teamStats = ref<TeamStatsResponse | null>(null)
-const adminStats = ref<AdminStatsResponse | null>(null)
+
+const isStaff = computed(() => !!props.user?.is_staff)
+const isTeamRole = computed(() => hasRole(props.user, 'team'))
+const isPlayerActive = computed(() => !!props.user && !isStaff.value)
+const firstTeamId = computed(() => props.user?.teams?.[0]?.id ?? 0)
+const isTeamActive = computed(() => isTeamRole.value && firstTeamId.value > 0)
+
+const adminQuery = useGetAdminStats({ query: { enabled: isStaff } })
+const playerQuery = useGetPlayerStats({ query: { enabled: isPlayerActive } })
+const teamQuery = useGetTeamStats(firstTeamId, {
+  query: { enabled: isTeamActive, retry: false },
+})
+
+const { data: adminStats } = adminQuery
+const { data: playerStats } = playerQuery
+const { data: teamStats } = teamQuery
+
+const activeQuery = computed(() => (isStaff.value ? adminQuery : playerQuery))
 
 const cards = computed(() => {
   if (props.user?.is_staff) {
@@ -132,7 +119,7 @@ const cards = computed(() => {
     },
   ]
 
-  if (props.user?.role === 'team') {
+  if (hasRole(props.user, 'team')) {
     return [
       ...base,
       {
@@ -144,47 +131,6 @@ const cards = computed(() => {
   }
 
   return base
-})
-
-const loadStats = async () => {
-  if (!props.user) return
-  isLoading.value = true
-  isError.value = false
-  playerStats.value = null
-  teamStats.value = null
-  adminStats.value = null
-
-  try {
-    if (props.user.is_staff) {
-      const data = await getAdminStats()
-      adminStats.value = data
-      return
-    }
-
-    const data = await getPlayerStats()
-    playerStats.value = data
-
-    if (props.user.role === 'team' && props.user.teams?.[0]?.id) {
-      const data = await getTeamStats(props.user.teams[0].id)
-      teamStats.value = data
-    }
-  } catch {
-    isError.value = true
-  } finally {
-    isLoading.value = false
-  }
-}
-
-watch(
-  () => props.user,
-  () => {
-    if (props.user) void loadStats()
-  },
-  { deep: true },
-)
-
-onMounted(() => {
-  if (props.user) void loadStats()
 })
 </script>
 
@@ -205,13 +151,6 @@ onMounted(() => {
   gap: 0.6rem;
 }
 
-.preview-item {
-  padding: 0.75rem;
-  border-radius: 12px;
-  border: 1px solid var(--line-soft);
-  background: var(--muted);
-}
-
 .label {
   margin: 0;
   font-size: 0.8rem;
@@ -225,17 +164,8 @@ onMounted(() => {
   color: var(--foreground);
 }
 
-.value-link {
-  color: inherit;
-  text-decoration: none;
-}
-
 .value-link:hover {
   text-decoration: underline;
-}
-
-.preview-actions {
-  margin-top: 1rem;
 }
 
 .preview-error {

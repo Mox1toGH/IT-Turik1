@@ -13,7 +13,7 @@
             @click="$emit('select', slice.role)"
           />
         </template>
-        <circle r="26" fill="var(--stats-card)" />
+        <circle r="26" fill="var(--card)" />
         <text x="0" y="-2" text-anchor="middle" class="axis-text">{{ centerRole }}</text>
         <text x="0" y="12" text-anchor="middle" class="axis-text">{{ centerCount }}</text>
       </g>
@@ -53,7 +53,7 @@ defineEmits<{
 
 const props = defineProps<Props>()
 const hovered = ref<string | null>(null)
-const colors = ['var(--stats-accent)', 'var(--stats-secondary)', '#6a6a6a', '#8a8a8a']
+const colors = ['var(--stats-accent)', 'var(--stats-secondary)', 'var(--muted-foreground)', 'var(--border-strong)']
 
 const total = computed(() => Math.max(props.items.reduce((sum, item) => sum + item.count, 0), 1))
 

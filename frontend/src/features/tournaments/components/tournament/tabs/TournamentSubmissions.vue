@@ -1,0 +1,498 @@
+<template>
+  <ui-card>
+    <template #header>
+      <div class="submissions-header">
+        <h2>My submissions</h2>
+        <ui-select
+          v-model="filterOption"
+          align-to="right"
+          multiple
+          min-width="200px"
+          placeholder="Select round"
+          :options="filterOptions"
+          :is-loading="isLoadingRounds"
+          :is-error="isRoundsError"
+          :error="roundsError?.message"
+        />
+      </div>
+    </template>
+
+    <ui-query-block :query="displayQuery">
+      <ui-query-field>
+        <template #skeleton>
+          <submissions-list-skeleton />
+        </template>
+
+        <div v-if="isEmpty" class="submissions-empty">
+          <p class="text-muted">{{ emptyText }}</p>
+          <p class="text-sm text-muted">{{ emptyHint }}</p>
+        </div>
+        <div v-else class="submissions-list">
+          <div
+            v-for="submission in filteredSubmissions"
+            :key="submission.id"
+            class="submission-row"
+          >
+            <div class="submission-header">
+              <div class="left-side">
+                <div class="left-side-icon">
+                  <FileCheck :size="20" />
+                </div>
+
+                <div class="round-info">
+                  <p class="text-muted">Round</p>
+                  <p>{{ submission.round_details.name }}</p>
+                </div>
+              </div>
+
+              <div class="right-side">
+                <div class="round-info">
+                  <p class="text-muted">submitted on</p>
+                  <p class="text-muted">{{ formatDate(submission.created_at) }}</p>
+                </div>
+
+                <div class="round-info">
+                  <p class="text-muted">status</p>
+                  <ui-badge :variant="badgeVariant(submission.round_details.status)">{{
+                    submissionStatus(submission.round_details.status)
+                  }}</ui-badge>
+                </div>
+              </div>
+            </div>
+
+            <ui-expandable-text :text="submission.description ?? '-'" :lines="3" />
+
+            <div class="submission-footer">
+              <div class="submission-links">
+                <a :href="submission.github_url" target="_blank" class="submission-link">Github</a>
+                <a :href="submission.demo_video_url" target="_blank" class="submission-link"
+                  >Demo</a
+                >
+              </div>
+
+              <ui-button
+                size="sm"
+                v-if="submission.round_details.status === 'active'"
+                @click="isEditOpen = true"
+                >Edit Submission</ui-button
+              >
+              <EditSubmissionModal
+                v-model="isEditOpen"
+                :tournament-id="props.tournamentId"
+                :submission-id="submission.id"
+                :default-values="{
+                  github_url: submission.github_url,
+                  demo_video_url: submission.demo_video_url,
+                  description: submission.description,
+                }"
+              />
+            </div>
+
+            <div class="submission-results">
+              <div class="submission-results-head">
+                <p class="text-muted">Jury evaluations</p>
+                <p class="text-muted">
+                  {{ evaluatedCount(submission) }}/{{ submissionAssignments(submission).length }}
+                  evaluated
+                  <template v-if="evaluatedCount(submission) > 0">
+                    • Avg:
+                    <strong>{{ averageFinalScore(submission).toFixed(2) }}</strong>
+                  </template>
+                </p>
+              </div>
+
+              <div
+                v-for="assignment in submissionAssignments(submission)"
+                :key="assignment.id"
+                class="submission-result-item"
+              >
+                <div class="jury-head">
+                  <p class="jury-name">
+                    {{ assignment.jury.full_name || assignment.jury.username }}
+                  </p>
+                  <ui-badge :variant="assignment.evaluation ? 'green' : 'gray'">
+                    {{ assignment.evaluation ? 'Evaluated' : 'Pending' }}
+                  </ui-badge>
+                </div>
+
+                <template v-if="assignment.evaluation">
+                  <div class="jury-metrics">
+                    <p><strong>Final:</strong> {{ assignment.evaluation.final_score }}</p>
+                    <p><strong>Total:</strong> {{ assignment.evaluation.total_score }}</p>
+                    <p><strong>At:</strong> {{ formatDate(assignment.evaluation.created_at) }}</p>
+                  </div>
+
+                  <div class="score-track-wrap">
+                    <div class="score-track-head">
+                      <p class="text-muted">Score</p>
+                      <p class="text-muted">
+                        {{ assignment.evaluation.total_score }} /
+                        {{ roundMaxScore(submission.round_details.id) }}
+                      </p>
+                    </div>
+                    <ui-progress-bar
+                      :percent="
+                        scorePercent(submission.round_details.id, assignment.evaluation.total_score)
+                      "
+                      :height="10"
+                      fill-color="var(--primary)"
+                    />
+                  </div>
+
+                  <div class="jury-criteria">
+                    <p class="text-muted">Criteria</p>
+                    <div
+                      v-for="score in assignment.evaluation.scores"
+                      :key="`${assignment.id}-${score.criterion_id}`"
+                      class="jury-criterion-row"
+                    >
+                      <span>{{ score.criterion_name || score.criterion_id }}</span>
+                      <span>
+                        {{ score.score }}/{{
+                          criterionMaxScore(submission.round_details.id, score.criterion_id)
+                        }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p v-if="assignment.evaluation.comment" class="jury-comment">
+                    {{ assignment.evaluation.comment }}
+                  </p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ui-query-field>
+    </ui-query-block>
+  </ui-card>
+</template>
+
+<script setup lang="ts">
+import UiBadge, { type Variants } from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiExpandableText from '@/components/ui/UiExpandableText'
+import UiProgressBar from '@/components/ui/UiProgressBar'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSelect from '@/components/ui/UiSelect'
+import SubmissionsListSkeleton from './tournament-submissions/SubmissionsListSkeleton.vue'
+import { FileCheck } from 'lucide-vue-next'
+import { formatDate } from '@/lib/date'
+import { computed, ref } from 'vue'
+import EditSubmissionModal from './tournament-submissions/EditSubmissionModal.vue'
+import { useListMyTeamSubmissions, useListRounds } from '@/api/tournaments/tournaments'
+import { getErrorCode } from '@/composables/useQueryState'
+import type { RoundStatus } from '@/api/backendAPINinja.schemas.ts'
+
+interface Props {
+  tournamentId: number
+}
+
+const props = defineProps<Props>()
+const isEditOpen = ref(false)
+
+const submissionsQuery = useListMyTeamSubmissions(props.tournamentId)
+const submissions = computed(() => submissionsQuery.data.value?.items ?? [])
+const errorCode = computed(() => getErrorCode(submissionsQuery.error.value))
+const displayQuery = computed(() => ({
+  isPending: submissionsQuery.isPending.value,
+  isError: submissionsQuery.isError.value && errorCode.value !== 404,
+  data: submissions.value,
+  error: submissionsQuery.error.value,
+  isFetching: submissionsQuery.isFetching.value,
+  refetch: submissionsQuery.refetch,
+}))
+
+// The endpoint answers 404 when the current team has no submissions in this
+// tournament; that is an empty list, not a failure.
+const {
+  data: rounds,
+  isLoading: isLoadingRounds,
+  isError: isRoundsError,
+  error: roundsError,
+} = useListRounds(props.tournamentId)
+
+const filterOptions = computed(() =>
+  rounds.value?.items.map((round) => ({
+    value: round.name ?? '',
+    label: round.name ?? '',
+  })),
+)
+
+const filterOption = ref<string[]>([])
+const filteredSubmissions = computed(() => {
+  if (!filterOption.value.length) {
+    return submissions.value ?? []
+  }
+
+  return (submissions.value ?? []).filter((submission) =>
+    filterOption.value.includes(submission.round_details.name ?? ''),
+  )
+})
+
+const isEmpty = computed(() => filteredSubmissions.value.length === 0)
+const emptyText = computed(() =>
+  submissions.value.length === 0
+    ? 'No submissions yet'
+    : 'No submissions match the selected rounds',
+)
+const emptyHint = computed(() =>
+  submissions.value.length === 0
+    ? 'Submissions you send for a round appear here.'
+    : 'Try clearing the round filter to see all submissions.',
+)
+
+const submissionStatus = (roundStatus?: RoundStatus) => {
+  return roundStatus === 'active' ? 'Active' : 'Closed'
+}
+const badgeVariant = (roundStatus?: RoundStatus): Variants => {
+  return roundStatus === 'active' ? 'primary' : 'red'
+}
+
+const submissionEvaluations = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return (submission.assignments ?? []).filter((assignment) => assignment.evaluation)
+}
+
+const submissionAssignments = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return [...submission.assignments].sort((a, b) => {
+    const left = (a.jury.full_name || a.jury.username || '').toLowerCase()
+    const right = (b.jury.full_name || b.jury.username || '').toLowerCase()
+    return left.localeCompare(right)
+  })
+}
+
+const evaluatedCount = (submission: NonNullable<typeof submissions.value>[number]) => {
+  return submissionEvaluations(submission).length
+}
+
+const roundMaxScore = (roundId: number) => {
+  const round = rounds.value?.items.find((item) => item.id === roundId)
+  if (!round?.criteria) return 0
+  return round.criteria.reduce((sum, criterion) => sum + Number(criterion.max_score || 0), 0)
+}
+
+const criterionMaxScore = (roundId: number, criterionId: string) => {
+  const round = rounds.value?.items.find((item) => item.id === roundId)
+  const criterion = round?.criteria?.find((item) => item.id === criterionId)
+  return Number(criterion?.max_score || 0)
+}
+
+const scorePercent = (roundId: number, totalScore: number) => {
+  const max = roundMaxScore(roundId)
+  if (!max) return 0
+  const clamped = Math.max(0, Math.min(Number(totalScore || 0), max))
+  return (clamped / max) * 100
+}
+
+const averageFinalScore = (submission: NonNullable<typeof submissions.value>[number]) => {
+  const evaluations = submissionEvaluations(submission)
+  if (!evaluations.length) return 0
+  const total = evaluations.reduce(
+    (sum, assignment) => sum + Number(assignment.evaluation?.final_score ?? 0),
+    0,
+  )
+  return total / evaluations.length
+}
+</script>
+
+<style scoped>
+.submissions-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.submissions-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.submission-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.submission-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.left-side-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  padding: 0.7rem;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 50%;
+}
+
+.round-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.round-info p {
+  margin: 0;
+}
+
+.right-side,
+.left-side {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.skeleton-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.submission-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.submission-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.submission-link {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.submission-results {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.submission-results-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.submission-results-head p {
+  margin: 0;
+}
+
+.submission-result-item {
+  background: var(--subtle);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.jury-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.jury-name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.jury-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.jury-metrics p {
+  margin: 0;
+}
+
+.jury-criteria {
+  display: flex;
+  flex-direction: column;
+}
+
+.jury-criteria > .text-muted {
+  margin: 0 0 0.4rem;
+}
+
+.score-track-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.score-track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.score-track-head p {
+  margin: 0;
+}
+
+.jury-criterion-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.jury-criterion-row:first-of-type {
+  border-top: 0;
+}
+
+.jury-comment {
+  margin: 0;
+  border-left: 3px solid var(--primary);
+  padding-left: 0.6rem;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 625px) {
+  .submission-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .left-side {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .jury-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

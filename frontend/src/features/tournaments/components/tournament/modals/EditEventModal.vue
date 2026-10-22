@@ -56,23 +56,23 @@
 
     <template #footer>
       <ui-button variant="secondary" @click="toggleClose"> Close </ui-button>
-      <ui-button @click="editEvent"> <loading-icon v-if="isPending" /> Save </ui-button>
+      <ui-button @click="editEvent"> <LoaderCircle class="animate-spin" v-if="isPending" /> Save </ui-button>
     </template>
   </ui-modal>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiTimePicker from '@/components/ui/UiTimePicker.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiDatePicker from '@/components/ui/UiDatePicker'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
+import UiTimePicker from '@/components/ui/UiTimePicker'
 import { useForm } from '@/composables/useForm'
 import { EditEventSchema } from '@/schemas/tournaments.schema'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
+import { LoaderCircle } from 'lucide-vue-next'
+import UiTextArea from '@/components/ui/UiTextArea'
 import { useUpdateEvent } from '@/api/tournaments/tournaments'
 
 interface Props {
@@ -86,13 +86,6 @@ interface Props {
   link: string
 }
 
-interface Form {
-  title: string
-  description: string
-  startDate: Date
-  startTime: string
-}
-
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
@@ -102,7 +95,7 @@ const { showNotification } = useNotification()
 
 const date = props.startDate instanceof Date ? props.startDate : new Date(props.startDate)
 const pad = (value: number) => String(value).padStart(2, '0')
-const form = useForm<Form>(EditEventSchema, {
+const form = useForm(EditEventSchema, {
   title: props.title,
   description: props.description,
   startDate: date,
@@ -127,8 +120,8 @@ const editEvent = () => {
     },
     {
       onError: (error) => {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
 
         showNotification(error?.message, 'error')

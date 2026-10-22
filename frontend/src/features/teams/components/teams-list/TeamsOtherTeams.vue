@@ -1,120 +1,96 @@
 <template>
-  <ui-card :isError="isLoadingError">
-    <template #error>
-      <div style="display: flex; height: 200px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ teamsError?.code }})</p>
-      </div>
-    </template>
+  <div class="teams-widget">
+    <ui-query-block :query="teamsQuery" title="teams">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-grid">
+            <div class="team-item-skeleton" v-for="i in 2" :key="i">
+              <div class="team-skeleton-body">
+                <ui-skeleton variant="rect" width="120px" />
 
-    <template #header>
-      <div class="section-head">
-        <h2>Other teams</h2>
-        <ui-skeleton-loader :loading="isLoadingTeams">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="80px" />
-          </template>
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <ui-skeleton variant="rect" width="80px" />
+                  <ui-skeleton variant="rect" width="120px" />
+                  <ui-skeleton variant="rect" width="100px" />
+                  <ui-skeleton variant="rect" width="110px" />
+                </div>
 
-          <span class="text-muted">{{ otherTeams?.length ?? 0 }} available</span>
-        </ui-skeleton-loader>
-      </div>
-    </template>
-
-    <ui-skeleton-loader :loading="isLoadingTeams">
-      <template #skeleton>
-        <div class="team-grid">
-          <ui-card class="team-item" v-for="i in 2" :key="i">
-            <template #header>
-              <ui-skeleton variant="rect" width="120px" />
-            </template>
-
-            <div style="display: flex; flex-direction: column; gap: 4px">
-              <ui-skeleton variant="rect" width="80px" />
-              <ui-skeleton variant="rect" width="120px" />
-              <ui-skeleton variant="rect" width="100px" />
-              <ui-skeleton variant="rect" width="110px" />
-            </div>
-
-            <template #footer>
-              <div class="actions">
-                <ui-skeleton variant="rect" height="2rem" width="100%" />
-                <ui-skeleton variant="rect" height="2rem" width="100%" />
+                <div class="actions">
+                  <ui-skeleton variant="rect" height="2rem" width="100%" />
+                  <ui-skeleton variant="rect" height="2rem" width="100%" />
+                </div>
               </div>
-            </template>
-          </ui-card>
-        </div>
-      </template>
-
-      <p v-if="otherTeams?.length === 0" class="text-muted">No other teams available.</p>
-      <div v-else class="team-grid">
-        <ui-card v-for="team in otherTeamsPageItems" :key="`other-${team.id}`" class="team-item">
-          <template #header>
-            <div class="team-meta">
-              <h3 :title="team.name">{{ truncateText(team.name, 60) }}</h3>
             </div>
-          </template>
+          </div>
+        </template>
 
-          <div>
-            <p class="text-muted">Visibility: {{ team.is_public ? 'Public' : 'Private' }}</p>
-            <p class="text-muted">Captain: {{ captainName(team) }}</p>
-            <p class="text-muted">Members: {{ team.members.length }}</p>
+        <template #default>
+          <p v-if="isEmpty" class="empty-text text-muted">
+            No teams to discover. Available teams will show up here when they can be joined.
+          </p>
+          <div v-else class="team-grid">
+            <ui-card
+              v-for="team in otherTeamsPageItems"
+              :key="`other-${team.id}`"
+              class="team-item"
+            >
+              <div class="team-body">
+                <div class="team-meta">
+                  <ui-truncate :text="team.name" class="team-title" />
+                </div>
+
+                <div class="team-details">
+                  <p class="text-muted">Visibility: {{ team.is_public ? 'Public' : 'Private' }}</p>
+                  <p class="text-muted">Captain: {{ captainName(team) }}</p>
+                  <p class="text-muted">Members: {{ team.members.length }}</p>
+                </div>
+              </div>
+
+              <template #footer>
+                <div class="actions">
+                  <ui-button
+                    v-if="team.can_request_to_join && user?.role === 'team'"
+                    size="sm"
+                    variant="secondary"
+                    style="width: 100%"
+                    :disabled="loadingIds.has(team.id)"
+                    @click="sendJoinRequest(team.id)"
+                  >
+                    <LoaderCircle class="animate-spin" v-if="loadingIds.has(team.id)" />
+                    Request to join
+                  </ui-button>
+                  <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`">
+                    Open workspace
+                  </ui-button>
+                </div>
+              </template>
+            </ui-card>
           </div>
 
-          <template #footer>
-            <div class="actions">
-              <ui-button
-                v-if="team.can_request_to_join && user?.role === 'team'"
-                size="sm"
-                variant="secondary"
-                style="width: 100%"
-                :disabled="loadingIds.has(team.id)"
-                @click="sendJoinRequest(team.id)"
-              >
-                <loading-icon v-if="loadingIds.has(team.id)" />
-                Request to join
-              </ui-button>
-              <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team.id}`"
-                >Open workspace</ui-button
-              >
-            </div>
-          </template>
-        </ui-card>
-      </div>
-    </ui-skeleton-loader>
-
-    <div v-if="otherPages > 1" class="pagination">
-      <ui-button
-        size="sm"
-        variant="secondary"
-        class="btn-soft"
-        :disabled="otherPage === 1"
-        @click="otherPage -= 1"
-        type="button"
-      >
-        Prev
-      </ui-button>
-      <span>Page {{ otherPage }} / {{ otherPages }}</span>
-      <ui-button
-        size="sm"
-        variant="secondary"
-        :disabled="otherPage === otherPages"
-        @click="otherPage += 1"
-        type="button"
-      >
-        Next
-      </ui-button>
-    </div>
-  </ui-card>
+          <ui-pagination
+            class="teams-pagination"
+            v-if="otherPages > 1"
+            v-model="otherPage"
+            :total-items="otherTeams?.length ?? 0"
+            :page-size="OTHER_TEAMS_PER_PAGE"
+            :show-summary="false"
+          />
+        </template>
+      </ui-query-field>
+    </ui-query-block>
+  </div>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiPagination from '@/components/ui/UiPagination'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { truncateText } from '@/lib/utils'
+import { LoaderCircle } from 'lucide-vue-next'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import {
   useCreateTeamJoinRequest,
@@ -124,10 +100,11 @@ import {
 
 const OTHER_TEAMS_PER_PAGE = 8
 
-type Team = ListTeamsQueryResult[number]
+type Team = ListTeamsQueryResult['items'][number]
 
 const { data: user } = useGetUserProfile()
-const { data: teams, isLoading: isLoadingTeams, isLoadingError, error: teamsError } = useListTeams()
+const teamsQuery = useListTeams()
+const { data: teams } = teamsQuery
 
 const { showNotification } = useNotification()
 
@@ -141,7 +118,10 @@ const captainName = (team: Team) => {
 }
 const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
 
-const otherTeams = computed(() => teams.value?.filter((team) => !isAcceptedMember(team)))
+const otherTeams = computed(() =>
+  (teams.value?.items ?? []).filter((team) => !isAcceptedMember(team)),
+)
+const isEmpty = computed(() => otherTeams.value.length === 0)
 const otherPages = computed(() =>
   Math.max(1, Math.ceil((otherTeams.value?.length ?? 0) / OTHER_TEAMS_PER_PAGE)),
 )
@@ -155,7 +135,7 @@ const { mutate: sendJoinRequestMutate } = useCreateTeamJoinRequest()
 const sendJoinRequest = (teamId: number) => {
   loadingIds.value.add(teamId)
   sendJoinRequestMutate(
-    { id: teamId, data: { detail: '' } },
+    { pk: teamId },
     {
       onSuccess: () => {
         showNotification('Join request sent.', 'success')
@@ -172,22 +152,59 @@ const sendJoinRequest = (teamId: number) => {
 </script>
 
 <style scoped>
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+.teams-widget {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.empty-text {
+  margin: 0;
+  padding: 2rem 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.teams-pagination {
+  margin-top: 1rem;
 }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
 .team-item {
-  padding: 0.95rem;
-  background: var(--muted);
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.team-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
+}
+
+.team-item-skeleton {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.team-skeleton-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
 }
 
 .team-meta {
@@ -197,15 +214,28 @@ const sendJoinRequest = (teamId: number) => {
   gap: 0.5rem;
 }
 
-.team-meta h3 {
+.team-meta h3,
+.team-title {
   font-family: var(--font-display);
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  min-width: 0;
 }
 
-.pagination {
-  margin-top: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+.team-details {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.team-details p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.team-item :deep(.card-footer) {
+  padding: 0 1.25rem 1.25rem;
 }
 
 .actions {

@@ -1,34 +1,40 @@
 <template>
-  <ui-button :disabled="props.disabled" size="sm" variant="danger" @click="isDeleteModalOpen = true"
-    >Delete</ui-button
-  >
-
   <ui-modal v-model="isDeleteModalOpen" :close-on-backdrop="!isDeleting">
     <template #title>
       <h3>Delete tournament</h3>
     </template>
 
     <div>
-      <p class="modal-text">
-        This action cannot be undone. Enter
-        <ui-badge :title="props.tournamentName" variant="red">{{
-          truncateText(props.tournamentName, 15)
-        }}</ui-badge>
-        to confirm.
-      </p>
+      <p class="modal-text">This action cannot be undone. Enter the tournament name to confirm.</p>
 
-      <ui-input
-        v-model="deleteConfirmInput"
-        :placeholder="props.tournamentName"
-        :disabled="isDeleting"
-        style="width: 100%"
-      />
+      <ui-query-block :query="tournamentQuery">
+        <template #error><p class="text-error">Could not load tournament details.</p></template>
+        <ui-query-field>
+          <template #skeleton><ui-skeleton variant="rect" width="100%" height="40px" /></template>
+          <div class="delete-confirmation">
+            <ui-badge :title="tournament?.name" variant="red">{{
+              truncateText(tournament?.name || `Tournament ${props.tournamentId}`, 15)
+            }}</ui-badge>
+            <ui-input
+              v-model="deleteConfirmInput"
+              :placeholder="tournament?.name"
+              :disabled="isDeleting"
+              style="width: 100%"
+            />
+          </div>
+        </ui-query-field>
+      </ui-query-block>
 
       <p v-if="deleteError" class="text-error">{{ deleteError }}</p>
     </div>
 
     <template #footer>
-      <ui-button variant="secondary" size="sm" :disabled="isDeleting" @click="closeDeleteModal">
+      <ui-button
+        variant="secondary"
+        size="sm"
+        :disabled="isDeleting"
+        @click="isDeleteModalOpen = false"
+      >
         Cancel
       </ui-button>
 
@@ -38,7 +44,7 @@
         :disabled="!canDeleteTournament"
         @click="handleDeleteTournament"
       >
-        <loading-icon v-if="isDeleting" />
+        <LoaderCircle class="animate-spin" v-if="isDeleting" />
         Delete permanently
       </ui-button>
     </template>
@@ -46,48 +52,43 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { truncateText } from '@/lib/utils'
-import { useDeleteTournament } from '@/api/tournaments/tournaments'
+import { useDeleteTournament, useGetTournament } from '@/api/tournaments/tournaments'
+import { useRouter } from 'vue-router'
 
 interface Props {
   tournamentId: number
-  tournamentName: string
-  disabled?: boolean
 }
 
 const props = defineProps<Props>()
-const { hideNotification } = useNotification()
 
-const { mutate: deleteTournament, isPending: isDeleting } = useDeleteTournament()
-
-const emit = defineEmits<{
-  (e: 'deleted'): void
-}>()
-
-const { showNotification } = useNotification()
-
-const isDeleteModalOpen = ref(false)
+const isDeleteModalOpen = defineModel({ default: false })
 const deleteConfirmInput = ref('')
 const deleteError = ref('')
 
+const tournamentQuery = useGetTournament(props.tournamentId)
+const { data: tournament } = tournamentQuery
+
 const canDeleteTournament = computed(
-  () => deleteConfirmInput.value === props.tournamentName && !isDeleting.value,
+  () => deleteConfirmInput.value === tournament.value?.name && !isDeleting.value,
 )
 
-function closeDeleteModal() {
-  isDeleteModalOpen.value = false
-}
+const router = useRouter()
+const { showNotification, hideNotification } = useNotification()
+const { mutate: deleteTournament, isPending: isDeleting } = useDeleteTournament()
 
 const handleDeleteTournament = () => {
   if (!canDeleteTournament.value) {
-    deleteError.value = `Please enter "${props.tournamentName}" exactly.`
+    deleteError.value = `Please enter "${tournament.value?.name}" exactly.`
     return
   }
 
@@ -98,8 +99,9 @@ const handleDeleteTournament = () => {
     { id: props.tournamentId },
     {
       onSuccess: () => {
-        closeDeleteModal()
-        emit('deleted')
+        isDeleteModalOpen.value = false
+        showNotification('Tournament deleted successfully.', 'success')
+        router.push('/tournaments')
       },
       onError: (error) => {
         deleteError.value = error.message
@@ -115,5 +117,10 @@ const handleDeleteTournament = () => {
 .modal-text {
   margin-bottom: 1rem;
   color: var(--muted-foreground);
+}
+
+.delete-confirmation {
+  display: grid;
+  gap: 0.5rem;
 }
 </style>

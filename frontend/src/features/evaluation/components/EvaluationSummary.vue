@@ -14,14 +14,14 @@
       </div>
     </div>
 
-    <div v-if="evaluation.comment" class="comment-box">
+    <div v-if="evaluation?.comment" class="comment-box">
       <p class="comment-label">Comment</p>
-      <p class="comment">{{ evaluation.comment }}</p>
+      <p class="comment">{{ evaluation?.comment }}</p>
     </div>
 
     <div class="metric">
       <div class="metric-head">
-        <p><strong>Total:</strong> {{ evaluation.total_score }}</p>
+        <p><strong>Total:</strong> {{ evaluation?.total_score }}</p>
         <p class="range">{{ minScore }} - {{ maxScore }}</p>
       </div>
 
@@ -36,17 +36,25 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar.vue'
-import type { Criterion, JuryAssignment } from '@/api/.ts.schemas'
+import UiSegmentedProgressBar from '@/components/ui/UiSegmentedProgressBar'
+import type { Criterion, Evaluation } from '@/features/evaluation/types'
 
 interface Props {
-  evaluation: JuryAssignment['evaluation']
+  evaluation?: Evaluation | null
   criteria: readonly Criterion[]
 }
 
 const props = defineProps<Props>()
 
-const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#f97316']
+const palette = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+  'var(--chart-1)',
+]
 
 const minScore = 0
 const maxScore = computed(() =>
@@ -55,7 +63,7 @@ const maxScore = computed(() =>
 
 const scoreByCriterion = computed(() => {
   const map = new Map<string, number>()
-  props.evaluation.scores.forEach((item) => {
+  props.evaluation?.scores.forEach((item) => {
     map.set(item.criterion_id, Number(item.score || 0))
   })
   return map
@@ -93,7 +101,7 @@ const usedSegments = computed(() => {
 
 const totalPercent = computed(() => {
   if (!maxScore.value) return 0
-  const clamped = Math.max(0, Math.min(Number(props.evaluation.total_score || 0), maxScore.value))
+  const clamped = Math.max(0, Math.min(Number(props.evaluation?.total_score || 0), maxScore.value))
   return (clamped / maxScore.value) * 100
 })
 </script>
@@ -135,9 +143,8 @@ const totalPercent = computed(() => {
   gap: 1rem;
   color: var(--foreground);
   padding: 0.45rem 0.55rem;
-  border: 1px solid var(--border);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--muted) 55%, transparent);
+  background: var(--subtle);
 }
 
 .criterion {

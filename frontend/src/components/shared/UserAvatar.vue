@@ -1,28 +1,14 @@
 <template>
-  <div class="user-avatar-wrap" :style="avatarStyle">
-    <img
-      v-if="avatar"
-      :src="avatar"
-      :alt="altText"
-      class="user-avatar"
-      :class="{ 'has-frame': avatarFrameUrl }"
-      :style="avatarImageStyle"
-    />
+  <div class="user-avatar-wrap" :style="avatarStyle" @click="emit('click', $event)">
+    <img v-if="avatar" :src="avatar" :alt="altText" class="user-avatar" :style="avatarImageStyle" />
     <div
       v-else
       class="user-avatar user-avatar-fallback"
-      :class="{ 'has-frame': avatarFrameUrl }"
       :style="avatarImageStyle"
       :aria-label="altText"
     >
       {{ initials }}
     </div>
-    <img
-      v-if="avatarFrameUrl"
-      :src="avatarFrameUrl"
-      alt="Avatar frame"
-      class="user-avatar-frame"
-    />
   </div>
 </template>
 
@@ -30,18 +16,20 @@
 import { computed } from 'vue'
 import { readImagePosition, toObjectPosition } from '@/lib/imagePosition'
 
+const emit = defineEmits<{
+  click: [event: MouseEvent]
+}>()
+
 const props = withDefaults(
   defineProps<{
     avatar?: string | null
     username: string
     fullName?: string
-    avatarFrameUrl?: string | null
     size?: number
     positionKey?: string
   }>(),
   {
     avatar: null,
-    avatarFrameUrl: null,
     fullName: '',
     size: 42,
   },
@@ -80,10 +68,6 @@ const avatarImageStyle = computed(() => ({
   border: 1px solid var(--line-soft);
   display: block;
   transition: border-color 0.2s ease;
-}
-
-.user-avatar.has-frame {
-  border-color: transparent;
 }
 
 .user-avatar-fallback {

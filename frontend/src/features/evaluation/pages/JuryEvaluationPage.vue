@@ -1,114 +1,119 @@
 <template>
-  <section class="page-shell">
-    <div class="section-header">
-      <p class="section-eyebrow">Jury</p>
-      <h1 class="section-title">My Evaluations</h1>
-      <p class="section-subtitle">Review and evaluate submitted projects</p>
-    </div>
-
-    <ui-card>
-      <template #header>
-        <div class="page-controls">
-          <div class="filters-wrap">
-            <ui-select
-              v-model="selectedRounds"
-              :options="roundOptions"
-              multiple
-              min-width="220px"
-              placeholder="Filter by round"
-              align-to="left"
-              :is-loading="isLoading"
-              :is-error="isError"
-              error="Failed to fetch rounds"
-            />
-            <ui-select
-              v-model="selectedTournamentIds"
-              :options="tournamentOptions"
-              multiple
-              min-width="220px"
-              placeholder="Filter by tournament"
-              align-to="left"
-              :is-loading="isLoading || isTournamentsLoading"
-              :is-error="isError || isTournamentsError"
-              error="Failed to fetch tournaments"
-            />
-            <ui-select
-              v-model="evaluationStatus"
-              :options="evaluationStatusOptions"
-              min-width="220px"
-              placeholder="Filter by evaluation"
-              align-to="left"
-              :is-loading="isLoading"
-              :is-error="isError"
-              error="Failed to fetch assignments"
-            />
-          </div>
-
-          <div class="progress-wrap">
-            <p class="progress-text">{{ evaluatedCount }} / {{ totalCount }} evaluated</p>
-            <div class="progress-bar">
-              <div class="progress-value" :style="{ width: `${progressPercent}%` }" />
-            </div>
-          </div>
+  <section class="jury-page page-shell">
+    <header class="jury-hero">
+      <div class="jury-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Jury</span>
         </div>
-      </template>
 
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="assignments-grid">
-            <ui-card v-for="i in 4" :key="`skeleton-${i}`" class="assignment-skeleton">
-              <ui-skeleton variant="rect" width="60%" height="20px" />
-              <ui-skeleton variant="rect" width="30%" height="16px" />
-              <ui-skeleton variant="rect" width="100%" height="14px" />
-              <ui-skeleton variant="rect" width="80%" height="14px" />
-            </ui-card>
+        <h1 class="text-6xl">My Evaluations</h1>
+        <p class="section-subtitle text-xl">Review and evaluate submitted projects.</p>
+      </div>
+    </header>
+
+    <div class="jury-rule" aria-hidden="true"></div>
+
+    <ui-query-block :query="assignmentsQuery" title="assignments">
+      <section class="evaluation-section">
+        <header class="page-controls-header">
+          <div class="page-controls">
+            <div class="filters-wrap">
+              <ui-select
+                v-model="selectedRounds"
+                :options="roundOptions"
+                multiple
+                min-width="220px"
+                placeholder="Filter by round"
+                align-to="left"
+                :is-loading="isLoading"
+                :is-error="isError"
+                error="Failed to fetch rounds"
+              />
+              <ui-select
+                v-model="selectedTournamentIds"
+                :options="tournamentOptions"
+                multiple
+                min-width="220px"
+                placeholder="Filter by tournament"
+                align-to="left"
+                :is-loading="isLoading || isTournamentsLoading"
+                :is-error="isError || isTournamentsError"
+                error="Failed to fetch tournaments"
+              />
+              <ui-select
+                v-model="evaluationStatus"
+                :options="evaluationStatusOptions"
+                min-width="220px"
+                placeholder="Filter by evaluation"
+                align-to="left"
+                :is-loading="isLoading"
+                :is-error="isError"
+                error="Failed to fetch assignments"
+              />
+            </div>
+
+            <ui-query-field class="progress-wrap">
+              <template #skeleton>
+                <ui-skeleton variant="rect" width="180px" height="16px" />
+                <ui-skeleton variant="rect" width="100%" height="8px" />
+              </template>
+              <p class="progress-text">{{ evaluatedCount }} / {{ totalCount }} evaluated</p>
+              <div class="progress-bar">
+                <div class="progress-value" :style="{ width: `${progressPercent}%` }" />
+              </div>
+            </ui-query-field>
           </div>
-        </template>
+        </header>
 
-        <template #default>
-          <ui-card v-if="pagedAssignments.length === 0" class="empty-card">
-            <p class="empty-text">No assignments found for selected filters</p>
-          </ui-card>
-
-          <div v-else class="assignments-grid">
-            <evaluation-assignment-card
-              v-for="assignment in pagedAssignments"
-              :key="assignment.id"
-              :assignment="assignment"
-              @evaluated="refetch"
-            />
-          </div>
-
-          <ui-pagination
-            v-if="totalCount > pageSize"
-            v-model="currentPage"
-            :total-items="totalCount"
-            :page-size="pageSize"
+        <ui-query-field>
+          <template #skeleton>
+            <div class="assignments-grid">
+              <ui-card v-for="i in 4" :key="i" class="assignment-skeleton">
+                <ui-skeleton variant="rect" width="60%" height="20px" />
+                <ui-skeleton variant="rect" width="30%" height="16px" />
+                <ui-skeleton variant="rect" width="100%" height="14px" />
+                <ui-skeleton variant="rect" width="80%" height="14px" />
+              </ui-card>
+            </div>
+          </template>
+          <assignment-grid
+            v-if="pagedAssignments.length > 0"
+            :assignments="pagedAssignments"
+            @evaluated="refetch"
           />
-        </template>
-      </ui-skeleton-loader>
-    </ui-card>
+          <p v-else class="text-muted">No assignments found for selected filters.</p>
+        </ui-query-field>
+
+        <ui-pagination
+          v-if="totalCount > pageSize"
+          v-model="currentPage"
+          :total-items="totalCount"
+          :page-size="pageSize"
+        />
+      </section>
+    </ui-query-block>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useListJuryAssignments } from '@/api/evaluation/evaluation'
 import { useListTournaments } from '@/api/tournaments/tournaments'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiPagination from '@/components/ui/UiPagination.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import EvaluationAssignmentCard from '../components/EvaluationAssignmentCard.vue'
+import UiPagination from '@/components/ui/UiPagination'
+import UiSelect from '@/components/ui/UiSelect'
+import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import AssignmentGrid from '../components/AssignmentGrid.vue'
+import {
+  EVALUATION_STATUS_OPTIONS,
+  useEvaluationFilters,
+} from '../composables/useEvaluationFilters'
 
-const selectedRounds = ref<string[]>([])
-const selectedTournamentIds = ref<string[]>([])
-const evaluationStatus = ref<'all' | 'evaluated' | 'not_evaluated'>('all')
-const currentPage = ref(1)
-const pageSize = 10
-
-const { data: assignmentsResponse, isLoading, isError, refetch } = useListJuryAssignments()
+const assignmentsQuery = useListJuryAssignments()
+const { data: assignmentsResponse, isLoading, isError, refetch } = assignmentsQuery
 
 const {
   data: tournamentsResponse,
@@ -121,116 +126,90 @@ const {
   })),
 )
 
-const assignments = computed(() => assignmentsResponse.value?.results ?? [])
+const assignments = computed(() => assignmentsResponse.value?.items ?? [])
 const tournaments = computed(() => tournamentsResponse.value?.data ?? [])
 
-const evaluationStatusOptions = [
-  { value: 'all', label: 'All evaluations' },
-  { value: 'evaluated', label: 'Evaluated' },
-  { value: 'not_evaluated', label: 'Not evaluated' },
-]
+const evaluationStatusOptions = EVALUATION_STATUS_OPTIONS
 
-const roundOptions = computed(() => {
-  const unique = new Map<string, string>()
-
-  assignments.value.forEach((assignment) => {
-    unique.set(String(assignment.round_details.id), assignment.round_details.name ?? `Round #${assignment.round_details.id}`)
-  })
-
-  tournaments.value.forEach((tournament) => {
-    const rounds = Array.isArray(tournament.rounds) ? tournament.rounds : []
-    rounds.forEach((round) => {
-      unique.set(String(round.id), round.name ?? `Round #${round.id}`)
-    })
-  })
-
-  return Array.from(unique.entries()).map(([value, label]) => ({ value, label }))
-})
-
-const tournamentOptions = computed(() => {
-  const byId = new Map<string, string>()
-
-  tournaments.value.forEach((tournament) => {
-    byId.set(String(tournament.id), tournament.name)
-  })
-
-  assignments.value.forEach((assignment) => {
-    const id = assignment.round_details.tournament
-    if (id == null) return
-    const key = String(id)
-    if (!byId.has(key)) byId.set(key, `Tournament #${key}`)
-  })
-
-  return Array.from(byId.entries()).map(([value, label]) => ({ value, label }))
-})
-
-const filteredAssignments = computed(() => {
-  let list = assignments.value
-
-  if (selectedRounds.value.length) {
-    list = list.filter((assignment) => selectedRounds.value.includes(String(assignment.round_details.id)))
-  }
-
-  if (selectedTournamentIds.value.length) {
-    list = list.filter((assignment) =>
-      selectedTournamentIds.value.includes(String(assignment.round_details.tournament)),
-    )
-  }
-
-  if (evaluationStatus.value === 'evaluated') {
-    list = list.filter((assignment) => assignment.is_evaluated)
-  } else if (evaluationStatus.value === 'not_evaluated') {
-    list = list.filter((assignment) => !assignment.is_evaluated)
-  }
-
-  return list
-})
-
-const pagedAssignments = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredAssignments.value.slice(start, end)
-})
-
-const totalCount = computed(() => filteredAssignments.value.length)
-const evaluatedCount = computed(() => filteredAssignments.value.filter((item) => item.is_evaluated).length)
-const progressPercent = computed(() =>
-  totalCount.value ? Math.round((evaluatedCount.value / totalCount.value) * 100) : 0,
-)
-
-watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
-  currentPage.value = 1
-})
+const {
+  selectedRounds,
+  selectedTournamentIds,
+  evaluationStatus,
+  currentPage,
+  pageSize,
+  roundOptions,
+  tournamentOptions,
+  pagedAssignments,
+  totalCount,
+  evaluatedCount,
+  progressPercent,
+} = useEvaluationFilters(assignments, tournaments)
 </script>
 
 <style scoped>
-.page-shell {
+.jury-page {
+  gap: 1.4rem;
+}
+
+.jury-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+}
+
+.jury-hero-copy {
+  min-width: 0;
+}
+
+.breadcrumb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.jury-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.jury-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.jury-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--border);
+}
+
+.evaluation-section {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.section-eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-}
-
-.section-title {
-  margin: 0;
-}
-
-.section-subtitle {
-  margin: 0;
-  color: var(--muted-foreground);
 }
 
 .page-controls {
@@ -265,7 +244,7 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
   border-radius: 999px;
   overflow: hidden;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  background: var(--track);
 }
 
 .progress-value {
@@ -274,30 +253,29 @@ watch([selectedRounds, selectedTournamentIds, evaluationStatus], () => {
   transition: width 0.2s ease;
 }
 
-.assignments-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-}
+@media (max-width: 760px) {
+  .jury-page {
+    padding: 1rem 1rem 2rem;
+  }
 
-.assignment-skeleton {
-  background: var(--muted);
-}
+  .jury-hero {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
 
-.empty-card {
-  border-color: var(--border);
-}
+  .jury-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
 
-.empty-text {
-  margin: 0;
-  color: var(--muted-foreground);
-  text-align: center;
-  padding: 0.8rem 0;
-}
+  .jury-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
 
-@media (max-width: 980px) {
-  .assignments-grid {
-    grid-template-columns: 1fr;
+  .hero-actions {
+    justify-content: flex-start;
   }
 }
 

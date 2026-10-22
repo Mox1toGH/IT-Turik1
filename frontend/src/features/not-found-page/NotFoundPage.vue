@@ -13,8 +13,8 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
 
 const router = useRouter()
 

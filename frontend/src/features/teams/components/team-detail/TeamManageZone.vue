@@ -1,19 +1,17 @@
 <template>
   <ui-card v-if="isCaptain" class="manage-zone">
-    <div>
+    <div class="manage-stack">
       <div class="manage-row">
         <div>
           <h3>Edit team</h3>
           <p class="text-muted">Update team profile and manage members in edit workspace.</p>
         </div>
-        <ui-button asLink variant="secondary" size="sm" :to="`/teams/${team?.id}/edit`"
-          >Edit team</ui-button
-        >
+        <ui-button asLink variant="secondary" :to="`/teams/${team?.id}/edit`">Edit team</ui-button>
       </div>
 
       <div>
         <div class="danger-zone-header">
-          <danger-icon />
+          <TriangleAlert :size="20" />
           <span>Danger Zone</span>
         </div>
 
@@ -64,12 +62,12 @@
 <script setup lang="ts">
 import DeleteTeamModal from './modals/DeleteTeamModal.vue'
 import TeamVisibilityModal from './modals/TeamVisibilityModal.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import DangerIcon from '@/icons/DangerIcon.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiCard from '@/components/ui/UiCard'
+import { TriangleAlert } from 'lucide-vue-next'
+import UiButton from '@/components/ui/UiButton'
+import UiBadge from '@/components/ui/UiBadge'
 import { useRouter } from 'vue-router'
-import type { Team } from '@/api/.ts.schemas'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
   team?: Team
@@ -86,39 +84,33 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
+.manage-stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .danger-zone-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.8rem;
   margin: 0.2rem 0 0;
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
-  border-radius: 8px;
-  color: color-mix(in srgb, var(--destructive) 80%, transparent);
+  background: var(--destructive-soft);
+  border: 1px solid var(--destructive-ring);
+  border-radius: var(--radius-sm);
+  color: var(--destructive);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
-.danger-zone-icon {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex-shrink: 0;
-}
-
 .danger-zone-box {
   margin-top: 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
-  border-radius: 10px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
-}
-
-.danger-zone-box {
-  padding: 1rem;
-  border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
+  padding: 0 1rem;
+  border: 1px solid var(--destructive-ring);
+  border-radius: var(--radius-sm);
+  background: var(--destructive-soft);
 }
 
 .manage-row {
@@ -126,26 +118,30 @@ const emit = defineEmits<{
   justify-content: space-between;
   align-items: center;
   gap: 0.9rem;
+  padding: 1rem 0;
 }
 
-.danger-zone-row:not(:last-child) {
-  border-bottom: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
-}
-
-.manage-row:not(:last-child) {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+.danger-zone-row + .danger-zone-row {
+  border-top: 1px solid var(--destructive-ring);
 }
 
 .manage-row h3 {
+  margin: 0;
   font-size: 1rem;
 }
 
 .manage-row p {
-  margin-top: 0.3rem;
+  margin: 0.3rem 0 0;
 }
 
 .danger-zone-row h3 {
-  color: color-mix(in srgb, var(--destructive) 80%, transparent);
+  color: var(--destructive);
+}
+
+@media (max-width: 640px) {
+  .manage-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

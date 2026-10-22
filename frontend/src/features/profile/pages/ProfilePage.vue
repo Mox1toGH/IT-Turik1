@@ -1,480 +1,383 @@
 <template>
-  <section class="page-shell">
-    <ui-card :is-error="isLoadingError">
-      <template #error>
-        <div style="display: flex; height: 436px; justify-content: center; align-items: center">
-          <p>Error while fetching profile info (code: {{ profileError?.code }})</p>
+  <section class="page-shell profile-page">
+    <header class="profile-hero">
+      <div class="profile-hero-copy">
+        <div class="breadcrumb-label">
+          <span>Workspace</span>
+          <span aria-hidden="true">/</span>
+          <span>Profile</span>
         </div>
-      </template>
 
-      <template #header>
-        <div class="head">
-          <div>
-            <p class="section-eyebrow">User Center</p>
-            <h1 class="section-title profile-title">My profile</h1>
-          </div>
-          <p class="meta">Joined: {{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</p>
-        </div>
-        <div class="avatar-row">
-          <div class="avatar-box">
-            <user-avatar
-              :avatar="user?.avatar"
-              :avatar-frame-url="user?.avatar_frame_url"
-              :username="user?.username || 'user'"
-              :full-name="user?.full_name || ''"
-              :size="108"
-              :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
-            />
-            <avatar-modal :user="user" :disabled="isLoading" />
-          </div>
-          <ui-card class="balance-card">
-            <template #header>
-              <span class="card-text-title">Points balance</span>
-            </template>
-            <ui-skeleton-loader :loading="isPointsLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100%" />
-              </template>
-              <p class="balance-value">{{ pointsBalance?.balance ?? 0 }}</p>
-            </ui-skeleton-loader>
-          </ui-card>
-        </div>
-      </template>
-
-      <div class="details">
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Username</span>
-          </template>
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.username || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Email</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.email || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Role</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Full name</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.full_name || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">City</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-wrap">{{ user?.city || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Phone</span>
-          </template>
-
-          <ui-skeleton-loader :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" />
-            </template>
-
-            <strong class="item-value value-fixed">{{ user?.phone || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
-        <ui-card class="field-card">
-          <template #header>
-            <span class="card-text-title">Teams</span>
-          </template>
-
-          <div>
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 2" :key="i" variant="rect" width="150px" />
-                </div>
-              </template>
-
-              <div class="team-list">
-                <router-link
-                  v-for="team in user?.teams || []"
-                  :key="team.id"
-                  :to="`/teams/${team.id}`"
-                  class="team-link"
-                >
-                  {{ team.name }}
-                </router-link>
-              </div>
-
-              <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-            </ui-skeleton-loader>
-          </div>
-        </ui-card>
+        <h1 class="text-4xl">My profile</h1>
+        <p class="section-subtitle text-base">Manage your account details and preferences.</p>
       </div>
 
-      <div v-if="user?.active_tournament" class="tournament-overview-row">
-        <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
-          <ui-card class="active-tournament-card">
+      <div class="profile-hero-actions">
+        <ui-query-block :query="userQuery">
+          <template #error>
+            <ui-card class="joined-card">
+              <strong class="text-base">-</strong>
+              <span class="text-sm">Joined</span>
+            </ui-card>
+          </template>
+        </ui-query-block>
+      </div>
+    </header>
+
+    <div class="profile-rule" aria-hidden="true"></div>
+
+    <div class="profile-layout">
+      <aside class="profile-sidebar">
+        <div class="sidebar-sticky">
+          <ui-card class="sidebar-card">
             <template #header>
-              <span class="card-text-title">Active tournament</span>
-            </template>
-            <div class="active-tournament-content">
-              <div>
-                <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
-                <p class="active-tournament-meta">{{ formatDate(user.active_tournament.start_date) }} - {{ formatDate(user.active_tournament.end_date) }}</p>
+              <div class="sidebar-card-header">
+                <p class="section-eyebrow">Sections</p>
               </div>
-              <ui-button
-                as-link
-                to="/profile/tournaments-history"
-                variant="secondary"
-                size="sm"
-                class="history-btn"
-                @click.stop
+            </template>
+            <nav class="anchor-nav" aria-label="Profile sections">
+              <a
+                v-for="section in profileSections"
+                :key="section.key"
+                :href="`#${section.key}`"
+                class="anchor-chip"
+                @click.prevent="scrollToSection(section.key)"
               >
-                Tournament history
+                {{ section.label }}
+              </a>
+            </nav>
+          </ui-card>
+
+          <ui-card class="sidebar-card">
+            <template #header>
+              <div class="sidebar-card-header">
+                <p class="section-eyebrow">Quick actions</p>
+              </div>
+            </template>
+            <div class="quick-actions">
+              <ui-button
+                variant="danger"
+                size="sm"
+                :disabled="isLoading || isDeleting"
+                @click="logout"
+              >
+                Log out
               </ui-button>
             </div>
           </ui-card>
-        </router-link>
+        </div>
+      </aside>
+
+      <div class="profile-content">
+        <div id="overview" class="profile-group">
+          <ProfileOverviewSection :user="user" :is-loading="isLoading" :query="userQuery" />
+        </div>
+
+        <div id="statistics" class="profile-group">
+          <UserStats />
+        </div>
+
+        <div id="account" class="profile-group">
+          <ui-card class="danger-zone">
+            <div>
+              <div>
+                <p class="danger-title">Danger zone</p>
+                <p class="danger-text">Permanently delete your account and all associated data.</p>
+              </div>
+
+              <ui-button
+                class="danger-action"
+                type="button"
+                variant="danger"
+                :disabled="isLoading"
+                @click="isDeleteModalOpen = true"
+              >
+                Delete account
+              </ui-button>
+            </div>
+
+            <delete-profile-modal v-model="isDeleteModalOpen" />
+          </ui-card>
+        </div>
       </div>
-
-      <div class="stats-link-row">
-        <ui-button :disabled="isLoading" as-link to="/stats" variant="secondary"
-          >My Statistics</ui-button
-        >
-        <ui-button :disabled="isLoading" as-link to="/profile/points" variant="secondary">
-          Transaction History
-        </ui-button>
-        <ui-button :disabled="isLoading" as-link to="/profile/orders" variant="secondary"
-          >My Shop Orders</ui-button
-        >
-        <ui-button :disabled="isLoading" as-link to="/profile/inventory" variant="secondary"
-          >Digital Inventory</ui-button
-        >
-      </div>
-
-      <div class="actions">
-        <ui-button :disabled="isLoading" @click="goToEditProfile"> Edit Profile </ui-button>
-        <ui-button :disabled="isLoading" @click="goToNotifications"> Notifications </ui-button>
-        <ui-button :disabled="isLoading" @click="goToCertificates"> Certificates </ui-button>
-        <ui-button variant="danger" :disabled="isLoading || isDeleting" @click="logout">
-          Log Out
-        </ui-button>
-      </div>
-
-      <ui-card class="danger-zone">
-        <p class="danger-text">Danger zone: this action permanently deletes your account.</p>
-
-        <delete-profile-modal />
-      </ui-card>
-    </ui-card>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock } from '@/components/query'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
-import AvatarModal from '../components/profile/modals/AvatarModal.vue'
+import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
+import UserStats from '../components/profile/sections/UserStats.vue'
 import { useUserStore } from '@/stores/user'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
-import { formatDate } from '@/lib/date'
-import { useGetMyPointsBalance } from '@/api/points/points'
+
+interface ProfileSection {
+  key: string
+  label: string
+}
+
+const profileSections: ProfileSection[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'statistics', label: 'Statistics' },
+  { key: 'account', label: 'Danger zone' },
+]
 
 const store = useUserStore()
-const { data: user, isLoading, isLoadingError, error: profileError } = useGetUserProfile()
-const { data: pointsBalance, isLoading: isPointsLoading } = useGetMyPointsBalance()
-
+const userQuery = useGetUserProfile()
+const { data: user, isLoading } = userQuery
 const router = useRouter()
 const isDeleting = ref(false)
+const isDeleteModalOpen = ref(false)
 
 const logout = () => {
   store.logout()
   router.push('/login')
 }
 
-const goToEditProfile = () => {
-  router.push('/profile/edit')
+function scrollToSection(key: string) {
+  document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
-
-const goToNotifications = () => {
-  router.push('/profile/notifications')
-}
-
-const goToCertificates = () => {
-  router.push('/profile/certificates')
-}
-
 </script>
 
 <style scoped>
-.head {
+.profile-page {
+  gap: 1.4rem;
+}
+
+.profile-hero {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.profile-title {
-  margin-top: 0.2rem;
+.profile-hero-copy {
+  min-width: 0;
 }
 
-.meta {
-  margin: 0;
-  font-size: 0.86rem;
-}
-
-.avatar-row {
-  margin-top: 0.8rem;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.9rem;
-}
-
-.avatar-box {
-  display: flex;
+.breadcrumb-label {
+  display: inline-flex;
   align-items: center;
   gap: 0.7rem;
-}
-
-.balance-card {
-  min-width: 220px;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 12%, var(--muted));
-}
-
-.balance-value {
-  margin: 0;
-  font-size: 2rem;
-  line-height: 1;
-  font-weight: 800;
-  color: var(--primary);
-}
-
-.details {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin-top: 1rem;
-  align-items: start;
-}
-
-.item {
-  border: 1px solid var(--line-soft);
-  border-radius: 14px;
-  padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.85);
-  min-width: 0;
-  display: grid;
-  gap: 0.3rem;
-  align-content: start;
-}
-
-.item-label {
-  color: var(--color-gray-500);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.field-card {
-  background: var(--muted);
+  margin-bottom: 0.75rem;
   color: var(--muted-foreground);
-  gap: 0;
-}
-
-.item-phone {
-  align-content: start;
-}
-
-.item-wide {
-  grid-column: 1 / -1;
-}
-
-.team-list {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.team-link {
-  color: var(--brand-700);
-  text-decoration: none;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.badge {
-  width: max-content;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 800;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.actions {
-  margin-top: 1rem;
+.profile-hero h1 {
+  margin: 0;
+  max-width: 760px;
+  color: var(--foreground);
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl--line-height);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.profile-hero .section-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 780px;
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+.profile-hero-actions {
   display: flex;
-  gap: 0.6rem;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-.stats-link-row {
-  margin-top: 0.9rem;
+.profile-rule {
+  height: 1px;
+  background: var(--border);
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.profile-sidebar {
+  align-self: stretch;
+}
+
+.sidebar-sticky {
+  position: sticky;
+  top: calc(var(--nav-offset, 76px) + 1rem);
   display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: calc(100vh - var(--nav-offset, 76px) - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.tournament-overview-row {
-  margin-top: 0.9rem;
-  min-width: 220px;
-  width: fit-content;
-  max-width: 100%;
+.sidebar-card {
+  flex-shrink: 0;
 }
 
-.overview-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.active-tournament-card {
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 10%, var(--muted));
-  min-height: 100%;
-}
-
-.active-tournament-content {
+.sidebar-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
 }
 
-.active-tournament-name,
-.active-tournament-meta {
+.section-eyebrow {
   margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
 }
 
-.active-tournament-name {
-  font-weight: 700;
+.anchor-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.anchor-chip {
+  display: block;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.anchor-chip:hover {
+  background: var(--subtle);
   color: var(--foreground);
 }
 
-.history-btn {
-  align-self: center;
-  border-color: color-mix(in srgb, var(--primary) 75%, #ffffff 25%);
-  background: var(--primary);
-  color: white;
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+  min-width: 0;
+}
+
+.profile-group {
+  scroll-margin-top: calc(var(--nav-offset, 76px) + 1rem);
+  min-width: 0;
+}
+
+/* Clear separation between the stacked sections in the content column. */
+.profile-group + .profile-group {
+  border-top: 1px solid var(--border);
+  padding-top: 2.25rem;
+}
+
+.danger-zone.card {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.35rem;
+  border-color: var(--destructive-ring);
+  background: var(--destructive-soft);
+}
+
+.danger-action {
+  margin-top: 1rem;
+  width: max-content;
+}
+
+.danger-title,
+.danger-text {
+  margin: 0;
+}
+
+.danger-title {
+  color: var(--destructive);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
   font-weight: 700;
-  white-space: nowrap;
-}
-
-.history-btn:hover,
-.history-btn:focus-visible,
-.history-btn:active {
-  background: color-mix(in srgb, var(--primary) 84%, black 16%);
-  color: white;
-  border-color: color-mix(in srgb, var(--primary) 72%, black 28%);
-}
-
-.danger-zone {
-  margin-top: 1.4rem;
-  padding-top: 1rem;
-  border: 1px solied var(--destructive);
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
 }
 
 .danger-text {
-  margin: 0 0 0.6rem;
-  color: color-mix(in srgb, var(--destructive) 80%, transparent);
-  font-weight: 600;
+  margin-top: 0.35rem;
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  display: grid;
-  place-items: center;
-  z-index: 50;
-  padding: 1rem;
-}
-
-@media (max-width: 760px) {
-  .profile-card {
-    max-width: 100%;
-    margin: 0;
-  }
-
-  .head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .avatar-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .balance-card {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .details {
+@media (max-width: 1024px) {
+  .profile-layout {
     grid-template-columns: 1fr;
   }
 
-  .tournament-overview-row {
-    width: 100%;
-    min-width: 0;
+  .sidebar-sticky {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
-  .actions {
+  .anchor-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .anchor-chip {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+}
+
+@media (max-width: 800px) {
+  .profile-page {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .profile-hero {
+    align-items: flex-start;
     flex-direction: column;
+    gap: 1rem;
+  }
+
+  .profile-hero h1 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  .profile-hero .section-subtitle {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .profile-hero-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .danger-action {
+    width: 100%;
   }
 }
 </style>

@@ -1,40 +1,56 @@
 <template>
-  <button class="avatar-edit-btn" type="button" @click="isOpen = true" :disabled="disabled">
-    <AvatarEditIcon />
+  <button
+    v-if="showTrigger"
+    class="avatar-edit-btn"
+    type="button"
+    @click="avatar.isOpen.value = true"
+    :disabled="disabled"
+  >
+    <SquarePen :size="18" />
   </button>
 
-  <ui-modal v-model="isOpen" @close="resetState">
+  <ui-modal v-model="avatar.isOpen.value" @close="avatar.resetState">
     <template #title>
       <h3>Avatar</h3>
     </template>
 
     <div class="modal-body">
-      <div v-if="previewUrl" class="avatar-preview-frame" @pointerdown="onPreviewPointerDown">
+      <div
+        v-if="avatar.previewUrl.value"
+        class="avatar-preview-frame"
+        @pointerdown="avatar.onPreviewPointerDown"
+      >
         <img
-          :src="previewUrl"
+          :src="avatar.previewUrl.value"
           alt="Avatar preview"
           class="avatar-preview"
-          :style="{ objectPosition: previewObjectPosition }"
+          :style="{ objectPosition: avatar.previewObjectPosition.value }"
         />
       </div>
       <div v-else class="avatar-empty">No avatar</div>
 
-      <p v-if="previewUrl" class="position-hint">Drag image to choose avatar position</p>
-      <input type="file" accept="image/*" @change="onAvatarChange" />
+      <p v-if="avatar.previewUrl.value" class="position-hint">
+        Drag image to choose avatar position
+      </p>
+      <ui-file-drop v-model="avatar.selectedAvatar.value" accept="image/*" />
     </div>
 
     <template #footer>
-      <ui-button size="sm" variant="secondary" @click="resetState">Cancel</ui-button>
+      <ui-button size="sm" variant="secondary" @click="avatar.resetState">Cancel</ui-button>
       <ui-button
         size="sm"
         variant="secondary"
-        :disabled="isUpdating || !previewUrl"
-        @click="removeAvatar"
+        :disabled="avatar.isUpdating.value || !avatar.previewUrl.value"
+        @click="avatar.removeAvatar"
       >
         Remove
       </ui-button>
-      <ui-button size="sm" :disabled="isUpdating" @click="saveAvatar">
-        <LoadingIcon v-if="isUpdating" />
+      <ui-button size="sm" :disabled="avatar.isUpdating.value" @click="avatar.saveAvatar">
+        <LoaderCircle
+          v-if="avatar.isUpdating.value"
+          class="animate-spin"
+          :size="16"
+        />
         Save
       </ui-button>
     </template>
@@ -42,156 +58,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { useNotification } from '@/composables/useNotification'
-import {
-  clearImagePosition,
-  readImagePosition,
-  toObjectPosition,
-  writeImagePosition,
-} from '@/lib/imagePosition'
-import type { User } from '@/api/.ts.schemas'
-import { useDeleteUserAvatar, useUpdateUserAvatar } from '@/api/accounts/accounts'
+import { toRef } from 'vue'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
+import { LoaderCircle, SquarePen } from 'lucide-vue-next'
+import UiFileDrop from '@/components/ui/UiFileDrop'
+import { useAvatarUpload } from '../../../composables/useAvatarUpload'
+import type { UserSummary } from '@/shared/types/user'
 
-const props = defineProps<{
-  user?: User
-  disabled?: boolean
-}>()
-
-const isOpen = ref(false)
-const selectedAvatar = ref<File | null>(null)
-const selectedAvatarUrl = ref('')
-const avatarPositionKey = computed(() =>
-  props.user?.id ? `image-position:avatar:user:${props.user.id}` : '',
-)
-const positionX = ref(50)
-const positionY = ref(50)
-
-const previewUrl = computed(() => {
-  if (selectedAvatarUrl.value) return selectedAvatarUrl.value
-  return props.user?.avatar || ''
-})
-const previewObjectPosition = computed(() =>
-  toObjectPosition({
-    x: positionX.value,
-    y: positionY.value,
-  }),
+const props = withDefaults(
+  defineProps<{
+    user?: Pick<UserSummary, 'id' | 'avatar'>
+    disabled?: boolean
+    showTrigger?: boolean
+  }>(),
+  { showTrigger: true },
 )
 
-const { showNotification } = useNotification()
-const { mutate: updateAvatar, isPending: isUpdatingAvatar } = useUpdateUserAvatar()
-const { mutate: removeAvatarRequest, isPending: isRemovingAvatar } = useDeleteUserAvatar()
-const isUpdating = computed(() => isUpdatingAvatar.value || isRemovingAvatar.value)
-
-const closeModal = () => {
-  isOpen.value = false
-}
-
-const resetState = () => {
-  selectedAvatar.value = null
-  const saved = readImagePosition(avatarPositionKey.value)
-  positionX.value = saved.x
-  positionY.value = saved.y
-  if (selectedAvatarUrl.value) {
-    URL.revokeObjectURL(selectedAvatarUrl.value)
-    selectedAvatarUrl.value = ''
-  }
-  closeModal()
-}
-
-const onAvatarChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedAvatar.value = target.files?.[0] || null
-}
-
-const removeAvatar = () => {
-  removeAvatarRequest(void 0, {
-    onSuccess: async () => {
-      clearImagePosition(avatarPositionKey.value)
-      showNotification('Avatar removed.', 'success')
-      resetState()
-    },
-    onError: (error) => {
-      showNotification(error.message, 'error')
-    },
-  })
-}
-
-const saveAvatar = () => {
-  if (!props.user) return
-
-  if (!selectedAvatar.value) return
-
-  updateAvatar(
-    { data: { avatar: selectedAvatar.value } },
-    {
-      onSuccess: async () => {
-        if (avatarPositionKey.value) {
-          writeImagePosition(avatarPositionKey.value, { x: positionX.value, y: positionY.value })
-        }
-        showNotification('Avatar updated.', 'success')
-        resetState()
-      },
-      onError: (error) => {
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
-
-const onPreviewPointerDown = (event: PointerEvent) => {
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) return
-  target.setPointerCapture(event.pointerId)
-
-  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
-    const rect = target.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
-    positionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
-    positionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
-  }
-
-  applyPositionFromPointer(event)
-
-  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
-  const handleUp = (pointerEvent: PointerEvent) => {
-    applyPositionFromPointer(pointerEvent)
-    target.removeEventListener('pointermove', handleMove)
-    target.removeEventListener('pointerup', handleUp)
-    target.removeEventListener('pointercancel', handleUp)
-    if (avatarPositionKey.value) {
-      writeImagePosition(avatarPositionKey.value, { x: positionX.value, y: positionY.value })
-    }
-  }
-
-  target.addEventListener('pointermove', handleMove)
-  target.addEventListener('pointerup', handleUp)
-  target.addEventListener('pointercancel', handleUp)
-}
-
-watch(selectedAvatar, (file) => {
-  if (selectedAvatarUrl.value) {
-    URL.revokeObjectURL(selectedAvatarUrl.value)
-    selectedAvatarUrl.value = ''
-  }
-  if (file) {
-    selectedAvatarUrl.value = URL.createObjectURL(file)
-  }
-})
-
-watch(
-  avatarPositionKey,
-  (key) => {
-    const saved = readImagePosition(key)
-    positionX.value = saved.x
-    positionY.value = saved.y
-  },
-  { immediate: true },
+const avatar = useAvatarUpload(
+  toRef(props, 'user'),
+  toRef(props, 'disabled', false),
 )
+
+defineExpose({ open: avatar.open })
 </script>
 
 <style scoped>
@@ -199,9 +88,9 @@ watch(
   width: 2rem;
   height: 2rem;
   border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  background: var(--secondary);
-  color: var(--color-gray-700);
+  border: 1px solid var(--border);
+  background: var(--subtle);
+  color: var(--muted-foreground);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -209,8 +98,8 @@ watch(
 }
 
 .avatar-edit-btn:hover {
-  border-color: var(--brand-500);
-  color: var(--brand-700);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .modal-body {
@@ -223,7 +112,7 @@ watch(
   width: 120px;
   height: 120px;
   border-radius: 999px;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--border);
 }
 
 .avatar-preview-frame {
@@ -233,7 +122,7 @@ watch(
 
 .position-hint {
   margin: 0;
-  color: var(--color-gray-500);
+  color: var(--muted-foreground);
   font-size: 0.8rem;
 }
 
@@ -253,7 +142,7 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-gray-500);
+  color: var(--muted-foreground);
   font-size: 0.85rem;
 }
 </style>

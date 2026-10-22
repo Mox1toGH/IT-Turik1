@@ -1,12 +1,9 @@
 <template>
   <section class="page-shell calendar-page">
-    <ui-card class="calendar-hero">
+    <section class="calendar-hero">
       <div>
         <p class="eyebrow">Schedule</p>
-        <div class="title-row">
-          <calendar-title-icon class="title-icon" />
-          <h1>Calendar</h1>
-        </div>
+        <h1>Calendar</h1>
         <p class="sub">
           Events, consultations, deadlines and round milestones across your tournaments.
         </p>
@@ -14,18 +11,21 @@
       <div class="gcal-actions">
         <template v-if="gcalLoading">
           <ui-button size="sm" variant="secondary" disabled>
-            <loading-icon class="gcal-icon spin" />
+            <LoaderCircle class="gcal-icon animate-spin" :size="16" />
             Loading…
           </ui-button>
         </template>
         <template v-else-if="gcalConnected">
-          <ui-button size="sm" variant="ghost" @click="exportAll" :disabled="isExporting || !hasItems">
+          <ui-button
+            size="sm"
+            variant="ghost"
+            @click="exportAll"
+            :disabled="isExporting || !hasItems"
+          >
             <google-calendar-icon class="gcal-icon" />
             {{ isExporting ? 'Exporting…' : 'Export All to Google' }}
           </ui-button>
-          <ui-button size="sm" variant="danger" @click="disconnectGcal">
-            Disconnect
-          </ui-button>
+          <ui-button size="sm" variant="danger" @click="disconnectGcal"> Disconnect </ui-button>
         </template>
         <template v-else>
           <ui-button size="sm" variant="secondary" @click="connectGcal">
@@ -34,61 +34,56 @@
           </ui-button>
         </template>
       </div>
-    </ui-card>
+    </section>
 
-    <ui-card>
-      <template #error>
-        <div style="display: flex; height: 300px; justify-content: center; align-items: center">
-          <p>Failed to load calendar data (code: {{ calendarError?.code }})</p>
-        </div>
-      </template>
-
-      <ui-skeleton-loader :loading="isLoading">
-        <template #skeleton>
-          <div class="calendar-skeleton">
-            <div class="skeleton-nav">
-              <ui-skeleton variant="rect" width="32px" height="32px" />
-              <ui-skeleton variant="rect" width="180px" height="24px" />
-              <ui-skeleton variant="rect" width="32px" height="32px" />
-            </div>
-            <div class="skeleton-grid">
-              <ui-skeleton v-for="i in 42" :key="i" variant="rect" height="90px" />
-            </div>
+    <section class="calendar-content">
+      <ui-query-block :query="calendarQuery">
+        <template #error="{ errorCode }">
+          <div class="calendar-error">
+            <p>Failed to load calendar data (code: {{ errorCode }})</p>
           </div>
         </template>
+        <ui-query-field>
+          <template #skeleton>
+            <div class="calendar-skeleton">
+              <div class="skeleton-nav">
+                <ui-skeleton variant="rect" width="32px" height="32px" />
+                <ui-skeleton variant="rect" width="180px" height="24px" />
+                <ui-skeleton variant="rect" width="32px" height="32px" />
+              </div>
+              <div class="skeleton-grid">
+                <ui-skeleton v-for="i in 42" :key="i" variant="rect" height="90px" />
+              </div>
+            </div>
+          </template>
 
-        <div v-if="isError" class="calendar-error">
-          <p>Error while fetching calendar data</p>
-        </div>
-
-        <div v-else-if="!hasItems" class="calendar-empty">
-          <calendar-icon class="empty-icon" />
-          <p>No upcoming events or deadlines</p>
-          <p class="text-muted">Join a tournament to see its schedule here</p>
-        </div>
-
-        <schedule-calendar
-          v-else
-          :events="events"
-          :rounds="rounds"
-          :gcal-connected="gcalConnected"
-          @export-event="exportEvent"
-          @export-round="exportRound"
-        />
-      </ui-skeleton-loader>
-    </ui-card>
+          <template #default>
+            <div v-if="isEmpty" class="calendar-empty">
+              <Calendar class="empty-icon" />
+              <p>No upcoming events or deadlines</p>
+              <p class="text-muted">Join a tournament to see its schedule here</p>
+            </div>
+            <schedule-calendar
+              v-else
+              :events="events"
+              :rounds="rounds"
+              :gcal-connected="gcalConnected"
+              @export-event="exportEvent"
+              @export-round="exportRound"
+            />
+          </template>
+        </ui-query-field>
+      </ui-query-block>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import CalendarIcon from '@/icons/CalendarIcon.vue'
-import CalendarTitleIcon from '@/icons/CalendarTitleIcon.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import { Calendar, LoaderCircle } from 'lucide-vue-next'
 import GoogleCalendarIcon from '@/icons/GoogleCalendarIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
 import ScheduleCalendar from '../components/ScheduleCalendar.vue'
 import { computed, onMounted, ref } from 'vue'
 import {
@@ -97,13 +92,15 @@ import {
   getGoogleCalendarStatus,
 } from '@/api/accounts/accounts'
 import { exportToGoogleCalendar, useGetMyCalendar } from '@/api/tournaments/tournaments'
-import type { Event, Round } from '@/api/.ts.schemas'
+import type { CalendarEvent, CalendarRound } from '@/shared/types/calendar'
 
-const { data, isLoading, isError, error: calendarError } = useGetMyCalendar()
+const calendarQuery = useGetMyCalendar()
+const { data } = calendarQuery
 
 const events = computed(() => data.value?.events ?? [])
 const rounds = computed(() => data.value?.rounds ?? [])
 const hasItems = computed(() => events.value.length > 0 || rounds.value.length > 0)
+const isEmpty = computed(() => !hasItems.value)
 
 const gcalConnected = ref(false)
 const gcalLoading = ref(true)
@@ -142,8 +139,8 @@ async function exportAll() {
   if (isExporting.value) return
   isExporting.value = true
   try {
-    const eventIds = (events.value as Event[]).map((event) => event.id)
-    const roundIds = (rounds.value as Round[]).map((round) => round.id)
+    const eventIds = (events.value as CalendarEvent[]).map((event) => event.id)
+    const roundIds = (rounds.value as CalendarRound[]).map((round) => round.id)
     await exportToGoogleCalendar({
       event_ids: eventIds,
       round_ids: roundIds,
@@ -179,15 +176,9 @@ async function exportRound(roundId: number) {
 }
 
 .calendar-hero {
-  padding: 1.4rem;
-  background:
-    linear-gradient(130deg, rgba(15, 118, 110, 0.95), rgba(20, 184, 166, 0.88)),
-    linear-gradient(45deg, rgba(249, 115, 22, 0.2), transparent);
-  color: white;
-  border: none;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -204,20 +195,13 @@ async function exportRound(roundId: number) {
   height: 16px;
 }
 
-.spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .eyebrow {
   margin: 0;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.75rem;
-  opacity: 0.85;
+  font-weight: 700;
+  color: var(--muted-foreground);
 }
 
 h1 {
@@ -226,22 +210,9 @@ h1 {
   font-size: clamp(1.4rem, 1.3vw + 1rem, 2rem);
 }
 
-.title-row {
-  margin-top: 0.45rem;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.title-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  opacity: 0.92;
-}
-
 .sub {
   margin: 0.5rem 0 0;
-  opacity: 0.92;
+  color: var(--muted-foreground);
 }
 
 .calendar-skeleton {

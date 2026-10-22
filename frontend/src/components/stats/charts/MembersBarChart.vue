@@ -7,7 +7,7 @@
     >
       <span class="axis-text">{{ member.label }}</span>
       <div
-        style="height: 10px; border: 1px solid var(--stats-border); border-radius: 999px; overflow: hidden; cursor: pointer"
+        style="height: 10px; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; cursor: pointer"
         @mouseenter="hover = member.label"
         @mouseleave="hover = null"
         @click="$emit('select', member.label)"
@@ -15,7 +15,7 @@
         <div
           :style="{
             width: `${(member.value / max) * 100}%`,
-            background: hover === member.label ? 'color-mix(in srgb, var(--stats-accent) 82%, white)' : 'var(--stats-accent)',
+            background: hover === member.label ? 'color-mix(in srgb, var(--stats-accent) 82%, transparent)' : 'var(--stats-accent)',
             height: '100%',
             transition: 'all .2s ease',
           }"

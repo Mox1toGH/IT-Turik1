@@ -1,201 +1,171 @@
 <template>
   <section class="page-shell teams-detail-page">
-    <ui-card class="hero-card" :class="{ 'hero-card--with-banner': Boolean(team?.banner) }">
-      <button
-        v-if="isCaptain && !isInfoLoading"
-        class="banner-edit-btn"
-        type="button"
-        @click="isBannerModalOpen = true"
-        aria-label="Edit team banner"
-      >
-        <avatar-edit-icon />
-      </button>
-      <div v-if="team?.banner" class="hero-banner" :style="heroBannerStyle" />
-      <div v-if="team?.banner" class="hero-overlay" />
+    <team-header :team="team" :loading="isInfoLoading" />
 
-      <template #header>
-        <div class="hero-top hero-content">
-          <div>
-            <p class="section-eyebrow">Team workspace</p>
-            <ui-skeleton-loader class="section-title" :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" height="30px" width="200px" />
-              </template>
+    <div class="teams-rule" aria-hidden="true"></div>
 
-              <h1 class="section-title" :title="team?.name">
-                {{ truncateText(team?.name ?? 'Team details', 45) }}
-              </h1>
-            </ui-skeleton-loader>
-          </div>
-
-          <div class="hero-contacts">
-            <ui-skeleton-loader :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-              <a
-                v-if="team?.contact_telegram"
-                :href="telegramLink(team.contact_telegram)"
-                class="contact-pill"
-              >
-                <telegram-icon class="contact-icon" />
-
-                <ui-badge>@{{ team?.contact_telegram }}</ui-badge>
-              </a>
-              <span v-else class="contact-pill muted">No Telegram</span>
-            </ui-skeleton-loader>
-
-            <ui-skeleton-loader :loading="isInfoLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100px" />
-              </template>
-              <a
-                v-if="team?.contact_discord"
-                class="contact-pill"
-                :href="discordLink(team.contact_discord)"
-              >
-                <discord-icon class="contact-icon" />
-                <ui-badge>{{ team.contact_discord }}</ui-badge>
-              </a>
-
-              <span v-else class="contact-pill muted">No Discord</span>
-            </ui-skeleton-loader>
-          </div>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="hero-actions hero-content">
-          <ui-button asLink variant="secondary" size="sm" to="/teams">Back to teams</ui-button>
-        </div>
-      </template>
-    </ui-card>
-
-    <ui-card v-if="activeTournament">
-      <template #header>
-        <p class="section-eyebrow">Active tournament</p>
-      </template>
-
-      <div class="active-tournament">
-        <div class="active-tournament-info">
-          <p class="text-muted">Tournament name:</p>
-          <p :title="activeTournament.name">
-            {{ truncateText(activeTournament.name, 20) }}
-          </p>
-        </div>
-
-        <div class="active-tournament-info">
-          <p class="text-muted">Start date:</p>
-          <p>{{ formatDate(activeTournament.start_date, { showHours: true }) }}</p>
-        </div>
-
-        <div class="active-tournament-info">
-          <p class="text-muted">Status:</p>
-          <ui-badge variant="primary" class="active-tournament-badge">{{
-            activeTournament.status
-          }}</ui-badge>
-        </div>
-      </div>
-
-      <template #footer>
-        <ui-button
-          asLink
-          size="sm"
-          class="active-tournament-link"
-          :to="`/tournaments/${activeTournament.id}`"
-          >Go to tournament dashboard</ui-button
-        >
-      </template>
-    </ui-card>
-
-    <div class="workspace-grid">
-      <team-base-info
-        :team="team"
-        :loading="isInfoLoading"
-        :loading-error="isInfoLoadingError"
-        :is-captain="isCaptain"
-        @deleted="router.push('/teams')"
-        @leave="router.push('/teams')"
-      />
-
-      <ui-card class="panel">
-        <div style="display: flex; flex-direction: column; gap: 20px">
-          <ui-input
-            v-model="searchInput"
-            placeholder="Search by username or email"
-            :disabled="isInfoLoading || isInfoLoadingError"
-          />
-
-          <team-members
+    <ui-tabs :items="tabItems" query-key="tab">
+      <template #overview>
+        <div class="overview-grid">
+          <team-base-info
             :team="team"
-            :user="user"
-            :search-filter="searchInput"
-            :loading-error="isInfoLoadingError"
-            :loading="isInfoLoading || isProfileLoading"
+            :query="teamQuery"
             :is-captain="isCaptain"
+            @deleted="router.push('/teams')"
+            @leave="router.push('/teams')"
           />
 
-          <template v-if="isCaptain && !isInfoLoading">
-            <team-join-requests
-              :team-id="teamId"
-              :search-filter="searchInput"
-              :is-captain="isCaptain"
-            />
-            <team-invitations
-              :team-id="teamId"
-              :search-filter="searchInput"
-              :is-captain="isCaptain"
-            />
-          </template>
+          <team-banner-section
+            :team="team"
+            :query="teamQuery"
+            :is-captain="isCaptain"
+            :hero-banner-style="banner.heroBannerStyle.value"
+            @open="banner.isBannerModalOpen.value = true"
+          />
         </div>
-      </ui-card>
-    </div>
+      </template>
 
-    <ui-skeleton-loader :loading="isInfoLoading">
-      <team-manage-zone
-        :team="team"
-        :loading="isInfoLoading"
-        :is-captain="isCaptain"
-        @update-team="(newTeamValue) => (team = newTeamValue)"
-      />
-    </ui-skeleton-loader>
+      <template #members>
+        <ui-section
+          title="Members"
+          description="Search accepted members, requests, and invitations."
+        >
+          <div class="members-workspace">
+            <ui-input
+              v-model="searchInput"
+              placeholder="Search by username or email"
+              :disabled="isInfoLoading"
+            />
 
-    <ui-modal v-model="isBannerModalOpen" @close="resetBannerState">
+            <team-members
+              :team="team"
+              :user="user"
+              :members="members"
+              :query="membersQuery"
+              :search-filter="searchInput"
+              :is-captain="isCaptain"
+            />
+
+            <template v-if="isCaptain && !isInfoLoading">
+              <team-join-requests
+                :team-id="teamId"
+                :search-filter="searchInput"
+                :is-captain="isCaptain"
+              />
+              <team-invitations
+                :team-id="teamId"
+                :search-filter="searchInput"
+                :is-captain="isCaptain"
+              />
+            </template>
+          </div>
+        </ui-section>
+      </template>
+
+      <template v-if="activeTournament" #tournaments>
+        <ui-card class="active-tournament-card">
+          <template #header>
+            <div class="panel-header">
+              <span class="step-marker">Live</span>
+              <div>
+                <p class="section-eyebrow">Active tournament</p>
+                <h2>Tournament dashboard</h2>
+              </div>
+            </div>
+          </template>
+
+          <div class="active-tournament">
+            <div class="active-tournament-info">
+              <p class="text-muted">Tournament name:</p>
+              <p class="active-tournament-name">
+                <ui-truncate :text="activeTournament.name" />
+              </p>
+            </div>
+
+            <div class="active-tournament-info">
+              <p class="text-muted">Start date:</p>
+              <p>{{ formatDate(activeTournament.start_date, { showHours: true }) }}</p>
+            </div>
+
+            <div class="active-tournament-info">
+              <p class="text-muted">Status:</p>
+              <ui-badge variant="primary" class="active-tournament-badge">{{
+                activeTournament.status
+              }}</ui-badge>
+            </div>
+          </div>
+
+          <template #footer>
+            <ui-button
+              asLink
+              size="sm"
+              class="active-tournament-link"
+              :to="`/tournaments/${activeTournament.id}`"
+              >Go to tournament dashboard</ui-button
+            >
+          </template>
+        </ui-card>
+      </template>
+
+      <template v-if="isCaptain" #settings>
+        <ui-query-block :query="teamQuery">
+          <ui-query-field>
+            <template #skeleton>
+              <ui-skeleton variant="rect" width="100%" height="72px" />
+            </template>
+            <team-manage-zone
+              :team="team"
+              :loading="isInfoLoading"
+              :is-captain="isCaptain"
+              @update-team="(newTeamValue) => (team = newTeamValue)"
+            />
+          </ui-query-field>
+        </ui-query-block>
+      </template>
+    </ui-tabs>
+
+    <ui-modal v-model="banner.isBannerModalOpen.value" @close="banner.resetBannerState">
       <template #title>
         <h3>Team banner</h3>
       </template>
 
       <div class="banner-modal-body">
         <div
-          v-if="bannerPreviewUrl"
+          v-if="banner.bannerPreviewUrl.value"
           class="banner-preview-frame"
-          @pointerdown="onBannerPreviewPointerDown"
+          @pointerdown="banner.onBannerPreviewPointerDown"
         >
           <img
-            :src="bannerPreviewUrl"
+            :src="banner.bannerPreviewUrl.value"
             alt="Team banner preview"
             class="banner-preview"
-            :style="{ objectPosition: bannerObjectPosition }"
+            :style="{ objectPosition: banner.bannerObjectPosition.value }"
           />
         </div>
         <div v-else class="banner-empty">No banner</div>
 
-        <p v-if="bannerPreviewUrl" class="position-hint">Drag image to choose banner position</p>
-        <input type="file" accept="image/*" @change="onBannerChange" />
+        <p v-if="banner.bannerPreviewUrl.value" class="position-hint">
+          Drag image to choose banner position
+        </p>
+        <ui-file-drop v-model="banner.selectedBanner.value" accept="image/*" />
       </div>
 
       <template #footer>
-        <ui-button size="sm" variant="secondary" @click="resetBannerState">Cancel</ui-button>
+        <ui-button size="sm" variant="secondary" @click="banner.resetBannerState">Cancel</ui-button>
         <ui-button
           size="sm"
           variant="secondary"
-          :disabled="isBannerUpdating || !team?.banner"
-          @click="removeBanner"
+          :disabled="banner.isBannerUpdating.value || !team?.banner"
+          @click="banner.removeBanner"
         >
           Remove
         </ui-button>
-        <ui-button size="sm" :disabled="isBannerUpdating || !selectedBanner" @click="saveBanner">
-          <loading-icon v-if="isBannerUpdating" />
+        <ui-button
+          size="sm"
+          :disabled="banner.isBannerUpdating.value || !banner.selectedBanner.value.length"
+          @click="banner.saveBanner"
+        >
+          <LoaderCircle class="animate-spin" v-if="banner.isBannerUpdating.value" />
           Save
         </ui-button>
       </template>
@@ -204,49 +174,45 @@
 </template>
 
 <script setup lang="ts">
-import AvatarEditIcon from '@/icons/AvatarEditIcon.vue'
-import DiscordIcon from '@/icons/DiscordIcon.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import TelegramIcon from '@/icons/TelegramIcon.vue'
-import UiModal from '@/components/ui/UiModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import { LoaderCircle } from 'lucide-vue-next'
+import UiModal from '@/components/ui/UiModal'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiSection from '@/components/ui/UiSection'
+import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
+import UiTruncate from '@/components/ui/UiTruncate'
+import TeamHeader from '../components/team-detail/TeamHeader.vue'
+import TeamBannerSection from '../components/team-detail/TeamBannerSection.vue'
 import TeamBaseInfo from '../components/team-detail/TeamBaseInfo.vue'
 import TeamMembers from '../components/team-detail/TeamMembers.vue'
 import TeamManageZone from '../components/team-detail/TeamManageZone.vue'
 import TeamJoinRequests from '../components/team-detail/TeamJoinRequests.vue'
 import TeamInvitations from '../components/team-detail/TeamInvitations.vue'
+import { useTeamBanner } from '../composables/useTeamBanner'
 import { useRoute, useRouter } from 'vue-router'
-import { computed, ref, watch } from 'vue'
-import { discordLink, telegramLink } from '../lib/team-links'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import { truncateText } from '@/lib/utils'
+import { computed, ref } from 'vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiInput from '@/components/ui/UiInput'
 import { formatDate } from '@/lib/date'
-import { useNotification } from '@/composables/useNotification'
-import {
-  clearImagePosition,
-  readImagePosition,
-  toObjectPosition,
-  writeImagePosition,
-} from '@/lib/imagePosition'
-import { useGetTeam, useDeleteTeamBanner, useTeamBannerUpdate } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { useGetTeam, useListTeamMembers } from '@/api/teams/teams'
 import { useGetTeamActiveTournament } from '@/api/tournaments/tournaments'
+import UiFileDrop from '@/components/ui/UiFileDrop'
 
 const router = useRouter()
 const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
-const { data: user, isLoading: isProfileLoading } = useGetUserProfile()
-const {
-  data: team,
-  isLoading: isInfoLoading,
-  isLoadingError: isInfoLoadingError,
-} = useGetTeam(teamId)
+const { data: user } = useGetUserProfile()
+const teamQuery = useGetTeam(teamId)
+const { data: team, isLoading: isInfoLoading } = teamQuery
+const membersQuery = useListTeamMembers(teamId, {
+  query: { enabled: computed(() => route.query.tab === 'members') },
+})
+const { data: members } = membersQuery
 
 const { data: activeTournament } = useGetTeamActiveTournament(
   { team_id: teamId },
@@ -256,254 +222,54 @@ const { data: activeTournament } = useGetTeamActiveTournament(
 )
 
 const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
-const isBannerModalOpen = ref(false)
-const selectedBanner = ref<File | null>(null)
-const selectedBannerUrl = ref('')
-const bannerPositionX = ref(50)
-const bannerPositionY = ref(50)
-const { showNotification } = useNotification()
 
-const { mutate: updateBanner, isPending: isUpdatingBanner } = useTeamBannerUpdate()
-const { mutate: removeTeamBanner, isPending: isRemovingBanner } = useDeleteTeamBanner()
-const isBannerUpdating = computed(() => isUpdatingBanner.value || isRemovingBanner.value)
+const banner = useTeamBanner(teamId, team)
 
-const bannerPreviewUrl = computed(() => {
-  if (selectedBannerUrl.value) return selectedBannerUrl.value
-  return team.value?.banner || ''
+const tabItems = computed<TabItem[]>(() => {
+  const items: TabItem[] = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'members', label: 'Members' },
+  ]
+  if (activeTournament.value) items.push({ value: 'tournaments', label: 'Tournaments' })
+  if (isCaptain.value) items.push({ value: 'settings', label: 'Settings' })
+  return items
 })
-const bannerPositionKey = computed(() => `image-position:banner:team:${teamId}`)
-const bannerObjectPosition = computed(() =>
-  toObjectPosition({ x: bannerPositionX.value, y: bannerPositionY.value }),
-)
-
-const heroBannerStyle = computed(() => {
-  if (!team.value?.banner) return {}
-  return {
-    backgroundImage: `url(${team.value.banner})`,
-    backgroundPosition: bannerObjectPosition.value,
-  }
-})
-
-const closeBannerModal = () => {
-  isBannerModalOpen.value = false
-}
-
-const resetBannerState = () => {
-  selectedBanner.value = null
-  const saved = readImagePosition(bannerPositionKey.value)
-  bannerPositionX.value = saved.x
-  bannerPositionY.value = saved.y
-  if (selectedBannerUrl.value) {
-    URL.revokeObjectURL(selectedBannerUrl.value)
-    selectedBannerUrl.value = ''
-  }
-  closeBannerModal()
-}
-
-const onBannerChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  selectedBanner.value = target.files?.[0] || null
-}
-
-const saveBanner = () => {
-  if (!selectedBanner.value) return
-  writeImagePosition(bannerPositionKey.value, {
-    x: bannerPositionX.value,
-    y: bannerPositionY.value,
-  })
-  updateBanner(
-    { id: teamId, data: { banner: selectedBanner.value } },
-    {
-      onSuccess: () => {
-        showNotification('Banner updated.', 'success')
-        resetBannerState()
-      },
-      onError: (error) => {
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
-
-const removeBanner = () => {
-  removeTeamBanner(
-    { id: teamId },
-    {
-      onSuccess: () => {
-        clearImagePosition(bannerPositionKey.value)
-        showNotification('Banner removed.', 'success')
-        resetBannerState()
-      },
-      onError: (error) => {
-        showNotification(error.message, 'error')
-      },
-    },
-  )
-}
-
-const onBannerPreviewPointerDown = (event: PointerEvent) => {
-  const target = event.currentTarget as HTMLElement | null
-  if (!target) return
-  target.setPointerCapture(event.pointerId)
-
-  const applyPositionFromPointer = (pointerEvent: PointerEvent) => {
-    const rect = target.getBoundingClientRect()
-    if (!rect.width || !rect.height) return
-    bannerPositionX.value = ((pointerEvent.clientX - rect.left) / rect.width) * 100
-    bannerPositionY.value = ((pointerEvent.clientY - rect.top) / rect.height) * 100
-  }
-
-  applyPositionFromPointer(event)
-
-  const handleMove = (pointerEvent: PointerEvent) => applyPositionFromPointer(pointerEvent)
-  const handleUp = (pointerEvent: PointerEvent) => {
-    applyPositionFromPointer(pointerEvent)
-    writeImagePosition(bannerPositionKey.value, {
-      x: bannerPositionX.value,
-      y: bannerPositionY.value,
-    })
-    target.removeEventListener('pointermove', handleMove)
-    target.removeEventListener('pointerup', handleUp)
-    target.removeEventListener('pointercancel', handleUp)
-  }
-
-  target.addEventListener('pointermove', handleMove)
-  target.addEventListener('pointerup', handleUp)
-  target.addEventListener('pointercancel', handleUp)
-}
-
-watch(selectedBanner, (file) => {
-  if (selectedBannerUrl.value) {
-    URL.revokeObjectURL(selectedBannerUrl.value)
-    selectedBannerUrl.value = ''
-  }
-  if (file) {
-    selectedBannerUrl.value = URL.createObjectURL(file)
-  }
-})
-
-watch(
-  bannerPositionKey,
-  (key) => {
-    const saved = readImagePosition(key)
-    bannerPositionX.value = saved.x
-    bannerPositionY.value = saved.y
-  },
-  { immediate: true },
-)
 </script>
 
 <style scoped>
-.hero-card {
-  position: relative;
-  overflow: hidden;
+.teams-detail-page {
+  gap: 1.4rem;
 }
 
-.hero-content {
-  position: relative;
-  z-index: 2;
+.teams-rule {
+  height: 1px;
+  margin: 0.7rem 0 0.9rem;
+  background: var(--border);
 }
 
-.section-title {
-  color: var(--foreground);
-}
-
-.contact-pill {
-  color: var(--foreground);
-}
-
-.hero-card--with-banner :deep(.ui-card-body),
-.hero-card--with-banner :deep(.ui-card-header),
-.hero-card--with-banner :deep(.ui-card-footer) {
-  color: #fff;
-}
-
-.hero-card--with-banner .section-title,
-.hero-card--with-banner .contact-pill {
-  color: #fff;
-}
-
-.hero-card--with-banner .section-eyebrow {
-  color: #f8d7b6;
-}
-
-.hero-card--with-banner .contact-icon {
-  color: #fff;
-}
-
-.hero-banner {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  z-index: 0;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(135deg, rgba(5, 11, 23, 0.8), rgba(5, 11, 23, 0.45));
-}
-
-.banner-edit-btn {
-  position: absolute;
-  bottom: 0.9rem;
-  right: 0.9rem;
-  z-index: 3;
-  width: 2.1rem;
-  height: 2.1rem;
-  border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  background: var(--secondary);
-  color: var(--color-gray-700);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.banner-edit-btn:hover {
-  border-color: var(--brand-500);
-  color: var(--brand-700);
-}
-
-.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.85fr);
   gap: 1rem;
+  align-items: start;
 }
 
-.hero-contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  justify-items: end;
+@media (max-width: 900px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.contact-icon {
-  width: 1.3rem;
-  height: 1.3rem;
-  color: var(--brand-700);
-}
-
-.contact-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+.active-tournament-card.card {
+  gap: 1rem;
+  border-color: var(--border);
 }
 
 .active-tournament {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
 }
 
 .active-tournament-info {
@@ -511,14 +277,19 @@ watch(
   flex-direction: column;
   gap: 5px;
   flex: 1;
-  padding: 0 2rem;
-  border-left: 2px solid var(--border);
-  border-top: none;
-  border-bottom: none;
+  height: 100%;
+  min-width: 0;
+  padding: 0.95rem 1.1rem;
+  background: var(--subtle);
 }
 
-.active-tournament-info:last-child {
-  border-right: 2px solid var(--border);
+.active-tournament-info:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.active-tournament-name {
+  margin: 0;
+  min-width: 0;
 }
 
 .active-tournament-badge,
@@ -526,14 +297,10 @@ watch(
   width: max-content;
 }
 
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 0.95fr 1.25fr;
+.members-workspace {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
-}
-
-.panel {
-  border: 1px solid var(--line-soft);
 }
 
 .banner-modal-body {
@@ -546,8 +313,8 @@ watch(
   width: 100%;
   max-width: 480px;
   aspect-ratio: 16 / 5;
-  border-radius: 0.6rem;
-  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
 }
 
 .banner-preview-frame {
@@ -557,7 +324,7 @@ watch(
 
 .position-hint {
   margin: 0;
-  color: var(--color-gray-500);
+  color: var(--muted-foreground);
   font-size: 0.82rem;
 }
 
@@ -573,40 +340,29 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-gray-500);
+  color: var(--muted-foreground);
   font-size: 0.85rem;
 }
 
 @media (max-width: 720px) {
-  .hero-contacts {
-    justify-items: start;
-  }
-
-  .workspace-grid {
-    grid-template-columns: 1fr;
+  .teams-detail-page {
+    padding: 1rem 1rem 2rem;
   }
 }
 
 @media (max-width: 640px) {
-  .member-side {
-    align-items: flex-start;
-  }
-
-  .status-tags {
-    justify-content: flex-start;
-  }
-
   .active-tournament {
     flex-direction: column;
     align-items: stretch;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
   }
 
   .active-tournament-info {
-    padding: 0.75rem 0;
-    border-left: none;
-    border-right: none !important;
-    border-top: none;
-    border-bottom: 2px solid var(--border);
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
   }
 }
 </style>

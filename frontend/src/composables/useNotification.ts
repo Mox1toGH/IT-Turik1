@@ -92,8 +92,6 @@ const showNotification = (
   const text = String(message || '').trim()
   if (!text) return
 
-  if (notification.value) clearNotification()
-
   const payload: NotificationPayload = {
     message: text,
     type,
