@@ -427,8 +427,8 @@ export interface ActivationResponse {
 }
 
 export interface LoginResponse {
-  access: string;
-  refresh: string;
+  authenticated: boolean;
+  onboarding_required: boolean;
 }
 
 export interface LoginRequest {
@@ -437,16 +437,14 @@ export interface LoginRequest {
 }
 
 export interface TokenRefreshResponse {
-  access: string;
+  authenticated: boolean;
 }
 
 export interface TokenRefreshRequest {
-  refresh: string;
+  // Refresh token is sent in an HttpOnly cookie.
 }
 
 export interface GoogleAuthResponse {
-  access: string;
-  refresh: string;
   user: UserResponse;
   onboarding_required: boolean;
 }

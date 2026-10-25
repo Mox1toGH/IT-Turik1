@@ -91,8 +91,8 @@ const handleDeleteAccount = async () => {
   hideNotification()
 
   deleteAccount(void 0, {
-    onSuccess: () => {
-      store.logout()
+    onSuccess: async () => {
+      await store.logout()
       router.push('/login')
     },
     onError: (error) => {

@@ -149,6 +149,13 @@ CORS_ALLOWED_ORIGINS = [
     for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
     if origin
 ]
+CORS_ALLOW_CREDENTIALS = True
+
+JWT_ACCESS_COOKIE_NAME = 'access_token'
+JWT_REFRESH_COOKIE_NAME = 'refresh_token'
+JWT_CSRF_COOKIE_NAME = 'csrf_token'
+JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', not DEBUG)
+JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")

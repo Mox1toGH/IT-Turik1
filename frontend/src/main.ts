@@ -8,7 +8,6 @@ import App from './App.vue'
 import router from './router'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { queryClient } from './lib/queryClient'
-import { connectNotificationSocket } from './lib/notificationSocket'
 
 const app = createApp(App)
 
@@ -21,5 +20,3 @@ app.config.errorHandler = (err, instance, info) => {
 }
 
 app.mount('#app')
-
-connectNotificationSocket(queryClient)

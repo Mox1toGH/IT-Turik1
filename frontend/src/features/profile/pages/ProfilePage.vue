@@ -132,8 +132,8 @@ const router = useRouter()
 const isDeleting = ref(false)
 const isDeleteModalOpen = ref(false)
 
-const logout = () => {
-  store.logout()
+const logout = async () => {
+  await store.logout()
   router.push('/login')
 }
 

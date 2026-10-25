@@ -42,6 +42,7 @@ function toApiPath(url: string | undefined): string | undefined {
 
 export const AXIOS_INSTANCE = Axios.create({
   baseURL: API_BASE,
+  withCredentials: true,
 
   headers: {
     Accept: 'application/json',
@@ -49,10 +50,35 @@ export const AXIOS_INSTANCE = Axios.create({
   },
 })
 
-AXIOS_INSTANCE.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+let csrfToken: string | null = null
+let csrfRequest: Promise<string> | null = null
+
+const SAFE_METHODS = new Set(['get', 'head', 'options', 'trace'])
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken
+  if (!csrfRequest) {
+    csrfRequest = Axios.get<{ csrf_token: string }>(`${API_BASE}/api/accounts/csrf`, {
+      withCredentials: true,
+      headers: { Accept: 'application/json' },
+    })
+      .then(({ data }) => {
+        csrfToken = data.csrf_token
+        return csrfToken
+      })
+      .finally(() => {
+        csrfRequest = null
+      })
+  }
+  return csrfRequest
+}
+
+type RetryConfig = AxiosRequestConfig & { _authRetry?: boolean }
+
+AXIOS_INSTANCE.interceptors.request.use(async (config) => {
+  config.withCredentials = true
+  if (!SAFE_METHODS.has((config.method ?? 'get').toLowerCase())) {
+    config.headers['X-CSRFToken'] = await getCsrfToken()
   }
   return config
 })
@@ -61,13 +87,28 @@ AXIOS_INSTANCE.interceptors.response.use(
   (res) => res,
   async (err) => {
     if (err.response?.status === 401) {
-      const store = useUserStore()
-      if (store.getTokens().access) {
-        store.removeTokens()
+      const original = err.config as RetryConfig | undefined
+      const requestPath = toApiPath(original?.url) ?? ''
+      const isSessionEndpoint = /\/accounts\/(?:login|google-login|token\/refresh|csrf|logout)(?:\?|$)/.test(
+        requestPath,
+      )
+      if (original && !original._authRetry && !isSessionEndpoint) {
+        original._authRetry = true
+        try {
+          await AXIOS_INSTANCE.post('/api/accounts/token/refresh', {})
+          return AXIOS_INSTANCE(original)
+        } catch {
+          const store = useUserStore()
+          store.clearSession()
+          if (router.currentRoute.value.meta.requiresAuth) router.push('/login')
+        }
+      } else if (!isSessionEndpoint) {
+        const store = useUserStore()
+        store.clearSession()
       }
 
       try {
-        if (router.currentRoute.value.meta.requiresAuth) {
+        if (!isSessionEndpoint && router.currentRoute.value.meta.requiresAuth) {
           router.push('/login')
         }
       } catch {
