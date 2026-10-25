@@ -14,16 +14,16 @@ type SocketEnvelope = {
 let socket: WebSocket | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 let manuallyClosed = false
+let sessionAuthenticated = false
 let reconnectAttempts = 0
 let clientRef: QueryClient | null = null
 
 const MAX_BACKOFF_MS = 30000
 
-function getWsUrl(token: string): string {
+function getWsUrl(): string {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.hostname
-  const port = '8000'
-  return `${wsProtocol}//${host}:${port}/ws/notifications/?token=${encodeURIComponent(token)}`
+  const backend = new URL(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
+  return `${wsProtocol}//${backend.host}/ws/notifications/`
 }
 
 function applyUnreadCount(unreadCount: number) {
@@ -111,8 +111,7 @@ function clearReconnectTimer() {
 function scheduleReconnect() {
   if (manuallyClosed) return
   clearReconnectTimer()
-  const token = localStorage.getItem('access')
-  if (!token) return
+  if (!sessionAuthenticated) return
   reconnectAttempts += 1
   const delay = Math.min(MAX_BACKOFF_MS, Math.max(1000, 1000 * 2 ** (reconnectAttempts - 1)))
   reconnectTimer = setTimeout(() => {
@@ -123,9 +122,7 @@ function scheduleReconnect() {
 export function connectNotificationSocket(queryClient?: QueryClient) {
   if (queryClient) clientRef = queryClient
   if (!clientRef) return
-
-  const token = localStorage.getItem('access')
-  if (!token) return
+  if (!sessionAuthenticated) return
 
   if (
     socket &&
@@ -136,7 +133,7 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
 
   manuallyClosed = false
   clearReconnectTimer()
-  socket = new WebSocket(getWsUrl(token))
+  socket = new WebSocket(getWsUrl())
 
   socket.onopen = () => {
     reconnectAttempts = 0
@@ -155,11 +152,12 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
   socket.onclose = (event) => {
     socket = null
     if (event.code === 4401) {
-      manuallyClosed = true
-      localStorage.removeItem('access')
-      localStorage.removeItem('refresh')
-      localStorage.removeItem('needs_onboarding')
-      if (window.location.pathname !== '/login') window.location.replace('/login')
+      import('@/lib/apiClient')
+        .then(({ AXIOS_INSTANCE }) => AXIOS_INSTANCE.get('/api/accounts/profile'))
+        .then(() => {
+          if (!manuallyClosed) connectNotificationSocket()
+        })
+        .catch(() => {})
       return
     }
     scheduleReconnect()
@@ -171,10 +169,20 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
 }
 
 export function disconnectNotificationSocket() {
+  sessionAuthenticated = false
   manuallyClosed = true
   clearReconnectTimer()
   if (socket) {
     socket.close()
     socket = null
   }
+}
+
+export function setNotificationSocketAuthenticated(authenticated: boolean) {
+  sessionAuthenticated = authenticated
+  if (authenticated) {
+    if (clientRef) connectNotificationSocket()
+    return
+  }
+  disconnectNotificationSocket()
 }

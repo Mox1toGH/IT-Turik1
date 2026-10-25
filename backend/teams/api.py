@@ -13,6 +13,7 @@ from backend.pagination import APIPageNumberPagination
 from accounts.models import User
 from backend.auth import JWTAuth
 from backend.media import absolute_media_url
+from backend.uploads import validate_and_clean_image
 from backend.permissions import is_platform_admin
 
 from .models import Team, TeamInvitation, TeamJoinRequest, TeamMember
@@ -500,7 +501,8 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
             extra={'team_id': pk, 'user_id': request.auth.id},
         )
         raise_api_error(HTTPStatus.FORBIDDEN, 'Only captain can modify this team banner.')
-    if not (banner.content_type or '').startswith('image/'):
+    cleaned_banner, error = validate_and_clean_image(banner, max_size_bytes=5 * 1024 * 1024)
+    if error:
         logger.warning(
             'Banner upload rejected, not an image',
             extra={
@@ -509,10 +511,13 @@ def apply_banner_upload(request, pk: int, banner: UploadedFile):
                 'content_type': banner.content_type,
             },
         )
-        raise_api_error(HTTPStatus.BAD_REQUEST, 'Upload a valid image.')
+        raise_api_error(HTTPStatus.BAD_REQUEST, error)
 
-    team.banner = banner
-    team.save(update_fields=['banner'])
+    try:
+        team.banner = cleaned_banner
+        team.save(update_fields=['banner'])
+    finally:
+        cleaned_banner.close()
     team.refresh_from_db()
     logger.info(
         'Team banner updated',

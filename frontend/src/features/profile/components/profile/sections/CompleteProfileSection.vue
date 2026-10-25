@@ -162,6 +162,7 @@ import { useForm } from '@/composables/useForm'
 import { CompleteProfileSchema } from '@/schemas/profile.schema'
 import { useGetUserProfile, useUpdateUserProfile } from '@/api/accounts/accounts'
 import { useNotification } from '@/composables/useNotification'
+import { useUserStore } from '@/stores/user'
 import type { UserRole } from '@/shared/types/user'
 
 interface Form {
@@ -206,6 +207,7 @@ watch(
 )
 
 const { showNotification } = useNotification()
+const store = useUserStore()
 
 const restrictedRoles = ['jury', 'organizer', 'admin']
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
@@ -228,7 +230,7 @@ const handleSubmit = async () => {
     { data: form.fields.value },
     {
       onSuccess: () => {
-        localStorage.removeItem('needs_onboarding')
+        store.setSession({ authenticated: true, onboarding_required: false })
         router.push('/')
       },
       onError: (error) => {

@@ -5,8 +5,8 @@ import { ref, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
 import * as v from 'valibot'
 import { LinkUrlSchema } from '@/schemas/link.schema'
 import Highlight from '@tiptap/extension-highlight'
-import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
+import { SafeTiptapLink } from '@/lib/safeTiptapLink'
 
 export interface RichTextEditorLinkSelection {
   from: number
@@ -34,15 +34,7 @@ export function useRichTextEditor(
       StarterKit,
       Underline,
       Highlight,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-        defaultProtocol: 'https',
-        HTMLAttributes: {
-          rel: 'noopener noreferrer nofollow',
-          target: '_blank',
-        },
-      }),
+      SafeTiptapLink,
     ],
     content: draftJson.value ?? '',
     editorProps: {

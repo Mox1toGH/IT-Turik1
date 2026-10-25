@@ -32,7 +32,13 @@
       <p v-if="avatar.previewUrl.value" class="position-hint">
         Drag image to choose avatar position
       </p>
-      <ui-file-drop v-model="avatar.selectedAvatar.value" accept="image/*" />
+      <ui-file-drop
+        v-model="avatar.selectedAvatar.value"
+        accept=".jpg,.jpeg,.png,.webp"
+        :multiple="false"
+        :max-files="1"
+        :max-size-mb="5"
+      />
     </div>
 
     <template #footer>

@@ -70,3 +70,18 @@ export const LinkUrlSchema = v.pipe(
     'Phone links must use tel: followed by a valid number, such as tel:+15551234567.',
   ),
 )
+
+/** Return a normalized URL only when it is safe for a rendered rich-text link. */
+export function getSafeRichTextHref(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+
+  const result = v.safeParse(LinkUrlSchema, value)
+  if (!result.success) return null
+
+  try {
+    const url = new URL(result.output)
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.href : null
+  } catch {
+    return null
+  }
+}

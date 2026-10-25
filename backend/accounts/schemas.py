@@ -70,14 +70,11 @@ class LoginRequest(Schema):
     password: str
 
 class LoginResponse(Schema):
-    access: str
-    refresh: str
-
-class TokenRefreshRequest(Schema):
-    refresh: str
+    authenticated: bool
+    onboarding_required: bool
 
 class TokenRefreshResponse(Schema):
-    access: str
+    authenticated: bool
 
 class GoogleAuthRequest(Schema):
     id_token: str
@@ -208,8 +205,6 @@ class UserListFilters(Schema):
     search: Optional[str] = Field(None, description='Filter by username, email, or full name')
 
 class GoogleAuthResponse(Schema):
-    access: str
-    refresh: str
     user: UserResponse
     onboarding_required: bool
 

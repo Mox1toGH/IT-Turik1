@@ -6,7 +6,13 @@
 
     <div class="banner-modal-body">
       <banner-preview v-model:draft="draft" :preview-url="bannerPreviewUrl" />
-      <ui-file-drop v-model="selectedBanner" accept="image/*" />
+      <ui-file-drop
+        v-model="selectedBanner"
+        accept=".jpg,.jpeg,.png,.webp"
+        :multiple="false"
+        :max-files="1"
+        :max-size-mb="5"
+      />
     </div>
 
     <template #footer>

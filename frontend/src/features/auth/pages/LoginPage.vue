@@ -76,8 +76,7 @@ import { useForm } from '@/composables/useForm'
 import { LoginSchema } from '@/schemas/auth.schema'
 
 interface LoginResult {
-  access: string
-  refresh: string
+  authenticated: boolean
   onboarding_required?: boolean
 }
 
@@ -89,7 +88,7 @@ const router = useRouter()
 const { mutate: login, isPending, error } = useLogin()
 
 function saveAndRedirect(data: LoginResult) {
-  store.setTokens(data)
+  store.setSession(data)
   router.push('/')
 }
 

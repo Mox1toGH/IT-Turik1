@@ -121,7 +121,7 @@ watch(
 )
 
 function saveTokensAndRedirect(data: GoogleAuthMutationResult) {
-  storage.setTokens(data)
+  storage.setSession({ authenticated: true, onboarding_required: data.onboarding_required })
   router.push('/')
 }
 

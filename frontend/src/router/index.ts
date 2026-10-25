@@ -40,10 +40,21 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const store = useUserStore()
-  const tokens = store.getTokens()
+  let profile: Awaited<ReturnType<typeof getUserProfile>> | null = null
 
-  const isAuthenticated = !!tokens.access
-  const needsOnboarding = !!tokens.needsOnboarding
+  // The session lives in HttpOnly cookies, so validate it once instead of
+  // trying to inspect an access token in browser storage.
+  if (!store.sessionChecked) {
+    try {
+      profile = await getUserProfile()
+      store.setSession({ authenticated: true, onboarding_required: profile.needs_onboarding })
+    } catch {
+      store.clearSession()
+    }
+  }
+
+  const isAuthenticated = store.isAuthenticated
+  const needsOnboarding = store.needsOnboarding
 
   if (isAuthenticated && needsOnboarding && to.path !== '/complete-profile') {
     return '/complete-profile'
@@ -54,7 +65,6 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    store.logout()
     return '/login'
   }
 
@@ -69,11 +79,13 @@ router.beforeEach(async (to) => {
 
   if (to.meta.roles?.length) {
     try {
-      const profile = await getUserProfile()
+      profile ??= await getUserProfile()
+      if (!isAuthenticated) return '/login'
       if (!hasAnyRole(profile, to.meta.roles)) {
         return '/'
       }
     } catch {
+      store.clearSession()
       return '/'
     }
   }

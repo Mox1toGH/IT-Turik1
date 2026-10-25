@@ -240,6 +240,10 @@ function addFiles(list: FileList | File[]) {
   setError('')
 
   const incoming = Array.from(list)
+  if (!props.multiple && incoming.length > 1) {
+    setError('Choose one file at a time.')
+    return
+  }
   const accepted: File[] = []
 
   for (const candidate of incoming) {

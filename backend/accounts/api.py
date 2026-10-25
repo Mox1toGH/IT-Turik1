@@ -11,6 +11,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -22,6 +23,8 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from backend.auth import JWTAuth
 from backend.media import absolute_media_url
+from backend.uploads import validate_and_clean_image
+from backend.auth_cookies import auth_response, clear_auth_cookies, csrf_response, require_csrf
 from backend.permissions import Permission, require_permission
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -68,7 +71,6 @@ from .schemas import (
     RoleActivationCodeListFilters,
     RoleActivationCodeListResponse,
     TeamUserListResponse,
-    TokenRefreshRequest,
     TokenRefreshResponse,
     UserAvatarResponse,
     UserListFilters,
@@ -78,6 +80,17 @@ from .schemas import (
 )
 
 router = Router(tags=['accounts'])
+
+
+@router.get('/csrf', auth=None, operation_id='getCsrfToken')
+def get_csrf_token(request):
+    return csrf_response(request)
+
+
+@router.post('/logout', auth=None, operation_id='logout')
+def logout(request):
+    require_csrf(request)
+    return clear_auth_cookies(JsonResponse({'detail': 'Logged out.'}))
 
 # --------------------------------------------------------------------------
 # Helpers
@@ -323,6 +336,7 @@ def activate_account(request, uidb64: str, token: str):
     response={200: LoginResponse, 401: ErrorResponse},
 )
 def login(request, payload: LoginRequest):
+    require_csrf(request)
     user = authenticate(request, username=payload.username, password=payload.password)
     if user is None:
         logger.warning('Failed login attempt', extra={'username': payload.username})
@@ -333,7 +347,12 @@ def login(request, payload: LoginRequest):
 
     logger.info('User logged in', extra={'user_id': user.id})
 
-    return {'access': str(refresh.access_token), 'refresh': str(refresh)}
+    return auth_response(
+        request,
+        {'authenticated': True, 'onboarding_required': user.needs_onboarding},
+        access_token=str(refresh.access_token),
+        refresh_token=str(refresh),
+    )
 
 
 @router.post(
@@ -343,10 +362,18 @@ def login(request, payload: LoginRequest):
     url_name="token_refresh",
     response={200: TokenRefreshResponse, 401: ErrorResponse},
 )
-def refresh_token(request, payload: TokenRefreshRequest):
+def refresh_token(request):
+    require_csrf(request)
+    token = request.COOKIES.get(settings.JWT_REFRESH_COOKIE_NAME)
+    if not token:
+        raise_api_error(HTTPStatus.UNAUTHORIZED, 'Refresh token is missing or expired.')
     try:
-        refresh = RefreshToken(payload.refresh)
-        return {'access': str(refresh.access_token)}
+        refresh = RefreshToken(token)
+        return auth_response(
+            request,
+            {'authenticated': True},
+            access_token=str(refresh.access_token),
+        )
     except TokenError:
         raise_api_error(
             HTTPStatus.UNAUTHORIZED,
@@ -362,6 +389,7 @@ def refresh_token(request, payload: TokenRefreshRequest):
     response={200: GoogleAuthResponse, 400: ErrorResponse},
 )
 async def google_auth(request, payload: GoogleAuthRequest):
+    require_csrf(request)
     from google.auth.transport import requests as google_requests
     from google.oauth2 import id_token as google_id_token
 
@@ -414,12 +442,15 @@ async def google_auth(request, payload: GoogleAuthRequest):
     )
     user = await sync_to_async(User.objects.prefetch_related('teams').get)(pk=user.pk)
 
-    return {
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-        'user': _user_response_data(user, request),
-        'onboarding_required': user.needs_onboarding,
-    }
+    return auth_response(
+        request,
+        {
+            'user': _user_response_data(user, request),
+            'onboarding_required': user.needs_onboarding,
+        },
+        access_token=str(refresh.access_token),
+        refresh_token=str(refresh),
+    )
 
 
 # --------------------------------------------------------------------------
@@ -546,15 +577,19 @@ def delete_user_profile(request):
     response={200: UserAvatarResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def update_user_avatar(request, avatar: UploadedFile = File(...)):
-    if not (avatar.content_type or '').startswith('image/'):
+    cleaned_avatar, error = validate_and_clean_image(avatar, max_size_bytes=5 * 1024 * 1024)
+    if error:
         raise_api_error(
             HTTPStatus.BAD_REQUEST,
-            'Upload a valid image.'
+            error,
         )
 
     user = request.user
-    user.avatar = avatar
-    user.save(update_fields=['avatar'])
+    try:
+        user.avatar = cleaned_avatar
+        user.save(update_fields=['avatar'])
+    finally:
+        cleaned_avatar.close()
     
     logger.info('User avatar updated', extra={
         'user_id': user.id

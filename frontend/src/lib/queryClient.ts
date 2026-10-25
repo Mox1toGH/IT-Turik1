@@ -1,5 +1,4 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/vue-query'
-import { connectNotificationSocket } from '@/lib/notificationSocket'
 
 import {
   getListTeamsQueryKey,
@@ -342,7 +341,7 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       const status = (error as ErrorType<ApiErrorResponse>)?._axiosError?.response?.status
-      // 401 is handled globally (tokens cleared + redirect in the axios
+      // 401 is handled globally (session cleared + redirect in the axios
       // interceptor); cards never render a 401 error state.
       if (status === 401) {
         console.warn('[query] unauthorized (401): redirect handled by api interceptor')
@@ -357,13 +356,6 @@ export const queryClient = new QueryClient({
       if (!key) return
 
       // Зберегти токен ДО інвалідації
-      if ((key === 'login' || key === 'googleAuth') && data) {
-        const d = data as { access?: string; refresh?: string }
-        if (d.access) localStorage.setItem('access', d.access)
-        if (d.refresh) localStorage.setItem('refresh', d.refresh)
-        connectNotificationSocket(queryClient)
-      }
-
       invalidationKeys(key, vars, data).forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey })
       })
