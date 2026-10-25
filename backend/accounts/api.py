@@ -23,6 +23,7 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from backend.auth import JWTAuth
 from backend.media import absolute_media_url
+from backend.uploads import validate_and_clean_image
 from backend.auth_cookies import auth_response, clear_auth_cookies, csrf_response, require_csrf
 from backend.permissions import Permission, require_permission
 from rest_framework_simplejwt.exceptions import TokenError
@@ -576,15 +577,19 @@ def delete_user_profile(request):
     response={200: UserAvatarResponse, 400: ErrorResponse, 401: ErrorResponse},
 )
 def update_user_avatar(request, avatar: UploadedFile = File(...)):
-    if not (avatar.content_type or '').startswith('image/'):
+    cleaned_avatar, error = validate_and_clean_image(avatar, max_size_bytes=5 * 1024 * 1024)
+    if error:
         raise_api_error(
             HTTPStatus.BAD_REQUEST,
-            'Upload a valid image.'
+            error,
         )
 
     user = request.user
-    user.avatar = avatar
-    user.save(update_fields=['avatar'])
+    try:
+        user.avatar = cleaned_avatar
+        user.save(update_fields=['avatar'])
+    finally:
+        cleaned_avatar.close()
     
     logger.info('User avatar updated', extra={
         'user_id': user.id

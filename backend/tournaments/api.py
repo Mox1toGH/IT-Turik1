@@ -15,6 +15,7 @@ from accounts.google_calendar import get_calendar_service
 from backend.auth import JWTAuth
 from backend.media import absolute_media_url
 from backend.permissions import Permission, require_permission, has_permission
+from backend.uploads import validate_and_clean_image
 from backend.schemas import ErrorResponse
 from evaluation.leaderboard_service import get_tournament_leaderboard
 from evaluation.models import LeaderboardEntry
@@ -375,10 +376,16 @@ def _team_participants(team: Team) -> list[User]:
 @router.patch('/manage/{id}/banner', operation_id='updateTournamentBanner', url_name='tournament_manage_banner', response={200: TournamentResponse, 400: ErrorResponse, 401: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
 def update_tournament_banner(request, id: int, banner: UploadedFile = File(...)):
     require_permission(request, Permission.EDIT_TOURNAMENT)
+    cleaned_banner, error = validate_and_clean_image(banner, max_size_bytes=5 * 1024 * 1024)
+    if error:
+        raise_api_error(HTTPStatus.BAD_REQUEST, error)
     tournament = get_object_or_404(Tournament, pk=id)
 
-    tournament.banner = banner
-    tournament.save(update_fields=['banner'])
+    try:
+        tournament.banner = cleaned_banner
+        tournament.save(update_fields=['banner'])
+    finally:
+        cleaned_banner.close()
     logger.info(
         'Tournament banner updated',
         extra={

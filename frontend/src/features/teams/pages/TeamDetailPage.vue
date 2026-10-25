@@ -147,7 +147,13 @@
         <p v-if="banner.bannerPreviewUrl.value" class="position-hint">
           Drag image to choose banner position
         </p>
-        <ui-file-drop v-model="banner.selectedBanner.value" accept="image/*" />
+        <ui-file-drop
+          v-model="banner.selectedBanner.value"
+          accept=".jpg,.jpeg,.png,.webp"
+          :multiple="false"
+          :max-files="1"
+          :max-size-mb="5"
+        />
       </div>
 
       <template #footer>
