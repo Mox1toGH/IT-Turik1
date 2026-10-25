@@ -31,10 +31,11 @@
           </template>
 
           <template #default>
-            <div v-if="(tournaments?.data?.length ?? 0) === 0" class="empty-results">
-              <p class="card-muted">No tournaments found</p>
-              <p class="text-base text-muted">Try changing the search text or status filters.</p>
-            </div>
+            <ui-empty-card
+              v-if="(tournaments?.data?.length ?? 0) === 0"
+              title="No tournaments found"
+              message="Try changing the search text or status filters."
+            />
             <div v-else class="tournaments-grid">
               <tournament-card
                 v-for="tournament in tournaments?.data ?? []"
@@ -58,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { computed, ref, watch } from 'vue'
 import { keepPreviousData } from '@tanstack/vue-query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -171,12 +173,6 @@ watch(statusFilter, () => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-}
-
-.card-muted {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted-foreground);
 }
 
 @media (max-width: 760px) {

@@ -7,7 +7,6 @@
         <h1 class="hero-title">{{ name }}</h1>
         <p class="hero-dates">{{ formatDateRange(startDate, endDate) }}</p>
         <div class="hero-actions">
-          <ui-button asLink to="/tournaments/archive" size="sm" variant="secondary">Back</ui-button>
           <ui-button asLink :to="`/tournaments/${tournamentId}`" size="sm" variant="secondary"
             >Open tournament</ui-button
           >

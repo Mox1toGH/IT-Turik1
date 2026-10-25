@@ -1,16 +1,15 @@
 <template>
   <section class="page-shell">
     <section class="page-section role-codes-section">
+      <page-back-link to="/admin" label="Back to Admin hub" />
       <header class="page-header">
         <div class="head">
           <div>
-            <p class="section-eyebrow">Admin</p>
             <h1 class="section-title">Activation Codes</h1>
             <p class="section-subtitle">
               Generate and monitor one-time registration codes for restricted roles.
             </p>
           </div>
-          <ui-button as-link to="/admin" variant="secondary">Back to Admin hub</ui-button>
         </div>
       </header>
 
@@ -111,9 +110,7 @@
 
             <template #default>
               <div v-if="isEmpty" class="codes-list">
-                <ui-card class="empty-card">
-                  <p class="text-muted empty-error">No codes found for current filter.</p>
-                </ui-card>
+                <ui-empty-card message="No codes found for current filter." />
               </div>
 
               <div v-else class="codes-list">
@@ -152,9 +149,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiNumberInput from '@/components/ui/UiNumberInput'
 import UiSelect from '@/components/ui/UiSelect'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
@@ -293,10 +292,6 @@ const formatDateTime = (value: string | number | Date) => {
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   overflow-wrap: anywhere;
-}
-
-.empty-error {
-  text-align: center;
 }
 
 @media (max-width: 900px) {

@@ -17,7 +17,7 @@
         size="sm"
         variant="secondary"
         :disabled="isBannerUpdating || !tournament?.banner"
-        @click="removeBanner"
+        @click="isRemoveConfirmOpen = true"
       >
         Remove
       </ui-button>
@@ -27,11 +27,22 @@
       </ui-button>
     </template>
   </ui-modal>
+  <ui-confirm-modal
+    v-model="isRemoveConfirmOpen"
+    title="Remove tournament banner?"
+    message="The current tournament banner will be removed."
+    confirm-text="Remove banner"
+    confirm-variant="danger"
+    :loading="isBannerUpdating"
+    @confirm="confirmRemoveBanner"
+  />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiModal from '@/components/ui/UiModal'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import UiButton from '@/components/ui/UiButton'
 import UiFileDrop from '@/components/ui/UiFileDrop'
 import BannerPreview from './BannerPreview.vue'
@@ -40,6 +51,7 @@ import { useBannerUpload } from '../../../composables/useBannerUpload'
 const props = defineProps<{ tournamentId: number }>()
 
 const isOpen = defineModel({ default: false })
+const isRemoveConfirmOpen = ref(false)
 
 const {
   tournament,
@@ -56,6 +68,11 @@ const {
   () => props.tournamentId,
   isOpen,
 )
+
+function confirmRemoveBanner() {
+  isRemoveConfirmOpen.value = false
+  removeBanner()
+}
 </script>
 
 <style scoped>

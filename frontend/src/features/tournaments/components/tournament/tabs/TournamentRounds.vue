@@ -12,10 +12,11 @@
         </template>
 
         <template #default>
-          <div v-if="rounds.length === 0" class="rounds-empty">
-            <p>No rounds added yet.</p>
-            <p class="text-sm text-muted">Rounds created for this tournament show up here.</p>
-          </div>
+          <ui-empty-card
+            v-if="rounds.length === 0"
+            title="No rounds added yet"
+            message="Rounds created for this tournament show up here."
+          />
           <div v-else class="rounds-list">
             <ui-card v-for="round in rounds" :key="round.id" class="round-card">
               <template #header>
@@ -110,6 +111,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import RoundsListSkeleton from './tournament-rounds/RoundsListSkeleton.vue'
 import { truncateText } from '@/lib/utils'
@@ -222,11 +224,6 @@ function badgeStatus(status: RoundResponse['status']) {
   gap: 0.8rem;
 }
 
-.skeleton-lines {
-  display: grid;
-  gap: 0.3rem;
-}
-
 .round-header {
   display: flex;
   justify-content: space-between;
@@ -258,34 +255,6 @@ function badgeStatus(status: RoundResponse['status']) {
   min-width: 0;
 }
 
-.description-card {
-  grid-column: 1 / 3;
-}
-
-.details-editor {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem;
-  background: var(--input);
-  height: min(60vh, 520px);
-  overflow: auto;
-}
-
-.details-editor :deep(.ProseMirror) {
-  outline: none;
-  min-height: 100%;
-}
-
-@media (max-width: 900px) {
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .description-card {
-    grid-column: 1;
-  }
-}
-
 @media (max-width: 1024px) {
   .rounds-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -298,18 +267,4 @@ function badgeStatus(status: RoundResponse['status']) {
   }
 }
 
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-down-enter-from {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-.slide-down-leave-to {
-  opacity: 0;
-  transform: translateY(-20px);
-}
 </style>

@@ -156,7 +156,7 @@
           size="sm"
           variant="secondary"
           :disabled="banner.isBannerUpdating.value || !team?.banner"
-          @click="banner.removeBanner"
+          @click="isBannerRemoveConfirmOpen = true"
         >
           Remove
         </ui-button>
@@ -170,12 +170,22 @@
         </ui-button>
       </template>
     </ui-modal>
+    <ui-confirm-modal
+      v-model="isBannerRemoveConfirmOpen"
+      title="Remove team banner?"
+      message="The current team banner will be removed."
+      confirm-text="Remove banner"
+      confirm-variant="danger"
+      :loading="banner.isBannerUpdating.value"
+      @confirm="confirmRemoveTeamBanner"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { LoaderCircle } from 'lucide-vue-next'
 import UiModal from '@/components/ui/UiModal'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock } from '@/components/query'
@@ -206,6 +216,7 @@ const route = useRoute()
 const teamId = Number(route.params.id)
 
 const searchInput = ref('')
+const isBannerRemoveConfirmOpen = ref(false)
 const { data: user } = useGetUserProfile()
 const teamQuery = useGetTeam(teamId)
 const { data: team, isLoading: isInfoLoading } = teamQuery
@@ -224,6 +235,11 @@ const { data: activeTournament } = useGetTeamActiveTournament(
 const isCaptain = computed(() => team.value?.captain_id === user.value?.id)
 
 const banner = useTeamBanner(teamId, team)
+
+function confirmRemoveTeamBanner() {
+  isBannerRemoveConfirmOpen.value = false
+  banner.removeBanner()
+}
 
 const tabItems = computed<TabItem[]>(() => {
   const items: TabItem[] = [

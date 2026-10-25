@@ -105,13 +105,22 @@
           class="leave-team"
           variant="danger"
           size="md"
-          @click="leaveTeam"
+          @click="isLeaveConfirmOpen = true"
         >
           Leave team
         </ui-button>
       </div>
     </template>
   </ui-card>
+  <ui-confirm-modal
+    v-model="isLeaveConfirmOpen"
+    title="Leave team?"
+    message="You will lose access to this team workspace. You may need a new invitation to rejoin."
+    confirm-text="Leave team"
+    confirm-variant="danger"
+    :loading="isLeaving"
+    @confirm="leaveTeam"
+  />
 </template>
 
 <script setup lang="ts">
@@ -121,7 +130,8 @@ import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { LoaderCircle } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -174,7 +184,8 @@ const sendJoinRequest = () => {
 }
 
 // ── Leave Team ────────────────────────────────────────────────────
-const { mutate: leaveTeamMutate } = useLeaveTeam()
+const { mutate: leaveTeamMutate, isPending: isLeaving } = useLeaveTeam()
+const isLeaveConfirmOpen = ref(false)
 
 const leaveTeam = () => {
   if (!props.team) return
@@ -184,6 +195,7 @@ const leaveTeam = () => {
     { pk: props.team.id },
     {
       onSuccess: () => {
+        isLeaveConfirmOpen.value = false
         emit('leave')
       },
       onError: (error) => {

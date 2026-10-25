@@ -1,5 +1,6 @@
 <template>
   <section class="team-create-page page-shell">
+    <page-back-link to="/teams" label="Back to teams" />
     <header class="create-hero">
       <div>
         <p class="section-eyebrow">Teams</p>
@@ -7,9 +8,6 @@
         <p class="section-subtitle">Add the team details and choose members to invite.</p>
       </div>
 
-      <ui-button asLink class="back-link" variant="secondary" to="/teams">
-        Back to teams
-      </ui-button>
     </header>
 
     <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
@@ -55,7 +53,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiCard from '@/components/ui/UiCard'
 import UiSection from '@/components/ui/UiSection'
 import { LoaderCircle } from 'lucide-vue-next'
@@ -95,10 +93,6 @@ const isLoadingError = computed(
 .create-hero .section-subtitle {
   max-width: 680px;
   margin: 0.45rem 0 0;
-}
-
-.back-link {
-  flex: 0 0 auto;
 }
 
 .team-form {

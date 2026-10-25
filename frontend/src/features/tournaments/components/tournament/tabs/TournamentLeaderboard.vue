@@ -61,10 +61,11 @@
         <template #skeleton>
           <leaderboard-skeleton />
         </template>
-        <div v-if="rankings.length === 0 || isLeaderboardNotReady" class="leaderboard-empty">
-          <p class="text-muted">No leaderboard data yet.</p>
-          <p class="text-sm text-muted">Rankings appear once a round has been evaluated.</p>
-        </div>
+        <ui-empty-card
+          v-if="rankings.length === 0 || isLeaderboardNotReady"
+          title="No leaderboard data yet"
+          message="Rankings appear once a round has been evaluated."
+        />
         <leaderboard-table
           v-else
           :rankings="rankings"
@@ -88,6 +89,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiPopover from '@/components/ui/UiPopover'
 import LeaderboardSkeleton from './tournament-leaderboard/LeaderboardSkeleton.vue'

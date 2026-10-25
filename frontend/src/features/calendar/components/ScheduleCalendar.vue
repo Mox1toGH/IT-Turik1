@@ -61,9 +61,7 @@
     <!-- DAY VIEW -->
     <template v-if="viewMode === 'day'">
       <div class="day-view">
-        <div v-if="dayViewItems.length === 0" class="day-view-empty">
-          <p class="text-muted">No events for this day</p>
-        </div>
+        <ui-empty-card v-if="dayViewItems.length === 0" message="No events for this day." />
 
         <div v-else class="day-view-list">
           <div
@@ -107,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { ref, toRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, Clock, ExternalLink } from 'lucide-vue-next'
@@ -271,11 +270,6 @@ function emitExport(item: CalendarItem) {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-}
-
-.day-view-empty {
-  text-align: center;
-  padding: 2rem 0;
 }
 
 .day-view-list {

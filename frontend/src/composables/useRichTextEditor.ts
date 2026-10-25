@@ -1,7 +1,7 @@
 import StarterKit from '@tiptap/starter-kit'
 import type { JSONContent } from '@tiptap/core'
 import { useEditor } from '@tiptap/vue-3'
-import { ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
+import { ref, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
 import * as v from 'valibot'
 import { LinkUrlSchema } from '@/schemas/link.schema'
 import Highlight from '@tiptap/extension-highlight'
@@ -54,6 +54,16 @@ export function useRichTextEditor(
     onUpdate({ editor }) {
       draftJson.value = editor.getJSON()
     },
+    onCreate({ editor }) {
+      editor.commands.setContent(draftJson.value ?? '', { emitUpdate: false })
+    },
+  })
+
+  watch(modelValue, (value) => {
+    draftJson.value = value
+    if (!isOpen.value) {
+      editor.value?.commands.setContent(value ?? '', { emitUpdate: false })
+    }
   })
 
   function openModal(): void {

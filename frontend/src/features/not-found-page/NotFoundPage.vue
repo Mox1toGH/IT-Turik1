@@ -1,20 +1,23 @@
 <template>
-  <ui-card class="not-found-card">
+  <section class="page-shell not-found-page">
+    <page-back-link label="Go back" @back="goBack" />
+    <ui-card class="not-found-card">
     <div>
       <h1 class="title">Page not found</h1>
       <p class="text">The page you’re looking for doesn’t exist or was moved.</p>
       <div class="actions">
         <ui-button asLink to="/">Go home</ui-button>
-        <ui-button variant="secondary" @click="goBack">Go back</ui-button>
       </div>
     </div>
-  </ui-card>
+    </ui-card>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 
 const router = useRouter()
 

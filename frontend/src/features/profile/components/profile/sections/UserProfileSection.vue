@@ -1,153 +1,133 @@
 <template>
-  <section class="page-shell">
+  <section class="page-shell public-profile-page">
     <ui-query-block :query="userQuery" title="profile">
-      <ui-card>
-        <template #header>
-          <div class="head">
-            <div>
-              <p class="section-eyebrow">User Profile</p>
-              <div class="section-title profile-title" role="heading" aria-level="1">
-                <ui-query-field>
-                  <template #skeleton
-                    ><ui-skeleton variant="rect" width="220px" height="36px"
-                  /></template>
-                  <span>{{ user?.full_name || user?.username || '-' }}</span>
-                </ui-query-field>
-              </div>
+      <ui-query-field>
+        <template #skeleton>
+          <div class="profile-skeleton">
+            <ui-skeleton variant="rounded" width="112px" height="112px" />
+            <div class="skeleton-copy">
+              <ui-skeleton variant="rect" width="260px" height="36px" />
+              <ui-skeleton variant="rect" width="140px" height="20px" />
             </div>
-            <div class="meta">
-              Joined:
-              <ui-query-field>
-                <template #skeleton
-                  ><ui-skeleton variant="rect" width="100px" height="16px"
-                /></template>
-                <span>{{ user?.created_at ? formatDate(user?.created_at) : 'N/A' }}</span>
-              </ui-query-field>
-            </div>
+            <ui-skeleton variant="rect" width="150px" height="40px" />
           </div>
-          <ui-query-field>
-            <template #skeleton
-              ><ui-skeleton variant="rounded" width="108px" height="108px"
-            /></template>
-            <user-avatar
-              :avatar="user?.avatar"
-              :username="user?.username || 'user'"
-              :full-name="user?.full_name || ''"
-              :size="108"
-              :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
-            />
-          </ui-query-field>
+          <ui-skeleton variant="rect" width="100%" height="280px" />
         </template>
 
-        <div class="details">
-          <div class="field-row">
-            <span class="field-label">Username</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="120px" /></template
-              ><strong class="item-value value-wrap">{{
-                user?.username || '-'
-              }}</strong></ui-query-field
-            >
-          </div>
-          <div class="field-row">
-            <span class="field-label">Email</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="160px" /></template
-              ><strong class="item-value value-wrap">{{
-                user?.email || '-'
-              }}</strong></ui-query-field
-            >
-          </div>
-          <div class="field-row">
-            <span class="field-label">Role</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="80px" /></template
-              ><ui-badge variant="green">{{ user?.role ?? '-' }}</ui-badge></ui-query-field
-            >
-          </div>
-          <div class="field-row">
-            <span class="field-label">Full name</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="140px" /></template
-              ><strong class="item-value value-wrap">{{
-                user?.full_name || '-'
-              }}</strong></ui-query-field
-            >
-          </div>
-          <div class="field-row">
-            <span class="field-label">City</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="90px" /></template
-              ><strong class="item-value value-wrap">{{
-                user?.city || '-'
-              }}</strong></ui-query-field
-            >
-          </div>
-          <div class="field-row">
-            <span class="field-label">Phone</span>
-            <ui-query-field
-              ><template #skeleton><ui-skeleton variant="rect" width="120px" /></template
-              ><strong class="item-value value-fixed">{{
-                user?.phone || '-'
-              }}</strong></ui-query-field
-            >
-          </div>
-          <div class="field-row field-row--wide">
-            <span class="field-label">Teams</span>
-            <div>
-              <ui-query-field>
-                <template #skeleton>
-                  <div class="team-list-skeleton">
-                    <ui-skeleton variant="rect" width="140px" height="20px" /><ui-skeleton
-                      variant="rect"
-                      width="120px"
-                      height="20px"
-                    />
+        <div class="profile-content">
+          <header class="profile-hero">
+            <div class="identity">
+              <user-avatar
+                :avatar="user?.avatar"
+                :username="user?.username || 'user'"
+                :full-name="user?.full_name || ''"
+                :size="112"
+                :position-key="user?.id ? `image-position:avatar:user:${user.id}` : ''"
+              />
+              <div class="identity-copy">
+                <h1>{{ user?.full_name || user?.username || 'User profile' }}</h1>
+                <p class="username">@{{ user?.username || 'user' }}</p>
+                <ui-badge variant="green">{{ user?.role || 'Member' }}</ui-badge>
+              </div>
+            </div>
+
+            <div class="hero-actions">
+              <div class="joined-meta">
+                <span class="field-label">Joined</span>
+                <strong>{{ user?.created_at ? formatDate(user.created_at) : 'N/A' }}</strong>
+              </div>
+              <ui-button
+                as-link
+                variant="secondary"
+                size="sm"
+                :to="`/users/${userId}/tournaments-history`"
+              >
+                Tournament history
+              </ui-button>
+            </div>
+          </header>
+
+          <div class="profile-grid">
+            <ui-card class="details-card">
+              <template #header>
+                <div class="card-heading">
+                  <div>
+                    <p class="section-eyebrow">Profile</p>
+                    <h2>About</h2>
+                  </div>
+                </div>
+              </template>
+
+              <dl class="details-grid">
+                <div class="detail-item">
+                  <dt>Email</dt>
+                  <dd>{{ user?.email || '—' }}</dd>
+                </div>
+                <div class="detail-item">
+                  <dt>Full name</dt>
+                  <dd>{{ user?.full_name || '—' }}</dd>
+                </div>
+                <div class="detail-item">
+                  <dt>City</dt>
+                  <dd>{{ user?.city || '—' }}</dd>
+                </div>
+                <div class="detail-item">
+                  <dt>Phone</dt>
+                  <dd>{{ user?.phone || '—' }}</dd>
+                </div>
+              </dl>
+            </ui-card>
+
+            <div class="profile-side">
+              <ui-card class="teams-card">
+                <template #header>
+                  <div class="card-heading card-heading-row">
+                    <div>
+                      <p class="section-eyebrow">Membership</p>
+                      <h2>Teams</h2>
+                    </div>
+                    <span class="count-pill">{{ user?.teams?.length ?? 0 }}</span>
                   </div>
                 </template>
-                <div class="team-list">
+
+                <div v-if="user?.teams?.length" class="team-list">
                   <router-link
-                    v-for="team in user?.teams || []"
+                    v-for="team in user.teams"
                     :key="team.id"
                     :to="`/teams/${team.id}`"
                     class="team-link"
                   >
-                    {{ team.name }}
+                    <span class="team-mark" aria-hidden="true">{{ team.name.slice(0, 1) }}</span>
+                    <span>{{ team.name }}</span>
+                    <span class="team-arrow" aria-hidden="true">↗</span>
                   </router-link>
                 </div>
-                <p v-if="!(user?.teams || []).length" class="text-muted">No teams yet.</p>
-              </ui-query-field>
+                <p v-else class="empty-copy">This user is not a member of any teams yet.</p>
+              </ui-card>
+
+              <ui-card v-if="user?.active_tournament" class="active-tournament-card">
+                <template #header>
+                  <div>
+                    <p class="section-eyebrow">Currently competing</p>
+                    <h2>Active tournament</h2>
+                  </div>
+                </template>
+                <router-link
+                  :to="`/tournaments/${user.active_tournament.id}`"
+                  class="tournament-link"
+                >
+                  <span class="tournament-name">{{ user.active_tournament.name }}</span>
+                  <span class="tournament-dates">
+                    {{ formatDate(user.active_tournament.start_date) }} —
+                    {{ formatDate(user.active_tournament.end_date) }}
+                  </span>
+                  <ui-badge variant="primary">{{ user.active_tournament.status }}</ui-badge>
+                </router-link>
+              </ui-card>
             </div>
           </div>
         </div>
-
-        <div v-if="user?.active_tournament" class="tournament-overview-row">
-          <router-link :to="`/tournaments/${user.active_tournament.id}`" class="overview-link">
-            <div class="active-tournament-card">
-              <span class="card-text-title">Active tournament</span>
-              <div class="active-tournament-content">
-                <div>
-                  <p class="active-tournament-name">{{ user.active_tournament.name }}</p>
-                  <p class="active-tournament-meta">
-                    {{ formatDate(user.active_tournament.start_date) }} -
-                    {{ formatDate(user.active_tournament.end_date) }}
-                  </p>
-                </div>
-                <ui-button
-                  as-link
-                  :to="`/users/${userId}/tournaments-history`"
-                  variant="secondary"
-                  size="sm"
-                  class="history-btn"
-                  @click.stop
-                >
-                  Tournament history
-                </ui-button>
-              </div>
-            </div>
-          </router-link>
-        </div>
-      </ui-card>
+      </ui-query-field>
     </ui-query-block>
   </section>
 </template>
@@ -155,10 +135,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
-import UiBadge from '@/components/ui/UiBadge'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUser } from '@/api/accounts/accounts'
@@ -171,148 +151,323 @@ const { data: user } = userQuery
 </script>
 
 <style scoped>
-.head {
+.public-profile-page {
+  gap: 1.25rem;
+}
+
+.profile-content {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.profile-hero {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.5rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--line-soft);
+  border-radius: 20px;
+  background:
+    radial-gradient(
+      ellipse at 8% 10%,
+      color-mix(in srgb, var(--primary) 14%, transparent),
+      transparent 44%
+    ),
+    var(--card);
+  box-shadow: var(--shadow-card);
 }
 
-.profile-title {
-  margin-top: 0.2rem;
-}
-
-.meta {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-}
-
-.details {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0 1.5rem;
-  margin-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.field-row {
-  display: grid;
-  gap: 0.3rem;
-  align-content: start;
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
   min-width: 0;
-  padding: 0.7rem 0;
 }
 
-.details .field-row + .field-row {
-  border-top: 1px solid var(--border);
+.identity-copy {
+  display: grid;
+  justify-items: start;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
-.field-label {
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 600;
-}
-
-.field-row--wide {
-  grid-column: 1 / -1;
-}
-
-.item-value {
+.identity-copy h1 {
+  margin: 0;
   color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.1;
   overflow-wrap: anywhere;
 }
 
-.team-list {
+.identity-copy,
+.identity-copy .username {
+  margin: 0;
+}
+
+.username {
+  color: var(--muted-foreground);
+}
+
+.hero-actions {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  align-items: flex-end;
+  gap: 0.9rem;
+  flex: 0 0 auto;
 }
 
-.team-link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.team-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.tournament-overview-row {
-  margin-top: 0.9rem;
-  min-width: 220px;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.overview-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.active-tournament-card {
+.joined-meta {
   display: grid;
-  gap: 0.6rem;
-  padding: 0.9rem;
-  border-radius: var(--radius-sm);
-  background: var(--subtle);
-  min-height: 100%;
+  gap: 0.15rem;
+  text-align: right;
 }
 
-.card-text-title {
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.joined-meta strong {
+  color: var(--foreground);
+  font-size: var(--text-sm);
 }
 
-.active-tournament-content {
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.details-card,
+.teams-card,
+.active-tournament-card {
+  min-width: 0;
+  border-color: var(--line-soft);
+}
+
+.card-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.8rem;
+  width: 100%;
 }
 
-.active-tournament-name,
-.active-tournament-meta {
+.card-heading,
+.card-heading h2 {
   margin: 0;
 }
 
-.active-tournament-name {
-  font-weight: 700;
-  color: var(--foreground);
+.card-heading h2 {
+  margin-top: 0.2rem;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
 }
 
-.active-tournament-meta {
+.count-pill {
+  display: inline-flex;
+  min-width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
+
+.detail-item {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.95rem 0.75rem 0.95rem 0;
+}
+
+.detail-item:nth-child(n + 3) {
+  border-top: 1px solid var(--border);
+}
+
+.detail-item dt,
+.field-label {
   color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: 700;
 }
 
-.history-btn {
-  align-self: center;
+.detail-item dd {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.profile-side {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.team-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.team-link {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.team-link:hover {
+  border-color: var(--primary);
+  background: var(--subtle);
+}
+
+.team-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-weight: 900;
+}
+
+.team-link > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-@media (max-width: 760px) {
-  .head {
-    flex-direction: column;
+.team-arrow {
+  color: var(--muted-foreground);
+}
+
+.empty-copy {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+}
+
+.tournament-link {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--subtle);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.tournament-link:hover {
+  border-color: var(--primary);
+}
+
+.tournament-name {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
+.tournament-dates {
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+}
+
+.profile-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+}
+
+.skeleton-copy {
+  display: grid;
+  flex: 1;
+  gap: 0.65rem;
+}
+
+@media (max-width: 820px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .profile-hero {
     align-items: flex-start;
+    flex-direction: column;
   }
 
-  .details {
+  .hero-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .joined-meta {
+    text-align: left;
+  }
+
+  .details-grid {
     grid-template-columns: 1fr;
   }
 
-  .tournament-overview-row {
-    width: 100%;
-    min-width: 0;
+  .detail-item:nth-child(n + 2) {
+    border-top: 1px solid var(--border);
+  }
+
+  .profile-skeleton {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .identity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-link,
+  .tournament-link {
+    transition: none;
   }
 }
 </style>

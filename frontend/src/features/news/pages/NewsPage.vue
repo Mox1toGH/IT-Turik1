@@ -1,9 +1,6 @@
 <template>
   <section class="page-shell news-page">
-    <news-hero
-      :can-manage-news="canManageNews"
-      @create="isCreateOpen = true"
-    />
+    <news-hero :can-manage-news="canManageNews" @create="isCreateOpen = true" />
 
     <div class="news-rule" aria-hidden="true"></div>
 
@@ -52,7 +49,6 @@ const route = useRoute()
 const { data: user } = useGetUserProfile()
 
 const canManageNews = computed(() => hasAnyRole(user.value, ['admin', 'organizer']))
-
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteConfirmOpen = ref(false)

@@ -23,12 +23,16 @@
         </template>
 
         <template #default>
-          <div v-if="isEmpty" class="empty-text text-muted">
-            <p>No invitations. When someone invites you, it will appear here.</p>
-            <button type="button" class="empty-link text-sm" @click="emit('browse-teams')">
-              Browse available teams <span aria-hidden="true">-&gt;</span>
-            </button>
-          </div>
+          <ui-empty-card
+            v-if="isEmpty"
+            message="No invitations. When someone invites you, it will appear here."
+          >
+            <template #actions>
+              <ui-button variant="link" size="sm" @click="emit('browse-teams')">
+                Browse available teams <span aria-hidden="true">→</span>
+              </ui-button>
+            </template>
+          </ui-empty-card>
           <div v-else class="team-grid">
             <ui-card
               v-for="invitation in pendingInboxInvitations"
@@ -75,6 +79,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -135,20 +140,6 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   min-width: 0;
 }
 
-.empty-text {
-  display: grid;
-  gap: 0.5rem;
-  justify-items: center;
-  margin: 0;
-  padding: 2rem 0;
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-.empty-text p {
-  margin: 0;
-}
-
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -185,21 +176,6 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-}
-
-.empty-link {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--primary);
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.empty-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .team-meta {

@@ -46,7 +46,7 @@
       </template>
 
       <ui-query-block :query="cardQuery" title="submissions">
-        <div class="table-head">
+        <div v-if="submissions.length" class="table-head">
           <span>Team</span>
           <span>Submitted On</span>
           <span>Assigned Jury</span>
@@ -72,12 +72,11 @@
               :jury-label="juryLabel"
             />
           </div>
-          <div v-else class="query-empty-message">
-            <p class="text-muted">No submissions to evaluate yet.</p>
-            <p class="text-sm text-muted">
-              Assignments appear once teams submit to the closed round.
-            </p>
-          </div>
+          <ui-empty-card
+            v-else
+            title="No submissions to evaluate yet"
+            message="Assignments appear once teams submit to the closed round."
+          />
         </ui-query-field>
       </ui-query-block>
     </ui-card>
@@ -87,6 +86,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSection from '@/components/ui/UiSection'
 import UiSelect from '@/components/ui/UiSelect'

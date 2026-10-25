@@ -13,10 +13,11 @@
         </template>
 
         <template #default>
-          <div v-if="isEmpty" class="news-empty">
-            <p class="card-muted">No news yet</p>
-            <p class="text-base">Announcements will appear here when they are published.</p>
-          </div>
+          <ui-empty-card
+            v-if="isEmpty"
+            title="No news yet"
+            message="Announcements will appear here when they are published."
+          />
           <div v-else class="news-grid">
             <news-item-card
               v-for="item in items"
@@ -44,6 +45,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiPagination from '@/components/ui/UiPagination'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -83,12 +85,6 @@ const isEmpty = computed(() => props.items.length === 0)
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
-}
-
-.card-muted {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted-foreground);
 }
 
 .pagination-row {

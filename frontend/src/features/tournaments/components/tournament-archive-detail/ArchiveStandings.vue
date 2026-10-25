@@ -19,12 +19,13 @@
         <span>{{ formatScore(row.total_score) }}</span>
       </div>
     </div>
-    <p v-else class="empty-state">No saved standings.</p>
+    <ui-empty-card v-else message="No saved standings." />
   </ui-section>
 </template>
 
 <script setup lang="ts">
 import UiSection from '@/components/ui/UiSection'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { formatScore } from './lib/format'
 import type { ArchiveStanding } from '@/features/tournaments/types'
 
@@ -101,11 +102,6 @@ const rankClass = (rank: number) => {
 .team-link:hover {
   color: var(--primary);
   text-decoration: underline;
-}
-
-.empty-state {
-  margin: 0;
-  color: var(--muted-foreground);
 }
 
 @media (max-width: 720px) {

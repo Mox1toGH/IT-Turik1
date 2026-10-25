@@ -30,16 +30,14 @@
               <ui-skeleton v-for="i in 4" :key="i" variant="rect" height="44px" width="100%" />
             </div>
           </template>
-          <p
+          <ui-empty-card
             v-if="
               !isDisqualifiedTeamsLoading &&
               activeTeams.length === 0 &&
               disqualifiedTeams.length === 0
             "
-            class="text-muted"
-          >
-            No teams registered yet.
-          </p>
+            message="No teams registered yet."
+          />
 
           <TournamentTeamSection
             v-if="activeTeams.length"
@@ -73,6 +71,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiInput from '@/components/ui/UiInput'
 import UiSkeleton from '@/components/ui/UiSkeleton'

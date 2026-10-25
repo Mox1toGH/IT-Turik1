@@ -58,11 +58,15 @@
           </template>
 
           <template #default>
-            <div v-if="isEmpty" class="calendar-empty">
-              <Calendar class="empty-icon" />
-              <p>No upcoming events or deadlines</p>
-              <p class="text-muted">Join a tournament to see its schedule here</p>
-            </div>
+            <ui-empty-card
+              v-if="isEmpty"
+              title="No upcoming events or deadlines"
+              message="Join a tournament to see its schedule here."
+            >
+              <template #icon>
+                <Calendar class="empty-icon" />
+              </template>
+            </ui-empty-card>
             <schedule-calendar
               v-else
               :events="events"
@@ -80,6 +84,7 @@
 
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { Calendar, LoaderCircle } from 'lucide-vue-next'
@@ -234,8 +239,7 @@ h1 {
   gap: 1px;
 }
 
-.calendar-error,
-.calendar-empty {
+.calendar-error {
   display: flex;
   flex-direction: column;
   align-items: center;

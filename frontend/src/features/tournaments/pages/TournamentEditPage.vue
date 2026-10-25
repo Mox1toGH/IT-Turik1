@@ -1,13 +1,13 @@
 <template>
   <section class="edit-tournament-page page-shell">
     <edit-tournament-hero :tournament-id="tournamentId" />
-    <tournament-form :tournament-id="tournamentId" />
+    <tournament-form mode="edit" :tournament-id="tournamentId" />
   </section>
 </template>
 
 <script setup lang="ts">
 import EditTournamentHero from '../components/tournament-edit/EditTournamentHero.vue'
-import TournamentForm from '../components/tournament-edit/TournamentForm.vue'
+import TournamentForm from '../components/tournament-form/TournamentForm.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()

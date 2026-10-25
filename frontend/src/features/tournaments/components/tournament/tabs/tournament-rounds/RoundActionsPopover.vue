@@ -16,7 +16,7 @@
           @click="
             () => {
               close()
-              handleStartRound()
+              requestConfirmation('start')
             }
           "
           >Start round</ui-button
@@ -29,7 +29,7 @@
             @click="
               () => {
                 close()
-                handleCloseSubmissions()
+                requestConfirmation('close')
               }
             "
           >
@@ -42,7 +42,7 @@
             @click="
               () => {
                 close()
-                handleMarkEvaluated()
+                requestConfirmation('evaluate')
               }
             "
           >
@@ -56,7 +56,7 @@
             @click="
               () => {
                 close()
-                handleDeleteRound()
+                requestConfirmation('delete')
               }
             "
           >
@@ -66,6 +66,16 @@
       </div>
     </template>
   </ui-popover>
+
+  <ui-confirm-modal
+    v-model="isConfirmOpen"
+    :title="confirmation.title"
+    :message="confirmation.message"
+    :confirm-text="confirmation.confirmText"
+    :confirm-variant="pendingAction === 'delete' ? 'danger' : 'default'"
+    :loading="isPending"
+    @confirm="performConfirmedAction"
+  />
 </template>
 
 <script setup lang="ts">
@@ -80,8 +90,10 @@ import {
 } from '@/api/tournaments/tournaments'
 import UiButton from '@/components/ui/UiButton'
 import UiPopover from '@/components/ui/UiPopover'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
 import { MoreHorizontal } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
 
 interface Props {
   roundId: number
@@ -98,58 +110,77 @@ const { mutate: deleteRound } = useDeleteRound()
 const { mutate: startRound } = useStartRound()
 const { mutate: closeSubmissions } = useCloseRoundSubmissions()
 const { mutate: markEvaluated } = useMarkRoundEvaluated()
+const isConfirmOpen = ref(false)
+const pendingAction = ref<'start' | 'close' | 'evaluate' | 'delete' | null>(null)
+const isPending = ref(false)
 
-function handleDeleteRound() {
-  deleteRound(
+const confirmation = computed(() => {
+  switch (pendingAction.value) {
+    case 'start':
+      return {
+        title: 'Start round?',
+        message: 'Starting this round opens its submission period for participating teams.',
+        confirmText: 'Start round',
+      }
+    case 'close':
+      return {
+        title: 'Close submissions?',
+        message: 'Teams will no longer be able to submit work for this round.',
+        confirmText: 'Close submissions',
+      }
+    case 'evaluate':
+      return {
+        title: 'Mark round evaluated?',
+        message: 'This marks the round as evaluated and finalizes its results.',
+        confirmText: 'Mark evaluated',
+      }
+    default:
+      return {
+        title: 'Delete round?',
+        message: 'This permanently deletes the round and cannot be undone.',
+        confirmText: 'Delete round',
+      }
+  }
+})
+
+function requestConfirmation(action: 'start' | 'close' | 'evaluate' | 'delete') {
+  pendingAction.value = action
+  isConfirmOpen.value = true
+}
+
+function performConfirmedAction() {
+  const action = pendingAction.value
+  if (!action || isPending.value) return
+  isPending.value = true
+
+  const mutation =
+    action === 'start'
+      ? startRound
+      : action === 'close'
+        ? closeSubmissions
+        : action === 'evaluate'
+          ? markEvaluated
+          : deleteRound
+
+  mutation(
+    { id: props.roundId },
     {
-      id: props.roundId,
-    },
-    {
+      onSuccess: () => {
+        isConfirmOpen.value = false
+        pendingAction.value = null
+      },
       onError: (error) => {
+        isConfirmOpen.value = false
+        pendingAction.value = null
         showNotification(error?.message, 'error')
+      },
+      onSettled: () => {
+        isPending.value = false
       },
     },
   )
 }
 
-function handleStartRound() {
-  startRound(
-    {
-      id: props.roundId,
-    },
-    {
-      onError: (error) => {
-        showNotification(error?.message, 'error')
-      },
-    },
-  )
-}
-
-function handleCloseSubmissions() {
-  closeSubmissions(
-    {
-      id: props.roundId,
-    },
-    {
-      onError: (error) => {
-        showNotification(error?.message, 'error')
-      },
-    },
-  )
-}
-
-function handleMarkEvaluated() {
-  markEvaluated(
-    {
-      id: props.roundId,
-    },
-    {
-      onError: (error) => {
-        showNotification(error?.message, 'error')
-      },
-    },
-  )
-}
 </script>
 
 <style scoped>

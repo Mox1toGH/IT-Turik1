@@ -1313,7 +1313,7 @@ def list_tournament_submissions(request, id: int):
     return [_submission_response_data(item, request) for item in submissions]
 
 
-@router.get('/current-task', operation_id='getCurrentTask', url_name='current_task', response={200: CurrentTaskResponse, 401: ErrorResponse, 404: ErrorResponse})
+@router.get('/current-task', operation_id='getCurrentTask', url_name='current_task', response={200: CurrentTaskResponse | None, 401: ErrorResponse})
 def get_current_task(request, tournament_id: int | None = None):
     logger.debug('Fetching current task', extra={'tournament_id': tournament_id})
     queryset = Round.objects.filter(
@@ -1326,7 +1326,7 @@ def get_current_task(request, tournament_id: int | None = None):
     round_obj = queryset.first()
     if round_obj is None:
         logger.info('No active task found', extra={'tournament_id': tournament_id})
-        raise_api_error(404, 'No active task found.')
+        return None
     return {
         'id': round_obj.id,
         'tournament_id': round_obj.tournament_id,

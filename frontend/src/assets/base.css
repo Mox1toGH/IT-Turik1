@@ -305,11 +305,6 @@ a {
   overflow-wrap: anywhere;
 }
 
-.empty-card {
-  border: 1px dashed var(--border) !important;
-  color: var(--muted-foreground) !important;
-}
-
 .empty-error {
   text-align: center;
 }

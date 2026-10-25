@@ -41,7 +41,7 @@
         size="sm"
         variant="secondary"
         :disabled="avatar.isUpdating.value || !avatar.previewUrl.value"
-        @click="avatar.removeAvatar"
+        @click="isRemoveConfirmOpen = true"
       >
         Remove
       </ui-button>
@@ -55,11 +55,21 @@
       </ui-button>
     </template>
   </ui-modal>
+  <ui-confirm-modal
+    v-model="isRemoveConfirmOpen"
+    title="Remove profile photo?"
+    message="Your current profile photo will be removed."
+    confirm-text="Remove photo"
+    confirm-variant="danger"
+    :loading="avatar.isUpdating.value"
+    @confirm="confirmRemoveAvatar"
+  />
 </template>
 
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { ref, toRef } from 'vue'
 import UiModal from '@/components/ui/UiModal'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import UiButton from '@/components/ui/UiButton'
 import { LoaderCircle, SquarePen } from 'lucide-vue-next'
 import UiFileDrop from '@/components/ui/UiFileDrop'
@@ -79,6 +89,12 @@ const avatar = useAvatarUpload(
   toRef(props, 'user'),
   toRef(props, 'disabled', false),
 )
+const isRemoveConfirmOpen = ref(false)
+
+function confirmRemoveAvatar() {
+  isRemoveConfirmOpen.value = false
+  avatar.removeAvatar()
+}
 
 defineExpose({ open: avatar.open })
 </script>

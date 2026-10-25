@@ -12,7 +12,6 @@
         Important updates, announcements, and platform changes.
       </p>
     </div>
-
     <div class="hero-actions">
       <ui-button v-if="canManageNews" size="lg" @click="$emit('create')">
         <span class="create-plus text-2xl" aria-hidden="true">+</span>
@@ -25,13 +24,8 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 
-defineProps<{
-  canManageNews: boolean
-}>()
-
-defineEmits<{
-  create: []
-}>()
+defineProps<{ canManageNews: boolean }>()
+defineEmits<{ create: [] }>()
 </script>
 
 <style scoped>
@@ -109,5 +103,6 @@ defineEmits<{
   .hero-actions {
     justify-content: flex-start;
   }
+
 }
 </style>

@@ -1,5 +1,7 @@
 <template>
-  <header class="team-detail-hero">
+  <div class="team-detail-head">
+    <page-back-link to="/teams" label="Back to teams" />
+    <header class="team-detail-hero">
     <div class="team-detail-copy">
       <div class="breadcrumb-label">
         <span>Workspace</span>
@@ -45,16 +47,14 @@
       </ui-query-field>
     </div>
 
-    <div class="hero-actions">
-      <ui-button asLink variant="secondary" size="lg" to="/teams">Back to teams</ui-button>
-    </div>
-  </header>
+    </header>
+  </div>
 </template>
 
 <script setup lang="ts">
 import TelegramIcon from '@/icons/TelegramIcon.vue'
 import DiscordIcon from '@/icons/DiscordIcon.vue'
-import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiBadge from '@/components/ui/UiBadge'
 import { UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -76,6 +76,11 @@ const props = defineProps<Props>()
   justify-content: space-between;
   align-items: flex-end;
   gap: 1.5rem;
+}
+
+.team-detail-head {
+  display: grid;
+  gap: 0.8rem;
 }
 
 .team-detail-copy {
@@ -103,14 +108,6 @@ const props = defineProps<Props>()
   line-height: var(--text-4xl--line-height);
   font-family: var(--font-display);
   font-weight: 800;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
 }
 
 .hero-contacts {
@@ -156,8 +153,5 @@ const props = defineProps<Props>()
     line-height: var(--text-3xl--line-height);
   }
 
-  .hero-actions {
-    justify-content: flex-start;
-  }
 }
 </style>

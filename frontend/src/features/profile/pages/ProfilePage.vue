@@ -78,15 +78,13 @@
         </div>
 
         <div id="account" class="profile-group">
-          <ui-card class="danger-zone">
-            <div>
-              <div>
-                <p class="danger-title">Danger zone</p>
-                <p class="danger-text">Permanently delete your account and all associated data.</p>
-              </div>
-
+          <management-action-card
+            title="Delete account"
+            description="Permanently delete your account and all associated data. This cannot be undone."
+            danger
+          >
+            <template #action>
               <ui-button
-                class="danger-action"
                 type="button"
                 variant="danger"
                 :disabled="isLoading"
@@ -94,10 +92,9 @@
               >
                 Delete account
               </ui-button>
-            </div>
-
-            <delete-profile-modal v-model="isDeleteModalOpen" />
-          </ui-card>
+            </template>
+          </management-action-card>
+          <delete-profile-modal v-model="isDeleteModalOpen" />
         </div>
       </div>
     </div>
@@ -109,6 +106,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import ManagementActionCard from '@/components/shared/ManagementActionCard.vue'
 import { UiQueryBlock } from '@/components/query'
 import DeleteProfileModal from '../components/profile/modals/DeleteProfileModal.vue'
 import ProfileOverviewSection from '../components/profile/sections/ProfileOverviewSection.vue'
@@ -293,38 +291,6 @@ function scrollToSection(key: string) {
   padding-top: 2.25rem;
 }
 
-.danger-zone.card {
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 1.35rem;
-  border-color: var(--destructive-ring);
-  background: var(--destructive-soft);
-}
-
-.danger-action {
-  margin-top: 1rem;
-  width: max-content;
-}
-
-.danger-title,
-.danger-text {
-  margin: 0;
-}
-
-.danger-title {
-  color: var(--destructive);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-}
-
-.danger-text {
-  margin-top: 0.35rem;
-  color: var(--muted-foreground);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-}
-
 @media (max-width: 1024px) {
   .profile-layout {
     grid-template-columns: 1fr;
@@ -375,9 +341,4 @@ function scrollToSection(key: string) {
   }
 }
 
-@media (max-width: 560px) {
-  .danger-action {
-    width: 100%;
-  }
-}
 </style>

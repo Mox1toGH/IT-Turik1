@@ -1,20 +1,9 @@
 <template>
   <header class="edit-hero">
+    <page-back-link :to="`/tournaments/${tournamentId}`" label="Back to tournament" />
     <div>
       <p class="section-eyebrow">Tournaments</p>
-      <div class="heading-title-row">
-        <h1>Edit tournament</h1>
-        <ui-button
-          asLink
-          :to="`/tournaments/${tournamentId}`"
-          variant="ghost"
-          size="sm"
-          class="back-button"
-        >
-          <ArrowLeft :size="16" aria-hidden="true" />
-          Back to tournament
-        </ui-button>
-      </div>
+      <h1>Edit tournament</h1>
       <p class="section-subtitle">
         Update the tournament details, team limits, and registration dates.
       </p>
@@ -23,8 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton'
-import { ArrowLeft } from 'lucide-vue-next'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 
 defineProps<{
   tournamentId: number
@@ -33,16 +21,9 @@ defineProps<{
 
 <style scoped>
 .edit-hero {
-  display: block;
+  display: grid;
+  gap: 0.8rem;
   margin-bottom: 0;
-}
-
-.heading-title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .edit-hero h1 {
@@ -59,28 +40,11 @@ defineProps<{
   margin: 0.45rem 0 0;
 }
 
-.back-button {
-  flex: 0 0 auto;
-  width: max-content;
-  max-width: 100%;
-  white-space: nowrap;
-}
-
 @media (max-width: 760px) {
-  .heading-title-row {
-    align-items: flex-start;
-  }
-
   .edit-hero h1 {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
   }
 }
 
-@media (max-width: 560px) {
-  .heading-title-row {
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-}
 </style>
