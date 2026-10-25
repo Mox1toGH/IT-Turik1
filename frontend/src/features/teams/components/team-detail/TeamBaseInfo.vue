@@ -1,154 +1,156 @@
 <template>
-  <ui-card :is-error="props.loadingError">
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 502px">
-        <p>Failed to fetch team info</p>
-      </div>
-    </template>
-
+  <ui-card>
     <template #header>
-      <div class="panel-head">
-        <h2>Team Info</h2>
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="150px" />
-          </template>
-        </ui-skeleton-loader>
+      <div class="panel-header">
+        <span class="step-marker">01</span>
+        <div>
+          <h2>Team info</h2>
+          <p class="text-muted">Core identity, ownership, and directory status.</p>
+        </div>
       </div>
     </template>
 
-    <div>
+    <ui-query-block :query="props.query">
       <div class="info-grid">
-        <ui-card title="Name" class="info-item">
-          <template #header>
-            <span class="card-label">Name</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Name</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="70%" />
             </template>
 
-            <strong class="text-muted" :title="props.team?.name">{{
-              truncateText(props.team?.name ?? '', 35)
-            }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+            <strong class="text-muted info-value">
+              <ui-truncate :text="props.team?.name ?? ''" />
+            </strong>
+          </ui-query-field>
+        </div>
 
-        <ui-card title="Email" class="info-item">
-          <template #header>
-            <span class="card-label">Email</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Email</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="70%" />
             </template>
 
-            <strong class="text-muted">{{ props.team?.email }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+            <strong class="text-muted info-value">{{ props.team?.email }}</strong>
+          </ui-query-field>
+        </div>
 
-        <ui-card title="Organization" class="info-item">
-          <template #header>
-            <span class="card-label">Organization</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Organization</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="70%" />
             </template>
 
-            <strong class="text-muted">{{ props.team?.organization || '-' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+            <strong class="text-muted info-value">{{ props.team?.organization || '-' }}</strong>
+          </ui-query-field>
+        </div>
 
-        <ui-card title="Captain" class="info-item">
-          <template #header>
-            <span class="card-label">Captain</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Captain</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="50%" />
             </template>
 
-            <strong v-if="props.team?.captain_id">
+            <strong v-if="props.team?.captain_id" class="info-value">
               <RouterLink :to="`/users/${props.team.captain_id}`" class="captain-link">
                 {{ captainName }}
-              </RouterLink>
-            </strong>
-            <strong v-else class="text-muted">{{ captainName }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+              </RouterLink> </strong
+            ><strong v-else class="text-muted info-value">{{ captainName }}</strong>
+          </ui-query-field>
+        </div>
 
-        <ui-card title="Members count" class="info-item">
-          <template #header>
-            <span class="card-label">Members count</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Members count</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="30%" />
             </template>
 
-            <strong class="text-muted">{{ props.team?.members.length }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+            <ui-badge variant="primary" class="info-badge">
+              {{ props.team?.members.length }} members
+            </ui-badge>
+          </ui-query-field>
+        </div>
 
-        <ui-card title="Visibility" class="info-item">
-          <template #header>
-            <span class="card-label">Visibility</span>
-          </template>
-
-          <ui-skeleton-loader :loading="props.loading">
+        <div class="info-row">
+          <span class="card-label">Visibility</span>
+          <ui-query-field class="info-value-cell">
             <template #skeleton>
-              <ui-skeleton variant="rect" width="100%" style="margin-top: 5px" />
+              <ui-skeleton variant="rect" height="16px" width="40%" />
             </template>
 
-            <strong class="text-muted">{{ props.team?.is_public ? 'Public' : 'Private' }}</strong>
-          </ui-skeleton-loader>
-        </ui-card>
+            <ui-badge :variant="props.team?.is_public ? 'green' : 'gray'" class="info-badge">
+              {{ props.team?.is_public ? 'Public team' : 'Private team' }}
+            </ui-badge>
+          </ui-query-field>
+        </div>
       </div>
-    </div>
+    </ui-query-block>
 
     <template #footer>
       <div class="info-actions">
         <ui-button
-          v-if="props.team?.can_request_to_join && user?.role === 'team'"
-          size="sm"
+          v-if="props.team?.can_request_to_join && hasRole(user, 'team')"
+          size="md"
           :disabled="joinRequestLoading"
           @click="sendJoinRequest"
         >
-          <loading-icon v-if="joinRequestLoading" size="md" />
+          <LoaderCircle class="animate-spin" v-if="joinRequestLoading" :size="22" />
           {{ joinRequestLoading ? 'Sending...' : 'Request to join this team' }}
         </ui-button>
 
-        <ui-button v-if="canLeaveTeam" variant="danger" size="sm" @click="leaveTeam">
+        <ui-button
+          v-if="canLeaveTeam"
+          class="leave-team"
+          variant="danger"
+          size="md"
+          @click="isLeaveConfirmOpen = true"
+        >
           Leave team
         </ui-button>
       </div>
     </template>
   </ui-card>
+  <ui-confirm-modal
+    v-model="isLeaveConfirmOpen"
+    title="Leave team?"
+    confirm-text="Leave team"
+    confirm-variant="danger"
+    :loading="isLeaving"
+    @confirm="leaveTeam"
+  >
+    <template #message>
+      <p>
+        You will lose access to this
+        <ui-badge variant="red">team workspace</ui-badge>. You may need a new invitation to rejoin.
+      </p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import { computed } from 'vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiTruncate from '@/components/ui/UiTruncate'
+import UiBadge from '@/components/ui/UiBadge'
+import { LoaderCircle } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import { truncateText } from '@/lib/utils'
-import type { Team } from '@/api/.ts.schemas'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
+import { hasRole } from '@/shared/lib/permissions'
+import type { Team } from '@/features/teams/types'
+import type { QueryLike } from '@/composables/useQueryState'
 
 interface Props {
   team?: Team
-  loading: boolean
-  loadingError?: boolean
+  query: QueryLike
   isCaptain: boolean
 }
 
@@ -177,7 +179,7 @@ const sendJoinRequest = () => {
   hideNotification()
 
   sendJoinRequestMutate(
-    { id: props.team?.id, data: { detail: '' } },
+    { pk: props.team?.id },
     {
       onSuccess: () => {
         emit('deleted')
@@ -191,16 +193,18 @@ const sendJoinRequest = () => {
 }
 
 // ── Leave Team ────────────────────────────────────────────────────
-const { mutate: leaveTeamMutate } = useLeaveTeam()
+const { mutate: leaveTeamMutate, isPending: isLeaving } = useLeaveTeam()
+const isLeaveConfirmOpen = ref(false)
 
 const leaveTeam = () => {
   if (!props.team) return
   hideNotification()
 
   leaveTeamMutate(
-    { id: props.team.id },
+    { pk: props.team.id },
     {
       onSuccess: () => {
+        isLeaveConfirmOpen.value = false
         emit('leave')
       },
       onError: (error) => {
@@ -212,36 +216,82 @@ const leaveTeam = () => {
 </script>
 
 <style scoped>
-.panel-head {
+.panel-header {
   display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.panel-header h2 {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: var(--text-xl--line-height);
+  font-weight: 800;
+}
+
+.panel-header p {
+  margin: 0;
+}
+
+.step-marker {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .info-grid {
   display: grid;
-  gap: 0.65rem;
+  gap: 0;
+  border-top: 1px solid var(--border);
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  gap: 0.3rem;
-  background: var(--muted);
+.info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
 }
 
-.info-item span {
-  display: block;
-  font-size: 0.8rem;
+.info-row + .info-row {
+  border-top: 1px solid var(--border);
+}
+
+.info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.info-value-cell {
+  min-width: 0;
+}
+
+.info-badge {
+  width: max-content;
+  max-width: 100%;
 }
 
 .captain-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
+}
+
+.captain-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .info-actions {
@@ -250,54 +300,39 @@ const leaveTeam = () => {
   flex-wrap: wrap;
 }
 
-.modal-text {
-  margin: 0 0 0.75rem;
-  font-size: 0.9rem;
-  color: var(--color-gray-700);
-  line-height: 1.55;
+.info-actions .leave-team {
+  width: 100%;
 }
 
-.modal-text code {
-  background: #f1f5f9;
-  border: 1px solid var(--line-soft);
-  border-radius: 6px;
-  padding: 0.1rem 0.35rem;
-  font-family: 'SF Mono', ui-monospace, monospace;
-  font-size: 0.85em;
-}
+@media (max-width: 520px) {
+  .panel-header {
+    gap: 0.65rem;
+  }
 
-.modal-error {
-  margin: 0.5rem 0 0;
-  font-size: 0.8rem;
-}
+  .panel-header p {
+    margin-top: 0.2rem;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
 
-@media (max-width: 1020px) {
-  .hero-top {
+  .info-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+    padding: 0.7rem 0;
+  }
+
+  .info-value {
+    display: block;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  .info-actions {
     flex-direction: column;
   }
 
-  .hero-contacts {
-    justify-items: start;
-  }
-
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .member-row,
-  .manage-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .member-side {
-    align-items: flex-start;
-  }
-
-  .status-tags {
-    justify-content: flex-start;
+  .info-actions > * {
+    width: 100%;
   }
 }
 </style>

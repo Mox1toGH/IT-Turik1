@@ -27,7 +27,10 @@ class AccountModelTests(TestCase):
         self.assertFalse(code.is_used)
 
     def test_user_needs_onboarding_default_false(self):
-        user = User.objects.create_user(username='onboard', email='o@e.com')
+        user = User.objects.create_user(
+            username="onboard",
+            email="o@e.com",
+        )
         self.assertFalse(user.needs_onboarding)
 
     def test_user_active_by_default(self):

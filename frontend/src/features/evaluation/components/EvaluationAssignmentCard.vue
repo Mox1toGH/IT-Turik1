@@ -1,5 +1,5 @@
 <template>
-  <ui-card class="assignment-card">
+  <ui-card class="assignment-card card-actions-divided">
     <template #header>
       <div class="card-header">
         <div>
@@ -67,13 +67,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiModal from '@/components/ui/UiModal'
 import EvaluationForm from './EvaluationForm.vue'
 import EvaluationSummary from './EvaluationSummary.vue'
-import type { JuryAssignment } from '@/api/.ts.schemas'
+import type { JuryAssignment } from '@/features/evaluation/types'
 
 interface Props {
   assignment: JuryAssignment
@@ -119,7 +119,8 @@ const handleSuccess = () => {
 
 <style scoped>
 .assignment-card {
-  background: var(--muted);
+  height: 100%;
+  background: var(--card);
   border-color: var(--border);
 }
 

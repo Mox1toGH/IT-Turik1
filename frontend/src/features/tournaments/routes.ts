@@ -34,13 +34,13 @@ export const tournamentsRoutes = [
   {
     path: '/tournaments/create',
     component: () => import('./pages/TournamentCreatePage.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true, roles: ['admin'] },
   },
   {
     path: '/tournaments/:id/edit',
     component: () => import('./pages/TournamentEditPage.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
-    beforeEnter: (to) => ensureTournamentExists(to.params.id),
+    meta: { requiresAuth: true, roles: ['admin'] },
+    beforeEnter: (to: { params: { id: number } }) => ensureTournamentExists(to.params.id),
   },
   {
     path: '/tournaments',
@@ -56,18 +56,12 @@ export const tournamentsRoutes = [
     path: '/tournaments/archive/:id',
     component: () => import('./pages/TournamentArchiveDetailPage.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureTournamentArchiveExists(to.params.id),
+    beforeEnter: (to: { params: { id: number } }) => ensureTournamentArchiveExists(to.params.id),
   },
   {
     path: '/tournaments/:id',
     component: () => import('./pages/TournamentPage.vue'),
     meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureTournamentExists(to.params.id),
-  },
-  {
-    path: '/tournaments/:id/rounds/create',
-    component: () => import('./pages/CreateRoundPage.vue'),
-    meta: { requiresAuth: true },
-    beforeEnter: (to) => ensureTournamentExists(to.params.id),
+    beforeEnter: (to: { params: { id: number } }) => ensureTournamentExists(to.params.id),
   },
 ]

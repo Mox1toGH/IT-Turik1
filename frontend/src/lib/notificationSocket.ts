@@ -1,6 +1,10 @@
 import type { QueryClient } from '@tanstack/vue-query'
 
-import type { Notification, PaginatedNotificationList } from '@/api/.ts.schemas'
+import {
+  getGetUnreadNotificationCountQueryKey,
+  getListNotificationsQueryKey,
+} from '@/api/notifications/notifications'
+import type { NotificationResponse, PagedNotificationResponse } from '@/api/backendAPINinja.schemas'
 
 type SocketEnvelope = {
   event: string
@@ -10,39 +14,33 @@ type SocketEnvelope = {
 let socket: WebSocket | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 let manuallyClosed = false
+let sessionAuthenticated = false
 let reconnectAttempts = 0
 let clientRef: QueryClient | null = null
 
 const MAX_BACKOFF_MS = 30000
 
-const unreadKey = ['http:', 'localhost:8000', 'api', 'notifications', 'unread-count'] as const
-
-function listQueryPrefix() {
-  return ['http:', 'localhost:8000', 'api', 'notifications'] as const
-}
-
-function getWsUrl(token: string): string {
+function getWsUrl(): string {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.hostname
-  const port = '8000'
-  return `${wsProtocol}//${host}:${port}/ws/notifications/?token=${encodeURIComponent(token)}`
+  const backend = new URL(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
+  return `${wsProtocol}//${backend.host}/ws/notifications/`
 }
 
 function applyUnreadCount(unreadCount: number) {
   if (!clientRef) return
-  clientRef.setQueryData(unreadKey, { unread_count: unreadCount })
+  clientRef.setQueryData(getGetUnreadNotificationCountQueryKey(), { unread_count: unreadCount })
 }
 
-function applyNotificationCreated(notification: Notification) {
+function applyNotificationCreated(notification: NotificationResponse) {
   if (!clientRef) return
-  clientRef.setQueriesData({ queryKey: listQueryPrefix(), exact: false }, (old) => {
-    const current = old as PaginatedNotificationList | undefined
-    if (!current?.results) return old
-    if (current.results.some((n) => n.id === notification.id)) return current
+  clientRef.setQueriesData({ queryKey: getListNotificationsQueryKey(), exact: false }, (old) => {
+    const current = old as PagedNotificationResponse | undefined
+    if (!current?.items) return old
+    if (current.items.some((n) => n.id === notification.id)) return current
     return {
       ...current,
-      count: (current.count ?? current.results.length) + 1,
-      results: [notification, ...current.results],
+      count: (current.count ?? current.items.length) + 1,
+      results: [notification, ...current.items],
     }
   })
 }
@@ -50,12 +48,12 @@ function applyNotificationCreated(notification: Notification) {
 function applyReadStatusChanged(ids: number[], isRead: boolean) {
   if (!clientRef) return
   const idSet = new Set(ids)
-  clientRef.setQueriesData({ queryKey: listQueryPrefix(), exact: false }, (old) => {
-    const current = old as PaginatedNotificationList | undefined
-    if (!current?.results) return old
+  clientRef.setQueriesData({ queryKey: getListNotificationsQueryKey(), exact: false }, (old) => {
+    const current = old as PagedNotificationResponse | undefined
+    if (!current?.items) return old
     return {
       ...current,
-      results: current.results.map((item) =>
+      results: current.items.map((item) =>
         idSet.has(item.id) ? { ...item, is_read: isRead } : item,
       ),
     }
@@ -65,13 +63,16 @@ function applyReadStatusChanged(ids: number[], isRead: boolean) {
 function applyDeleted(ids: number[]) {
   if (!clientRef) return
   const idSet = new Set(ids)
-  clientRef.setQueriesData({ queryKey: listQueryPrefix(), exact: false }, (old) => {
-    const current = old as PaginatedNotificationList | undefined
-    if (!current?.results) return old
-    const filtered = current.results.filter((item) => !idSet.has(item.id))
+  clientRef.setQueriesData({ queryKey: getListNotificationsQueryKey(), exact: false }, (old) => {
+    const current = old as PagedNotificationResponse | undefined
+    if (!current?.items) return old
+    const filtered = current.items.filter((item) => !idSet.has(item.id))
     return {
       ...current,
-      count: Math.max(0, (current.count ?? current.results.length) - (current.results.length - filtered.length)),
+      count: Math.max(
+        0,
+        (current.count ?? current.items.length) - (current.items.length - filtered.length),
+      ),
       results: filtered,
     }
   })
@@ -80,7 +81,7 @@ function applyDeleted(ids: number[]) {
 function handleMessage(data: SocketEnvelope) {
   const payload = data.payload ?? {}
   if (data.event === 'notification.created') {
-    const notification = payload.notification as Notification | undefined
+    const notification = payload.notification as NotificationResponse | undefined
     if (notification) applyNotificationCreated(notification)
     return
   }
@@ -110,8 +111,7 @@ function clearReconnectTimer() {
 function scheduleReconnect() {
   if (manuallyClosed) return
   clearReconnectTimer()
-  const token = localStorage.getItem('access')
-  if (!token) return
+  if (!sessionAuthenticated) return
   reconnectAttempts += 1
   const delay = Math.min(MAX_BACKOFF_MS, Math.max(1000, 1000 * 2 ** (reconnectAttempts - 1)))
   reconnectTimer = setTimeout(() => {
@@ -122,17 +122,18 @@ function scheduleReconnect() {
 export function connectNotificationSocket(queryClient?: QueryClient) {
   if (queryClient) clientRef = queryClient
   if (!clientRef) return
+  if (!sessionAuthenticated) return
 
-  const token = localStorage.getItem('access')
-  if (!token) return
-
-  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+  if (
+    socket &&
+    (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+  ) {
     return
   }
 
   manuallyClosed = false
   clearReconnectTimer()
-  socket = new WebSocket(getWsUrl(token))
+  socket = new WebSocket(getWsUrl())
 
   socket.onopen = () => {
     reconnectAttempts = 0
@@ -143,13 +144,22 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
       const data = JSON.parse(event.data) as SocketEnvelope
       handleMessage(data)
     } catch {
-      clientRef?.invalidateQueries({ queryKey: listQueryPrefix(), exact: false })
-      clientRef?.invalidateQueries({ queryKey: unreadKey })
+      clientRef?.invalidateQueries({ queryKey: getListNotificationsQueryKey(), exact: false })
+      clientRef?.invalidateQueries({ queryKey: getGetUnreadNotificationCountQueryKey() })
     }
   }
 
-  socket.onclose = () => {
+  socket.onclose = (event) => {
     socket = null
+    if (event.code === 4401) {
+      import('@/lib/apiClient')
+        .then(({ AXIOS_INSTANCE }) => AXIOS_INSTANCE.get('/api/accounts/profile'))
+        .then(() => {
+          if (!manuallyClosed) connectNotificationSocket()
+        })
+        .catch(() => {})
+      return
+    }
     scheduleReconnect()
   }
 
@@ -159,10 +169,20 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
 }
 
 export function disconnectNotificationSocket() {
+  sessionAuthenticated = false
   manuallyClosed = true
   clearReconnectTimer()
   if (socket) {
     socket.close()
     socket = null
   }
+}
+
+export function setNotificationSocketAuthenticated(authenticated: boolean) {
+  sessionAuthenticated = authenticated
+  if (authenticated) {
+    if (clientRef) connectNotificationSocket()
+    return
+  }
+  disconnectNotificationSocket()
 }

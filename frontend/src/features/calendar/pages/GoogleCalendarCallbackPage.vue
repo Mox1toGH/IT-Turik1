@@ -1,32 +1,30 @@
 <template>
   <section class="page-shell callback-page">
-    <ui-card class="callback-card">
+    <page-back-link to="/calendar" label="Back to calendar" />
+    <section class="callback-card">
       <div v-if="isProcessing" class="callback-status">
         <div class="spinner"></div>
         <p>Connecting Google Calendar...</p>
       </div>
       <div v-else-if="isSuccess" class="callback-status callback-status--success">
-        <selected-icon class="status-icon status-icon--success" />
+        <Check class="status-icon status-icon--success" />
         <p>Google Calendar connected successfully!</p>
         <p class="text-muted">Redirecting to calendar...</p>
       </div>
       <div v-else class="callback-status callback-status--error">
-        <cross-icon class="status-icon status-icon--error" />
+        <X class="status-icon status-icon--error" />
         <p>Failed to connect Google Calendar</p>
         <p class="text-muted">{{ errorMessage }}</p>
-        <ui-button variant="default" @click="goToCalendar">Back to Calendar</ui-button>
       </div>
-    </ui-card>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import SelectedIcon from '@/icons/SelectedIcon.vue'
-import CrossIcon from '@/icons/CrossIcon.vue'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
+import { Check, X } from 'lucide-vue-next'
 import { callbackGoogleCalendar } from '@/api/accounts/accounts'
 
 const router = useRouter()
@@ -35,10 +33,6 @@ const route = useRoute()
 const isProcessing = ref(true)
 const isSuccess = ref(false)
 const errorMessage = ref('')
-
-function goToCalendar() {
-  router.push('/calendar')
-}
 
 onMounted(async () => {
   const code = route.query.code as string | undefined
@@ -54,7 +48,7 @@ onMounted(async () => {
     isSuccess.value = true
     isProcessing.value = false
     setTimeout(() => router.push('/calendar'), 1500)
-  } catch (e) {
+  } catch (_error) {
     isProcessing.value = false
     errorMessage.value = 'Failed to connect. Please try again.'
   }
@@ -89,7 +83,7 @@ onMounted(async () => {
 }
 
 .status-icon--success {
-  color: #22940d;
+  color: var(--success);
 }
 
 .status-icon--error {
@@ -106,6 +100,8 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

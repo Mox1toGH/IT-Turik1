@@ -1,0 +1,50 @@
+from ninja import NinjaAPI
+from ninja.errors import HttpError, ValidationError as NinjaValidationError
+
+from evaluation.api import router as evaluation_router
+from accounts.api import router as accounts_router
+from teams.api import router as teams_router
+from news.api import router as news_router
+from notifications.api import router as notifications_router
+from stats.api import router as stats_router
+from tournaments.api import router as tournaments_router
+
+api = NinjaAPI(title='Backend API (Ninja)', urls_namespace='ninja-api')
+
+
+@api.exception_handler(HttpError)
+def http_error_handler(request, exc):
+    return api.create_response(
+        request,
+        exc.message,
+        status=exc.status_code,
+    )
+
+@api.exception_handler(NinjaValidationError)
+def validation_error_handler(request, exc):
+    details = {}
+
+    for error in exc.errors:
+        loc = error.get("loc", [])
+        message = error.get("msg", "Invalid value.")
+
+        if loc:
+            field = loc[-1]
+            details[field] = message
+
+    return api.create_response(
+        request,
+        {
+            "message": "Validation failed.",
+            "details": details or None,
+        },
+        status=400,
+    )
+
+api.add_router('/evaluation', evaluation_router)
+api.add_router('/accounts', accounts_router)
+api.add_router('/teams', teams_router)
+api.add_router('/news', news_router)
+api.add_router('/notifications', notifications_router)
+api.add_router('/stats', stats_router)
+api.add_router('/tournaments', tournaments_router)

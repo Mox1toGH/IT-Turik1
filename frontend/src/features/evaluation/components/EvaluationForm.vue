@@ -11,9 +11,8 @@
           <p class="criterion-max">Max: {{ criterion.max_score }}</p>
         </div>
 
-        <ui-input
+        <ui-number-input
           v-model="scoresMap[criterion.id]"
-          type="number"
           :min="0"
           :max="criterion.max_score"
           :is-invalid="hasCriterionError(criterion.id, criterion.max_score)"
@@ -46,19 +45,18 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiTextArea from '@/components/ui/UiTextArea.vue'
-import type { JuryAssignment, ScoreItem } from '@/api/.ts.schemas'
+import UiButton from '@/components/ui/UiButton'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiTextArea from '@/components/ui/UiTextArea'
 import {
   useCreateJuryEvaluation,
   useUpdateJuryEvaluation,
-  type GetJuryEvaluationQueryResult,
 } from '@/api/evaluation/evaluation'
+import type { EvaluationScore, JuryAssignment, JuryEvaluation } from '@/features/evaluation/types'
 
 interface Props {
   assignment: JuryAssignment
-  existingEvaluation?: GetJuryEvaluationQueryResult | null
+  existingEvaluation?: JuryEvaluation | null
 }
 
 const props = defineProps<Props>()
@@ -80,7 +78,7 @@ const scoresMap = reactive<Record<string, number>>(
 
 const comment = ref(props.existingEvaluation?.comment ?? '')
 
-const scoreItems = computed<ScoreItem[]>(() =>
+const scoreItems = computed<EvaluationScore[]>(() =>
   props.assignment.round_details.criteria.map((criterion) => ({
     criterion_id: criterion.id,
     criterion_name: criterion.name,
@@ -126,7 +124,7 @@ const handleSubmit = () => {
   if (props.existingEvaluation?.id) {
     updateMutation.mutate(
       {
-        id: props.existingEvaluation.id,
+        evaluationId: props.existingEvaluation.id,
         data: body,
       },
       {

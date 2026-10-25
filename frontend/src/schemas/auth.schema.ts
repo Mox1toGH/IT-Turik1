@@ -1,4 +1,4 @@
-import type { RoleB96Enum } from '@/api/.ts.schemas'
+import type { UserRole } from '@/shared/types/user'
 import * as v from 'valibot'
 
 export const PasswordSchema = v.pipe(
@@ -12,6 +12,7 @@ export const PasswordSchema = v.pipe(
 
 export const LoginSchema = v.object({
   username: v.pipe(v.string(), v.minLength(1, 'Username cannot be empty')),
+  password: v.pipe(v.string(), v.minLength(1, 'Password cannot be empty')),
 })
 
 export const RegisterSchema = v.object({
@@ -20,10 +21,11 @@ export const RegisterSchema = v.object({
     v.minLength(3, 'Username must be at least 3 characters.'),
     v.regex(/^[A-Za-z0-9@.+_-]+$/, 'Use letters, numbers, and @ . + - _ only.'),
   ),
+  activation_code: v.pipe(v.string(), v.minLength(1, 'Activation code cannot be empty')),
   full_name: v.pipe(v.string(), v.minLength(1, 'Fullname cannot be empty')),
   email: v.pipe(v.string(), v.email('Invalid email')),
   password: PasswordSchema,
-  role: v.picklist<RoleB96Enum[]>(['admin', 'jury', 'organizer', 'team']),
+  role: v.picklist<UserRole[]>(['admin', 'jury', 'organizer', 'team']),
   phone: v.pipe(
     v.string(),
     v.trim(),

@@ -9,10 +9,18 @@ import { teamsRoutes } from '@/features/teams/routes'
 import { tournamentsRoutes } from '@/features/tournaments/routes'
 import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
-import { statsRoutes } from '@/features/stats/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
 import { getUserProfile } from '@/api/accounts/accounts'
-import { shopRoutes } from '@/features/shop/routes'
+import { hasAnyRole } from '@/shared/lib/permissions'
+import type { UserRole } from '@/shared/types/user'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    requiresGuest?: boolean
+    roles?: UserRole[]
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,19 +33,28 @@ const router = createRouter({
     ...tournamentsRoutes,
     ...newsRoutes,
     ...evaluationRoutes,
-    ...statsRoutes,
     ...calendarRoutes,
-    ...shopRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
 
 router.beforeEach(async (to) => {
   const store = useUserStore()
-  const tokens = store.getTokens()
+  let profile: Awaited<ReturnType<typeof getUserProfile>> | null = null
 
-  const isAuthenticated = !!tokens.access
-  const needsOnboarding = !!tokens.needsOnboarding
+  // The session lives in HttpOnly cookies, so validate it once instead of
+  // trying to inspect an access token in browser storage.
+  if (!store.sessionChecked) {
+    try {
+      profile = await getUserProfile()
+      store.setSession({ authenticated: true, onboarding_required: profile.needs_onboarding })
+    } catch {
+      store.clearSession()
+    }
+  }
+
+  const isAuthenticated = store.isAuthenticated
+  const needsOnboarding = store.needsOnboarding
 
   if (isAuthenticated && needsOnboarding && to.path !== '/complete-profile') {
     return '/complete-profile'
@@ -48,7 +65,6 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    store.logout()
     return '/login'
   }
 
@@ -61,13 +77,15 @@ router.beforeEach(async (to) => {
     return '/'
   }
 
-  if (to.meta.requiresAdmin) {
+  if (to.meta.roles?.length) {
     try {
-      const profile = await getUserProfile()
-      if (profile.role !== 'admin') {
+      profile ??= await getUserProfile()
+      if (!isAuthenticated) return '/login'
+      if (!hasAnyRole(profile, to.meta.roles)) {
         return '/'
       }
     } catch {
+      store.clearSession()
       return '/'
     }
   }

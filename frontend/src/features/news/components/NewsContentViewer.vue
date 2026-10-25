@@ -4,10 +4,11 @@
 
 <script setup lang="ts">
 import Highlight from '@tiptap/extension-highlight'
-import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { watch } from 'vue'
+import { SafeTiptapLink } from '@/lib/safeTiptapLink'
 
 interface Props {
   content: JSONContent
@@ -18,16 +19,9 @@ const props = defineProps<Props>()
 const editor = useEditor({
   extensions: [
     StarterKit,
+    Underline,
     Highlight,
-    Link.configure({
-      openOnClick: true,
-      autolink: true,
-      defaultProtocol: 'https',
-      HTMLAttributes: {
-        rel: 'noopener noreferrer nofollow',
-        target: '_blank',
-      },
-    }),
+    SafeTiptapLink,
   ],
   content: props.content,
   editable: false,
@@ -49,10 +43,8 @@ watch(
 
 <style scoped>
 .news-content {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-  padding: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .news-content :deep(.ProseMirror) {
@@ -76,13 +68,13 @@ watch(
 }
 
 .news-content :deep(.ProseMirror a) {
-  color: #1c7ed6;
+  color: var(--pm-link);
   text-decoration: underline;
   text-underline-offset: 2px;
   font-weight: 600;
 }
 
 .news-content :deep(.ProseMirror a:hover) {
-  color: #1864ab;
+  color: var(--pm-link);
 }
 </style>

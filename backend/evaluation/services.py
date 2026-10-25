@@ -1,5 +1,5 @@
 from django.db import transaction
-from rest_framework.exceptions import ValidationError
+from backend.ninja_exceptions import ValidationError
 from accounts.models import User
 from notifications.services import NotificationService
 from tournaments.models import Round
@@ -64,6 +64,7 @@ def replace_round_jury_assignments(round_obj, assignments_data):
 
     if new_assignments:
         JuryAssignment.objects.bulk_create(new_assignments)
+
     newly_assigned_ids = all_jury_ids - previous_jury_ids
     if newly_assigned_ids:
         recipients = list(User.objects.filter(id__in=newly_assigned_ids))
@@ -155,7 +156,7 @@ def apply_passing_count(round_obj) -> dict:
         ).update(
             is_active=False,
             is_disqualified=False,
-            disqualification_reason=f'Eliminated by rank in {round_obj.name}'
+            disqualification_reason=f'Eliminated by rank in {round_obj.name}',
         )
 
     return {

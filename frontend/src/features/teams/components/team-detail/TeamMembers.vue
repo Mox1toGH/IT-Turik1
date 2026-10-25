@@ -1,98 +1,88 @@
 <template>
-  <ui-card :is-error="props.loadingError">
-    <template #error>
-      <div style="display: flex; justify-content: center; align-items: center; height: 200px">
-        <p>Failed to fetch team members</p>
-      </div>
-    </template>
-
+  <ui-card title="Members">
     <div class="members-sections">
       <section class="members-section">
-        <header class="section-subhead">
-          <h3>Members</h3>
-          <ui-skeleton-loader :loading="props.loading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="80px" />
-            </template>
-
-            <span class="text-muted">{{ filteredMembers?.length }} people</span>
-          </ui-skeleton-loader>
+        <header v-if="props.members" class="section-subhead">
+          <span class="text-muted">{{ filteredMembers?.length }} people</span>
         </header>
 
-        <ui-skeleton-loader :loading="props.loading">
-          <template #skeleton>
-            <div class="member-list">
-              <ui-card v-for="i in 2" :key="i" class="card-item">
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <div style="display: flex; justify-content: space-between; gap: 10px">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="100px" />
+        <ui-query-block :query="props.query" title="team members">
+          <ui-query-field>
+            <template #skeleton>
+              <div class="member-list">
+                <div
+                  v-for="i in 2"
+                  :key="`member-skeleton-${i}`"
+                  class="member-card"
+                >
+                  <ui-skeleton variant="rounded" width="44px" height="44px" />
+                  <div class="member-main">
+                    <div class="member-top">
+                      <ui-skeleton variant="rect" width="120px" height="24px" />
+                      <ui-skeleton variant="rounded" width="64px" height="29px" />
+                    </div>
+                    <ui-skeleton variant="rect" width="190px" height="20px" />
                   </div>
-
-                  <ui-skeleton variant="rect" width="200px" />
                 </div>
-              </ui-card>
-            </div>
-          </template>
+              </div>
+            </template>
 
-          <div class="member-list">
-            <ui-card
-              class="card-item"
-              v-for="member in filteredMembers"
-              :key="`member-${member.id}`"
-            >
-              <div class="member-row">
+            <div class="member-list">
+              <article
+                class="member-card"
+                v-for="member in filteredMembers"
+                :key="`member-${member.id}`"
+              >
                 <user-avatar
                   :avatar="member.avatar"
-                  :avatar-frame-url="member.avatar_frame_url"
                   :username="member.username"
                   :full-name="member.full_name || ''"
-                  :size="42"
+                  :size="44"
                 />
 
                 <div class="member-main">
-                <div style="display: flex; justify-content: space-between">
-                  <p class="member-name">
-                    <RouterLink :to="`/users/${member.id}`" class="member-link">
-                      {{ member.username }}
-                    </RouterLink>
-                  </p>
+                  <div class="member-top">
+                    <p class="member-name">
+                      <RouterLink :to="`/users/${member.id}`" class="member-link">
+                        {{ member.username }}
+                      </RouterLink>
+                    </p>
 
-                  <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
-                    >Captain</ui-badge
-                  >
-                  <ui-badge v-else variant="gray">Member</ui-badge>
+                    <ui-badge v-if="member.id === props.team?.captain_id" variant="green"
+                      >Captain</ui-badge
+                    >
+                    <ui-badge v-else variant="gray">Member</ui-badge>
+                  </div>
+
+                  <p class="text-muted member-email">{{ member.email }}</p>
                 </div>
+              </article>
 
-                <p class="text-muted member-email">{{ member.email }}</p>
-                </div>
-              </div>
-            </ui-card>
-
-            <p v-if="filteredMembers?.length === 0" class="text-muted">
-              No accepted members match your search.
-            </p>
-          </div>
-        </ui-skeleton-loader>
+              <p v-if="filteredMembers?.length === 0" class="text-muted">
+                No accepted members match your search.
+              </p>
+            </div>
+          </ui-query-field>
+        </ui-query-block>
       </section>
     </div>
   </ui-card>
 </template>
 
 <script setup lang="ts">
-import type { Team, User } from '@/api/.ts.schemas'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiCard from '@/components/ui/UiCard'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
+import type { QueryLike } from '@/composables/useQueryState'
 import { computed } from 'vue'
+import type { Team } from '@/features/teams/types'
 
 interface Props {
   team?: Team
-  user?: User
-  loading: boolean
-  loadingError?: boolean
+  members?: Team['members']
+  query: QueryLike
   searchFilter?: string
   isCaptain: boolean
 }
@@ -106,35 +96,11 @@ const matches = (parts: (string | undefined)[]) => {
 }
 
 const filteredMembers = computed(() =>
-  props.team?.members.filter((m) => matches([m.username, m.email, m.full_name])),
+  props.members?.filter((m) => matches([m.username, m.email, m.full_name])),
 )
-
 </script>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--line-soft);
-  height: 100%;
-}
-
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
-}
-
-.panel-head h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-}
-
-.card-item {
-  background-color: var(--muted);
-}
-
 .members-sections {
   display: flex;
   flex-direction: column;
@@ -162,8 +128,34 @@ const filteredMembers = computed(() =>
   overflow-y: auto;
   max-height: 300px;
   display: grid;
-  gap: 0.55rem;
-  grid-template-rows: auto;
+  gap: 0.75rem;
+  padding: 1px;
+}
+
+.member-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.member-card:hover {
+  border-color: var(--primary);
+  background: var(--muted);
+}
+
+.member-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .member-name,
@@ -173,12 +165,8 @@ const filteredMembers = computed(() =>
 
 .member-name {
   font-weight: 700;
-}
-
-.member-row {
-  display: flex;
-  gap: 0.7rem;
-  align-items: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .member-main {
@@ -187,25 +175,24 @@ const filteredMembers = computed(() =>
 }
 
 .member-link {
-  color: var(--brand-700);
+  color: var(--primary);
   text-decoration: none;
   font-weight: 700;
 }
 
+.member-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .member-email {
   font-size: 0.84rem;
+  overflow-wrap: anywhere;
 }
 
-.member-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.45rem;
-}
-
-@media (max-width: 640px) {
-  .member-side {
-    align-items: flex-start;
+@media (prefers-reduced-motion: reduce) {
+  .member-card {
+    transition: none;
   }
 }
 </style>

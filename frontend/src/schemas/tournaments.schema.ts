@@ -34,11 +34,21 @@ export const CreateTournamentSchema = v.pipe(
       (input) => {
         const combinedStartDate = combineDateAndTime(input.startDate, input.startTime)
         const combinedEndDate = combineDateAndTime(input.endDate, input.endTime)
+
         return combinedEndDate > combinedStartDate
       },
       'End date/time must be after start date/time',
     ),
     ['endDate'],
+  ),
+
+  v.forward(
+    v.partialCheck(
+      [['max_teams'], ['min_team_members']],
+      (input) => input.max_teams >= input.min_team_members,
+      'Maximum teams must be greater than or equal to minimum team members',
+    ),
+    ['max_teams'],
   ),
 )
 

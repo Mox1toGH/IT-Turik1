@@ -1,18 +1,23 @@
 <template>
   <ui-card class="panel form-panel">
-    <header class="panel-head">
-      <h2>Team profile settings</h2>
-      <ui-badge variant="green">Captain access</ui-badge>
-    </header>
+    <template #header>
+      <div class="panel-header">
+        <div>
+          <h2>Team profile</h2>
+          <p class="text-muted">Core identity and contact details for the team directory.</p>
+        </div>
+      </div>
+    </template>
 
-    <form class="form-grid" @submit.prevent="handleSubmit">
-      <label class="form-item">
-        <p class="form-label">Team name</p>
-        <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-          <template #skeleton>
-            <ui-skeleton variant="rect" height="45px" width="100%" />
-          </template>
+    <form class="edit-form" @submit.prevent="handleSubmit">
+      <section class="form-section-grid identity-section">
+        <div class="section-heading">
+          <h3 class="section-title">Identity</h3>
+          <p class="text-muted">Public details shown across team pages.</p>
+        </div>
 
+        <label class="form-item">
+          <p class="form-label">Team name</p>
           <ui-input
             v-model="form.fields.value.name"
             required
@@ -20,20 +25,13 @@
             :isInvalid="!!form.errors.value.name"
             style="width: 100%"
             @blur="form.validateField('name')"
-          />
-          <small v-if="form.errors.value.name" class="text-error">{{
+          /><small v-if="form.errors.value.name" class="text-error">{{
             form.errors.value.name
           }}</small>
-        </ui-skeleton-loader>
-      </label>
+        </label>
 
-      <label class="form-item">
-        <p class="form-label">Team email</p>
-        <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-          <template #skeleton>
-            <ui-skeleton variant="rect" height="45px" width="100%" />
-          </template>
-
+        <label class="form-item">
+          <p class="form-label">Team email</p>
           <ui-input
             v-model="form.fields.value.email"
             type="email"
@@ -42,40 +40,33 @@
             :isInvalid="!!form.errors.value.email"
             style="width: 100%"
             @blur="form.validateField('email')"
-          />
-          <small v-if="form.errors.value.email" class="text-error">{{
+          /><small v-if="form.errors.value.email" class="text-error">{{
             form.errors.value.email
           }}</small>
-        </ui-skeleton-loader>
-      </label>
+        </label>
 
-      <label class="form-item">
-        <p class="form-label">Organization</p>
-        <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-          <template #skeleton>
-            <ui-skeleton variant="rect" height="45px" width="100%" />
-          </template>
-
+        <label class="form-item">
+          <p class="form-label">Organization</p>
           <ui-input
             v-model="form.fields.value.organization"
             :disabled="isSavingChanges"
             :isInvalid="!!form.errors.value.organization"
             style="width: 100%"
             @blur="form.validateField('organization')"
-          />
-          <small v-if="form.errors.value.organization" class="text-error">{{
+          /><small v-if="form.errors.value.organization" class="text-error">{{
             form.errors.value.organization
           }}</small>
-        </ui-skeleton-loader>
-      </label>
+        </label>
+      </section>
 
-      <label class="form-item">
-        <p class="form-label">Telegram</p>
-        <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-          <template #skeleton>
-            <ui-skeleton variant="rect" height="45px" width="100%" />
-          </template>
+      <section class="form-section-grid contact-section">
+        <div class="section-heading">
+          <h3 class="section-title">Contact</h3>
+          <p class="text-muted">Optional channels members can use to coordinate.</p>
+        </div>
 
+        <label class="form-item">
+          <p class="form-label">Telegram</p>
           <ui-input
             v-model="form.fields.value.contact_telegram"
             title="Telegram username: 5-32 characters, start with a letter, letters/digits/_"
@@ -83,20 +74,13 @@
             :isInvalid="!!form.errors.value.contact_telegram"
             style="width: 100%"
             @blur="form.validateField('contact_telegram')"
-          />
-          <small v-if="form.errors.value.contact_telegram" class="text-error">{{
+          /><small v-if="form.errors.value.contact_telegram" class="text-error">{{
             form.errors.value.contact_telegram
           }}</small>
-        </ui-skeleton-loader>
-      </label>
+        </label>
 
-      <label class="form-item">
-        <p class="form-label">Discord</p>
-        <ui-skeleton-loader :loading="props.loading" style="width: 100%">
-          <template #skeleton>
-            <ui-skeleton variant="rect" height="45px" width="100%" />
-          </template>
-
+        <label class="form-item">
+          <p class="form-label">Discord</p>
           <ui-input
             v-model="form.fields.value.contact_discord"
             title="Discord username: 2-32 characters, letters/digits/._ with optional #1234"
@@ -104,19 +88,23 @@
             :isInvalid="!!form.errors.value.contact_discord"
             style="width: 100%"
             @blur="form.validateField('contact_discord')"
-          />
-          <small v-if="form.errors.value.contact_discord" class="text-error">{{
+          /><small v-if="form.errors.value.contact_discord" class="text-error">{{
             form.errors.value.contact_discord
           }}</small>
-        </ui-skeleton-loader>
-      </label>
+        </label>
+      </section>
 
-      <div class="form-actions full-width">
-        <ui-button type="submit" :disabled="isSavingChanges || props.loading || props.isError">
-          <loading-icon v-if="isSavingChanges" />
+      <div class="form-actions">
+        <ui-button type="submit" size="lg" :disabled="isSavingChanges || props.loading">
+          <LoaderCircle class="animate-spin" v-if="isSavingChanges" />
           Save changes
         </ui-button>
-        <ui-button asLink variant="secondary" :to="`/teams/${team?.id}`" :disabled="props.loading"
+        <ui-button
+          asLink
+          variant="secondary"
+          size="lg"
+          :to="`/teams/${team?.id}`"
+          :disabled="props.loading"
           >Cancel</ui-button
         >
       </div>
@@ -125,24 +113,21 @@
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiInput from '@/components/ui/UiInput.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
 import { useNotification } from '@/composables/useNotification'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
 import { useForm } from '@/composables/useForm'
 import { EditTeamSchema } from '@/schemas/teams.schema'
-import type { Team } from '@/api/.ts.schemas'
 import { useUpdateTeam } from '@/api/teams/teams'
+import type { Team } from '@/features/teams/types'
+
 interface Props {
   team?: Team
   loading: boolean
-  isError?: boolean
 }
 
 const props = defineProps<Props>()
@@ -163,15 +148,20 @@ const { mutate: updateTeam } = useUpdateTeam()
 
 const handleSubmit = () => {
   if (!props.team || !form.validate()) return
+  isSavingChanges.value = true
 
   updateTeam(
-    { id: props.team.id, data: form.fields.value },
+    { pk: props.team.id, data: form.fields.value },
     {
       onSuccess: () => {
+        showNotification('Team updated successfully.', 'success')
         router.push(`/teams/${props.team?.id}`)
       },
       onError: (error) => {
         showNotification(error.message, 'error')
+      },
+      onSettled: () => {
+        isSavingChanges.value = false
       },
     },
   )
@@ -179,46 +169,67 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--line-soft);
+.access-badge {
+  margin-left: auto;
+  white-space: nowrap;
 }
 
-.panel-head {
+.edit-form {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
+  flex-direction: column;
+  gap: 1.15rem;
 }
 
-.panel-head h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-}
-
-.lock-note {
-  margin-top: 0;
-}
-
-.form-grid {
+.form-section-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
-.full-width {
+.form-section-grid + .form-section-grid {
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--border);
+}
+
+.section-heading {
   grid-column: 1 / -1;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.section-heading p {
+  margin: 0;
+}
+
+.section-title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  font-weight: 800;
 }
 
 .form-actions {
   display: flex;
-  gap: 0.6rem;
   align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
 }
 
 @media (max-width: 760px) {
-  .form-grid {
+  .panel-header {
+    flex-wrap: wrap;
+  }
+
+  .access-badge {
+    margin-left: 0;
+  }
+
+  .form-section-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1,10 +1,9 @@
 <template>
   <ui-modal
-    :model-value="props.modelValue"
+    :model-value="modelValue"
     @update:model-value="toggleOpen"
     @close="toggleClose"
     max-width="1200px"
-    scrollable
   >
     <template #title>
       <h2>Edit round</h2>
@@ -131,7 +130,6 @@
       <label class="form-item passing-count-field">
         <span class="form-label">Passing count</span>
         <ui-input
-          type="number"
           v-model.number="form.fields.value.passing_count"
           placeholder="Enter passing teams count"
           :isInvalid="!!form.errors.value.passing_count"
@@ -143,7 +141,7 @@
       </label>
 
       <ui-button class="submit-btn" type="submit" :disabled="isPending">
-        <loading-icon v-if="isPending" />
+        <LoaderCircle class="animate-spin" v-if="isPending" />
         <p>Edit</p></ui-button
       >
     </form>
@@ -151,58 +149,55 @@
 </template>
 
 <script setup lang="ts">
-import UiDatePicker from '@/components/ui/UiDatePicker.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import { toRaw } from 'vue'
+import UiDatePicker from '@/components/ui/UiDatePicker'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
 import { useForm } from '@/composables/useForm'
 import { EditRoundSchema } from '@/schemas/tournaments.schema'
-import { type JSONContent } from '@tiptap/vue-3'
-import AddCriteriaModal from '../../create-round/modals/AddCriteriaModal.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import AddCriteriaModal from '../tabs/tournament-rounds/modals/AddCriteriaModal.vue'
+import UiButton from '@/components/ui/UiButton'
+import { LoaderCircle } from 'lucide-vue-next'
 import { useNotification } from '@/composables/useNotification'
 import { combineDateAndTime } from '@/lib/date'
-import type { Criterion, Round } from '@/api/.ts.schemas'
 import { useUpdateRound } from '@/api/tournaments/tournaments'
-import EditorModal from '../../create-round/modals/EditorModal.vue'
+import EditorModal from '@/components/shared/EditorModal.vue'
+import type { Round } from '@/features/tournaments/types'
 
 interface Props {
   modelValue: boolean
   round: Round
 }
 
-interface Form {
-  name: string
-  passing_count: number
-  tech_requirements: JSONContent | null
-  description: JSONContent | null
-  must_have_requirements: JSONContent | null
-  criteria: Criterion[]
-  start_date: Date
-  start_time: string
-  end_date: Date
-  end_time: string
-}
-
+// Don't destructure props: keep `props` so the template/render context stays valid
 const props = defineProps<Props>()
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
 const { showNotification } = useNotification()
-const pad = (value: number) => String(value).padStart(2, '0')
-const startDate = new Date(props.round.start_date)
-const endDate = new Date(props.round.end_date)
 
-const form = useForm<Form>(EditRoundSchema, {
-  name: props.round.name ?? '',
-  passing_count: props.round.passing_count ?? 1,
-  description: props.round.description ?? '',
-  tech_requirements: props.round.tech_requirements ?? {},
-  must_have_requirements: props.round.must_have_requirements ?? {},
-  criteria: props.round.criteria,
+const pad = (value: number) => String(value).padStart(2, '0')
+
+// The parent may pass a reactive proxy (e.g. from a ref).
+// structuredClone (used inside useForm) can't clone proxies, so unwrap to plain data.
+const round = toRaw(props.round)
+
+const startDate = new Date(round.start_date)
+const endDate = new Date(round.end_date)
+
+const form = useForm(EditRoundSchema, {
+  name: round.name ?? '',
+  passing_count: round.passing_count ?? 1,
+  description: round.description ?? '',
+  tech_requirements: round.tech_requirements ?? {},
+  must_have_requirements: round.must_have_requirements ?? {},
+  criteria: round.criteria,
+
   start_date: startDate,
   start_time: `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`,
+
   end_date: endDate,
   end_time: `${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`,
 })
@@ -211,14 +206,16 @@ const { mutate: editRound, isPending } = useUpdateRound()
 
 function handleSubmit() {
   if (!form.validate()) return
+
   const { start_time, end_time, ...rest } = form.fields.value
 
   editRound(
     {
-      id: props.round.id,
+      id: round.id,
       data: {
         ...rest,
         start_date: combineDateAndTime(form.fields.value.start_date, start_time).toISOString(),
+
         end_date: combineDateAndTime(form.fields.value.end_date, end_time).toISOString(),
       },
     },
@@ -227,22 +224,24 @@ function handleSubmit() {
         emit('update:modelValue', false)
         showNotification('Successfully changed round info', 'success')
       },
+
       onError(error) {
-        for (const [field, errors] of Object.entries(error?.details || {})) {
-          form.setError(field as keyof Form, errors?.[0] ?? 'Invalid value')
+        for (const [field, message] of Object.entries(error?.details || {})) {
+          form.setError(field, message)
         }
+
         showNotification(error?.message, 'error')
       },
     },
   )
 }
 
-const toggleOpen = () => {
-  emit('update:modelValue', !props.modelValue)
+function toggleOpen(value: boolean) {
+  emit('update:modelValue', value)
 }
 
-const toggleClose = () => {
-  toggleOpen()
+function toggleClose() {
+  emit('update:modelValue', false)
   form.reset()
 }
 </script>

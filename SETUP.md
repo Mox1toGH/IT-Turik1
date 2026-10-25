@@ -67,6 +67,11 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 - `EMAIL_HOST_PASSWORD`: App Password у Google Account — `Security → App passwords`.
 - `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`: у Google Cloud Console → `APIs & Services → Credentials → OAuth client ID → Web application`.
 - `DB_HOST`: **`db`** для Docker, **`localhost`** для ручного запуску.
+- Пул з'єднань: деталі й правила вибору — у [CONNECTION_POOLING.md](./CONNECTION_POOLING.md).
+  Коротко: або вбудований пул Django (`DB_POOL_ENABLED=true`), **або** PgBouncer
+  (`DB_POOL_ENABLED=false`) — ніколи обидва одночасно. Для віддаленої БД обирай PgBouncer.
+- `REDIS_URL`: адреса Redis для кешу, channel layer (WebSocket fan-out між процесами) та Celery. Якщо порожньо — локальні in-process fallbacks, а Celery-тайски виконуються inline.
+- `PROFILING_ENABLED`: увімкнути django-debug-toolbar (`/__debug__/`) та django-silk (`/silk/`) для профілювання. За замовчуванням = значення `DJANGO_DEBUG`. Дивитись записи запитів/SQL можна на `http://localhost:8000/silk/` (потрібен логін суперкористувача в `/admin/`).
 
 ### Frontend
 
@@ -132,6 +137,17 @@ python manage.py runserver
 ```
 
 > WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише з Daphne.
+
+#### Опційно: Redis + Celery (фонові задачі)
+
+Локально все працює і без Redis — тайски (email, синхронізація Google Calendar, черга нотифікацій) виконуються inline. Щоб розігнати їх окремо:
+
+```powershell
+# потрібен запущений Redis та REDIS_URL у backend/.env
+celery -A backend worker -l info --concurrency=2 --beat -s /tmp/celerybeat-schedule
+```
+
+У Docker сервіси `redis` та `celery` піднімаються автоматично разом з `docker compose up`.
 
 Backend буде доступний на `http://localhost:8000`.
 

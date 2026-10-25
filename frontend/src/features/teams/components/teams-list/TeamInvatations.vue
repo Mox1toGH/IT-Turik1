@@ -1,117 +1,112 @@
 <template>
-  <ui-card :is-error="isLoadingError">
-    <template #error>
-      <div style="display: flex; height: 136px; justify-content: center; align-items: center">
-        <p>Error while fetching invitations (code: {{ invitationsError?.code }})</p>
-      </div>
-    </template>
+  <div class="teams-widget">
+    <ui-query-block :query="invitationsQuery" title="invitations">
+      <ui-query-field>
+        <template #skeleton>
+          <div class="team-grid">
+            <div class="team-item-skeleton" v-for="i in 2" :key="i">
+              <div class="team-skeleton-body">
+                <div class="team-meta">
+                  <ui-skeleton variant="rect" width="100%" />
+                  <ui-skeleton variant="rect" width="80px" />
+                </div>
 
-    <template #header>
-      <div class="section-head">
-        <h2>Invitations</h2>
-        <ui-skeleton-loader :loading="inboxLoading">
-          <template #skeleton>
-            <ui-skeleton variant="rect" width="70px" />
-          </template>
+                <ui-skeleton variant="rect" width="120px" />
 
-          <span class="text-muted">{{ pendingInboxInvitations?.length ?? 0 }} pending</span>
-        </ui-skeleton-loader>
-      </div>
-    </template>
-
-    <ui-skeleton-loader :loading="inboxLoading">
-      <template #skeleton>
-        <div class="team-grid">
-          <ui-card class="team-item" v-for="i in 2" :key="i">
-            <template #header>
-              <div class="team-meta">
-                <ui-skeleton variant="rect" width="100%" />
-                <ui-skeleton variant="rect" width="80px" />
+                <div style="display: flex; gap: 10px">
+                  <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                  <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                </div>
               </div>
+            </div>
+          </div>
+        </template>
+
+        <template #default>
+          <ui-empty-card
+            v-if="isEmpty"
+            message="No invitations. When someone invites you, it will appear here."
+          >
+            <template #actions>
+              <ui-button variant="link" size="sm" @click="emit('browse-teams')">
+                Browse available teams <span aria-hidden="true">→</span>
+              </ui-button>
             </template>
+          </ui-empty-card>
+          <div v-else class="team-grid">
+            <ui-card
+              v-for="invitation in pendingInboxInvitations"
+              :key="`invite-${invitation.id}`"
+              class="team-item"
+            >
+              <div class="team-body">
+                <div class="team-meta">
+                  <ui-truncate :text="invitation.team.name" class="team-title" />
 
-            <ui-skeleton variant="rect" width="120px" />
-
-            <template #footer>
-              <div style="display: flex; gap: 10px">
-                <ui-skeleton variant="rect" height="1.8rem" width="80px" />
-                <ui-skeleton variant="rect" height="1.8rem" width="80px" />
+                  <ui-badge class="text-muted">
+                    Invited by: {{ invitation.invited_by?.username || 'Unknown user' }}
+                  </ui-badge>
+                </div>
               </div>
-            </template>
-          </ui-card>
-        </div>
-      </template>
 
-      <p v-if="pendingInboxInvitations?.length === 0" class="text-muted">No pending invitations.</p>
-      <div v-else class="team-grid">
-        <ui-card
-          v-for="invitation in pendingInboxInvitations"
-          :key="`invite-${invitation.id}`"
-          class="team-item"
-        >
-          <template #header>
-            <div class="team-meta">
-              <h3>{{ invitation.team.name }}</h3>
-
-              <ui-badge class="text-muted">
-                Invited by: {{ invitation.invited_by?.username || 'Unknown user' }}
-              </ui-badge>
-            </div>
-          </template>
-
-          <template #footer>
-            <div class="row-actions">
-              <ui-button
-                size="sm"
-                :disabled="loadingIds.has(invitation.id)"
-                @click="respondToInvitation(invitation.id, 'accept')"
-              >
-                <loading-icon v-if="loadingIds.has(invitation.id)" />
-                Accept
-              </ui-button>
-              <ui-button
-                size="sm"
-                variant="secondary"
-                :disabled="loadingIds.has(invitation.id)"
-                @click="respondToInvitation(invitation.id, 'decline')"
-              >
-                Decline
-              </ui-button>
-            </div>
-          </template>
-        </ui-card>
-      </div>
-    </ui-skeleton-loader>
-  </ui-card>
+              <template #footer>
+                <div class="row-actions">
+                  <ui-button
+                    size="sm"
+                    :disabled="loadingIds.has(invitation.id)"
+                    @click="respondToInvitation(invitation.id, 'accept')"
+                  >
+                    <LoaderCircle class="animate-spin" v-if="loadingIds.has(invitation.id)" />
+                    Accept
+                  </ui-button>
+                  <ui-button
+                    size="sm"
+                    variant="secondary"
+                    :disabled="loadingIds.has(invitation.id)"
+                    @click="respondToInvitation(invitation.id, 'decline')"
+                  >
+                    Decline
+                  </ui-button>
+                </div>
+              </template>
+            </ui-card>
+          </div>
+        </template>
+      </ui-query-field>
+    </ui-query-block>
+  </div>
 </template>
 
 <script setup lang="ts">
-import UiButton from '@/components/ui/UiButton.vue'
-import UiCard from '@/components/ui/UiCard.vue'
+import UiButton from '@/components/ui/UiButton'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
+import UiCard from '@/components/ui/UiCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiTruncate from '@/components/ui/UiTruncate'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
-import UiBadge from '@/components/ui/UiBadge.vue'
+import { LoaderCircle } from 'lucide-vue-next'
+import UiSkeleton from '@/components/ui/UiSkeleton'
+import UiBadge from '@/components/ui/UiBadge'
 import {
   useAcceptTeamInvitation,
   useDeclineTeamInvitation,
   useListTeamInvitations,
 } from '@/api/teams/teams'
 
+const emit = defineEmits<{
+  'browse-teams': []
+}>()
+
 const { showNotification } = useNotification()
 
-const {
-  data: inboxInvitations,
-  isLoading: inboxLoading,
-  isLoadingError,
-  error: invitationsError,
-} = useListTeamInvitations()
+const invitationsQuery = useListTeamInvitations()
+const { data: inboxInvitations } = invitationsQuery
 
 const pendingInboxInvitations = computed(() =>
-  inboxInvitations.value?.filter((invitation) => invitation.status === 'invited'),
+  inboxInvitations.value?.items.filter((invitation) => invitation.status === 'invited'),
 )
+const isEmpty = computed(() => pendingInboxInvitations.value?.length === 0)
 
 const { mutate: accept } = useAcceptTeamInvitation()
 const { mutate: decline } = useDeclineTeamInvitation()
@@ -139,23 +134,48 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
 </script>
 
 <style scoped>
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
+.teams-widget {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 
 .team-item {
-  padding: 0.95rem;
-  background: var(--muted);
-  color: var(--muted-foreground);
+  height: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.team-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.25rem;
+}
+
+.team-item-skeleton {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.team-skeleton-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
 }
 
 .team-meta {
@@ -165,13 +185,22 @@ const respondToInvitation = (invitationId: number, action: 'accept' | 'decline')
   gap: 0.5rem;
 }
 
-.team-meta h3 {
+.team-meta h3,
+.team-title {
   font-family: var(--font-display);
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  min-width: 0;
 }
 
 .row-actions {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.team-item :deep(.card-footer) {
+  padding: 0 1.25rem 1.25rem;
 }
 </style>

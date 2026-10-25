@@ -1,175 +1,179 @@
 <template>
   <section class="page-shell">
-    <ui-card>
-      <template #header>
+    <section class="page-section role-codes-section">
+      <page-back-link to="/admin" label="Back to Admin hub" />
+      <header class="page-header">
         <div class="head">
           <div>
-            <p class="section-eyebrow">Admin</p>
             <h1 class="section-title">Activation Codes</h1>
             <p class="section-subtitle">
               Generate and monitor one-time registration codes for restricted roles.
             </p>
           </div>
-          <ui-button as-link to="/admin" variant="secondary">Back to Admin hub</ui-button>
         </div>
-      </template>
+      </header>
 
-      <div>
-        <div class="counts">
-          <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
-            <template #header>
-              <span class="card-label">{{ role }}</span>
-            </template>
-
-            <ui-skeleton-loader :loading="isLoading">
-              <template #skeleton>
-                <ui-skeleton variant="rect" width="100%" />
-              </template>
-
-              <strong class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
-            </ui-skeleton-loader>
-          </ui-card>
-        </div>
-
-        <form class="generator" @submit.prevent="handleGenerate">
-          <div class="form-item">
-            <label class="form-label"> Role </label>
-            <ui-select
-              v-model="generateForm.role"
-              :miltiple="true"
-              :options="[
-                { value: 'jury', label: 'Jury' },
-                { value: 'organizer', label: 'Organizer' },
-                { value: 'admin', label: 'Admin' },
-              ]"
-              required
-            >
-              <option value="jury">Jury</option>
-              <option value="organizer">Organizer</option>
-              <option value="admin">Admin</option>
-            </ui-select>
-            <small v-if="errors?.role" class="text-error">{{ errors.role[0] }}</small>
-          </div>
-
-          <div class="form-item">
-            <label class="form-label"> Quantity </label>
-            <ui-input v-model="generateForm.quantity" type="number" min="1" max="10" required />
-            <small v-if="errors?.quantity" class="text-error">{{ errors.quantity[0] }}</small>
-          </div>
-
-          <ui-button type="submit" class="generate-btn" :disabled="submitting">
-            {{ submitting ? 'Generating...' : 'Generate Codes' }}
-          </ui-button>
-        </form>
-
-        <div class="filters">
-          <div class="form-item">
-            <label class="form-label"> Filter by role </label>
-
-            <ui-select
-              v-model="selectedRoleFilter"
-              :options="[
-                { value: 'all', label: 'All restricted roles' },
-                { value: 'jury', label: 'Jury' },
-                { value: 'organizer', label: 'Organizer' },
-                { value: 'admin', label: 'Admin' },
-              ]"
-            />
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <ui-skeleton-loader :loading="isLoading">
-          <template #skeleton>
-            <div class="codes-list">
-              <ui-card v-for="i in 3" :key="i" class="code-card">
-                <template #header>
-                  <div class="code-head">
-                    <ui-skeleton variant="rect" width="100%" />
-                    <ui-skeleton variant="rect" width="100px" />
-                  </div>
-                </template>
-
-                <div style="display: flex; flex-direction: column; gap: 4px">
-                  <ui-skeleton v-for="i in 6" :key="i" variant="rect" width="100%" />
-                </div>
-              </ui-card>
-            </div>
-          </template>
-
-          <div class="codes-list">
-            <div
-              v-if="isLoadingError"
-              style="display: flex; height: 120px; justify-content: center; align-items: center"
-            >
-              <p>Error while fetching role codes (code: {{ getRoleCodesError?.code }})</p>
-            </div>
-
-            <template v-else>
-              <ui-card v-for="code in codes" :key="code.id" class="code-card">
-                <template #header>
-                  <div class="code-head">
-                    <strong class="mono">{{ code.code }}</strong>
-                    <ui-badge :variant="code.is_used ? 'gray' : 'green'">
-                      {{ code.is_used ? 'Used' : 'Active' }}
-                    </ui-badge>
-                  </div>
-                </template>
-
-                <div class="code-card-content">
-                  <p><strong>Role:</strong> {{ code.role }}</p>
-                  <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
-                  <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
-                  <template v-if="code.is_used">
-                    <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
-                    <p>
-                      <strong>Used at:</strong>
-                      {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
-                    </p>
+      <ui-query-block :query="roleCodesQuery">
+        <div>
+          <ui-query-field>
+            <template #skeleton>
+              <div class="counts">
+                <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
+                  <template #header>
+                    <span class="card-label">{{ role }}</span>
                   </template>
-                </div>
-              </ui-card>
 
-              <ui-card class="empty-card">
-                <p v-if="!codes.length" class="text-muted empty-error">
-                  No codes found for current filter.
-                </p>
-              </ui-card>
+                  <ui-skeleton variant="rect" width="100%" />
+                </ui-card>
+              </div>
             </template>
+
+            <template #default>
+              <div class="counts">
+                <ui-card v-for="role in restrictedRoles" :key="role" class="statistic-card">
+                  <template #header>
+                    <span class="card-label">{{ role }}</span>
+                  </template>
+
+                  <strong class="text-muted">{{ activeCounts?.[role] || 0 }}/10 active</strong>
+                </ui-card>
+              </div>
+            </template>
+          </ui-query-field>
+
+          <form class="generator" @submit.prevent="handleGenerate">
+            <div class="form-item">
+              <label class="form-label"> Role </label>
+              <ui-select
+                v-model="generateForm.role"
+                :miltiple="true"
+                :options="[
+                  { value: 'jury', label: 'Jury' },
+                  { value: 'organizer', label: 'Organizer' },
+                  { value: 'admin', label: 'Admin' },
+                ]"
+                required
+              >
+                <option value="jury">Jury</option>
+                <option value="organizer">Organizer</option>
+                <option value="admin">Admin</option>
+              </ui-select>
+              <small v-if="errors?.role" class="text-error">{{ errors.role[0] }}</small>
+            </div>
+
+            <div class="form-item">
+              <label class="form-label"> Quantity </label>
+              <ui-number-input v-model="generateForm.quantity" min="1" max="10" required />
+              <small v-if="errors?.quantity" class="text-error">{{ errors.quantity[0] }}</small>
+            </div>
+
+            <ui-button type="submit" class="generate-btn" :disabled="submitting">
+              {{ submitting ? 'Generating...' : 'Generate Codes' }}
+            </ui-button>
+          </form>
+
+          <div class="filters">
+            <div class="form-item">
+              <label class="form-label"> Filter by role </label>
+
+              <ui-select
+                v-model="selectedRoleFilter"
+                :options="[
+                  { value: 'all', label: 'All restricted roles' },
+                  { value: 'jury', label: 'Jury' },
+                  { value: 'organizer', label: 'Organizer' },
+                  { value: 'admin', label: 'Admin' },
+                ]"
+              />
+            </div>
           </div>
-        </ui-skeleton-loader>
-      </template>
-    </ui-card>
+        </div>
+
+        <section class="codes-section">
+          <ui-query-field>
+            <template #skeleton>
+              <div class="codes-list">
+                <ui-card v-for="i in 3" :key="i" class="code-card">
+                  <template #header>
+                    <div class="code-head">
+                      <ui-skeleton variant="rect" width="100%" />
+                      <ui-skeleton variant="rect" width="100px" />
+                    </div>
+                  </template>
+
+                  <div style="display: flex; flex-direction: column; gap: 4px">
+                    <ui-skeleton v-for="i in 6" :key="i" variant="rect" width="100%" />
+                  </div>
+                </ui-card>
+              </div>
+            </template>
+
+            <template #default>
+              <div v-if="isEmpty" class="codes-list">
+                <ui-empty-card message="No codes found for current filter." />
+              </div>
+
+              <div v-else class="codes-list">
+                <ui-card v-for="code in codes" :key="code.id" class="code-card">
+                  <template #header>
+                    <div class="code-head">
+                      <strong class="mono">{{ code.code }}</strong>
+                      <ui-badge :variant="code.is_used ? 'gray' : 'green'">
+                        {{ code.is_used ? 'Used' : 'Active' }}
+                      </ui-badge>
+                    </div>
+                  </template>
+
+                  <div class="code-card-content">
+                    <p><strong>Role:</strong> {{ code.role }}</p>
+                    <p><strong>Created:</strong> {{ formatDateTime(code.created_at) }}</p>
+                    <p><strong>Created by:</strong> {{ code.created_by_username || '-' }}</p>
+                    <template v-if="code.is_used">
+                      <p><strong>Used by:</strong> {{ code.used_by_username }}</p>
+                      <p>
+                        <strong>Used at:</strong>
+                        {{ code.used_at ? formatDateTime(code.used_at) : '-' }}
+                      </p>
+                    </template>
+                  </div>
+                </ui-card>
+              </div>
+            </template>
+          </ui-query-field>
+        </section>
+      </ui-query-block>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiSelect from '@/components/ui/UiSelect.vue'
-import UiCard from '@/components/ui/UiCard.vue'
-import UiSkeletonLoader from '@/components/ui/UiSkeletonLoader.vue'
-import UiSkeleton from '@/components/ui/UiSkeleton.vue'
+import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
+import UiNumberInput from '@/components/ui/UiNumberInput'
+import UiSelect from '@/components/ui/UiSelect'
+import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
+import { UiQueryBlock, UiQueryField } from '@/components/query'
+import UiSkeleton from '@/components/ui/UiSkeleton'
 import { useNotification } from '@/composables/useNotification'
-import UiBadge from '@/components/ui/UiBadge.vue'
-import type { RoleB96Enum } from '@/api/.ts.schemas'
+import UiBadge from '@/components/ui/UiBadge'
 import {
   useGenerateRoleActivationCodes,
   useListRoleActivationCodes,
   type GenerateRoleActivationCodesMutationBody,
 } from '@/api/accounts/accounts'
+import type { UserRole } from '@/shared/types/user'
 
 interface Errors {
-  role: string[]
+  role: UserRole[]
   quantity: string[]
 }
 
 const forbidden = ref(false)
 const errors = ref<Errors | null>(null)
 const restrictedRoles = ['jury', 'organizer', 'admin'] as const
-const selectedRoleFilter = ref<RoleB96Enum | 'all'>('all')
+const selectedRoleFilter = ref<string | 'all'>('all') // role
 const generateForm = ref({
   role: 'jury',
   quantity: '1',
@@ -177,19 +181,15 @@ const generateForm = ref({
 
 const { showNotification } = useNotification()
 
-const {
-  data,
-  isLoading,
-  isLoadingError,
-  error: getRoleCodesError,
-} = useListRoleActivationCodes(
-  computed(() => ({
-    ...(selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {}),
-  })),
+const roleCodesQuery = useListRoleActivationCodes(
+  computed(() => (selectedRoleFilter.value !== 'all' ? { role: selectedRoleFilter.value } : {})),
 )
+
+const { data, error: getRoleCodesError } = roleCodesQuery
 
 const codes = computed(() => data.value?.codes || [])
 const activeCounts = computed(() => data.value?.active_counts)
+const isEmpty = computed(() => codes.value.length === 0)
 
 watch(getRoleCodesError, (err) => {
   if (err) {
@@ -261,7 +261,8 @@ const formatDateTime = (value: string | number | Date) => {
 
 .statistic-card,
 .code-card {
-  background: var(--muted);
+  height: 100%;
+  background: var(--card);
 }
 
 .code-card-content {
@@ -277,7 +278,7 @@ const formatDateTime = (value: string | number | Date) => {
 
 .codes-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 0.75rem;
 }
 
@@ -291,10 +292,6 @@ const formatDateTime = (value: string | number | Date) => {
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   overflow-wrap: anywhere;
-}
-
-.empty-error {
-  text-align: center;
 }
 
 @media (max-width: 900px) {

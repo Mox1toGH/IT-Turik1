@@ -13,15 +13,15 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 let reconnectAttempts = 0
 let manuallyClosed = false
 let queryClientRef: QueryClient | null = null
+let sessionAuthenticated = false
 const subscribedTournamentCounts = new Map<number, number>()
 
 const MAX_BACKOFF_MS = 30000
 
-function getWsUrl(token: string): string {
+function getWsUrl(): string {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.hostname
-  const port = '8000'
-  return `${wsProtocol}//${host}:${port}/ws/leaderboards/?token=${encodeURIComponent(token)}`
+  const backend = new URL(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000')
+  return `${wsProtocol}//${backend.host}/ws/leaderboards/`
 }
 
 function clearReconnectTimer() {
@@ -44,8 +44,7 @@ function resubscribeAll() {
 function scheduleReconnect() {
   if (manuallyClosed) return
   clearReconnectTimer()
-  const token = localStorage.getItem('access')
-  if (!token) return
+  if (!sessionAuthenticated) return
   reconnectAttempts += 1
   const delay = Math.min(MAX_BACKOFF_MS, Math.max(1000, 1000 * 2 ** (reconnectAttempts - 1)))
   reconnectTimer = setTimeout(() => connectLeaderboardSocket(), delay)
@@ -62,13 +61,12 @@ function handleMessage(message: LeaderboardEnvelope) {
 
 function connectLeaderboardSocket() {
   if (!queryClientRef) return
-  const token = localStorage.getItem('access')
-  if (!token) return
+  if (!sessionAuthenticated) return
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return
 
   manuallyClosed = false
   clearReconnectTimer()
-  socket = new WebSocket(getWsUrl(token))
+  socket = new WebSocket(getWsUrl())
 
   socket.onopen = () => {
     reconnectAttempts = 0
@@ -83,13 +81,36 @@ function connectLeaderboardSocket() {
     }
   }
 
-  socket.onclose = () => {
+  socket.onclose = (event) => {
     socket = null
+    if (event.code === 4401) {
+      import('@/lib/apiClient')
+        .then(({ AXIOS_INSTANCE }) => AXIOS_INSTANCE.get('/api/accounts/profile'))
+        .then(() => {
+          if (sessionAuthenticated) connectLeaderboardSocket()
+        })
+        .catch(() => {})
+      return
+    }
     scheduleReconnect()
   }
 
   socket.onerror = () => {
     socket?.close()
+  }
+}
+
+export function setLeaderboardSocketAuthenticated(authenticated: boolean) {
+  sessionAuthenticated = authenticated
+  if (authenticated) {
+    connectLeaderboardSocket()
+    return
+  }
+  manuallyClosed = true
+  clearReconnectTimer()
+  if (socket) {
+    socket.close()
+    socket = null
   }
 }
 

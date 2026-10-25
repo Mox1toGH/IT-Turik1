@@ -10,7 +10,8 @@
 
     <div>
       <p class="modal-text">
-        This action cannot be undone. Enter
+        Permanently delete this <ui-badge variant="red">team</ui-badge> and
+        <ui-badge variant="red">ALL associated data</ui-badge>. Enter
         <ui-badge :title="props.team?.name" variant="red">{{
           truncateText(props.team?.name ?? '', 15)
         }}</ui-badge>
@@ -33,7 +34,7 @@
       </ui-button>
 
       <ui-button variant="danger" size="sm" :disabled="!canDeleteTeam" @click="handleDeleteTeam">
-        <loading-icon v-if="isDeleting" />
+        <LoaderCircle class="animate-spin" v-if="isDeleting" />
         Delete permanently
       </ui-button>
     </template>
@@ -41,16 +42,16 @@
 </template>
 
 <script setup lang="ts">
-import UiBadge from '@/components/ui/UiBadge.vue'
-import UiButton from '@/components/ui/UiButton.vue'
-import UiInput from '@/components/ui/UiInput.vue'
-import UiModal from '@/components/ui/UiModal.vue'
+import UiBadge from '@/components/ui/UiBadge'
+import UiButton from '@/components/ui/UiButton'
+import UiInput from '@/components/ui/UiInput'
+import UiModal from '@/components/ui/UiModal'
 import { useNotification } from '@/composables/useNotification'
 import { computed, ref } from 'vue'
-import LoadingIcon from '@/icons/LoadingIcon.vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import { truncateText } from '@/lib/utils'
-import type { Team } from '@/api/.ts.schemas'
 import { useDeleteTeam } from '@/api/teams/teams'
+import type { Team } from '@/features/teams/types'
 interface Props {
   team?: Team
   disabled?: boolean
@@ -89,7 +90,7 @@ const handleDeleteTeam = async () => {
   hideNotification()
 
   deleteTeam(
-    { id: props.team.id },
+    { pk: props.team.id },
     {
       onSuccess: () => {
         closeDeleteModal()
