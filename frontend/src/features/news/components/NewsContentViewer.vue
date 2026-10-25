@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import Highlight from '@tiptap/extension-highlight'
 import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor, type JSONContent } from '@tiptap/vue-3'
 import { watch } from 'vue'
@@ -18,6 +19,7 @@ const props = defineProps<Props>()
 const editor = useEditor({
   extensions: [
     StarterKit,
+    Underline,
     Highlight,
     Link.configure({
       openOnClick: true,

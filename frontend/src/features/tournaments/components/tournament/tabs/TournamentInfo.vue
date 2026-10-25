@@ -173,20 +173,32 @@
   <ui-confirm-modal
     v-model="isStartRegistrationConfirmOpen"
     title="Start registration?"
-    message="This will publish the tournament and allow eligible teams to register."
     confirm-text="Start registration"
     :loading="isPending"
     @confirm="handleStartRegistration"
-  />
+  >
+    <template #message>
+      <p>
+        This will publish the tournament and open
+        <ui-badge variant="green">team registration</ui-badge>.
+      </p>
+    </template>
+  </ui-confirm-modal>
   <ui-confirm-modal
     v-model="isLeaveConfirmOpen"
     title="Leave tournament?"
-    message="Your team will be unregistered and may lose its place in this tournament."
     confirm-text="Leave tournament"
     confirm-variant="danger"
     :loading="isLeaving"
     @confirm="handleLeave"
-  />
+  >
+    <template #message>
+      <p>
+        Your team will be <ui-badge variant="red">unregistered</ui-badge> and may lose its place in
+        this tournament.
+      </p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">

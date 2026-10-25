@@ -152,8 +152,16 @@ export function connectNotificationSocket(queryClient?: QueryClient) {
     }
   }
 
-  socket.onclose = () => {
+  socket.onclose = (event) => {
     socket = null
+    if (event.code === 4401) {
+      manuallyClosed = true
+      localStorage.removeItem('access')
+      localStorage.removeItem('refresh')
+      localStorage.removeItem('needs_onboarding')
+      if (window.location.pathname !== '/login') window.location.replace('/login')
+      return
+    }
     scheduleReconnect()
   }
 

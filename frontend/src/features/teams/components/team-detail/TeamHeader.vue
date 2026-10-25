@@ -80,7 +80,9 @@ const props = defineProps<Props>()
 
 .team-detail-head {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
+  min-width: 0;
 }
 
 .team-detail-copy {
@@ -151,7 +153,30 @@ const props = defineProps<Props>()
   .team-detail-title {
     font-size: var(--text-3xl);
     line-height: var(--text-3xl--line-height);
+    overflow-wrap: anywhere;
   }
 
+  .breadcrumb-label {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    margin-bottom: 0.55rem;
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+  }
+
+  .hero-contacts {
+    gap: 0.55rem;
+  }
+
+  .contact-pill {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .contact-pill :deep(.badge) {
+    min-width: 0;
+    max-width: calc(100vw - 5rem);
+    overflow-wrap: anywhere;
+  }
 }
 </style>

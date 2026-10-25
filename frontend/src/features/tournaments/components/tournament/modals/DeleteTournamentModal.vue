@@ -5,7 +5,11 @@
     </template>
 
     <div>
-      <p class="modal-text">This action cannot be undone. Enter the tournament name to confirm.</p>
+      <p class="modal-text">
+        Permanently delete this <ui-badge variant="red">tournament</ui-badge> and
+        <ui-badge variant="red">ALL associated data</ui-badge>. Enter the tournament name to
+        confirm.
+      </p>
 
       <ui-query-block :query="tournamentQuery">
         <template #error><p class="text-error">Could not load tournament details.</p></template>

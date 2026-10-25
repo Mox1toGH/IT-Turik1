@@ -173,12 +173,15 @@
     <ui-confirm-modal
       v-model="isBannerRemoveConfirmOpen"
       title="Remove team banner?"
-      message="The current team banner will be removed."
       confirm-text="Remove banner"
       confirm-variant="danger"
       :loading="banner.isBannerUpdating.value"
       @confirm="confirmRemoveTeamBanner"
-    />
+    >
+      <template #message>
+        <p>The current <ui-badge variant="red">team banner</ui-badge> will be removed.</p>
+      </template>
+    </ui-confirm-modal>
   </section>
 </template>
 
@@ -254,7 +257,14 @@ const tabItems = computed<TabItem[]>(() => {
 
 <style scoped>
 .teams-detail-page {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 1.4rem;
+}
+
+.teams-detail-page > *,
+.overview-grid > * {
+  min-width: 0;
 }
 
 .teams-rule {

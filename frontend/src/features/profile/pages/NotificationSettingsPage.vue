@@ -213,8 +213,13 @@
       </ui-query-block>
     </div>
 
-    <ui-modal v-model="showResetConfirm" title="Reset to defaults" max-width="400px">
-      <p>Are you sure you want to reset all notification settings to their default values?</p>
+    <ui-modal v-model="showResetConfirm" max-width="400px">
+      <template #title>
+        <h3>Reset notification settings?</h3>
+      </template>
+      <p>
+        Reset <ui-badge variant="orange">ALL notification settings</ui-badge> to their defaults?
+      </p>
       <template #footer>
         <ui-button variant="secondary" size="sm" @click="showResetConfirm = false">
           Cancel
@@ -230,6 +235,7 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import UiSwitch from '@/components/ui/UiSwitch'
+import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiModal from '@/components/ui/UiModal'
 import UiSkeleton from '@/components/ui/UiSkeleton'

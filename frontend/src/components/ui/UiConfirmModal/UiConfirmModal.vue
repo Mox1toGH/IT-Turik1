@@ -8,7 +8,10 @@
       <h3 class="confirm-modal-title">{{ title }}</h3>
     </template>
 
-    <p v-if="message">{{ message }}</p>
+    <div v-if="$slots.message" class="confirm-modal-message">
+      <slot name="message" />
+    </div>
+    <p v-else-if="message">{{ message }}</p>
 
     <div class="confirm-modal-content">
       <slot />
@@ -70,6 +73,12 @@ const confirm = () => {
 }
 
 .confirm-modal-content p {
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.confirm-modal-message :deep(p) {
+  margin: 0;
   color: var(--muted-foreground);
   line-height: 1.5;
 }

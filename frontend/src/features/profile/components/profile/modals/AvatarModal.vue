@@ -58,18 +58,22 @@
   <ui-confirm-modal
     v-model="isRemoveConfirmOpen"
     title="Remove profile photo?"
-    message="Your current profile photo will be removed."
     confirm-text="Remove photo"
     confirm-variant="danger"
     :loading="avatar.isUpdating.value"
     @confirm="confirmRemoveAvatar"
-  />
+  >
+    <template #message>
+      <p>Your current <ui-badge variant="red">profile photo</ui-badge> will be removed.</p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">
 import { ref, toRef } from 'vue'
 import UiModal from '@/components/ui/UiModal'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
+import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import { LoaderCircle, SquarePen } from 'lucide-vue-next'
 import UiFileDrop from '@/components/ui/UiFileDrop'

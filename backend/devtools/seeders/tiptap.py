@@ -31,19 +31,6 @@ LINK_ATTRS = {
 # Matches the toolbar default: chain().setHighlight({ color: '#8ce99a' }).
 HIGHLIGHT_COLOR = '#8ce99a'
 
-TEXT_ALIASES = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-}
-
-
-def _escape(value: str) -> str:
-    for char, replacement in TEXT_ALIASES.items():
-        value = value.replace(char, replacement)
-    return value
-
-
 # ---------------------------------------------------------------------------
 # Marks
 # ---------------------------------------------------------------------------
@@ -73,17 +60,12 @@ def highlight(node: JSONContent) -> JSONContent:
 
 
 def link(node: JSONContent, href: str) -> JSONContent:
-    """Wrap an inline node in a link mark.
-
-    ``setLink`` is emitted by the editor as an *inline node* wrapping its text,
-    not as a mark, so this produces the node form Tiptap actually round-trips.
-    """
-    children = node.get('content') or [node]
-    return {
-        'type': 'link',
-        'attrs': {'href': href, **LINK_ATTRS},
-        'content': children,
-    }
+    """Apply the Tiptap Link mark to an inline text node."""
+    result = dict(node)
+    marks = list(result.get('marks') or [])
+    marks.append({'type': 'link', 'attrs': {'href': href, **LINK_ATTRS}})
+    result['marks'] = marks
+    return result
 
 
 def _with_mark(node: JSONContent, mark: dict[str, Any]) -> JSONContent:
@@ -99,7 +81,9 @@ def _with_mark(node: JSONContent, mark: dict[str, Any]) -> JSONContent:
 # ---------------------------------------------------------------------------
 
 def text(value: str) -> JSONContent:
-    return {'type': 'text', 'text': _escape(value)}
+    # Tiptap JSON stores text as plain text. HTML escaping here causes entities
+    # such as `&amp;` to appear literally in the read-only renderer.
+    return {'type': 'text', 'text': value}
 
 
 def raw_text(value: str) -> JSONContent:
@@ -278,8 +262,14 @@ def news_article_content(*, headline: str, standfirst: str, sections: Sequence[t
 
 
 def news_feature_content(*, headline: str, blocks: Sequence[JSONContent]) -> JSONContent:
-    """Long-form article; the caller supplies the body blocks."""
-    return doc(heading(2, headline), *blocks)
+    """Long-form article; flatten nested documents into the article body."""
+    body: list[JSONContent] = []
+    for block in blocks:
+        if block.get('type') == 'doc':
+            body.extend(block.get('content') or [])
+        else:
+            body.append(block)
+    return doc(heading(2, headline), *body)
 
 
 def full_schema_showcase() -> JSONContent:
@@ -293,7 +283,7 @@ def full_schema_showcase() -> JSONContent:
         para(text('This article exercises every node and mark the editor enables.')),
         heading(2, 'Inline marks'),
         para(
-            text('bold'),
+            bold(text('bold')),
             text(', '),
             italic(text('italic')),
             text(', '),

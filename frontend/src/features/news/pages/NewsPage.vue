@@ -21,12 +21,15 @@
     <ui-confirm-modal
       v-model="isDeleteConfirmOpen"
       title="Delete news"
-      message="Are you sure you want to delete this news?"
       confirmText="Delete"
       confirmVariant="danger"
       :loading="isDeleting"
       @confirm="handleDelete"
-    />
+    >
+      <template #message>
+        <p>Remove this <ui-badge variant="red">news item</ui-badge>? This cannot be undone.</p>
+      </template>
+    </ui-confirm-modal>
   </section>
 </template>
 
@@ -34,6 +37,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
+import UiBadge from '@/components/ui/UiBadge'
 import { useNotification } from '@/composables/useNotification'
 import { useDeleteNews, useListNews } from '@/api/news/news'
 import { useGetUserProfile } from '@/api/accounts/accounts'

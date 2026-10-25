@@ -10,7 +10,8 @@
 
     <div>
       <p class="modal-text">
-        This action cannot be undone. Enter
+        Permanently delete this <ui-badge variant="red">team</ui-badge> and
+        <ui-badge variant="red">ALL associated data</ui-badge>. Enter
         <ui-badge :title="props.team?.name" variant="red">{{
           truncateText(props.team?.name ?? '', 15)
         }}</ui-badge>

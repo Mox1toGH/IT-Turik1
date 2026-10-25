@@ -71,14 +71,20 @@
     <ui-confirm-modal
       v-model="isRemoveConfirmOpen"
       title="Remove team member?"
-      :message="pendingRemoval
-        ? `Remove ${pendingRemoval.username} from ${team.name}? They will lose access to the team.`
-        : 'Remove this person from the team?'"
       confirm-text="Remove member"
       confirm-variant="danger"
       :loading="isRemovingPendingMember"
       @confirm="confirmRemoveMember"
-    />
+    >
+      <template #message>
+        <p>
+          Remove
+          <ui-badge variant="red">{{ pendingRemoval?.username || 'this person' }}</ui-badge>
+          from <ui-badge>{{ team.name }}</ui-badge>? They will
+          <ui-badge variant="red">lose access</ui-badge> to the team.
+        </p>
+      </template>
+    </ui-confirm-modal>
   </div>
 </template>
 

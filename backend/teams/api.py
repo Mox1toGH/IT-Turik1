@@ -282,15 +282,18 @@ def invite_user_to_team(*, team, user, invited_by):
             invitation.save(update_fields=['status', 'responded_at', 'invited_by', 'updated_at'])
             created = True
 
-        declined = TeamJoinRequest.objects.filter(
+        pending_requests = TeamJoinRequest.objects.filter(
             team=team,
             user=user,
             status=TeamJoinRequest.STATUS_PENDING,
-        ).update(
-            status=TeamJoinRequest.STATUS_DECLINED,
-            reviewed_by=invited_by,
-            reviewed_at=timezone.now(),
         )
+        declined = 0
+        for join_request in pending_requests:
+            join_request.status = TeamJoinRequest.STATUS_DECLINED
+            join_request.reviewed_by = invited_by
+            join_request.reviewed_at = timezone.now()
+            join_request.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
+            declined += 1
 
     logger.info(
         'User invited to team',
@@ -790,15 +793,16 @@ def respond_to_invitation(request, invitation_id: int, new_status: str):
         if new_status == TeamInvitation.STATUS_ACCEPTED:
             assert_team_not_in_active_tournament(invitation.team)
             TeamMember.objects.get_or_create(team=invitation.team, user=request.auth)
-            TeamJoinRequest.objects.filter(
+            pending_requests = TeamJoinRequest.objects.filter(
                 team=invitation.team,
                 user=request.auth,
                 status=TeamJoinRequest.STATUS_PENDING,
-            ).update(
-                status=TeamJoinRequest.STATUS_DECLINED,
-                reviewed_by=invitation.team.captain,
-                reviewed_at=now,
             )
+            for join_request in pending_requests:
+                join_request.status = TeamJoinRequest.STATUS_DECLINED
+                join_request.reviewed_by = invitation.team.captain
+                join_request.reviewed_at = now
+                join_request.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'updated_at'])
             # Drop any stale duplicates but keep this one so it stays persisted
             # with its accepted status (signal receivers get a saved instance).
             TeamInvitation.objects.filter(

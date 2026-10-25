@@ -20,7 +20,7 @@ export interface NotificationMessagePart {
 
 export interface NotificationConfirmConfig {
   title: string
-  message: string
+  scope: 'single' | 'all'
   onConfirm: () => void
   confirmVariant: 'danger'
 }
@@ -157,7 +157,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   const isConfirmModalOpen = ref(false)
   const confirmModalConfig = ref<NotificationConfirmConfig>({
     title: '',
-    message: '',
+    scope: 'single',
     onConfirm: () => {},
     confirmVariant: 'danger',
   })
@@ -192,7 +192,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   const requestDeleteConfirm = (id: number): void => {
     confirmModalConfig.value = {
       title: 'Delete Notification',
-      message: 'Are you sure you want to delete this notification?',
+      scope: 'single',
       confirmVariant: 'danger',
       onConfirm: () => {
         deleteNotification(
@@ -212,7 +212,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   const requestDeleteAllConfirm = (): void => {
     confirmModalConfig.value = {
       title: 'Delete All Notifications',
-      message: 'Are you sure you want to delete ALL notifications? This cannot be undone.',
+      scope: 'all',
       confirmVariant: 'danger',
       onConfirm: () => {
         deleteAllNotifications(undefined, {

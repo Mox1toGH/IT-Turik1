@@ -885,7 +885,14 @@ def register_team(request, id: int, payload: TeamRegistrationRequest):
         },
     )
 
-    NotificationService.notify(recipients=_participants(tournament), event_type='tournament_team_registered', context={'team_name': team.name, 'tournament_name': tournament.name})
+    NotificationService.notify(
+        recipients=_participants(tournament),
+        event_type='tournament_team_registered',
+        context={
+            'team_name': team.name,
+            'tournament_name': tournament.name,
+        },
+    )
     registration = TournamentTeamRegistration.objects.select_related('team').get(pk=registration.pk)
     return 201, _registration_response_data(registration)
 

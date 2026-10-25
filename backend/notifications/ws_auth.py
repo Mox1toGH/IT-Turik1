@@ -4,6 +4,7 @@ from asgiref.sync import sync_to_async
 from channels.middleware import BaseMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.db import close_old_connections
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
@@ -14,7 +15,7 @@ def _get_user_for_token(token: str):
     try:
         validated = jwt_auth.get_validated_token(token)
         return jwt_auth.get_user(validated)
-    except (InvalidToken, TokenError):
+    except (AuthenticationFailed, InvalidToken, TokenError):
         return AnonymousUser()
 
 

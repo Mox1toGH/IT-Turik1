@@ -10,7 +10,8 @@ class NewsArticleRequest(Schema):
 
 class NewsArticlePatchRequest(Schema):
     title: str | None = None
-    content: str | None = None
+    content: dict[str, JsonValue] | None = None
+    send_notification: bool = False
 
 
 class NewsArticleResponse(Schema):
