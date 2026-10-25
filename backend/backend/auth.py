@@ -1,4 +1,5 @@
 from ninja.security import HttpBearer
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -7,10 +8,11 @@ class JWTAuth(HttpBearer):
     """Required auth — raises 401 if token missing/invalid."""
 
     def authenticate(self, request, token):
+        jwt_auth = JWTAuthentication()
         try:
-            validated_token = JWTAuthentication().get_validated_token(token)
-            user = JWTAuthentication().get_user(validated_token)
-        except (InvalidToken, TokenError):
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+        except (AuthenticationFailed, InvalidToken, TokenError):
             return None
         # TODO: remove request.auth, use user instead
         request.auth = user

@@ -43,11 +43,18 @@
 
     <ui-modal
       v-model="notifications.isConfirmModalOpen.value"
-      :title="notifications.confirmModalConfig.value.title"
       max-width="400px"
       @close="notifications.isConfirmModalOpen.value = false"
     >
-      <p>{{ notifications.confirmModalConfig.value.message }}</p>
+      <template #title>
+        <h3>{{ notifications.confirmModalConfig.value.title }}</h3>
+      </template>
+      <p v-if="notifications.confirmModalConfig.value.scope === 'all'">
+        Delete <ui-badge variant="red">ALL notifications</ui-badge>? This cannot be undone.
+      </p>
+      <p v-else>
+        Delete this <ui-badge variant="red">notification</ui-badge>?
+      </p>
       <template #footer>
         <ui-button
           size="sm"
@@ -70,6 +77,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import UiBadge from '@/components/ui/UiBadge'
 import { useRouter } from 'vue-router'
 import UiModal from '@/components/ui/UiModal'
 import UiButton from '@/components/ui/UiButton'

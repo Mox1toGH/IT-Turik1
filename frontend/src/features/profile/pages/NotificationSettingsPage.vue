@@ -1,5 +1,6 @@
 <template>
   <section class="page-shell settings-page">
+    <page-back-link to="/profile/notifications" label="Back to notifications" />
     <header class="settings-hero">
       <div class="settings-hero-copy">
         <div class="breadcrumb-label">
@@ -27,10 +28,6 @@
           <CircleAlert class="save-icon" />
           Error
         </span>
-        <ui-button variant="secondary" size="sm" @click="router.push('/profile/notifications')">
-          <ArrowLeft class="btn-icon" />
-          Back to notifications
-        </ui-button>
       </div>
     </header>
 
@@ -216,8 +213,13 @@
       </ui-query-block>
     </div>
 
-    <ui-modal v-model="showResetConfirm" title="Reset to defaults" max-width="400px">
-      <p>Are you sure you want to reset all notification settings to their default values?</p>
+    <ui-modal v-model="showResetConfirm" max-width="400px">
+      <template #title>
+        <h3>Reset notification settings?</h3>
+      </template>
+      <p>
+        Reset <ui-badge variant="orange">ALL notification settings</ui-badge> to their defaults?
+      </p>
       <template #footer>
         <ui-button variant="secondary" size="sm" @click="showResetConfirm = false">
           Cancel
@@ -230,10 +232,10 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
 import UiSwitch from '@/components/ui/UiSwitch'
+import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiModal from '@/components/ui/UiModal'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -244,9 +246,9 @@ import {
   useUpdateNotificationConfig,
   useUpdateGlobalNotificationConfig,
 } from '@/api/notifications/notifications'
-import { Search, Check, CircleAlert, ArrowLeft, LoaderCircle } from 'lucide-vue-next'
+import { Search, Check, CircleAlert, LoaderCircle } from 'lucide-vue-next'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 
-const router = useRouter()
 const { showNotification } = useNotification()
 
 const search = ref('')

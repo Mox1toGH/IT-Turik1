@@ -6,14 +6,42 @@
           <ui-truncate :text="item.title" class="news-title" />
           <p class="meta">{{ item.created_by_name || 'Unknown author' }} · {{ formattedDate }}</p>
         </div>
-        <div v-if="canModify" class="news-actions">
-          <ui-button class="news-action-btn" variant="secondary" @click="$emit('edit', item)">
-            Edit
-          </ui-button>
-          <ui-button class="news-action-btn" variant="danger" @click="$emit('delete', item)">
-            Delete
-          </ui-button>
-        </div>
+        <ui-popover v-if="canModify" min-width="160px" header="News actions">
+          <template #trigger>
+            <ui-button
+              class="news-action-trigger"
+              variant="secondary"
+              size="sm"
+              aria-label="News actions"
+            >
+              <MoreHorizontal :size="18" />
+            </ui-button>
+          </template>
+          <template #default="{ close }">
+            <div class="news-actions">
+              <ui-button
+                class="news-action-btn"
+                variant="secondary"
+                @click="
+                  close();
+                  $emit('edit', item)
+                "
+              >
+                Edit
+              </ui-button>
+              <ui-button
+                class="news-action-btn"
+                variant="danger"
+                @click="
+                  close();
+                  $emit('delete', item)
+                "
+              >
+                Delete
+              </ui-button>
+            </div>
+          </template>
+        </ui-popover>
       </div>
 
       <div
@@ -42,6 +70,8 @@ import { computed, ref } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiButton from '@/components/ui/UiButton'
 import UiTruncate from '@/components/ui/UiTruncate'
+import UiPopover from '@/components/ui/UiPopover'
+import { MoreHorizontal } from 'lucide-vue-next'
 import NewsContentViewer from '../components/NewsContentViewer.vue'
 import type { NewsArticle } from '../types'
 
@@ -118,17 +148,12 @@ const formattedDate = computed(() => {
 }
 
 .news-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.45rem;
-  flex: 0 0 auto;
+  display: grid;
+  gap: 0.35rem;
 }
 
-.news-action-btn {
-  min-width: 76px;
-  min-height: 40px;
-}
+.news-action-btn { justify-content: flex-start; width: 100%; }
+.news-action-trigger { flex: 0 0 auto; }
 
 .news-content-wrap {
   position: relative;
@@ -169,8 +194,5 @@ const formattedDate = computed(() => {
     flex-direction: column;
   }
 
-  .news-actions {
-    justify-content: flex-start;
-  }
 }
 </style>

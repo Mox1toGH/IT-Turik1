@@ -23,10 +23,7 @@
           <submissions-list-skeleton />
         </template>
 
-        <div v-if="isEmpty" class="submissions-empty">
-          <p class="text-muted">{{ emptyText }}</p>
-          <p class="text-sm text-muted">{{ emptyHint }}</p>
-        </div>
+        <ui-empty-card v-if="isEmpty" :title="emptyText" :message="emptyHint" />
         <div v-else class="submissions-list">
           <div
             v-for="submission in filteredSubmissions"
@@ -172,6 +169,7 @@
 import UiBadge, { type Variants } from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiProgressBar from '@/components/ui/UiProgressBar'
 import { UiQueryBlock, UiQueryField } from '@/components/query'

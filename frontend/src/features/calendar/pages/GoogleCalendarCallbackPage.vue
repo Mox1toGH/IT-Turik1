@@ -1,5 +1,6 @@
 <template>
   <section class="page-shell callback-page">
+    <page-back-link to="/calendar" label="Back to calendar" />
     <section class="callback-card">
       <div v-if="isProcessing" class="callback-status">
         <div class="spinner"></div>
@@ -14,7 +15,6 @@
         <X class="status-icon status-icon--error" />
         <p>Failed to connect Google Calendar</p>
         <p class="text-muted">{{ errorMessage }}</p>
-        <ui-button variant="default" @click="goToCalendar">Back to Calendar</ui-button>
       </div>
     </section>
   </section>
@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import { Check, X } from 'lucide-vue-next'
 import { callbackGoogleCalendar } from '@/api/accounts/accounts'
 
@@ -33,10 +33,6 @@ const route = useRoute()
 const isProcessing = ref(true)
 const isSuccess = ref(false)
 const errorMessage = ref('')
-
-function goToCalendar() {
-  router.push('/calendar')
-}
 
 onMounted(async () => {
   const code = route.query.code as string | undefined

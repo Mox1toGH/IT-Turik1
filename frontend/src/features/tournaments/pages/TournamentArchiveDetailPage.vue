@@ -1,5 +1,6 @@
 <template>
   <section class="page-shell">
+    <page-back-link to="/tournaments/archive" label="Back to tournament archive" />
     <ui-query-block :query="archiveQuery">
       <ui-query-field>
         <template #skeleton>
@@ -58,6 +59,7 @@
 
 <script setup lang="ts">
 import { UiQueryBlock, UiQueryField } from '@/components/query'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'

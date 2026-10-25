@@ -1,7 +1,8 @@
 <template>
-  <ui-card v-if="assignments.length === 0" class="empty-card">
-    <p class="empty-text">No assignments found for selected filters</p>
-  </ui-card>
+  <ui-empty-card
+    v-if="assignments.length === 0"
+    message="No assignments found for selected filters."
+  />
   <div v-else class="assignments-grid">
     <evaluation-assignment-card
       v-for="assignment in assignments"
@@ -13,16 +14,13 @@
 </template>
 
 <script setup lang="ts">
-import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import EvaluationAssignmentCard from './EvaluationAssignmentCard.vue'
 import type { JuryAssignmentResponse } from '@/api/backendAPINinja.schemas'
 
-interface Props {
+defineProps<{
   assignments: JuryAssignmentResponse[]
-  loading?: boolean
-}
-
-withDefaults(defineProps<Props>(), { loading: false })
+}>()
 
 defineEmits<{
   (e: 'evaluated'): void
@@ -36,18 +34,4 @@ defineEmits<{
   gap: 0.85rem;
 }
 
-.assignment-skeleton {
-  background: var(--subtle);
-}
-
-.empty-card {
-  border-color: var(--border);
-}
-
-.empty-text {
-  margin: 0;
-  color: var(--muted-foreground);
-  text-align: center;
-  padding: 0.8rem 0;
-}
 </style>

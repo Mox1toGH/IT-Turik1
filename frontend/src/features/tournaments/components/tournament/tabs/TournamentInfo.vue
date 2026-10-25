@@ -8,7 +8,10 @@
           <p class="section-subtitle text-base">Core dates, description, and your progress.</p>
         </div>
 
-        <ui-button v-if="tournament?.status === 'draft'" @click="handleStartRegistration">
+        <ui-button
+          v-if="tournament?.status === 'draft'"
+          @click="isStartRegistrationConfirmOpen = true"
+        >
           <LoaderCircle class="animate-spin" v-if="isPending" />
           Start registration
         </ui-button>
@@ -158,7 +161,7 @@
             v-if="registeredTeamId"
             variant="danger"
             :disabled="isLeaving"
-            @click="handleLeave"
+            @click="isLeaveConfirmOpen = true"
           >
             <LoaderCircle class="animate-spin" v-if="isLeaving" />
             <span>Leave Tournament</span>
@@ -167,12 +170,42 @@
       </div>
     </ui-query-block>
   </ui-card>
+  <ui-confirm-modal
+    v-model="isStartRegistrationConfirmOpen"
+    title="Start registration?"
+    confirm-text="Start registration"
+    :loading="isPending"
+    @confirm="handleStartRegistration"
+  >
+    <template #message>
+      <p>
+        This will publish the tournament and open
+        <ui-badge variant="green">team registration</ui-badge>.
+      </p>
+    </template>
+  </ui-confirm-modal>
+  <ui-confirm-modal
+    v-model="isLeaveConfirmOpen"
+    title="Leave tournament?"
+    confirm-text="Leave tournament"
+    confirm-variant="danger"
+    :loading="isLeaving"
+    @confirm="handleLeave"
+  >
+    <template #message>
+      <p>
+        Your team will be <ui-badge variant="red">unregistered</ui-badge> and may lose its place in
+        this tournament.
+      </p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import UiSkeleton from '@/components/ui/UiSkeleton'
@@ -198,6 +231,8 @@ interface Props {
 
 const props = defineProps<Props>()
 const selectedTeamId = ref<number | null>(null)
+const isStartRegistrationConfirmOpen = ref(false)
+const isLeaveConfirmOpen = ref(false)
 
 const { showNotification } = useNotification()
 const userQuery = useGetUserProfile()
@@ -254,6 +289,10 @@ const { mutate: startRegistration, isPending } = useStartTournamentRegistration(
 const handleStartRegistration = () => {
   startRegistration({
     id: props.tournamentId,
+  }, {
+    onSuccess: () => {
+      isStartRegistrationConfirmOpen.value = false
+    },
   })
 }
 
@@ -261,7 +300,12 @@ function handleLeave() {
   if (!registeredTeamId.value || isLeaving.value) return
   leave(
     { id: props.tournamentId, data: { team_id: registeredTeamId.value } },
-    { onError: (error) => showNotification(error?.message, 'error') },
+    {
+      onSuccess: () => {
+        isLeaveConfirmOpen.value = false
+      },
+      onError: (error) => showNotification(error?.message, 'error'),
+    },
   )
 }
 

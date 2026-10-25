@@ -1,5 +1,6 @@
 <template>
   <section class="page-shell centered">
+    <page-back-link to="/login" label="Back to login" />
     <section class="reset-card">
       <div class="modal-title">
         <p class="section-eyebrow">Password Recovery</p>
@@ -30,9 +31,6 @@
 
         <div v-if="isSuccess" class="notice success reset-success">
           Password has been reset successfully.
-          <div class="footer-actions">
-            <ui-button as-link to="/login">Back to Login</ui-button>
-          </div>
         </div>
 
         <form v-else-if="!isLinkInvalid" class="reset-form" @submit.prevent="handleReset">
@@ -87,6 +85,7 @@ import UiCard from '@/components/ui/UiCard'
 import UiPasswordField from '@/components/ui/UiPasswordField'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiButton from '@/components/ui/UiButton'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import { useConfirmPasswordReset, useValidatePasswordResetLink } from '@/api/accounts/accounts'
 

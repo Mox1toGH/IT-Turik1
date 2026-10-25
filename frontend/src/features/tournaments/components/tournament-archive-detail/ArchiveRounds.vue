@@ -9,13 +9,14 @@
         <p class="round-meta">Criteria: {{ round.criteria?.length ?? 0 }}</p>
       </ui-card>
     </div>
-    <p v-else class="empty-state">No rounds found.</p>
+    <ui-empty-card v-else message="No rounds found." />
   </ui-section>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
 import UiSection from '@/components/ui/UiSection'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { formatArchiveDateTime, formatDateRange } from './lib/format'
 import type { TournamentArchive } from '@/features/tournaments/types'
 
@@ -44,8 +45,4 @@ defineProps<{
   color: var(--muted-foreground);
 }
 
-.empty-state {
-  margin: 0;
-  color: var(--muted-foreground);
-}
 </style>

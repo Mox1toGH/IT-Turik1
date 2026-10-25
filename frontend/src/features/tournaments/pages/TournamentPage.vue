@@ -10,12 +10,10 @@
           <TournamentInfo :tournament-id="id" />
           <TournamentTeams :tournament-id="id" />
         </div>
+      </template>
 
-        <ManageZoneCard
-          v-if="user?.role === 'admin'"
-          :tournament-id="id"
-          class="manage-zone"
-        />
+      <template v-if="user?.role === 'admin'" #management>
+        <TournamentManagement :tournament-id="id" />
       </template>
 
       <template #rounds>
@@ -68,7 +66,7 @@ import TournamentLeaderboard from '../components/tournament/tabs/TournamentLeade
 
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'
-import ManageZoneCard from '../components/tournament/ManageZoneCard.vue'
+import TournamentManagement from '../components/tournament/TournamentManagement.vue'
 import TournamentHeroCard from '../components/tournament/TournamentHeroCard.vue'
 
 const route = useRoute()
@@ -88,6 +86,7 @@ const tabItems = computed<TabItem[]>(() => [
   { value: 'submissions', label: 'Submissions', disabled: !canViewSubmissions.value },
   { value: 'schedule', label: 'Schedule' },
   { value: 'leaderboard', label: 'Leaderboard' },
+  ...(user.value?.role === 'admin' ? [{ value: 'management', label: 'Management' }] : []),
 ])
 </script>
 
@@ -107,10 +106,6 @@ const tabItems = computed<TabItem[]>(() => [
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
   gap: 1rem;
   align-items: start;
-}
-
-.manage-zone {
-  margin-top: 1rem;
 }
 
 @media (max-width: 810px) {

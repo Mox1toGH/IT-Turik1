@@ -24,9 +24,10 @@
         </template>
 
         <template #default>
-          <p v-if="isEmpty" class="empty-text text-muted">
-            No joined teams yet. Create a team or request to join an available workspace.
-          </p>
+          <ui-empty-card
+            v-if="isEmpty"
+            message="No joined teams yet. Create a team or request to join an available workspace."
+          />
           <div v-else class="team-grid">
             <ui-card v-for="team in myTeamsPageItems" :key="`my-${team.id}`" class="team-item">
               <div class="team-body">
@@ -72,6 +73,7 @@
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import UiPagination from '@/components/ui/UiPagination'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -114,13 +116,6 @@ const isAcceptedMember = (team: Team) => team.is_member || isCaptain(team)
   display: grid;
   gap: 1rem;
   min-width: 0;
-}
-
-.empty-text {
-  margin: 0;
-  padding: 2rem 0;
-  text-align: center;
-  overflow-wrap: anywhere;
 }
 
 .team-grid {

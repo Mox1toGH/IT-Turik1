@@ -12,10 +12,11 @@
         </template>
 
         <template #default>
-          <div v-if="events.length === 0" class="events-empty">
-            <p>No events scheduled yet.</p>
-            <p class="text-sm text-muted">Events added to this tournament appear here.</p>
-          </div>
+          <ui-empty-card
+            v-if="events.length === 0"
+            title="No events scheduled yet"
+            message="Events added to this tournament appear here."
+          />
           <div v-else class="events-list">
             <ui-card v-for="event in events" :key="event.id" class="event-card">
               <div class="event-content">
@@ -40,7 +41,37 @@
               </div>
 
               <div class="event-actions" v-if="user?.role === 'admin'">
-                <ui-button size="sm" @click="openEdit(event.id)">Edit</ui-button>
+                <ui-popover min-width="150px" header="Event actions">
+                  <template #trigger>
+                    <ui-button size="sm" variant="secondary" aria-label="Event actions">
+                      <MoreHorizontal :size="18" />
+                    </ui-button>
+                  </template>
+                  <template #default="{ close }">
+                    <div class="event-menu-actions">
+                      <ui-button
+                        size="sm"
+                        variant="secondary"
+                        @click="
+                          close();
+                          openEdit(event.id)
+                        "
+                      >
+                        Edit
+                      </ui-button>
+                      <ui-button
+                        size="sm"
+                        variant="danger"
+                        @click="
+                          close();
+                          openDelete(event.id)
+                        "
+                      >
+                        Delete
+                      </ui-button>
+                    </div>
+                  </template>
+                </ui-popover>
                 <EditEventModal
                   v-if="editTargetId === event.id"
                   v-model="isEditOpen"
@@ -52,10 +83,6 @@
                   :event-type="event.type"
                   :link="event.link ?? ''"
                 />
-
-                <ui-button size="sm" variant="danger" @click="openDelete(event.id)"
-                  >Delete</ui-button
-                >
                 <DeleteEventModal
                   v-if="deleteTargetId === event.id"
                   v-model="isDeleteOpen"
@@ -74,6 +101,7 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiExpandableText from '@/components/ui/UiExpandableText'
 import EventsListSkeleton from './tournament-schedule/EventsListSkeleton.vue'
@@ -84,6 +112,8 @@ import DeleteEventModal from '../modals/DeleteEventModal.vue'
 import AddEventModal from '../modals/AddEventModal.vue'
 import { computed, ref, watch } from 'vue'
 import UiButton from '@/components/ui/UiButton'
+import UiPopover from '@/components/ui/UiPopover'
+import { MoreHorizontal } from 'lucide-vue-next'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useListEvents } from '@/api/tournaments/tournaments'
 import type { TournamentStatus } from '@/api/backendAPINinja.schemas.ts'
@@ -206,4 +236,7 @@ const events = computed(() => eventsQuery.data.value?.items ?? [])
   padding-top: 7px;
   border-top: 1px solid var(--border);
 }
+
+.event-menu-actions { display: grid; gap: 0.35rem; }
+.event-menu-actions :deep(button) { justify-content: flex-start; }
 </style>

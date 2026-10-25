@@ -1,6 +1,7 @@
 <template>
   <section class="page-shell">
     <div class="history-page">
+      <page-back-link :label="isOwnView ? 'Back to profile' : 'Back to user profile'" @back="goBack" />
       <div class="head">
         <div>
           <p class="section-eyebrow">Tournaments</p>
@@ -8,7 +9,6 @@
             {{ isOwnView ? 'My tournament history' : `${displayUserName} tournament history` }}
           </h1>
         </div>
-        <ui-button variant="secondary" @click="goBack">Back</ui-button>
       </div>
 
       <ui-query-block :query="historyQuery">
@@ -28,7 +28,7 @@
           </template>
 
           <template #default>
-            <p v-if="isEmpty" class="text-muted">No tournament history yet.</p>
+            <ui-empty-card v-if="isEmpty" message="No tournament history yet." />
             <div v-else class="history-list">
               <ui-card
                 v-for="item in historyItems"
@@ -81,6 +81,8 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'

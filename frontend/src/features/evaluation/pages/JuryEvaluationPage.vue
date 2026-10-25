@@ -70,7 +70,7 @@
         <ui-query-field>
           <template #skeleton>
             <div class="assignments-grid">
-              <ui-card v-for="i in 4" :key="i" class="assignment-skeleton">
+              <ui-card v-for="i in 4" :key="i">
                 <ui-skeleton variant="rect" width="60%" height="20px" />
                 <ui-skeleton variant="rect" width="30%" height="16px" />
                 <ui-skeleton variant="rect" width="100%" height="14px" />
@@ -78,12 +78,7 @@
               </ui-card>
             </div>
           </template>
-          <assignment-grid
-            v-if="pagedAssignments.length > 0"
-            :assignments="pagedAssignments"
-            @evaluated="refetch"
-          />
-          <p v-else class="text-muted">No assignments found for selected filters.</p>
+          <assignment-grid :assignments="pagedAssignments" @evaluated="refetch" />
         </ui-query-field>
 
         <ui-pagination

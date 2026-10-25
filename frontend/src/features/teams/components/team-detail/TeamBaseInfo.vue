@@ -69,7 +69,9 @@
               <ui-skeleton variant="rect" height="16px" width="30%" />
             </template>
 
-            <strong class="text-muted info-value">{{ props.team?.members.length }}</strong>
+            <ui-badge variant="primary" class="info-badge">
+              {{ props.team?.members.length }} members
+            </ui-badge>
           </ui-query-field>
         </div>
 
@@ -80,9 +82,9 @@
               <ui-skeleton variant="rect" height="16px" width="40%" />
             </template>
 
-            <strong class="text-muted info-value">{{
-              props.team?.is_public ? 'Public' : 'Private'
-            }}</strong>
+            <ui-badge :variant="props.team?.is_public ? 'green' : 'gray'" class="info-badge">
+              {{ props.team?.is_public ? 'Public team' : 'Private team' }}
+            </ui-badge>
           </ui-query-field>
         </div>
       </div>
@@ -105,13 +107,28 @@
           class="leave-team"
           variant="danger"
           size="md"
-          @click="leaveTeam"
+          @click="isLeaveConfirmOpen = true"
         >
           Leave team
         </ui-button>
       </div>
     </template>
   </ui-card>
+  <ui-confirm-modal
+    v-model="isLeaveConfirmOpen"
+    title="Leave team?"
+    confirm-text="Leave team"
+    confirm-variant="danger"
+    :loading="isLeaving"
+    @confirm="leaveTeam"
+  >
+    <template #message>
+      <p>
+        You will lose access to this
+        <ui-badge variant="red">team workspace</ui-badge>. You may need a new invitation to rejoin.
+      </p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">
@@ -120,8 +137,10 @@ import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTruncate from '@/components/ui/UiTruncate'
+import UiBadge from '@/components/ui/UiBadge'
 import { LoaderCircle } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { useNotification } from '@/composables/useNotification'
 import { useCreateTeamJoinRequest, useLeaveTeam } from '@/api/teams/teams'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -174,7 +193,8 @@ const sendJoinRequest = () => {
 }
 
 // ── Leave Team ────────────────────────────────────────────────────
-const { mutate: leaveTeamMutate } = useLeaveTeam()
+const { mutate: leaveTeamMutate, isPending: isLeaving } = useLeaveTeam()
+const isLeaveConfirmOpen = ref(false)
 
 const leaveTeam = () => {
   if (!props.team) return
@@ -184,6 +204,7 @@ const leaveTeam = () => {
     { pk: props.team.id },
     {
       onSuccess: () => {
+        isLeaveConfirmOpen.value = false
         emit('leave')
       },
       onError: (error) => {
@@ -257,6 +278,11 @@ const leaveTeam = () => {
   min-width: 0;
 }
 
+.info-badge {
+  width: max-content;
+  max-width: 100%;
+}
+
 .captain-link {
   color: var(--primary);
   text-decoration: none;
@@ -276,5 +302,37 @@ const leaveTeam = () => {
 
 .info-actions .leave-team {
   width: 100%;
+}
+
+@media (max-width: 520px) {
+  .panel-header {
+    gap: 0.65rem;
+  }
+
+  .panel-header p {
+    margin-top: 0.2rem;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .info-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+    padding: 0.7rem 0;
+  }
+
+  .info-value {
+    display: block;
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+  }
+
+  .info-actions {
+    flex-direction: column;
+  }
+
+  .info-actions > * {
+    width: 100%;
+  }
 }
 </style>

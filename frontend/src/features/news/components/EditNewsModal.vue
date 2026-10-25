@@ -105,7 +105,8 @@ function handleSubmit() {
       articleId: props.item.id,
       data: {
         title: editForm.fields.value.title,
-        content: JSON.stringify(editForm.fields.value.content ?? {}),
+        content: editForm.fields.value.content ?? {},
+        send_notification: editForm.fields.value.send_notification,
       },
     },
     {

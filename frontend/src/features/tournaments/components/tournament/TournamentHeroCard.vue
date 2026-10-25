@@ -1,19 +1,7 @@
 <template>
   <div class="tournament-hero-wrap">
     <div class="hero-topbar">
-      <router-link to="/tournaments" class="back-link">
-        <ChevronLeft class="back-icon" aria-hidden="true" />
-        Back to tournaments
-      </router-link>
-      <button
-        v-if="user?.role === 'admin'"
-        class="banner-edit-btn"
-        type="button"
-        aria-label="Edit tournament banner"
-        @click="isBannerModalOpen = true"
-      >
-        <SquarePen :size="18" />
-      </button>
+      <page-back-link to="/tournaments" label="Back to tournaments" />
     </div>
 
     <header
@@ -54,28 +42,21 @@
       </div>
     </header>
 
-    <UpdateBannerModal v-model="isBannerModalOpen" :tournament-id="tournamentId" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ChevronLeft, SquarePen } from 'lucide-vue-next'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiTruncate from '@/components/ui/UiTruncate'
 import { UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetTournament } from '@/api/tournaments/tournaments'
-import UpdateBannerModal from './modals/UpdateBannerModal.vue'
 import { useBannerPosition } from '../../composables/useBannerPosition.ts'
 
 const props = defineProps<{
   tournamentId: number
 }>()
 
-const isBannerModalOpen = ref(false)
-
-const { data: user } = useGetUserProfile()
 const tournamentQuery = useGetTournament(props.tournamentId)
 const { isLoading: isTournamentLoading } = tournamentQuery
 const { data: tournament } = tournamentQuery
@@ -109,60 +90,6 @@ const { objectPosition: bannerObjectPosition } = useBannerPosition(props.tournam
 .hero-data-state :deep(.hero-overlay) {
   position: absolute;
   inset: 0;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: var(--foreground);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.back-link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.back-icon {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
-}
-
-.banner-edit-btn {
-  flex: 0 0 auto;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--foreground);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.banner-edit-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.banner-edit-btn:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
 }
 
 .tournament-hero {

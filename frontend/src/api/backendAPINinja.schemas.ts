@@ -1124,11 +1124,12 @@ export interface UpdateNewsResponse {
 
 export type NewsArticlePatchRequestTitle = string | null;
 
-export type NewsArticlePatchRequestContent = string | null;
+export type NewsArticlePatchRequestContent = Record<string, unknown> | null;
 
 export interface NewsArticlePatchRequest {
   title?: NewsArticlePatchRequestTitle;
   content?: NewsArticlePatchRequestContent;
+  send_notification?: boolean;
 }
 
 export interface NotificationResponse {

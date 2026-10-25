@@ -1,10 +1,7 @@
 <template>
   <section class="page-shell teams-edit-page">
     <header class="edit-header">
-      <router-link class="back-link" :to="team ? `/teams/${team.id}` : '/teams'">
-        <ChevronLeft class="back-icon" aria-hidden="true" />
-        Back to team
-      </router-link>
+      <page-back-link :to="team ? `/teams/${team.id}` : '/teams'" label="Back to team" />
 
       <div class="edit-header-copy">
         <h1 :title="team?.name">
@@ -50,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft } from 'lucide-vue-next'
 import { computed, watchEffect } from 'vue'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import TeamEditForm from '../components/team-edit/TeamEditForm.vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamManageMembers from '../components/team-edit/TeamManageMembers.vue'
@@ -140,36 +137,6 @@ watchEffect(() => {
   display: grid;
   gap: 0.6rem;
   min-width: 0;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: max-content;
-  color: var(--muted-foreground);
-  font-size: var(--text-sm);
-  line-height: var(--text-sm--line-height);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: var(--foreground);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.back-link:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.back-icon {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
 }
 
 .edit-header h1 {

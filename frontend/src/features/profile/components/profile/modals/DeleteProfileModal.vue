@@ -4,14 +4,16 @@
       <h3>Delete account</h3>
     </template>
 
-    <p class="modal-text">This action cannot be undone. Enter this username to confirm.</p>
+    <p class="modal-text">
+      Permanently delete this <ui-badge variant="red">account</ui-badge> and
+      <ui-badge variant="red">ALL associated data</ui-badge>. Enter this username to confirm.
+    </p>
 
     <ui-query-block :query="userQuery">
       <template #error><p class="text-error">Could not load account details.</p></template>
       <ui-query-field>
         <template #skeleton><ui-skeleton variant="rect" width="100%" height="40px" /></template>
         <div class="delete-confirmation">
-          <ui-badge variant="red">{{ expectedDeleteText }}</ui-badge>
           <ui-input
             v-model="deleteConfirmInput"
             :placeholder="expectedDeleteText"

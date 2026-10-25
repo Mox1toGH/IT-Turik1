@@ -1,15 +1,11 @@
 <template>
   <section class="page-shell">
     <section class="archive-section">
+      <page-back-link to="/tournaments" label="Back to active tournaments" />
       <header class="page-header">
         <div class="archive-header">
           <div class="title-row">
             <h1 class="archive-title">Tournament Archive</h1>
-          </div>
-          <div class="header-actions">
-            <ui-button asLink to="/tournaments" size="sm" variant="secondary"
-              >Back to active list</ui-button
-            >
           </div>
         </div>
       </header>
@@ -36,9 +32,7 @@
           </template>
 
           <template #default>
-            <ui-card v-if="isEmpty" class="empty-card">
-              <p class="empty-error">No finished tournaments yet.</p>
-            </ui-card>
+            <ui-empty-card v-if="isEmpty" message="No finished tournaments yet." />
             <div v-else class="archive-grid">
               <tournament-archive-card
                 v-for="tournament in tournamentItems"
@@ -55,7 +49,8 @@
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiButton from '@/components/ui/UiButton'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
+import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import { computed } from 'vue'
@@ -86,11 +81,6 @@ const isEmpty = computed(() => tournamentItems.value.length === 0)
   margin: 0;
 }
 
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .archive-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -116,14 +106,6 @@ const isEmpty = computed(() => tournamentItems.value.length === 0)
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.empty-card {
-  margin-top: 0.5rem;
-}
-
-.empty-error {
-  margin: 0;
 }
 
 @media (max-width: 768px) {

@@ -2518,7 +2518,7 @@ export const getCurrentTask = (
 ) => {
       params = unref(params);
       
-      return customInstance<CurrentTaskResponse>(
+      return customInstance<CurrentTaskResponse | null>(
       {url: `http://localhost:8000/api/tournaments/current-task`, method: 'GET',
         params: unref(params), signal
     },
@@ -2905,4 +2905,3 @@ export const useDeleteEvent = <TError = ErrorType<ErrorResponse>,
 
       return useMutation(mutationOptions, queryClient);
     }
-    

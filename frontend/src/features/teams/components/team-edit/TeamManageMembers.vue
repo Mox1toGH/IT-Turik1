@@ -55,7 +55,7 @@
                 size="sm"
                 class="remove-member-btn"
                 :disabled="kickLoadingIds.has(member.id)"
-                @click="removeMember(member)"
+                @click="requestRemoveMember(member)"
               >
                 <LoaderCircle class="animate-spin" v-if="kickLoadingIds.has(member.id)" />
                 Remove
@@ -68,6 +68,23 @@
         </p>
       </ui-query-field>
     </ui-query-block>
+    <ui-confirm-modal
+      v-model="isRemoveConfirmOpen"
+      title="Remove team member?"
+      confirm-text="Remove member"
+      confirm-variant="danger"
+      :loading="isRemovingPendingMember"
+      @confirm="confirmRemoveMember"
+    >
+      <template #message>
+        <p>
+          Remove
+          <ui-badge variant="red">{{ pendingRemoval?.username || 'this person' }}</ui-badge>
+          from <ui-badge>{{ team.name }}</ui-badge>? They will
+          <ui-badge variant="red">lose access</ui-badge> to the team.
+        </p>
+      </template>
+    </ui-confirm-modal>
   </div>
 </template>
 
@@ -76,6 +93,7 @@ import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
+import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UserAvatar from '@/components/shared/UserAvatar.vue'
@@ -105,6 +123,11 @@ const queryClient = useQueryClient()
 
 const memberSearch = ref('')
 const kickLoadingIds = ref<Set<number>>(new Set())
+const pendingRemoval = ref<TeamMember | null>(null)
+const isRemoveConfirmOpen = ref(false)
+const isRemovingPendingMember = computed(
+  () => pendingRemoval.value !== null && kickLoadingIds.value.has(pendingRemoval.value.id),
+)
 
 const filteredMembers = computed(() => {
   const search = memberSearch.value.trim().toLowerCase()
@@ -131,6 +154,8 @@ const removeMember = (member: TeamMember) => {
     { pk: props.team.id, userId: member.id },
     {
       onSuccess: () => {
+        isRemoveConfirmOpen.value = false
+        pendingRemoval.value = null
         void queryClient.invalidateQueries({
           queryKey: getListTeamMembersQueryKey(props.team.id),
         })
@@ -144,6 +169,15 @@ const removeMember = (member: TeamMember) => {
       },
     },
   )
+}
+
+const requestRemoveMember = (member: TeamMember) => {
+  pendingRemoval.value = member
+  isRemoveConfirmOpen.value = true
+}
+
+const confirmRemoveMember = () => {
+  if (pendingRemoval.value) removeMember(pendingRemoval.value)
 }
 </script>
 

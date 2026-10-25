@@ -64,6 +64,7 @@ const statusBadgeVariant = (status?: TournamentStatus) => {
   min-width: 0;
   padding: 0;
   overflow: hidden;
+  justify-content: space-between;
 }
 
 .tournament-media {

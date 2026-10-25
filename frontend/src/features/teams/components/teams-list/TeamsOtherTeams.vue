@@ -25,9 +25,10 @@
         </template>
 
         <template #default>
-          <p v-if="isEmpty" class="empty-text text-muted">
-            No teams to discover. Available teams will show up here when they can be joined.
-          </p>
+          <ui-empty-card
+            v-if="isEmpty"
+            message="No teams to discover. Available teams will show up here when they can be joined."
+          />
           <div v-else class="team-grid">
             <ui-card
               v-for="team in otherTeamsPageItems"
@@ -84,6 +85,7 @@
 <script setup lang="ts">
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import UiPagination from '@/components/ui/UiPagination'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiTruncate from '@/components/ui/UiTruncate'
@@ -156,13 +158,6 @@ const sendJoinRequest = (teamId: number) => {
   display: grid;
   gap: 1rem;
   min-width: 0;
-}
-
-.empty-text {
-  margin: 0;
-  padding: 2rem 0;
-  text-align: center;
-  overflow-wrap: anywhere;
 }
 
 .teams-pagination {

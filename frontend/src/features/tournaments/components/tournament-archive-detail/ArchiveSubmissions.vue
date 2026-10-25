@@ -70,7 +70,7 @@
         </div>
       </details>
     </div>
-    <p v-else class="empty-state">No submissions found.</p>
+    <ui-empty-card v-else message="No submissions found." />
   </ui-section>
 </template>
 
@@ -78,6 +78,7 @@
 import { computed } from 'vue'
 import UiCard from '@/components/ui/UiCard'
 import UiSection from '@/components/ui/UiSection'
+import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { formatScore } from './lib/format'
 import type { ArchiveSubmission as Submission } from '@/features/tournaments/types'
 
@@ -213,8 +214,4 @@ const hasEvaluations = (submission: Submission) =>
   padding-left: 1rem;
 }
 
-.empty-state {
-  margin: 0;
-  color: var(--muted-foreground);
-}
 </style>

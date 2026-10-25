@@ -1,9 +1,6 @@
 <template>
   <section class="page-shell news-page">
-    <news-hero
-      :can-manage-news="canManageNews"
-      @create="isCreateOpen = true"
-    />
+    <news-hero :can-manage-news="canManageNews" @create="isCreateOpen = true" />
 
     <div class="news-rule" aria-hidden="true"></div>
 
@@ -24,12 +21,15 @@
     <ui-confirm-modal
       v-model="isDeleteConfirmOpen"
       title="Delete news"
-      message="Are you sure you want to delete this news?"
       confirmText="Delete"
       confirmVariant="danger"
       :loading="isDeleting"
       @confirm="handleDelete"
-    />
+    >
+      <template #message>
+        <p>Remove this <ui-badge variant="red">news item</ui-badge>? This cannot be undone.</p>
+      </template>
+    </ui-confirm-modal>
   </section>
 </template>
 
@@ -37,6 +37,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
+import UiBadge from '@/components/ui/UiBadge'
 import { useNotification } from '@/composables/useNotification'
 import { useDeleteNews, useListNews } from '@/api/news/news'
 import { useGetUserProfile } from '@/api/accounts/accounts'
@@ -52,7 +53,6 @@ const route = useRoute()
 const { data: user } = useGetUserProfile()
 
 const canManageNews = computed(() => hasAnyRole(user.value, ['admin', 'organizer']))
-
 const isCreateOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteConfirmOpen = ref(false)

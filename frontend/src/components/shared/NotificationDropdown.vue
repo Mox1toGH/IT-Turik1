@@ -119,17 +119,26 @@
   <ui-confirm-modal
     v-model="isConfirmModalOpen"
     :title="confirmModalConfig.title"
-    :message="confirmModalConfig.message"
     :confirm-variant="confirmModalConfig.confirmVariant"
     :loading="isDeletingAll"
     @confirm="confirmModalConfig.onConfirm"
-  />
+  >
+    <template #message>
+      <p v-if="confirmModalConfig.scope === 'all'">
+        Delete <ui-badge variant="red">ALL notifications</ui-badge>? This cannot be undone.
+      </p>
+      <p v-else>
+        Delete this <ui-badge variant="red">notification</ui-badge>?
+      </p>
+    </template>
+  </ui-confirm-modal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Bell, ExternalLink, Trash2 } from 'lucide-vue-next'
+import UiBadge from '@/components/ui/UiBadge'
 import UiButton from '@/components/ui/UiButton'
 import UiConfirmModal from '@/components/ui/UiConfirmModal'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
@@ -160,7 +169,7 @@ const { mutate: deleteAllNotifications, isPending: isDeletingAll } = useDeleteAl
 const isConfirmModalOpen = ref(false)
 const confirmModalConfig = ref({
   title: '',
-  message: '',
+  scope: 'single' as 'single' | 'all',
   onConfirm: () => {},
   confirmVariant: 'danger' as const,
 })
@@ -192,7 +201,7 @@ const handleMarkAllRead = () => {
 const handleDelete = (id: number) => {
   confirmModalConfig.value = {
     title: 'Delete Notification',
-    message: 'Delete this notification?',
+    scope: 'single',
     confirmVariant: 'danger',
     onConfirm: () => {
       deleteNotification(
@@ -211,7 +220,7 @@ const handleDelete = (id: number) => {
 const handleDeleteAll = () => {
   confirmModalConfig.value = {
     title: 'Delete All Notifications',
-    message: 'Delete ALL notifications? This cannot be undone.',
+    scope: 'all',
     confirmVariant: 'danger',
     onConfirm: () => {
       deleteAllNotifications(undefined, {
@@ -248,7 +257,6 @@ const getRedirectUrl = (notification: Notification) => {
   }
 
   if (type.startsWith('team_')) {
-    // Other team events can still link directly if possible
     const match = notification.message.match(/\[team:(\d+):.+?\]/)
     if (match) {
       return `/teams/${match[1]}`
