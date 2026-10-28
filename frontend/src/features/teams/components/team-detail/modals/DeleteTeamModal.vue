@@ -98,7 +98,7 @@ const handleDeleteTeam = async () => {
       },
       onError: (error) => {
         deleteError.value = error.message
-        showNotification(error.message)
+        showNotification(error.message, 'error')
       },
     },
   )

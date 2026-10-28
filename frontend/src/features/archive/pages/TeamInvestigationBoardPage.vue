@@ -226,7 +226,7 @@ import {
   SEAL_TERMINAL_DELAY_MS,
   SEAL_VISUAL_RESET_MS,
 } from '../data/tapSealConfig'
-import triangle from '@/../public/archive/triangle.jpg'
+import triangle from '@/assets/triangle.jpg'
 
 const activeIndex = ref<number | null>(null)
 const router = useRouter()

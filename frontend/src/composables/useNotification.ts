@@ -2,12 +2,18 @@ import { computed, reactive, readonly } from 'vue'
 
 const DEFAULT_DURATION_MS = 4200
 
-type NotificationType = 'success' | 'error'
+type NotificationType = 'success' | 'error' | 'warning' | 'info'
+
+export interface NotificationAction {
+  label: string
+  onClick: () => void | Promise<void>
+}
 
 interface NotificationPayload {
   message: string
   type: NotificationType
   duration: number
+  actions?: NotificationAction[]
 }
 
 interface NotificationState {
@@ -15,6 +21,7 @@ interface NotificationState {
   type: NotificationType
   duration: number
   id: number
+  actions?: NotificationAction[]
 }
 
 interface GlobalNotificationState {
@@ -25,6 +32,7 @@ interface GlobalNotificationState {
 interface ShowNotificationOptions {
   duration?: number
   mode?: 'queue' | 'replace'
+  actions?: NotificationAction[]
 }
 
 const state = reactive<GlobalNotificationState>({
@@ -66,7 +74,9 @@ const scheduleDismiss = (duration: number): void => {
 
 const showNow = (payload: NotificationPayload): void => {
   state.current = { ...payload, id: ++notificationId }
-  scheduleDismiss(payload.duration)
+  if (payload.duration && payload.duration > 0) {
+    scheduleDismiss(payload.duration)
+  }
 }
 
 const clearNotification = (clearQueue = false): void => {
@@ -96,6 +106,7 @@ const showNotification = (
     message: text,
     type,
     duration: options?.duration ?? DEFAULT_DURATION_MS,
+    actions: options?.actions,
   }
 
   if (options?.mode === 'queue' && state.current) {

@@ -198,7 +198,7 @@ import { useArchiveBoot } from '../composables/useArchiveBoot'
 import { useArchiveProgress } from '../composables/useArchiveProgress'
 import { useArchiveTerminal } from '../composables/useArchiveTerminal'
 import { useStaticNoise } from '../../../composables/useStaticNoise'
-import triangle from '@/../public/archive/triangle.jpg'
+import triangle from '@/assets/triangle.jpg'
 import { AXIOS_INSTANCE } from '../../../lib/apiClient'
 
 const { bootLines, bootStatus, booting, bootStep, finishBoot } = useArchiveBoot()
