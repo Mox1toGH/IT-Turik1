@@ -15,7 +15,7 @@
         <ui-offline-banner />
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">
-            <div :key="$route.path">
+            <div :key="$route.path" class="page-route">
               <component :is="Component" />
             </div>
           </transition>
@@ -95,7 +95,9 @@ watch(sidebarCollapsed, (collapsed) => {
 }
 
 .page-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   width: 100%;
   margin: 0;
   padding: 2rem clamp(1rem, 3vw, 2.5rem) 2rem;
@@ -103,12 +105,17 @@ watch(sidebarCollapsed, (collapsed) => {
   z-index: 9;
 }
 
+.page-route {
+  min-width: 0;
+  padding-bottom: 2.25rem;
+}
+
 .app-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-top: 2.25rem;
+  margin-top: auto;
   padding: 1rem 1.15rem;
   border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--border));
   border-radius: 0.85rem;
@@ -177,7 +184,11 @@ watch(sidebarCollapsed, (collapsed) => {
   overflow: visible;
 }
 .archive-mode .page-content {
+  display: block;
   z-index: 1;
+}
+.archive-mode .page-route {
+  padding-bottom: 0;
 }
 
 @media (max-width: 900px) {
