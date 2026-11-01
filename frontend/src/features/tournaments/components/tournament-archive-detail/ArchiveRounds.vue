@@ -1,21 +1,18 @@
 <template>
-  <ui-section title="Rounds Timeline" description="Schedule and criteria per round">
-    <div v-if="rounds.length" class="rounds-list">
-      <ui-card v-for="round in rounds" :key="round.id" class="round-card">
-        <p class="round-title">{{ round.name }}</p>
-        <p class="round-meta">{{ formatDateRange(round.start_date, round.end_date) }}</p>
-        <p class="round-meta">Start: {{ formatArchiveDateTime(round.start_date) }}</p>
-        <p class="round-meta">End: {{ formatArchiveDateTime(round.end_date) }}</p>
-        <p class="round-meta">Criteria: {{ round.criteria?.length ?? 0 }}</p>
-      </ui-card>
-    </div>
-    <ui-empty-card v-else message="No rounds found." />
-  </ui-section>
+  <div v-if="rounds.length" class="rounds-list">
+    <ui-card v-for="round in rounds" :key="round.id" class="round-card">
+      <p class="round-title">{{ round.name }}</p>
+      <p class="round-meta">{{ formatDateRange(round.start_date, round.end_date) }}</p>
+      <p class="round-meta">Start: {{ formatArchiveDateTime(round.start_date) }}</p>
+      <p class="round-meta">End: {{ formatArchiveDateTime(round.end_date) }}</p>
+      <p class="round-meta">Criteria: {{ round.criteria?.length ?? 0 }}</p>
+    </ui-card>
+  </div>
+  <ui-empty-card v-else message="No rounds found." />
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiSection from '@/components/ui/UiSection'
 import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { formatArchiveDateTime, formatDateRange } from './lib/format'
 import type { TournamentArchive } from '@/features/tournaments/types'
@@ -44,5 +41,4 @@ defineProps<{
 .round-meta {
   color: var(--muted-foreground);
 }
-
 </style>

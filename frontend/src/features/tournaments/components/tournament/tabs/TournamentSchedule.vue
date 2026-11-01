@@ -26,7 +26,7 @@
                   </div>
 
                   <div class="event-info">
-                    <p class="event-title break-anywhere" :title="event.title">
+                    <p class="event-title" :title="event.title">
                       {{ truncateText(event.title, 30) }}
                     </p>
                     <ui-expandable-text :text="event.description ?? '-'" :lines="2" />
@@ -54,7 +54,7 @@
                         variant="secondary"
                         @click="
                           close();
-                          openEdit(event.id)
+                          openEdit(event.id);
                         "
                       >
                         Edit
@@ -64,7 +64,7 @@
                         variant="danger"
                         @click="
                           close();
-                          openDelete(event.id)
+                          openDelete(event.id);
                         "
                       >
                         Delete
@@ -209,6 +209,7 @@ const events = computed(() => eventsQuery.data.value?.items ?? [])
 .event-title {
   margin: 0;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .event-left-side,
@@ -237,6 +238,12 @@ const events = computed(() => eventsQuery.data.value?.items ?? [])
   border-top: 1px solid var(--border);
 }
 
-.event-menu-actions { display: grid; gap: 0.35rem; }
-.event-menu-actions :deep(button) { justify-content: flex-start; }
+.event-menu-actions {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.event-menu-actions :deep(button) {
+  justify-content: flex-start;
+}
 </style>

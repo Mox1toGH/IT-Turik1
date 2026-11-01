@@ -1,25 +1,22 @@
 <template>
-  <ui-section title="Summary" description="Archive overview">
-    <div class="stats-grid">
-      <ui-card variant="stat" class="stat-card">
-        <p class="stat-label">Rounds</p>
-        <p class="stat-value">{{ roundsCount }}</p>
-      </ui-card>
-      <ui-card variant="stat" class="stat-card">
-        <p class="stat-label">Submissions</p>
-        <p class="stat-value">{{ submissionsCount }}</p>
-      </ui-card>
-      <ui-card variant="stat" class="stat-card">
-        <p class="stat-label">Winner</p>
-        <p class="stat-value">{{ winnerName }}</p>
-      </ui-card>
-    </div>
-  </ui-section>
+  <div class="stats-grid">
+    <ui-card variant="stat" class="stat-card">
+      <p class="stat-label">Rounds</p>
+      <p class="stat-value">{{ roundsCount }}</p>
+    </ui-card>
+    <ui-card variant="stat" class="stat-card">
+      <p class="stat-label">Submissions</p>
+      <p class="stat-value">{{ submissionsCount }}</p>
+    </ui-card>
+    <ui-card variant="stat" class="stat-card">
+      <p class="stat-label">Winner</p>
+      <p class="stat-value">{{ winnerName }}</p>
+    </ui-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import UiCard from '@/components/ui/UiCard'
-import UiSection from '@/components/ui/UiSection'
 
 defineProps<{
   roundsCount: number

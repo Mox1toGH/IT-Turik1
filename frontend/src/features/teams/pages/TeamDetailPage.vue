@@ -26,40 +26,35 @@
       </template>
 
       <template #members>
-        <ui-section
-          title="Members"
-          description="Search accepted members, requests, and invitations."
-        >
-          <div class="members-workspace">
-            <ui-input
-              v-model="searchInput"
-              placeholder="Search by username or email"
-              :disabled="isInfoLoading"
-            />
+        <div class="members-workspace">
+          <ui-input
+            v-model="searchInput"
+            placeholder="Search by username or email"
+            :disabled="isInfoLoading"
+          />
 
-            <team-members
-              :team="team"
-              :user="user"
-              :members="members"
-              :query="membersQuery"
+          <team-members
+            :team="team"
+            :user="user"
+            :members="members"
+            :query="membersQuery"
+            :search-filter="searchInput"
+            :is-captain="isCaptain"
+          />
+
+          <template v-if="isCaptain && !isInfoLoading">
+            <team-join-requests
+              :team-id="teamId"
               :search-filter="searchInput"
               :is-captain="isCaptain"
             />
-
-            <template v-if="isCaptain && !isInfoLoading">
-              <team-join-requests
-                :team-id="teamId"
-                :search-filter="searchInput"
-                :is-captain="isCaptain"
-              />
-              <team-invitations
-                :team-id="teamId"
-                :search-filter="searchInput"
-                :is-captain="isCaptain"
-              />
-            </template>
-          </div>
-        </ui-section>
+            <team-invitations
+              :team-id="teamId"
+              :search-filter="searchInput"
+              :is-captain="isCaptain"
+            />
+          </template>
+        </div>
       </template>
 
       <template v-if="activeTournament" #tournaments>
@@ -199,7 +194,6 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import { UiQueryBlock } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
-import UiSection from '@/components/ui/UiSection'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import UiTruncate from '@/components/ui/UiTruncate'
 import TeamHeader from '../components/team-detail/TeamHeader.vue'

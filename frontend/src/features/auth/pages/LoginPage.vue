@@ -167,10 +167,16 @@ async function handleLogin() {
 }
 
 .auth-link {
-  margin: 0;
+  margin: 1rem 0 0;
+  color: var(--muted-foreground);
   text-align: center;
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
+}
+
+.auth-link a {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {

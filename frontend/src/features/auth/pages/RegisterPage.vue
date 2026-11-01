@@ -17,7 +17,7 @@
 
     <div class="auth-rule" aria-hidden="true"></div>
 
-    <div class="auth-layout">
+    <div>
       <ui-card class="register-card">
         <template #header>
           <div class="panel-header">
@@ -55,15 +55,6 @@
           </p>
         </template>
       </ui-card>
-
-      <register-summary
-        :username="form.fields.value.username"
-        :email="form.fields.value.email"
-        :full-name="form.fields.value.full_name"
-        :city="form.fields.value.city"
-        :role-label="roleLabel"
-        :is-restricted-role="isRestrictedRole"
-      />
     </div>
   </section>
 </template>
@@ -80,7 +71,6 @@ import { RegisterSchema } from '@/schemas/auth.schema'
 import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
 import { useRouter } from 'vue-router'
 import RegisterFields, { type RegisterFormValues } from '../components/RegisterFields.vue'
-import RegisterSummary from '../components/RegisterSummary.vue'
 
 const form = useForm<RegisterFormValues>(RegisterSchema, {
   username: '',
@@ -107,9 +97,6 @@ const roleOptions = [
 ]
 
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
-const roleLabel = computed(
-  () => roleOptions.find((option) => option.value === form.fields.value.role)?.label ?? 'Team',
-)
 
 watch(
   () => form.fields.value.role,
@@ -159,6 +146,19 @@ function handleRegister() {
   min-width: 0;
 }
 
+.auth-link {
+  margin: 1rem 0 0;
+  color: var(--muted-foreground);
+  text-align: center;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+}
+
+.auth-link a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 .breadcrumb-label {
   display: inline-flex;
   align-items: center;
@@ -195,13 +195,6 @@ function handleRegister() {
   background: var(--border);
 }
 
-.auth-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
-  gap: 1rem;
-  align-items: start;
-}
-
 .register-card {
   min-width: 0;
 }
@@ -214,12 +207,6 @@ function handleRegister() {
 
 .submit-btn {
   width: 100%;
-}
-
-@media (max-width: 980px) {
-  .auth-layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 760px) {

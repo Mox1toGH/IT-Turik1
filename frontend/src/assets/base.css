@@ -283,26 +283,8 @@ a {
   color: var(--muted-foreground);
 }
 
-.min-w-0 {
-  min-width: 0;
-}
-
-.break-anywhere {
-  overflow-wrap: anywhere;
-}
-
 .empty-error {
   text-align: center;
-}
-
-.auth-link {
-  margin: 1rem 0 0;
-  color: var(--muted-foreground);
-}
-
-.auth-link a {
-  color: var(--primary);
-  font-weight: 700;
 }
 
 .panel {
