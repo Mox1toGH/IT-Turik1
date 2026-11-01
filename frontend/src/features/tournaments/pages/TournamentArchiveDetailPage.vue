@@ -22,9 +22,7 @@
             :end-date="archive.end_date"
           />
 
-          <ui-section title="Description" description="Tournament summary">
-            <p class="description-text">{{ archive.description || 'No description provided.' }}</p>
-          </ui-section>
+          <p class="description-text">{{ archive.description || 'No description provided.' }}</p>
 
           <ui-tabs :items="tabItems" query-key="tab">
             <template #overview>
@@ -60,7 +58,6 @@
 <script setup lang="ts">
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import PageBackLink from '@/components/shared/PageBackLink.vue'
-import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import UiTabs, { type TabItem } from '@/components/ui/UiTabs'
 import ArchiveHero from '../components/tournament-archive-detail/ArchiveHero.vue'

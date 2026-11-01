@@ -3,7 +3,6 @@
     <template #header>
       <div class="leaderboard-header">
         <div>
-          <p class="section-eyebrow">Leaderboard</p>
           <h2>Leaderboard</h2>
           <p class="section-subtitle">Scores and rankings for this tournament.</p>
         </div>
@@ -157,16 +156,6 @@ const leaderboardQuery = computed(() => ({
 
 .leaderboard-header .section-subtitle {
   margin: 0;
-}
-
-.section-eyebrow {
-  margin: 0;
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted-foreground);
 }
 
 .export-trigger {

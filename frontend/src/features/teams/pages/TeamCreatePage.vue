@@ -7,7 +7,6 @@
         <h1>Create new team</h1>
         <p class="section-subtitle">Add the team details and choose members to invite.</p>
       </div>
-
     </header>
 
     <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
@@ -16,29 +15,27 @@
       <team-contact-fields :form="teamForm.form" />
 
       <ui-card class="team-form-panel">
-        <ui-section title="Members" description="Invite members now, or add them later.">
-          <label class="form-item">
-            <p class="form-label">Initial members</p>
-            <ui-select
-              v-model="teamForm.form.fields.value.member_ids!"
-              :isLoading="teamForm.isLoadingUsers.value"
-              :isError="isLoadingError"
-              :error="'Could not load users.'"
-              :multiple="true"
-              :options="
-                teamForm.createCandidateUsers.value?.map((u) => ({
-                  value: u.id,
-                  label: `${u.username} (${u.email})`,
-                }))
-              "
-              placeholder="Select members"
-              @blur="teamForm.form.validateField('member_ids')"
-            />
-            <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
-              teamForm.form.errors.value.member_ids
-            }}</small>
-          </label>
-        </ui-section>
+        <label class="form-item">
+          <p class="form-label">Initial members</p>
+          <ui-select
+            v-model="teamForm.form.fields.value.member_ids!"
+            :isLoading="teamForm.isLoadingUsers.value"
+            :isError="isLoadingError"
+            :error="'Could not load users.'"
+            :multiple="true"
+            :options="
+              teamForm.createCandidateUsers.value?.map((u) => ({
+                value: u.id,
+                label: `${u.username} (${u.email})`,
+              }))
+            "
+            placeholder="Select members"
+            @blur="teamForm.form.validateField('member_ids')"
+          />
+          <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
+            teamForm.form.errors.value.member_ids
+          }}</small>
+        </label>
       </ui-card>
 
       <div class="form-actions">
@@ -55,7 +52,6 @@
 import { computed } from 'vue'
 import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiCard from '@/components/ui/UiCard'
-import UiSection from '@/components/ui/UiSection'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSelect from '@/components/ui/UiSelect'
 import TeamIdentityFields from '../components/team-create/TeamIdentityFields.vue'

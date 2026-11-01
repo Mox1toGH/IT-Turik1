@@ -10,6 +10,7 @@ import { tournamentsRoutes } from '@/features/tournaments/routes'
 import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
+import { archiveRoutes } from '@/features/archive/routes'
 import { getUserProfile } from '@/api/accounts/accounts'
 import { hasAnyRole } from '@/shared/lib/permissions'
 import type { UserRole } from '@/shared/types/user'
@@ -19,6 +20,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     requiresGuest?: boolean
     roles?: UserRole[]
+    fullscreen?: boolean
   }
 }
 
@@ -34,6 +36,7 @@ const router = createRouter({
     ...newsRoutes,
     ...evaluationRoutes,
     ...calendarRoutes,
+    ...archiveRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })

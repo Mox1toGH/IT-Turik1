@@ -3,67 +3,54 @@
     <ProfileMiniCard :user="user" :is-loading="isLoading" @edit-profile="openEditProfile" />
     <EditProfileModal ref="editProfileModal" />
 
-    <ui-section
-      divider
-      title="Your information"
-      description="Profile details"
-      aria-labelledby="profile-details-title"
-    >
-      <ui-query-block :query="props.query">
-        <div class="details-grid">
-          <div v-for="field in profileFields" :key="field.label" class="field-row">
-            <span class="field-label">{{ field.label }}</span>
-            <ui-query-field>
-              <template #skeleton
-                ><ui-skeleton variant="rect" width="120px" height="18px"
-              /></template>
-              <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
-              <strong v-else class="field-value">{{ field.value }}</strong>
-            </ui-query-field>
-          </div>
+    <ui-query-block :query="props.query">
+      <div class="details-grid">
+        <div v-for="field in profileFields" :key="field.label" class="field-row">
+          <span class="field-label">{{ field.label }}</span>
+          <ui-query-field>
+            <template #skeleton
+              ><ui-skeleton variant="rect" width="120px" height="18px"
+            /></template>
+            <ui-badge v-if="field.label === 'Role'" variant="green">{{ field.value }}</ui-badge>
+            <strong v-else class="field-value">{{ field.value }}</strong>
+          </ui-query-field>
         </div>
-      </ui-query-block>
-    </ui-section>
-
-    <ui-section v-if="user?.teams?.length" divider title="Your teams" description="Membership">
-      <div class="team-list">
-        <router-link
-          v-for="team in user.teams"
-          :key="team.id"
-          :to="`/teams/${team.id}`"
-          class="team-link"
-        >
-          <Users :size="28" />
-          {{ team.name }}
-          <ChevronRight :size="24" />
-        </router-link>
       </div>
-    </ui-section>
+    </ui-query-block>
 
-    <ui-section
-      v-if="user?.active_tournament"
-      divider
-      title="Active tournament"
-      description="Current event"
-    >
-      <router-link :to="`/tournaments/${user.active_tournament.id}`" class="tournament-link">
-        <span>
-          <strong>{{ user.active_tournament.name }}</strong>
-          <small>
-            {{ formatDate(user.active_tournament.start_date) }} -
-            {{ formatDate(user.active_tournament.end_date) }}
-          </small>
-        </span>
+    <div v-if="user?.teams?.length" class="team-list">
+      <router-link
+        v-for="team in user.teams"
+        :key="team.id"
+        :to="`/teams/${team.id}`"
+        class="team-link"
+      >
+        <Users :size="28" />
+        {{ team.name }}
         <ChevronRight :size="24" />
       </router-link>
-    </ui-section>
+    </div>
+
+    <router-link
+      v-if="user?.active_tournament"
+      :to="`/tournaments/${user.active_tournament.id}`"
+      class="tournament-link"
+    >
+      <span>
+        <strong>{{ user.active_tournament.name }}</strong>
+        <small>
+          {{ formatDate(user.active_tournament.start_date) }} -
+          {{ formatDate(user.active_tournament.end_date) }}
+        </small>
+      </span>
+      <ChevronRight :size="24" />
+    </router-link>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import UiBadge from '@/components/ui/UiBadge'
-import UiSection from '@/components/ui/UiSection'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import { ChevronRight, Users } from 'lucide-vue-next'

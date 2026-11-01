@@ -53,6 +53,11 @@ export const AXIOS_INSTANCE = Axios.create({
 let csrfToken: string | null = null
 let csrfRequest: Promise<string> | null = null
 
+/** Drop the cached CSRF token, e.g. after logout deletes the CSRF cookie. */
+export function resetCsrfToken() {
+  csrfToken = null
+}
+
 const SAFE_METHODS = new Set(['get', 'head', 'options', 'trace'])
 
 async function getCsrfToken(): Promise<string> {
@@ -89,9 +94,8 @@ AXIOS_INSTANCE.interceptors.response.use(
     if (err.response?.status === 401) {
       const original = err.config as RetryConfig | undefined
       const requestPath = toApiPath(original?.url) ?? ''
-      const isSessionEndpoint = /\/accounts\/(?:login|google-login|token\/refresh|csrf|logout)(?:\?|$)/.test(
-        requestPath,
-      )
+      const isSessionEndpoint =
+        /\/accounts\/(?:login|google-login|token\/refresh|csrf|logout)(?:\?|$)/.test(requestPath)
       if (original && !original._authRetry && !isSessionEndpoint) {
         original._authRetry = true
         try {
@@ -147,7 +151,10 @@ export const customInstance = <T>(
     url: toApiPath(options?.url ?? config.url),
   }
 
-  if (finalConfig.data instanceof FormData || (finalConfig.data && containsFile(finalConfig.data))) {
+  if (
+    finalConfig.data instanceof FormData ||
+    (finalConfig.data && containsFile(finalConfig.data))
+  ) {
     if (!(finalConfig.data instanceof FormData)) {
       finalConfig.data = toFormData(finalConfig.data as Record<string, unknown>)
     }

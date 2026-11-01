@@ -1,7 +1,10 @@
 import { getGetUserProfileQueryKey } from '@/api/accounts/accounts'
 import { useQueryClient } from '@tanstack/vue-query'
 import { defineStore } from 'pinia'
-import { connectNotificationSocket, setNotificationSocketAuthenticated } from '@/lib/notificationSocket'
+import {
+  connectNotificationSocket,
+  setNotificationSocketAuthenticated,
+} from '@/lib/notificationSocket'
 import { setLeaderboardSocketAuthenticated } from '@/lib/leaderboardSocket'
 import { ref } from 'vue'
 
@@ -34,8 +37,12 @@ export const useUserStore = defineStore('user', () => {
 
   async function logout() {
     try {
-      const { AXIOS_INSTANCE } = await import('@/lib/apiClient')
-      await AXIOS_INSTANCE.post('/api/accounts/logout')
+      const { AXIOS_INSTANCE, resetCsrfToken } = await import('@/lib/apiClient')
+      try {
+        await AXIOS_INSTANCE.post('/api/accounts/logout')
+      } finally {
+        resetCsrfToken()
+      }
     } catch {
       // Local logout still clears the UI session when the server is unavailable.
     }
