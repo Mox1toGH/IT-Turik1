@@ -3,8 +3,7 @@
     <template #header>
       <div class="teams-header">
         <div class="teams-header-text">
-          <p class="section-eyebrow">Teams</p>
-          <h2 class="text-2xl">Teams info</h2>
+          <h2 class="text-2xl">Registered Teams</h2>
           <p class="section-subtitle text-base">Registered and disqualified teams.</p>
         </div>
         <span class="count-pill">{{ activeTeams.length }} active</span>
@@ -137,17 +136,6 @@ const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role 
 .teams-header-text .section-subtitle {
   margin: 0;
 }
-
-.section-eyebrow {
-  margin: 0;
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted-foreground);
-}
-
 .count-pill {
   display: inline-flex;
   align-items: center;
