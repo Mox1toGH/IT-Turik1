@@ -78,14 +78,19 @@ def require_csrf(request):
 
 
 def clear_auth_cookies(response: HttpResponse):
-    for cookie_name, path in (
-        (settings.JWT_ACCESS_COOKIE_NAME, '/'),
-        (settings.JWT_REFRESH_COOKIE_NAME, '/api/accounts/token/refresh'),
-        (settings.JWT_CSRF_COOKIE_NAME, '/'),
+    for cookie_name, path, httponly in (
+        (settings.JWT_ACCESS_COOKIE_NAME, '/', True),
+        (settings.JWT_REFRESH_COOKIE_NAME, '/api/accounts/token/refresh', True),
+        (settings.JWT_CSRF_COOKIE_NAME, '/', False),
     ):
-        response.delete_cookie(
+        # `delete_cookie` no longer accepts secure/httponly in Django 6.1, so
+        # expire the cookie explicitly with the same attributes it was set with.
+        response.set_cookie(
             cookie_name,
+            '',
+            max_age=0,
             path=path,
+            httponly=httponly,
             samesite=settings.JWT_COOKIE_SAMESITE,
             secure=settings.JWT_COOKIE_SECURE,
         )
