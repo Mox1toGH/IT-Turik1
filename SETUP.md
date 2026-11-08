@@ -136,7 +136,7 @@ daphne -b 0.0.0.0 -p 8000 backend.asgi:application
 python manage.py runserver
 ```
 
-> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише з Daphne.
+> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні в ASGI-режимі: локально через Daphne, у Docker — через Gunicorn з `uvicorn-worker`.
 
 #### Опційно: Redis + Celery (фонові задачі)
 
