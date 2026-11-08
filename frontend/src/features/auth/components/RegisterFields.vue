@@ -138,7 +138,7 @@ export interface RegisterFormValues {
   email: string
   password: string
   role: UserRole
-  activation_code: string
+  activation_code?: string
   phone: string
   city: string
 }
