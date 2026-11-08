@@ -1,30 +1,27 @@
 <template>
-  <ui-section title="Final Standings" description="Saved final ranking">
-    <div v-if="standings.length" class="table-wrap">
-      <div class="table-row table-head">
-        <span>Rank</span>
-        <span>Team</span>
-        <span>Total Score</span>
-      </div>
-      <div
-        v-for="row in standings"
-        :key="`${row.rank}-${row.team.id}`"
-        class="table-row"
-        :class="rankClass(row.rank)"
-      >
-        <span class="rank-pill">#{{ row.rank }}</span>
-        <router-link :to="`/teams/${row.team.id}`" class="team-link">
-          {{ row.team.name }}
-        </router-link>
-        <span>{{ formatScore(row.total_score) }}</span>
-      </div>
+  <div v-if="standings.length" class="table-wrap">
+    <div class="table-row table-head">
+      <span>Rank</span>
+      <span>Team</span>
+      <span>Total Score</span>
     </div>
-    <ui-empty-card v-else message="No saved standings." />
-  </ui-section>
+    <div
+      v-for="row in standings"
+      :key="`${row.rank}-${row.team.id}`"
+      class="table-row"
+      :class="rankClass(row.rank)"
+    >
+      <span class="rank-pill">#{{ row.rank }}</span>
+      <router-link :to="`/teams/${row.team.id}`" class="team-link">
+        {{ row.team.name }}
+      </router-link>
+      <span>{{ formatScore(row.total_score) }}</span>
+    </div>
+  </div>
+  <ui-empty-card v-else message="No saved standings." />
 </template>
 
 <script setup lang="ts">
-import UiSection from '@/components/ui/UiSection'
 import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { formatScore } from './lib/format'
 import type { ArchiveStanding } from '@/features/tournaments/types'

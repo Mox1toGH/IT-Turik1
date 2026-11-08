@@ -11,10 +11,11 @@
 
     <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
       <ui-card class="team-form-panel">
-        <ui-section
-          title="Identity"
-          description="Add the essentials people will see in the team directory."
-        >
+        <div class="team-form-section">
+          <div class="section-header">
+            <h2>Identity</h2>
+            <p>Add the essentials people will see in the team directory.</p>
+          </div>
           <div class="identity-grid">
             <label class="form-item">
               <p class="form-label">Team name</p>
@@ -75,11 +76,15 @@
               }}</small>
             </label>
           </div>
-        </ui-section>
+        </div>
       </ui-card>
 
       <ui-card class="team-form-panel">
-        <ui-section title="Contact" description="Add optional handles for quick communication.">
+        <div class="team-form-section">
+          <div class="section-header">
+            <h2>Contact</h2>
+            <p>Add optional handles for quick communication.</p>
+          </div>
           <div class="contact-grid">
             <label class="form-item">
               <p class="form-label">Telegram</p>
@@ -109,33 +114,31 @@
               }}</small>
             </label>
           </div>
-        </ui-section>
+        </div>
       </ui-card>
 
       <ui-card class="team-form-panel">
-        <ui-section title="Members" description="Invite members now, or add them later.">
-          <label class="form-item">
-            <p class="form-label">Initial members</p>
-            <ui-select
-              v-model="teamForm.form.fields.value.member_ids!"
-              :isLoading="teamForm.isLoadingUsers.value"
-              :isError="isLoadingError"
-              :error="'Could not load users.'"
-              :multiple="true"
-              :options="
-                teamForm.createCandidateUsers.value?.map((u) => ({
-                  value: u.id,
-                  label: `${u.username} (${u.email})`,
-                }))
-              "
-              placeholder="Select members"
-              @blur="teamForm.form.validateField('member_ids')"
-            />
-            <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
-              teamForm.form.errors.value.member_ids
-            }}</small>
-          </label>
-        </ui-section>
+        <label class="form-item">
+          <p class="form-label">Initial members</p>
+          <ui-select
+            v-model="teamForm.form.fields.value.member_ids!"
+            :isLoading="teamForm.isLoadingUsers.value"
+            :isError="isLoadingError"
+            :error="'Could not load users.'"
+            :multiple="true"
+            :options="
+              teamForm.createCandidateUsers.value?.map((u) => ({
+                value: u.id,
+                label: `${u.username} (${u.email})`,
+              }))
+            "
+            placeholder="Select members"
+            @blur="teamForm.form.validateField('member_ids')"
+          />
+          <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
+            teamForm.form.errors.value.member_ids
+          }}</small>
+        </label>
       </ui-card>
 
       <div class="form-actions">
@@ -153,7 +156,6 @@ import { computed } from 'vue'
 import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiCard from '@/components/ui/UiCard'
 import UiInput from '@/components/ui/UiInput'
-import UiSection from '@/components/ui/UiSection'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSelect from '@/components/ui/UiSelect'
 import UiSwitch from '@/components/ui/UiSwitch'
@@ -202,6 +204,20 @@ const isLoadingError = computed(
 
 .form-label {
   margin: 0;
+}
+
+.team-form-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
 }
 
 .identity-grid,

@@ -1,86 +1,80 @@
 <template>
-  <ui-section
-    title="Assign jury"
-    description="Assign jury members to evaluate round submissions."
-    class="jury-assign-shell"
-  >
-    <ui-card>
-      <template #header>
-        <div class="submissions-header">
-          <ui-query-field :loading="isLoading">
-            <template #skeleton>
-              <ui-skeleton variant="rect" width="150px" />
-            </template>
-
-            <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
-            <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
-          </ui-query-field>
-          <div class="header-actions">
-            <ui-select
-              multiple
-              v-model="assignJuryForAll"
-              :options="juryOptions"
-              placeholder="Assign jury to all"
-              class="jury-select jury-select-all"
-              :is-error="isFailedToFetchJury"
-              :error="juryFetchError?.message"
-              :is-loading="isFetchingJury"
-              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
-            />
-            <ui-button
-              variant="secondary"
-              @click="applyJuryToAllSubmissions"
-              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
-            >
-              Apply to all
-            </ui-button>
-            <ui-button
-              @click="handleAssignJury"
-              class="assign-btn"
-              :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
-            >
-              <LoaderCircle class="animate-spin" v-if="isPending" />Assign
-            </ui-button>
-          </div>
-        </div>
-      </template>
-
-      <ui-query-block :query="cardQuery" title="submissions">
-        <div v-if="submissions.length" class="table-head">
-          <span>Team</span>
-          <span>Submitted On</span>
-          <span>Assigned Jury</span>
-          <span style="text-align: end">Actions</span>
-        </div>
-
-        <ui-query-field>
+  <ui-card class="jury-assign-shell">
+    <template #header>
+      <div class="submissions-header">
+        <ui-query-field :loading="isLoading">
           <template #skeleton>
-            <jury-assign-skeleton />
+            <ui-skeleton variant="rect" width="150px" />
           </template>
 
-          <div v-if="submissions.length" class="submissions-table">
-            <jury-assign-row
-              v-for="submission in submissions"
-              :key="submission.id"
-              :submission="submission"
-              v-model:assigned="assignedJury[submission.id]"
-              :jury-options="juryOptions"
-              :is-failed-to-fetch-jury="isFailedToFetchJury"
-              :jury-fetch-error-message="juryFetchError?.message"
-              :is-fetching-jury="isFetchingJury"
-              :team-abbr="teamAbbr"
-              :jury-label="juryLabel"
-            />
-          </div>
-          <ui-empty-card
-            v-else
-            title="No submissions to evaluate yet"
-            message="Assignments appear once teams submit to the closed round."
-          />
+          <h2 v-if="closedRound">Round: "{{ closedRound.name }}"</h2>
+          <h2 v-else class="text-muted no-closed-round">No round with closed submissions</h2>
         </ui-query-field>
-      </ui-query-block>
-    </ui-card>
-  </ui-section>
+        <div class="header-actions">
+          <ui-select
+            multiple
+            v-model="assignJuryForAll"
+            :options="juryOptions"
+            placeholder="Assign jury to all"
+            class="jury-select jury-select-all"
+            :is-error="isFailedToFetchJury"
+            :error="juryFetchError?.message"
+            :is-loading="isFetchingJury"
+            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+          />
+          <ui-button
+            variant="secondary"
+            @click="applyJuryToAllSubmissions"
+            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+          >
+            Apply to all
+          </ui-button>
+          <ui-button
+            @click="handleAssignJury"
+            class="assign-btn"
+            :disabled="isLoading || noClosedRound || props.tournamentStatus === 'finished'"
+          >
+            <LoaderCircle class="animate-spin" v-if="isPending" />Assign
+          </ui-button>
+        </div>
+      </div>
+    </template>
+
+    <ui-query-block :query="cardQuery" title="submissions">
+      <div v-if="submissions.length" class="table-head">
+        <span>Team</span>
+        <span>Submitted On</span>
+        <span>Assigned Jury</span>
+        <span style="text-align: end">Actions</span>
+      </div>
+
+      <ui-query-field>
+        <template #skeleton>
+          <jury-assign-skeleton />
+        </template>
+
+        <div v-if="submissions.length" class="submissions-table">
+          <jury-assign-row
+            v-for="submission in submissions"
+            :key="submission.id"
+            :submission="submission"
+            v-model:assigned="assignedJury[submission.id]"
+            :jury-options="juryOptions"
+            :is-failed-to-fetch-jury="isFailedToFetchJury"
+            :jury-fetch-error-message="juryFetchError?.message"
+            :is-fetching-jury="isFetchingJury"
+            :team-abbr="teamAbbr"
+            :jury-label="juryLabel"
+          />
+        </div>
+        <ui-empty-card
+          v-else
+          title="No submissions to evaluate yet"
+          message="Assignments appear once teams submit to the closed round."
+        />
+      </ui-query-field>
+    </ui-query-block>
+  </ui-card>
 </template>
 
 <script setup lang="ts">
@@ -88,7 +82,6 @@ import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
 import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
-import UiSection from '@/components/ui/UiSection'
 import UiSelect from '@/components/ui/UiSelect'
 import JuryAssignSkeleton from './JuryAssignSkeleton.vue'
 import { LoaderCircle } from 'lucide-vue-next'

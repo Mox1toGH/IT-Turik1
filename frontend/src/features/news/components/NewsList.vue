@@ -1,45 +1,43 @@
 <template>
-  <ui-section title="Latest news" description="Fresh announcements from the platform team.">
-    <ui-query-block :query="query" title="news">
-      <ui-query-field>
-        <template #skeleton>
-          <div class="news-grid">
-            <div class="news-item-skeleton" v-for="i in 2" :key="i">
-              <ui-skeleton variant="rect" width="65%" />
-              <ui-skeleton variant="rect" width="45%" />
-              <ui-skeleton variant="rect" height="90px" width="100%" />
-            </div>
+  <ui-query-block :query="query" title="news">
+    <ui-query-field>
+      <template #skeleton>
+        <div class="news-grid">
+          <div class="news-item-skeleton" v-for="i in 2" :key="i">
+            <ui-skeleton variant="rect" width="65%" />
+            <ui-skeleton variant="rect" width="45%" />
+            <ui-skeleton variant="rect" height="90px" width="100%" />
           </div>
-        </template>
+        </div>
+      </template>
 
-        <template #default>
-          <ui-empty-card
-            v-if="isEmpty"
-            title="No news yet"
-            message="Announcements will appear here when they are published."
+      <template #default>
+        <ui-empty-card
+          v-if="isEmpty"
+          title="No news yet"
+          message="Announcements will appear here when they are published."
+        />
+        <div v-else class="news-grid">
+          <news-item-card
+            v-for="item in items"
+            :key="item.id"
+            :item="item"
+            :can-modify="canModify(item)"
+            @edit="$emit('edit', $event)"
+            @delete="$emit('delete', $event)"
           />
-          <div v-else class="news-grid">
-            <news-item-card
-              v-for="item in items"
-              :key="item.id"
-              :item="item"
-              :can-modify="canModify(item)"
-              @edit="$emit('edit', $event)"
-              @delete="$emit('delete', $event)"
-            />
-          </div>
+        </div>
 
-          <div v-if="totalNews > pageSize" class="pagination-row">
-            <ui-pagination
-              v-model="currentPageModel"
-              :total-items="totalNews"
-              :page-size="pageSize"
-            />
-          </div>
-        </template>
-      </ui-query-field>
-    </ui-query-block>
-  </ui-section>
+        <div v-if="totalNews > pageSize" class="pagination-row">
+          <ui-pagination
+            v-model="currentPageModel"
+            :total-items="totalNews"
+            :page-size="pageSize"
+          />
+        </div>
+      </template>
+    </ui-query-field>
+  </ui-query-block>
 </template>
 
 <script setup lang="ts">
@@ -47,7 +45,6 @@ import { computed } from 'vue'
 import UiPagination from '@/components/ui/UiPagination'
 import UiEmptyCard from '@/components/ui/UiEmptyCard'
 import { UiQueryBlock, UiQueryField } from '@/components/query'
-import UiSection from '@/components/ui/UiSection'
 import UiSkeleton from '@/components/ui/UiSkeleton'
 import NewsItemCard from './NewsItemCard.vue'
 import type { QueryLike } from '@/composables/useQueryState'
