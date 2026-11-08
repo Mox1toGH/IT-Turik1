@@ -82,6 +82,7 @@ const form = useForm<RegisterFormValues>(RegisterSchema, {
   phone: '',
   city: '',
 })
+
 const storage = useUserStore()
 const router = useRouter()
 const { showNotification } = useNotification()
