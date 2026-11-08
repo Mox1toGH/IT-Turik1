@@ -198,7 +198,7 @@ interface RegisterFormValues {
   email: string
   password: string
   role: UserRole
-  activation_code: string
+  activation_code?: string
   phone: string
   city: string
 }
@@ -208,7 +208,7 @@ const form = useForm<RegisterFormValues>(RegisterSchema, {
   email: '',
   password: '',
   role: 'team',
-  activation_code: '',
+  activation_code: undefined,
   full_name: '',
   phone: '',
   city: '',
