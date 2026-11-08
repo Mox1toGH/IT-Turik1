@@ -23,7 +23,7 @@ export const RegisterSchema = v.object({
     v.regex(/^[A-Za-z0-9@.+_-]+$/, 'Use letters, numbers, and @ . + - _ only.'),
   ),
   activation_code: v.optional(
-    v.pipe(v.string(), v.minLength(1, 'Activation code cannot be empty')),
+    v.pipe(v.string(), v.trim(), v.minLength(1, 'Activation code cannot be empty')),
   ),
   full_name: v.pipe(v.string(), v.minLength(1, 'Fullname cannot be empty')),
   email: v.pipe(v.string(), v.email('Invalid email')),
