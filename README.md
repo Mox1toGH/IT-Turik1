@@ -46,5 +46,3 @@ backend/
 ## Getting Started
 
 See [SETUP.md](./SETUP.md) for setup instructions (manual or Docker), tests, and superuser creation.
-
-See [CONNECTION_POOLING.md](./CONNECTION_POOLING.md) for database/PgBouncer configuration.

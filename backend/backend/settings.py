@@ -268,20 +268,15 @@ else:
         }
     }
 
-    # Built-in psycopg3 connection pool (Django 5.1+; requires psycopg[pool]).
-    # Only used by the PostgreSQL backend; ignored for SQLite.
-    #
-    # Disable with DB_POOL_ENABLED=false when an external pooler (PgBouncer in
-    # transaction mode) sits in front: pools must not nest, otherwise every
-    # worker holds its full pool and the pooler cannot multiplex connections.
-    if env_bool("DB_POOL_ENABLED", True):
-        DATABASES["default"]["pool"] = {
+    DATABASES["default"]["OPTIONS"] = {
+        "pool": {
             "min_size": int(os.getenv("DB_POOL_MIN_SIZE", "2")),
             "max_size": int(os.getenv("DB_POOL_MAX_SIZE", "10")),
             "timeout": float(os.getenv("DB_POOL_TIMEOUT", "30")),
             "max_lifetime": int(os.getenv("DB_POOL_MAX_LIFETIME", "3600")),
             "max_idle": int(os.getenv("DB_POOL_MAX_IDLE", "600")),
-        }
+        },
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

@@ -25,29 +25,6 @@ services:
       timeout: 3s
       retries: 20
 
-  # Connection pooler in front of Postgres. Keeps client connections cheap so
-  # every gunicorn worker / thread can hold one without exhausting Postgres.
-  pgbouncer:
-    image: edoburu/pgbouncer:latest
-    restart: unless-stopped
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: itturik
-      DB_PASSWORD: itturik
-      DB_NAME: itturik
-      AUTH_TYPE: scram-sha-256
-      POOL_MODE: transaction
-      MAX_CLIENT_CONN: "1000"
-      DEFAULT_POOL_SIZE: "25"
-      MAX_DB_CONNECTIONS: "60"
-    depends_on:
-      db:
-        condition: service_healthy
-    ports:
-      # 6432 (not 5432) so a local Postgres can keep using 5432
-      - "6432:5432"
-
   backend:
     build:
       context: ./backend
