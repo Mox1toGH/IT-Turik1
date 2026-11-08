@@ -150,6 +150,7 @@ import UserAvatar from '@/components/shared/UserAvatar.vue'
 import { useGetUserProfile } from '@/api/accounts/accounts'
 import { useGetUnreadNotificationCount } from '@/api/notifications/notifications'
 import { hasRole } from '@/shared/lib/permissions'
+import { useUserStore } from '@/stores/user'
 
 type Props = {
   collapsed?: boolean
@@ -168,8 +169,12 @@ const mobileOpen = ref(false)
 const isDesktop = ref(true)
 let mediaQuery: MediaQueryList | null = null
 
-const { data: user } = useGetUserProfile()
-const { data: unreadCount } = useGetUnreadNotificationCount()
+const userStore = useUserStore()
+const isAuthenticated = computed(() => userStore.isAuthenticated)
+const { data: user } = useGetUserProfile({ query: { enabled: isAuthenticated } })
+const { data: unreadCount } = useGetUnreadNotificationCount({
+  query: { enabled: isAuthenticated },
+})
 
 const unreadTotal = computed(() => unreadCount.value?.unread_count ?? 0)
 const displayName = computed(() => user.value?.full_name || user.value?.username || 'User')

@@ -127,9 +127,7 @@
       <p v-if="confirmModalConfig.scope === 'all'">
         Delete <ui-badge variant="red">ALL notifications</ui-badge>? This cannot be undone.
       </p>
-      <p v-else>
-        Delete this <ui-badge variant="red">notification</ui-badge>?
-      </p>
+      <p v-else>Delete this <ui-badge variant="red">notification</ui-badge>?</p>
     </template>
   </ui-confirm-modal>
 </template>
@@ -152,14 +150,21 @@ import {
 } from '@/api/notifications/notifications'
 import type { Notification } from '@/shared/types/notification'
 import { useNotification } from '@/composables/useNotification'
+import { useUserStore } from '@/stores/user'
 
 const isOpen = ref(false)
 const dropdownContainer = ref<HTMLElement | null>(null)
 const router = useRouter()
+const userStore = useUserStore()
+const isAuthenticated = computed(() => userStore.isAuthenticated)
 
-const notificationsQuery = useListNotifications()
+const notificationsQuery = useListNotifications(undefined, {
+  query: { enabled: isAuthenticated },
+})
 const notifications = notificationsQuery.data
-const { data: unreadCount } = useGetUnreadNotificationCount()
+const { data: unreadCount } = useGetUnreadNotificationCount({
+  query: { enabled: isAuthenticated },
+})
 const { mutate: markAsRead } = useMarkNotificationRead()
 const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
 const { mutate: deleteNotification } = useDeleteNotification()
