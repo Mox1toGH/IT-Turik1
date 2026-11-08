@@ -1,5 +1,6 @@
 from unittest.mock import patch
 from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
 from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
@@ -15,7 +16,7 @@ class GoogleAuthViewTests(APITestCase):
 
     url = reverse('ninja-api:google_login')
     @patch('google.oauth2.id_token.verify_oauth2_token')
-    def test_google_login_creates_user_and_returns_jwt(self, mocked_verify):
+    def test_google_login_creates_user_and_sets_auth_cookies(self, mocked_verify):
         mocked_verify.return_value = {
             'iss': 'https://accounts.google.com',
             'email': 'new.user@example.com',
@@ -25,8 +26,10 @@ class GoogleAuthViewTests(APITestCase):
         response = self.client.post(self.url, {'id_token': 'fake-token'}, format='json')
         data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', data)
-        self.assertIn('refresh', data)
+        self.assertNotIn('access', data)
+        self.assertNotIn('refresh', data)
+        self.assertTrue(response.cookies[settings.JWT_ACCESS_COOKIE_NAME]['httponly'])
+        self.assertTrue(response.cookies[settings.JWT_REFRESH_COOKIE_NAME]['httponly'])
         self.assertTrue(data['onboarding_required'])
         created_user = User.objects.get(email='new.user@example.com')
         self.assertTrue(created_user.is_active)
