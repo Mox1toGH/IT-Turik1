@@ -119,7 +119,7 @@ docker-compose exec backend python manage.py <command>
 - `/ws/notifications/`
 - `/ws/leaderboards/`
 
-Працюють через ASGI (`backend/asgi.py`) і запуск `daphne`.
+Працюють через ASGI (`backend/asgi.py`): локально — `daphne`, у Docker — Gunicorn з `uvicorn-worker`.
 
 ## Підходи та архітектурні принципи
 
