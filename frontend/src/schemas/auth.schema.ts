@@ -1,5 +1,6 @@
 import type { UserRole } from '@/shared/types/user'
 import * as v from 'valibot'
+import { PhoneSchema } from './phone.schema'
 
 export const PasswordSchema = v.pipe(
   v.string(),
@@ -21,15 +22,13 @@ export const RegisterSchema = v.object({
     v.minLength(3, 'Username must be at least 3 characters.'),
     v.regex(/^[A-Za-z0-9@.+_-]+$/, 'Use letters, numbers, and @ . + - _ only.'),
   ),
-  activation_code: v.pipe(v.string(), v.minLength(1, 'Activation code cannot be empty')),
+  activation_code: v.optional(
+    v.pipe(v.string(), v.minLength(1, 'Activation code cannot be empty')),
+  ),
   full_name: v.pipe(v.string(), v.minLength(1, 'Fullname cannot be empty')),
   email: v.pipe(v.string(), v.email('Invalid email')),
   password: PasswordSchema,
   role: v.picklist<UserRole[]>(['admin', 'jury', 'organizer', 'team']),
-  phone: v.pipe(
-    v.string(),
-    v.trim(),
-    v.regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Invalid phone number'),
-  ),
+  phone: PhoneSchema,
   city: v.pipe(v.string(), v.minLength(2, 'City must be at least 2 characters.')),
 })
