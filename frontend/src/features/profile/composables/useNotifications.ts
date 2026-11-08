@@ -11,6 +11,7 @@ import {
 import type { NotificationResponse } from '@/api/backendAPINinja.schemas'
 import { useNotification } from '@/composables/useNotification'
 import type { QueryLike } from '@/composables/useQueryState'
+import { useUserStore } from '@/stores/user'
 
 export interface NotificationMessagePart {
   type: string
@@ -143,12 +144,18 @@ export interface UseNotificationsReturn {
 export function useNotifications(options?: UseNotificationsOptions): UseNotificationsReturn {
   const router = useRouter()
   const { showNotification } = useNotification()
+  const userStore = useUserStore()
+  const isAuthenticated = computed(() => userStore.isAuthenticated)
 
   const listParams =
     options?.page !== undefined ? computed(() => ({ page: options.page!.value })) : undefined
-  const notificationsQuery = useListNotifications(listParams)
+  const notificationsQuery = useListNotifications(listParams, {
+    query: { enabled: isAuthenticated },
+  })
   const { data: notificationsData } = notificationsQuery
-  const { data: unreadCount } = useGetUnreadNotificationCount()
+  const { data: unreadCount } = useGetUnreadNotificationCount({
+    query: { enabled: isAuthenticated },
+  })
   const { mutate: markAsRead } = useMarkNotificationRead()
   const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllNotificationsRead()
   const { mutate: deleteNotification } = useDeleteNotification()

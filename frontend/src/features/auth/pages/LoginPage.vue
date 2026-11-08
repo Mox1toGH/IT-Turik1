@@ -85,7 +85,13 @@ const store = useUserStore()
 const form = useForm(LoginSchema, { username: '', password: '' })
 const router = useRouter()
 
-const { mutate: login, isPending, error } = useLogin()
+const {
+  mutate: login,
+  isPending,
+  error,
+} = useLogin({
+  request: { skipAuthRefresh: true },
+})
 
 function saveAndRedirect(data: LoginResult) {
   store.setSession(data)

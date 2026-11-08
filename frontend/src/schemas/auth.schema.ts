@@ -1,5 +1,6 @@
 import type { UserRole } from '@/shared/types/user'
 import * as v from 'valibot'
+import { PhoneSchema } from './phone.schema'
 
 export const PasswordSchema = v.pipe(
   v.string(),
@@ -28,10 +29,6 @@ export const RegisterSchema = v.object({
   email: v.pipe(v.string(), v.email('Invalid email')),
   password: PasswordSchema,
   role: v.picklist<UserRole[]>(['admin', 'jury', 'organizer', 'team']),
-  phone: v.pipe(
-    v.string(),
-    v.trim(),
-    v.regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Invalid phone number'),
-  ),
+  phone: PhoneSchema,
   city: v.pipe(v.string(), v.minLength(2, 'City must be at least 2 characters.')),
 })
