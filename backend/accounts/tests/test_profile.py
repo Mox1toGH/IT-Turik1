@@ -1,15 +1,19 @@
+from io import BytesIO
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 from accounts.models import User
 from backend.auth import authenticate
 
-VALID_GIF = (
-    b'GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!'
-    b'\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00'
-    b'\x00\x02\x02L\x01\x00;'
-)
+
+def valid_png_bytes():
+    image = BytesIO()
+    Image.new('RGB', (1, 1), color='red').save(image, format='PNG')
+    return image.getvalue()
+
 
 class ProfileTests(APITestCase):
     profile_url = reverse('ninja-api:profile')
@@ -92,7 +96,7 @@ class ProfileTests(APITestCase):
     def test_profile_avatar_upload_updates_avatar(self):
         user = User.objects.create_user(username='avatar-user', email='avatar-user@example.com', password='StrongPass123!')
         authenticate(self.client, user)
-        avatar = SimpleUploadedFile('avatar.gif', VALID_GIF, content_type='image/gif')
+        avatar = SimpleUploadedFile('avatar.png', valid_png_bytes(), content_type='image/png')
         response = self.client.patch(self.profile_avatar_url, {'avatar': avatar}, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         user.refresh_from_db()
@@ -100,7 +104,7 @@ class ProfileTests(APITestCase):
 
     def test_profile_avatar_delete_removes_avatar(self):
         user = User.objects.create_user(username='avatar-remove-user', email='a@e.com', password='P')
-        user.avatar = SimpleUploadedFile('avatar.gif', VALID_GIF, content_type='image/gif')
+        user.avatar = SimpleUploadedFile('avatar.png', valid_png_bytes(), content_type='image/png')
         user.save()
         authenticate(self.client, user)
         response = self.client.delete(self.profile_avatar_url)
