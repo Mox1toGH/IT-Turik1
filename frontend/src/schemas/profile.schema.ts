@@ -23,7 +23,7 @@ export const CompleteProfileSchema = v.pipe(
 
     password: PasswordSchema,
 
-    redeem_code: v.optional(v.string(), ''),
+    activation_code: v.optional(v.string(), ''),
 
     role: v.union([
       v.literal('team'),
@@ -42,11 +42,11 @@ export const CompleteProfileSchema = v.pipe(
   v.forward(
     v.check((input) => {
       if (['admin', 'jury', 'organizer'].includes(input.role)) {
-        return input.redeem_code.trim().length > 0
+        return input.activation_code.trim().length > 0
       }
       return true
-    }, 'Redeem code is required for this role.'),
-    ['redeem_code'],
+    }, 'Activation code is required for this role.'),
+    ['activation_code'],
   ),
 )
 

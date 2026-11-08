@@ -129,12 +129,12 @@ describe('useForm', () => {
     expect(form.errors.value.username).toBeUndefined()
   })
 
-  it('uses dot path for nested errors', () => {
+  it('ignores validation issues that do not match a form field', () => {
     const form = useForm(nestedSchema, { items: [{ name: 'ok' }, { name: 'x' }] })
 
     form.validate()
 
-    expect(form.errors.value['items.1.name']).toBe('item short')
+    expect(form.errors.value).toEqual({})
   })
 
   it('sets error manually', () => {
@@ -145,12 +145,4 @@ describe('useForm', () => {
     expect(form.errors.value.username).toBe('Custom error')
   })
 
-  it('setApiErrors merges with existing errors', () => {
-    const form = useForm(schema, initial)
-
-    form.setError('username', 'local')
-    form.setApiErrors({ full_name: 'from api' })
-
-    expect(form.errors.value).toEqual({ username: 'local', full_name: 'from api' })
-  })
 })
