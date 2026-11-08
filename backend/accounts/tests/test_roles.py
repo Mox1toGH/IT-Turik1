@@ -76,7 +76,7 @@ class RoleRegistrationTests(APITestCase):
         self.assertIn('Account activation', mail.outbox[0].body)
         self.assertIn('TournamentOS', mail.outbox[0].body)
 
-    def test_restricted_role_registration_requires_redeem_code(self):
+    def test_restricted_role_registration_requires_activation_code(self):
         response = self.client.post(self.register_url, {'username': 'j', 'email': 'j@e.com', 'password': 'Pass123!', 'role': 'jury'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

@@ -55,16 +55,16 @@
 
           <div style="display: flex; flex-direction: column; gap: 1rem">
             <div class="form-item" v-if="isRestrictedRole">
-              <label class="form-label full-width"> Redeem code </label>
+              <label class="form-label full-width"> Activation code </label>
               <ui-input
-                v-model="form.fields.value.redeem_code"
+                v-model="form.fields.value.activation_code"
                 placeholder="Enter one-time activation code"
                 required
-                :is-invalid="!!form.errors.value.redeem_code"
-                @blur="form.validateField('redeem_code')"
+                :is-invalid="!!form.errors.value.activation_code"
+                @blur="form.validateField('activation_code')"
               />
-              <small v-if="form.errors.value.redeem_code" class="text-error">{{
-                form.errors.value.redeem_code
+              <small v-if="form.errors.value.activation_code" class="text-error">{{
+                form.errors.value.activation_code
               }}</small>
             </div>
 
@@ -168,7 +168,7 @@ import type { UserRole } from '@/shared/types/user'
 interface Form {
   username: string
   role: UserRole
-  redeem_code: string
+  activation_code: string
   password: string
   full_name: string
   phone: string
@@ -182,7 +182,7 @@ const { data: user } = userQuery
 const form = useForm<Form>(CompleteProfileSchema, {
   username: user.value?.username ?? '',
   role: (user.value?.role as UserRole) ?? 'team',
-  redeem_code: '',
+  activation_code: '',
   password: '',
   full_name: user.value?.full_name ?? '',
   phone: user.value?.phone ?? '',
@@ -196,7 +196,7 @@ watch(
     form.hydrate({
       username: profile.username ?? '',
       role: (profile.role as UserRole) ?? 'team',
-      redeem_code: '',
+      activation_code: '',
       password: '',
       full_name: profile.full_name ?? '',
       phone: profile.phone ?? '',
@@ -216,7 +216,7 @@ watch(
   () => form.fields.value.role,
   (newRole) => {
     if (!restrictedRoles.includes(newRole)) {
-      form.fields.value.redeem_code = ''
+      form.fields.value.activation_code = ''
     }
   },
 )
