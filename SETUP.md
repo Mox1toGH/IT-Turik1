@@ -31,9 +31,9 @@ Copy-Item backend\.env.example backend\.env
 
 ```env
 DJANGO_SECRET_KEY=replace-me
-DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
 CORS_ALLOWED_ORIGINS=http://localhost:5173
+JWT_COOKIE_SECURE=False
 
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -61,9 +61,9 @@ DB_PORT=5432
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
-- `DJANGO_DEBUG`: `True` для локальної розробки, `False` для продакшну.
 - `DJANGO_ALLOWED_HOSTS`: список хостів через кому. Для Docker обов'язково додай `backend`.
 - `CORS_ALLOWED_ORIGINS`: адреса фронтенду (локально: `http://localhost:5173`).
+- `JWT_COOKIE_SECURE`: `False` для локального HTTP; встанови `True` у production з HTTPS.
 - `EMAIL_HOST_PASSWORD`: App Password у Google Account — `Security → App passwords`.
 - `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`: у Google Cloud Console → `APIs & Services → Credentials → OAuth client ID → Web application`.
 - `DB_HOST`: **`db`** для Docker, **`localhost`** для ручного запуску.
@@ -71,7 +71,7 @@ python -c "from django.core.management.utils import get_random_secret_key; print
   Коротко: або вбудований пул Django (`DB_POOL_ENABLED=true`), **або** PgBouncer
   (`DB_POOL_ENABLED=false`) — ніколи обидва одночасно. Для віддаленої БД обирай PgBouncer.
 - `REDIS_URL`: адреса Redis для кешу, channel layer (WebSocket fan-out між процесами) та Celery. Якщо порожньо — локальні in-process fallbacks, а Celery-тайски виконуються inline.
-- `PROFILING_ENABLED`: увімкнути django-debug-toolbar (`/__debug__/`) та django-silk (`/silk/`) для профілювання. За замовчуванням = значення `DJANGO_DEBUG`. Дивитись записи запитів/SQL можна на `http://localhost:8000/silk/` (потрібен логін суперкористувача в `/admin/`).
+- `PROFILING_ENABLED`: увімкнути django-debug-toolbar (`/__debug__/`) для перегляду запитів під час локальної розробки. За замовчуванням вимкнено.
 
 ### Frontend
 

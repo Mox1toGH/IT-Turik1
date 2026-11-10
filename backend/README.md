@@ -139,7 +139,6 @@ docker-compose exec backend python manage.py <command>
 ## Змінні середовища (мінімум)
 
 - `DJANGO_SECRET_KEY`
-- `DJANGO_DEBUG`
 - `DJANGO_ALLOWED_HOSTS`
 - `CORS_ALLOWED_ORIGINS`
 - `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`

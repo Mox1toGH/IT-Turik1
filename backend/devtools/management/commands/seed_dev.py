@@ -21,7 +21,6 @@ first.
 
 from __future__ import annotations
 
-import os
 import random
 from contextlib import contextmanager
 
@@ -112,11 +111,6 @@ class Command(BaseCommand):
             '--reset', action='store_true',
             help='Delete previously seeded records before seeding again.',
         )
-        parser.add_argument(
-            '--force', action='store_true',
-            help='Bypass the safety guard. Also requires ALLOW_SEED=1.',
-        )
-
     # -------------------------------------------------------------- passwords
 
     @contextmanager
@@ -136,39 +130,25 @@ class Command(BaseCommand):
 
     # ----------------------------------------------------------------- guard
 
-    def _check_safety(self, *, force: bool) -> None:
+    def _check_safety(self) -> None:
         """Refuse to seed anything that is not plainly a development database."""
-        if settings.DEBUG:
-            return
-
-        allowed = os.getenv('ALLOW_SEED', '') == '1'
-        if force and allowed:
-            return
-
         database = settings.DATABASES['default']
         engine = str(database.get('ENGINE', ''))
         name = str(database.get('NAME', ''))
         host = str(database.get('HOST') or '')
 
         is_sqlite = engine == 'django.db.backends.sqlite3'
-        if not (is_sqlite and host in ('', 'localhost')) and not (allowed and force):
+        if not (is_sqlite and host in ('', 'localhost')):
             raise CommandError(
-                'Seeding refused: DEBUG is False and this does not look like a local '
-                f'database (engine={engine!r}, host={host!r}). Set ALLOW_SEED=1 and pass '
-                '--force to override.'
+                'Seeding refused: only local SQLite databases are allowed '
+                f'(engine={engine!r}, host={host!r}).'
             )
 
         suspicious = any(token in name.lower() for token in ('prod', 'live', 'staging'))
-        if suspicious and not (allowed and force):
+        if suspicious:
             raise CommandError(
-                f'Seeding refused: database name "{name}" looks like production. '
-                'Set ALLOW_SEED=1 and pass --force to override.'
+                f'Seeding refused: database name "{name}" looks like production.'
             )
-
-        raise CommandError(
-            'Seeding refused: DEBUG is False. This command is only for development. '
-            'Set ALLOW_SEED=1 and pass --force to override.'
-        )
 
     # -------------------------------------------------------------- signals
 
@@ -266,7 +246,7 @@ class Command(BaseCommand):
     # ------------------------------------------------------------ execution
 
     def handle(self, *args, **options):
-        self._check_safety(force=options['force'])
+        self._check_safety()
 
         size = options['size']
         rng = Rng(options['seed'])

@@ -41,16 +41,15 @@ GOOGLE_CALENDAR_REDIRECT_URI = os.getenv(
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY", "django-insecure-change-me-please-override-this-in-env"
 )
-DEBUG = env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = [
     host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host
 ]
 
-# Dev profiling: django-debug-toolbar (/__debug__/ + admin) and django-silk (/silk/)
-PROFILING_ENABLED = env_bool("PROFILING_ENABLED", DEBUG)
+# Development request inspection with django-debug-toolbar.
+PROFILING_ENABLED = env_bool("PROFILING_ENABLED", False)
 INTERNAL_IPS = [ip for ip in os.getenv("INTERNAL_IPS", "127.0.0.1").split(",") if ip]
 
-LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "DEBUG" if DEBUG else "INFO").upper()
+LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO").upper()
 DJANGO_DB_LOG_LEVEL = os.getenv("DJANGO_DB_LOG_LEVEL", "INFO")
 
 PROJECT_LOGGERS = [
@@ -116,7 +115,7 @@ INSTALLED_APPS = [
 ]
 
 if PROFILING_ENABLED:
-    INSTALLED_APPS += ["debug_toolbar", "silk"]
+    INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
     "ninja.compatibility.files.fix_request_files_middleware",
@@ -133,12 +132,10 @@ MIDDLEWARE = [
 ]
 
 if PROFILING_ENABLED:
-    # Silk records everything first; the debug toolbar must sit *after*
-    # GZipMiddleware (django-debug-toolbar check W003).
+    # The debug toolbar must sit after GZipMiddleware (W003).
     _gzip = "django.middleware.gzip.GZipMiddleware"
     _after_gzip = MIDDLEWARE.index(_gzip) + 1
     MIDDLEWARE = [
-        "silk.middleware.SilkyMiddleware",
         *MIDDLEWARE[:_after_gzip],
         "debug_toolbar.middleware.DebugToolbarMiddleware",
         *MIDDLEWARE[_after_gzip:],
@@ -154,7 +151,7 @@ CORS_ALLOW_CREDENTIALS = True
 JWT_ACCESS_COOKIE_NAME = 'access_token'
 JWT_REFRESH_COOKIE_NAME = 'refresh_token'
 JWT_CSRF_COOKIE_NAME = 'csrf_token'
-JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', not DEBUG)
+JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', True)
 JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "")

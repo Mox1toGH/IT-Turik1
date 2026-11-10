@@ -16,16 +16,13 @@ python manage.py seed_dev --size large
 python manage.py seed_dev --reset            # delete seeded rows, then rebuild
 python manage.py seed_dev --seed 42          # deterministic random seed
 python manage.py seed_dev --only news,calendar
-python manage.py seed_dev --force            # with ALLOW_SEED=1
 ```
 
 ### Safety
 
-The command refuses to run unless it is plainly a development environment. It
-requires `DEBUG=True`; if `DEBUG` is off it additionally demands both
-`ALLOW_SEED=1` in the environment and `--force`. Seeding is rejected outright
-when the database is not local SQLite, or when the database name contains
-`prod`, `live`, or `staging`.
+The command only seeds a local SQLite database, regardless of `DEBUG`. It
+refuses any other database backend/host and any database name containing
+`prod`, `live`, or `staging`. There is no override for these checks.
 
 Outbound email is redirected to Django's in-memory backend for the duration of
 the run, and the Google Calendar `post_save` receivers are disconnected so that
