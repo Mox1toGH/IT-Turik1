@@ -22,7 +22,7 @@ Web platform for organizing and running programming tournaments. Decoupled archi
 - **Integrations:** Google OAuth, Google Calendar API, Google Sheets API
 - **DevOps:** Docker Compose
 - **API:** OpenAPI schema with Orval codegen
-- **Perf/Debug:** django-debug-toolbar, django-silk
+- **Perf/Debug:** django-debug-toolbar
 
 ## Architecture
 

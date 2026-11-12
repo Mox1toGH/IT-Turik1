@@ -26,4 +26,3 @@ whitenoise
 psycopg[binary,pool]
 
 django-debug-toolbar
-django-silk
