@@ -66,6 +66,7 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 - `DJANGO_ALLOWED_HOSTS`: список хостів через кому. Для Docker обов'язково додай `backend`.
 - `CORS_ALLOWED_ORIGINS`: адреса фронтенду (локально: `http://localhost:5173`).
 - `JWT_COOKIE_SECURE`: `False` для локального HTTP; встанови `True` у production з HTTPS.
+- `LOG_LEVEL`: рівень логування для всіх логерів (`DEBUG`, `INFO`, `WARNING`, `ERROR` або `CRITICAL`); за замовчуванням `INFO`.
 - `EMAIL_HOST_PASSWORD`: App Password у Google Account — `Security → App passwords`.
 - `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`: у Google Cloud Console → `APIs & Services → Credentials → OAuth client ID → Web application`.
 - `DB_HOST`: **`db`** для Docker, **`localhost`** локально або приватна адреса Linode VM з PostgreSQL у production.

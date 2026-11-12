@@ -49,8 +49,7 @@ ALLOWED_HOSTS = [
 PROFILING_ENABLED = env_bool("PROFILING_ENABLED", False)
 INTERNAL_IPS = [ip for ip in os.getenv("INTERNAL_IPS", "127.0.0.1").split(",") if ip]
 
-LOG_LEVEL = os.getenv("DJANGO_LOG_LEVEL", "INFO").upper()
-DJANGO_DB_LOG_LEVEL = os.getenv("DJANGO_DB_LOG_LEVEL", "INFO")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
 PROJECT_LOGGERS = [
     "accounts",
@@ -83,13 +82,13 @@ LOGGING = {
             "formatter": "json",
         },
     },
-    "root": {"handlers": ["console"], "level": "WARNING"},
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
         **{
             name: {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False}
             for name in PROJECT_LOGGERS
         },
-        "django.db.backends": {"level": DJANGO_DB_LOG_LEVEL},
+        "django.db.backends": {"level": LOG_LEVEL},
     },
 }
 
