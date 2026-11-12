@@ -7,12 +7,14 @@
 ## 1. Що потрібно встановити
 
 ### Для ручного запуску
+
 - Python 3.11+
 - Node.js 20.19+ або 22.12+
 - npm
 - PostgreSQL 15+
 
 ### Для Docker
+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (включає Docker та Docker Compose)
 
 ---
@@ -31,9 +33,9 @@ Copy-Item backend\.env.example backend\.env
 
 ```env
 DJANGO_SECRET_KEY=replace-me
-DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
 CORS_ALLOWED_ORIGINS=http://localhost:5173
+JWT_COOKIE_SECURE=False
 
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
@@ -49,7 +51,7 @@ DB_ENGINE=django.db.backends.postgresql
 DB_NAME=itturik
 DB_USER=itturik
 DB_PASSWORD=itturik
-DB_HOST=db        # для Docker: db / для ручного: localhost
+DB_HOST=db        # Docker: db / локально: localhost
 DB_PORT=5432
 ```
 
@@ -61,17 +63,16 @@ DB_PORT=5432
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
-- `DJANGO_DEBUG`: `True` для локальної розробки, `False` для продакшну.
 - `DJANGO_ALLOWED_HOSTS`: список хостів через кому. Для Docker обов'язково додай `backend`.
 - `CORS_ALLOWED_ORIGINS`: адреса фронтенду (локально: `http://localhost:5173`).
+- `JWT_COOKIE_SECURE`: `False` для локального HTTP; встанови `True` у production з HTTPS.
+- `LOG_LEVEL`: рівень логування для всіх логерів (`DEBUG`, `INFO`, `WARNING`, `ERROR` або `CRITICAL`); за замовчуванням `INFO`.
 - `EMAIL_HOST_PASSWORD`: App Password у Google Account — `Security → App passwords`.
 - `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`: у Google Cloud Console → `APIs & Services → Credentials → OAuth client ID → Web application`.
-- `DB_HOST`: **`db`** для Docker, **`localhost`** для ручного запуску.
-- Пул з'єднань: деталі й правила вибору — у [CONNECTION_POOLING.md](./CONNECTION_POOLING.md).
-  Коротко: або вбудований пул Django (`DB_POOL_ENABLED=true`), **або** PgBouncer
-  (`DB_POOL_ENABLED=false`) — ніколи обидва одночасно. Для віддаленої БД обирай PgBouncer.
+- `DB_HOST`: **`db`** для Docker, **`localhost`** локально або приватна адреса Linode VM з PostgreSQL у production.
+- PostgreSQL connection pool увімкнений автоматично (від 2 до 10 з'єднань на процес).
 - `REDIS_URL`: адреса Redis для кешу, channel layer (WebSocket fan-out між процесами) та Celery. Якщо порожньо — локальні in-process fallbacks, а Celery-тайски виконуються inline.
-- `PROFILING_ENABLED`: увімкнути django-debug-toolbar (`/__debug__/`) та django-silk (`/silk/`) для профілювання. За замовчуванням = значення `DJANGO_DEBUG`. Дивитись записи запитів/SQL можна на `http://localhost:8000/silk/` (потрібен логін суперкористувача в `/admin/`).
+- `PROFILING_ENABLED`: увімкнути django-debug-toolbar (`/__debug__/`) для перегляду запитів під час локальної розробки. За замовчуванням вимкнено.
 
 ### Frontend
 
@@ -136,7 +137,7 @@ daphne -b 0.0.0.0 -p 8000 backend.asgi:application
 python manage.py runserver
 ```
 
-> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні лише з Daphne.
+> WebSocket-нотифікації (`/ws/notifications/`, `/ws/leaderboards/`) доступні в ASGI-режимі: локально через Daphne, у Docker — через Gunicorn з `uvicorn-worker`.
 
 #### Опційно: Redis + Celery (фонові задачі)
 
@@ -158,7 +159,6 @@ cd frontend
 nvm use
 npm install
 ```
-
 
 #### Генерація API (OpenAPI & Orval):
 
@@ -220,6 +220,7 @@ docker compose up --build
 ```
 
 Docker автоматично:
+
 - запустить PostgreSQL
 - виконає міграції
 - запустить backend і frontend
@@ -274,8 +275,6 @@ docker compose down -v
 ```
 
 ---
-
-
 
 ## 6. Правила розробки
 

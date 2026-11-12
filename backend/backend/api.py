@@ -8,6 +8,7 @@ from news.api import router as news_router
 from notifications.api import router as notifications_router
 from stats.api import router as stats_router
 from tournaments.api import router as tournaments_router
+from corrupted_archive_api import router as corrupted_archive_router
 
 api = NinjaAPI(title='Backend API (Ninja)', urls_namespace='ninja-api')
 
@@ -48,3 +49,4 @@ api.add_router('/news', news_router)
 api.add_router('/notifications', notifications_router)
 api.add_router('/stats', stats_router)
 api.add_router('/tournaments', tournaments_router)
+api.add_router('/archive', corrupted_archive_router)

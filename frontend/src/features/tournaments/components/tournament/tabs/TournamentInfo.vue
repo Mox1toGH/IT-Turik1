@@ -3,7 +3,6 @@
     <template #header>
       <div class="tournament-header">
         <div>
-          <p class="section-eyebrow">Overview</p>
           <h2 class="text-3xl">Tournament info</h2>
           <p class="section-subtitle text-base">Core dates, description, and your progress.</p>
         </div>
@@ -287,13 +286,16 @@ const statusBadgeVariant = computed(() => {
 const { mutate: startRegistration, isPending } = useStartTournamentRegistration()
 
 const handleStartRegistration = () => {
-  startRegistration({
-    id: props.tournamentId,
-  }, {
-    onSuccess: () => {
-      isStartRegistrationConfirmOpen.value = false
+  startRegistration(
+    {
+      id: props.tournamentId,
     },
-  })
+    {
+      onSuccess: () => {
+        isStartRegistrationConfirmOpen.value = false
+      },
+    },
+  )
 }
 
 function handleLeave() {

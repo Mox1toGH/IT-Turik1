@@ -7,38 +7,138 @@
         <h1>Create new team</h1>
         <p class="section-subtitle">Add the team details and choose members to invite.</p>
       </div>
-
     </header>
 
     <form class="team-form" @submit.prevent="teamForm.handleFormSubmit">
-      <team-identity-fields :form="teamForm.form" />
+      <ui-card class="team-form-panel">
+        <div class="team-form-section">
+          <div class="section-header">
+            <h2>Identity</h2>
+            <p>Add the essentials people will see in the team directory.</p>
+          </div>
+          <div class="identity-grid">
+            <label class="form-item">
+              <p class="form-label">Team name</p>
+              <ui-input
+                v-model="teamForm.form.fields.value.name"
+                :is-invalid="!!teamForm.form.errors.value.name"
+                required
+                placeholder="Enter team name"
+                @blur="teamForm.form.validateField('name')"
+              />
+              <small v-if="teamForm.form.errors.value.name" class="text-error">{{
+                teamForm.form.errors.value.name
+              }}</small>
+            </label>
 
-      <team-contact-fields :form="teamForm.form" />
+            <label class="form-item">
+              <p class="form-label">Team email</p>
+              <ui-input
+                v-model="teamForm.form.fields.value.email"
+                :is-invalid="!!teamForm.form.errors.value.email"
+                type="email"
+                required
+                placeholder="team@example.com"
+                @blur="teamForm.form.validateField('email')"
+              />
+              <small v-if="teamForm.form.errors.value.email" class="text-error">{{
+                teamForm.form.errors.value.email
+              }}</small>
+            </label>
+
+            <label class="form-item">
+              <p class="form-label">Organization</p>
+              <ui-input
+                v-model="teamForm.form.fields.value.organization"
+                :is-invalid="!!teamForm.form.errors.value.organization"
+                placeholder="School, company, or community"
+                @blur="teamForm.form.validateField('organization')"
+              />
+              <small v-if="teamForm.form.errors.value.organization" class="text-error">{{
+                teamForm.form.errors.value.organization
+              }}</small>
+            </label>
+
+            <label class="form-label toggle-field">
+              <span>Team visibility</span>
+              <div class="visibility-control">
+                <span class="visibility-label">Private</span>
+                <ui-switch
+                  v-model="teamForm.form.fields.value.is_public"
+                  :aria-checked="teamForm.form.fields.value.is_public ? 'true' : 'false'"
+                  :aria-label="`Team visibility: ${teamForm.form.fields.value.is_public ? 'Public' : 'Private'}`"
+                  @blur="teamForm.form.validateField('is_public')"
+                />
+                <span class="visibility-label">Public</span>
+              </div>
+              <small v-if="teamForm.form.errors.value.is_public" class="text-error">{{
+                teamForm.form.errors.value.is_public
+              }}</small>
+            </label>
+          </div>
+        </div>
+      </ui-card>
 
       <ui-card class="team-form-panel">
-        <ui-section title="Members" description="Invite members now, or add them later.">
-          <label class="form-item">
-            <p class="form-label">Initial members</p>
-            <ui-select
-              v-model="teamForm.form.fields.value.member_ids!"
-              :isLoading="teamForm.isLoadingUsers.value"
-              :isError="isLoadingError"
-              :error="'Could not load users.'"
-              :multiple="true"
-              :options="
-                teamForm.createCandidateUsers.value?.map((u) => ({
-                  value: u.id,
-                  label: `${u.username} (${u.email})`,
-                }))
-              "
-              placeholder="Select members"
-              @blur="teamForm.form.validateField('member_ids')"
-            />
-            <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
-              teamForm.form.errors.value.member_ids
-            }}</small>
-          </label>
-        </ui-section>
+        <div class="team-form-section">
+          <div class="section-header">
+            <h2>Contact</h2>
+            <p>Add optional handles for quick communication.</p>
+          </div>
+          <div class="contact-grid">
+            <label class="form-item">
+              <p class="form-label">Telegram</p>
+              <ui-input
+                v-model="teamForm.form.fields.value.contact_telegram"
+                :is-invalid="!!teamForm.form.errors.value.contact_telegram"
+                placeholder="@team_username"
+                title="Telegram username: 5-32 characters, start with a letter, letters/digits/_"
+                @blur="teamForm.form.validateField('contact_telegram')"
+              />
+              <small v-if="teamForm.form.errors.value.contact_telegram" class="text-error">{{
+                teamForm.form.errors.value.contact_telegram
+              }}</small>
+            </label>
+
+            <label class="form-item">
+              <p class="form-label">Discord</p>
+              <ui-input
+                v-model="teamForm.form.fields.value.contact_discord"
+                :is-invalid="!!teamForm.form.errors.value.contact_discord"
+                placeholder="team.username"
+                title="Discord username: 2-32 characters, letters/digits/._ with optional #1234"
+                @blur="teamForm.form.validateField('contact_discord')"
+              />
+              <small v-if="teamForm.form.errors.value.contact_discord" class="text-error">{{
+                teamForm.form.errors.value.contact_discord
+              }}</small>
+            </label>
+          </div>
+        </div>
+      </ui-card>
+
+      <ui-card class="team-form-panel">
+        <label class="form-item">
+          <p class="form-label">Initial members</p>
+          <ui-select
+            v-model="teamForm.form.fields.value.member_ids!"
+            :isLoading="teamForm.isLoadingUsers.value"
+            :isError="isLoadingError"
+            :error="'Could not load users.'"
+            :multiple="true"
+            :options="
+              teamForm.createCandidateUsers.value?.map((u) => ({
+                value: u.id,
+                label: `${u.username} (${u.email})`,
+              }))
+            "
+            placeholder="Select members"
+            @blur="teamForm.form.validateField('member_ids')"
+          />
+          <small v-if="teamForm.form.errors.value.member_ids" class="text-error">{{
+            teamForm.form.errors.value.member_ids
+          }}</small>
+        </label>
       </ui-card>
 
       <div class="form-actions">
@@ -55,11 +155,10 @@
 import { computed } from 'vue'
 import PageBackLink from '@/components/shared/PageBackLink.vue'
 import UiCard from '@/components/ui/UiCard'
-import UiSection from '@/components/ui/UiSection'
+import UiInput from '@/components/ui/UiInput'
 import { LoaderCircle } from 'lucide-vue-next'
 import UiSelect from '@/components/ui/UiSelect'
-import TeamIdentityFields from '../components/team-create/TeamIdentityFields.vue'
-import TeamContactFields from '../components/team-create/TeamContactFields.vue'
+import UiSwitch from '@/components/ui/UiSwitch'
 import { useTeamCreateForm } from '../composables/useTeamCreateForm'
 
 const teamForm = useTeamCreateForm()
@@ -105,6 +204,53 @@ const isLoadingError = computed(
 
 .form-label {
   margin: 0;
+}
+
+.team-form-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.section-header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
+}
+
+.identity-grid,
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.contact-grid {
+  min-width: 0;
+}
+
+.toggle-field {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+}
+
+.visibility-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--subtle);
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+}
+
+.visibility-label {
+  font-size: 0.86rem;
+  user-select: none;
 }
 
 .form-actions {

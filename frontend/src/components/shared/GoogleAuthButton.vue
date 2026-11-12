@@ -28,7 +28,9 @@ const googleButtonRef = ref<HTMLDivElement | null>(null)
 const errorMessage = ref('')
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
-const { mutate: googleLogin } = useGoogleAuth()
+const { mutate: googleLogin } = useGoogleAuth({
+  request: { skipAuthRefresh: true },
+})
 
 const handleGoogleCredential = (response: GoogleCredentialResponse) => {
   if (!response?.credential) {

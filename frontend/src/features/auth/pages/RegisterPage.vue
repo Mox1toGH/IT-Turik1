@@ -17,7 +17,7 @@
 
     <div class="auth-rule" aria-hidden="true"></div>
 
-    <div class="auth-layout">
+    <div>
       <ui-card class="register-card">
         <template #header>
           <div class="panel-header">
@@ -35,11 +35,127 @@
         </div>
 
         <form v-else @submit.prevent="handleRegister" class="register-form">
-          <register-fields
-            :form="form"
-            :role-options="roleOptions"
-            :is-restricted-role="isRestrictedRole"
-          />
+          <div class="register-fields">
+            <div class="form-grid">
+              <label class="form-item">
+                <p class="form-label">Username</p>
+                <ui-input
+                  v-model="form.fields.value.username"
+                  @blur="form.validateField('username')"
+                  placeholder="johndoe"
+                  required
+                  :is-invalid="!!form.errors.value.username"
+                />
+                <small v-if="form.errors.value.username" class="text-error">{{
+                  form.errors.value.username
+                }}</small>
+              </label>
+
+              <label class="form-item">
+                <p class="form-label">Email</p>
+                <ui-input
+                  v-model="form.fields.value.email"
+                  @blur="form.validateField('email')"
+                  :is-invalid="!!form.errors.value.email"
+                  placeholder="name@mail.com"
+                  required
+                />
+                <small v-if="form.errors.value.email" class="text-error">{{
+                  form.errors.value.email
+                }}</small>
+              </label>
+
+              <label class="form-item">
+                <p class="form-label">Password</p>
+                <ui-password-field
+                  v-model="form.fields.value.password"
+                  autocomplete="new-password"
+                  :is-invalid="!!form.errors.value.password"
+                  placeholder="********"
+                  required
+                  @blur="form.validateField('password')"
+                />
+                <small v-if="form.errors.value.password" class="text-error">{{
+                  form.errors.value.password
+                }}</small>
+              </label>
+
+              <label class="form-item">
+                <p class="form-label">Role</p>
+                <ui-select
+                  v-model="form.fields.value.role"
+                  @blur="form.validateField('role')"
+                  :options="roleOptions"
+                  class="select-control"
+                />
+              </label>
+            </div>
+
+            <label v-if="isRestrictedRole" class="form-item">
+              <p class="form-label full-width">Activation code</p>
+              <ui-input
+                v-model="form.fields.value.activation_code"
+                @blur="form.validateField('activation_code')"
+                :is-invalid="!!form.errors.value.activation_code"
+                placeholder="Enter one-time activation code"
+                required
+              />
+              <small v-if="form.errors.value.activation_code" class="text-error">{{
+                form.errors.value.activation_code
+              }}</small>
+            </label>
+
+            <div class="profile-fields">
+              <div class="panel-header profile-header">
+                <span class="step-marker">02</span>
+                <div>
+                  <p class="section-eyebrow">Profile</p>
+                  <h2>Optional info</h2>
+                </div>
+              </div>
+
+              <label class="form-item">
+                <p class="form-label full-width">Full name</p>
+                <ui-input
+                  v-model="form.fields.value.full_name"
+                  :is-invalid="!!form.errors.value.full_name"
+                  placeholder="John Doe"
+                  @blur="form.validateField('full_name')"
+                />
+                <small v-if="form.errors.value.full_name" class="text-error">{{
+                  form.errors.value.full_name
+                }}</small>
+              </label>
+
+              <div class="form-grid">
+                <label class="form-item">
+                  <p class="form-label">Phone</p>
+                  <phone-field
+                    v-model="form.fields.value.phone"
+                    placeholder="Enter phone number"
+                    :is-invalid="!!form.errors.value.phone"
+                    @blur="form.validateField('phone')"
+                  />
+                  <small v-if="form.errors.value.phone" class="text-error">{{
+                    form.errors.value.phone
+                  }}</small>
+                </label>
+
+                <label class="form-item">
+                  <p class="form-label">City</p>
+                  <ui-input
+                    v-model="form.fields.value.city"
+                    @blur="form.validateField('city')"
+                    :is-invalid="!!form.errors.value.city"
+                    placeholder="Kyiv"
+                  />
+                  <small v-if="form.errors.value.city" class="text-error">{{
+                    form.errors.value.city
+                  }}</small>
+                </label>
+              </div>
+            </div>
+          </div>
 
           <ui-button type="submit" class="submit-btn" :disabled="isLoading">
             {{ isLoading ? 'Creating account...' : 'Create account' }}
@@ -55,15 +171,6 @@
           </p>
         </template>
       </ui-card>
-
-      <register-summary
-        :username="form.fields.value.username"
-        :email="form.fields.value.email"
-        :full-name="form.fields.value.full_name"
-        :city="form.fields.value.city"
-        :role-label="roleLabel"
-        :is-restricted-role="isRestrictedRole"
-      />
     </div>
   </section>
 </template>
@@ -71,27 +178,42 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import GoogleAuthButton from '@/components/shared/GoogleAuthButton.vue'
+import PhoneField from '@/components/shared/PhoneField.vue'
 import UiButton from '@/components/ui/UiButton'
 import UiCard from '@/components/ui/UiCard'
+import UiInput from '@/components/ui/UiInput'
+import UiPasswordField from '@/components/ui/UiPasswordField'
+import UiSelect from '@/components/ui/UiSelect'
 import { useNotification } from '@/composables/useNotification'
 import { useUserStore } from '@/stores/user'
 import { useForm } from '@/composables/useForm'
 import { RegisterSchema } from '@/schemas/auth.schema'
 import { useRegisterUser, type GoogleAuthMutationResult } from '@/api/accounts/accounts'
 import { useRouter } from 'vue-router'
-import RegisterFields, { type RegisterFormValues } from '../components/RegisterFields.vue'
-import RegisterSummary from '../components/RegisterSummary.vue'
+import type { UserRole } from '@/api/backendAPINinja.schemas'
+
+interface RegisterFormValues {
+  username: string
+  full_name: string
+  email: string
+  password: string
+  role: UserRole
+  activation_code?: string
+  phone: string
+  city: string
+}
 
 const form = useForm<RegisterFormValues>(RegisterSchema, {
   username: '',
   email: '',
   password: '',
   role: 'team',
-  activation_code: '',
+  activation_code: undefined,
   full_name: '',
   phone: '',
   city: '',
 })
+
 const storage = useUserStore()
 const router = useRouter()
 const { showNotification } = useNotification()
@@ -107,9 +229,6 @@ const roleOptions = [
 ]
 
 const isRestrictedRole = computed(() => restrictedRoles.includes(form.fields.value.role))
-const roleLabel = computed(
-  () => roleOptions.find((option) => option.value === form.fields.value.role)?.label ?? 'Team',
-)
 
 watch(
   () => form.fields.value.role,
@@ -159,6 +278,19 @@ function handleRegister() {
   min-width: 0;
 }
 
+.auth-link {
+  margin: 1rem 0 0;
+  color: var(--muted-foreground);
+  text-align: center;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+}
+
+.auth-link a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
 .breadcrumb-label {
   display: inline-flex;
   align-items: center;
@@ -195,13 +327,6 @@ function handleRegister() {
   background: var(--border);
 }
 
-.auth-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
-  gap: 1rem;
-  align-items: start;
-}
-
 .register-card {
   min-width: 0;
 }
@@ -212,12 +337,33 @@ function handleRegister() {
   gap: 0.9rem;
 }
 
+.register-fields,
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.profile-fields {
+  margin-top: 0.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.profile-header {
+  margin-bottom: 0.1rem;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
 .submit-btn {
   width: 100%;
 }
 
-@media (max-width: 980px) {
-  .auth-layout {
+@media (max-width: 760px) {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }

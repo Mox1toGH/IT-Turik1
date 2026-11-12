@@ -10,7 +10,7 @@ import { tournamentsRoutes } from '@/features/tournaments/routes'
 import { newsRoutes } from '@/features/news/routes'
 import { evaluationRoutes } from '@/features/evaluation/routes'
 import { calendarRoutes } from '@/features/calendar/routes'
-import { getUserProfile } from '@/api/accounts/accounts'
+import { archiveRoutes } from '@/features/archive/routes'
 import { hasAnyRole } from '@/shared/lib/permissions'
 import type { UserRole } from '@/shared/types/user'
 
@@ -19,6 +19,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     requiresGuest?: boolean
     roles?: UserRole[]
+    fullscreen?: boolean
   }
 }
 
@@ -34,24 +35,14 @@ const router = createRouter({
     ...newsRoutes,
     ...evaluationRoutes,
     ...calendarRoutes,
+    ...archiveRoutes,
     { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
 })
 
 router.beforeEach(async (to) => {
   const store = useUserStore()
-  let profile: Awaited<ReturnType<typeof getUserProfile>> | null = null
-
-  // The session lives in HttpOnly cookies, so validate it once instead of
-  // trying to inspect an access token in browser storage.
-  if (!store.sessionChecked) {
-    try {
-      profile = await getUserProfile()
-      store.setSession({ authenticated: true, onboarding_required: profile.needs_onboarding })
-    } catch {
-      store.clearSession()
-    }
-  }
+  await store.checkSession()
 
   const isAuthenticated = store.isAuthenticated
   const needsOnboarding = store.needsOnboarding
@@ -78,16 +69,11 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.roles?.length) {
-    try {
-      profile ??= await getUserProfile()
-      if (!isAuthenticated) return '/login'
-      if (!hasAnyRole(profile, to.meta.roles)) {
-        return '/'
-      }
-    } catch {
-      store.clearSession()
-      return '/'
-    }
+    if (!isAuthenticated) return '/login'
+
+    const profile = await store.ensureProfile()
+    if (!profile) return '/login'
+    if (!hasAnyRole(profile, to.meta.roles)) return '/'
   }
 })
 

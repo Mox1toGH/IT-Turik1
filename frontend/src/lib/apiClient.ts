@@ -2,6 +2,12 @@ import Axios, { AxiosError, type AxiosRequestConfig, isAxiosError } from 'axios'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipAuthRefresh?: boolean
+  }
+}
+
 const API_BASE: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 function containsFile(data: unknown): boolean {
@@ -53,6 +59,11 @@ export const AXIOS_INSTANCE = Axios.create({
 let csrfToken: string | null = null
 let csrfRequest: Promise<string> | null = null
 
+/** Drop the cached CSRF token, e.g. after logout deletes the CSRF cookie. */
+export function resetCsrfToken() {
+  csrfToken = null
+}
+
 const SAFE_METHODS = new Set(['get', 'head', 'options', 'trace'])
 
 async function getCsrfToken(): Promise<string> {
@@ -74,6 +85,24 @@ async function getCsrfToken(): Promise<string> {
 }
 
 type RetryConfig = AxiosRequestConfig & { _authRetry?: boolean }
+let refreshRequest: Promise<void> | null = null
+
+function refreshSession(): Promise<void> {
+  if (!refreshRequest) {
+    refreshRequest = AXIOS_INSTANCE.post(
+      '/api/accounts/token/refresh',
+      {},
+      {
+        skipAuthRefresh: true,
+      },
+    )
+      .then(() => undefined)
+      .finally(() => {
+        refreshRequest = null
+      })
+  }
+  return refreshRequest
+}
 
 AXIOS_INSTANCE.interceptors.request.use(async (config) => {
   config.withCredentials = true
@@ -86,33 +115,24 @@ AXIOS_INSTANCE.interceptors.request.use(async (config) => {
 AXIOS_INSTANCE.interceptors.response.use(
   (res) => res,
   async (err) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && !err.config?.skipAuthRefresh) {
       const original = err.config as RetryConfig | undefined
-      const requestPath = toApiPath(original?.url) ?? ''
-      const isSessionEndpoint = /\/accounts\/(?:login|google-login|token\/refresh|csrf|logout)(?:\?|$)/.test(
-        requestPath,
-      )
-      if (original && !original._authRetry && !isSessionEndpoint) {
+      const store = useUserStore()
+
+      if (original && !original._authRetry && store.isAuthenticated) {
         original._authRetry = true
         try {
-          await AXIOS_INSTANCE.post('/api/accounts/token/refresh', {})
+          await refreshSession()
           return AXIOS_INSTANCE(original)
         } catch {
-          const store = useUserStore()
           store.clearSession()
-          if (router.currentRoute.value.meta.requiresAuth) router.push('/login')
         }
-      } else if (!isSessionEndpoint) {
-        const store = useUserStore()
+      } else {
         store.clearSession()
       }
 
-      try {
-        if (!isSessionEndpoint && router.currentRoute.value.meta.requiresAuth) {
-          router.push('/login')
-        }
-      } catch {
-        // ignore
+      if (router.currentRoute.value.meta.requiresAuth) {
+        router.push('/login')
       }
     }
 
@@ -147,7 +167,10 @@ export const customInstance = <T>(
     url: toApiPath(options?.url ?? config.url),
   }
 
-  if (finalConfig.data instanceof FormData || (finalConfig.data && containsFile(finalConfig.data))) {
+  if (
+    finalConfig.data instanceof FormData ||
+    (finalConfig.data && containsFile(finalConfig.data))
+  ) {
     if (!(finalConfig.data instanceof FormData)) {
       finalConfig.data = toFormData(finalConfig.data as Record<string, unknown>)
     }

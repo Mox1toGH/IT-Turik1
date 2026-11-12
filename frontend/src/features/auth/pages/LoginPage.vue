@@ -85,7 +85,13 @@ const store = useUserStore()
 const form = useForm(LoginSchema, { username: '', password: '' })
 const router = useRouter()
 
-const { mutate: login, isPending, error } = useLogin()
+const {
+  mutate: login,
+  isPending,
+  error,
+} = useLogin({
+  request: { skipAuthRefresh: true },
+})
 
 function saveAndRedirect(data: LoginResult) {
   store.setSession(data)
@@ -167,10 +173,16 @@ async function handleLogin() {
 }
 
 .auth-link {
-  margin: 0;
+  margin: 1rem 0 0;
+  color: var(--muted-foreground);
   text-align: center;
   font-size: var(--text-sm);
   line-height: var(--text-sm--line-height);
+}
+
+.auth-link a {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {

@@ -20,9 +20,9 @@ google-auth-oauthlib
 
 daphne
 gunicorn
-uvicorn
+uvicorn[standard]
+uvicorn-worker
 whitenoise
 psycopg[binary,pool]
 
 django-debug-toolbar
-django-silk
